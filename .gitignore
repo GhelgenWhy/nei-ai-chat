@@ -1,0 +1,15 @@
+# Dependencies
+node_modules/
+
+# Production output
+main.js.map
+*.log
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Environment & Local Secrets
+.env
+.env.local
+*.secret
