@@ -117,8 +117,7 @@ export class AgentLoop {
 
 ИНСТРУКЦИИ И ЭКОНОМИЯ ТОКЕНОВ:
 - Вся необходимая информация из папок ваулта или GitHub репозиториев уже предзагружена в контекст ниже.
-- Старайся сформулировать финальный ответ максимально быстро (за 1-2 шага).
-- Если нужно вызвать дополнительный инструмент — вызывай его. Если данные уже есть — ДАВАЙ ФИНАЛЬНЫЙ АНАЛИТИЧЕСКИЙ ОТВЕТ СРАЗУ.
+- Сформулируй финальный аналитический ответ для пользователя на основе этих данных.
 
 ФОРМАТИРОВАНИЕ ОТВЕТА:
 - Чистый GitHub Flavored Markdown с таблицами, списками, цитатами и рекомендациями по улучшению проекта.
@@ -142,29 +141,20 @@ export class AgentLoop {
 
         const messages: ChatMessage[] = [
             { role: "system", content: systemPrompt },
-            ...chatHistory.filter(m => m.role !== "system").slice(-4), // keep only last 4 messages to save tokens
+            ...chatHistory.filter(m => m.role !== "system").slice(-4),
             { role: "user", content: userQuery }
         ];
 
         const tools = defaultToolRegistry.getToolDefinitions();
         let iteration = 0;
         let finalResponseText = "";
-        let hasExecutedTools = false;
 
         while (iteration < maxIterations) {
             iteration++;
             console.log(`[AgentLoop] Итерация ${iteration}/${maxIterations}`);
 
-            // Force final answer on the last iteration if tools were executed
             const isLastIteration = (iteration === maxIterations);
             const activeTools = isLastIteration ? undefined : tools;
-
-            if (isLastIteration && hasExecutedTools) {
-                messages.push({
-                    role: "user",
-                    content: "Собери всю имеющуюся информацию и выдай подробный итоговый аналитический ответ для пользователя без использования дополнительных инструментов."
-                });
-            }
 
             const response = await sendChatRequest(config, messages, activeTools);
 
@@ -181,10 +171,9 @@ export class AgentLoop {
 
             // A) Native Tool Calls
             if (response.tool_calls && response.tool_calls.length > 0 && !isLastIteration) {
-                hasExecutedTools = true;
                 messages.push({
                     role: "assistant",
-                    content: response.content || null,
+                    content: response.content || "Выполнение вызова инструментов...",
                     tool_calls: response.tool_calls
                 });
 
@@ -209,7 +198,6 @@ export class AgentLoop {
                         toolArgsStr
                     );
 
-                    // Trim result for token savings
                     const rawRes = typeof execResult.result === "string" ? execResult.result : JSON.stringify(execResult.result);
                     const trimmedResult = rawRes.length > 2000 ? rawRes.substring(0, 2000) + "... [содержимое сжато]" : rawRes;
 
@@ -230,7 +218,6 @@ export class AgentLoop {
             } 
             // B) Fallback: Text-based JSON Tool Call Parser
             else if (response.content && this.containsJsonToolCall(response.content) && !isLastIteration) {
-                hasExecutedTools = true;
                 const parsedTool = this.extractJsonToolCall(response.content);
                 if (parsedTool) {
                     const callId = "text_call_" + Date.now();
@@ -276,7 +263,14 @@ export class AgentLoop {
                 }
             } else {
                 // Final answer reached
-                finalResponseText = response.content || "Агент завершил анализ.";
+                finalResponseText = response.content.trim();
+                
+                // Fallback if model returned empty content
+                if (!finalResponseText && prefetchedContext) {
+                    finalResponseText = `### Анализ данных:\n${prefetchedContext}`;
+                } else if (!finalResponseText) {
+                    finalResponseText = "Агент завершил обработку вашей задачи.";
+                }
 
                 if (this.shouldAutoCreateNote(userQuery, finalResponseText)) {
                     await this.attemptAutoCreateNote(app, userQuery, finalResponseText, steps, notifySteps);
@@ -291,7 +285,7 @@ export class AgentLoop {
         }
 
         if (!finalResponseText) {
-            finalResponseText = "Агент завершил обработку данных.";
+            finalResponseText = "Агент завершил анализ запроса.";
         }
 
         return finalResponseText;

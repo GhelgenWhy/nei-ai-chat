@@ -2,7 +2,7 @@ import { ToolDefinition, ToolCall } from "./tools/types";
 
 export interface ChatMessage {
     role: 'user' | 'assistant' | 'system' | 'tool';
-    content: string | null;
+    content: string;
     name?: string;
     tool_call_id?: string;
     tool_calls?: ToolCall[];
@@ -16,7 +16,7 @@ export interface LlmConfig {
 }
 
 export interface LlmResponse {
-    content: string | null;
+    content: string;
     tool_calls?: ToolCall[];
     reasoning?: string;
 }
@@ -46,9 +46,18 @@ export async function sendChatRequest(
         headers["X-Title"] = "NEI AI Assistant Obsidian Plugin";
     }
 
+    // Clean messages to prevent null content issues on OpenRouter
+    const cleanMessages = messages.map(m => ({
+        role: m.role,
+        content: m.content || "",
+        ...(m.name ? { name: m.name } : {}),
+        ...(m.tool_call_id ? { tool_call_id: m.tool_call_id } : {}),
+        ...(m.tool_calls ? { tool_calls: m.tool_calls } : {})
+    }));
+
     const body: Record<string, any> = {
         model: config.model,
-        messages: messages
+        messages: cleanMessages
     };
 
     if (tools && tools.length > 0) {
@@ -71,13 +80,17 @@ export async function sendChatRequest(
 
     const data = await response.json();
     if (!data.choices || data.choices.length === 0) {
-        throw new Error("ИИ вернул пустой ответ.");
+        throw new Error("ИИ вернул пустой выбор ответа (empty choices).");
     }
 
-    const choiceMessage = data.choices[0].message;
+    const choiceMessage = data.choices[0].message || {};
+    const content = choiceMessage.content || "";
+    const tool_calls = choiceMessage.tool_calls || undefined;
+    const reasoning = choiceMessage.reasoning || choiceMessage.reasoning_content || undefined;
+
     return {
-        content: choiceMessage.content || null,
-        tool_calls: choiceMessage.tool_calls || undefined,
-        reasoning: choiceMessage.reasoning || choiceMessage.reasoning_content || undefined
+        content,
+        tool_calls,
+        reasoning
     };
 }

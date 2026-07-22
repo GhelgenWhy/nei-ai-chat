@@ -24496,9 +24496,16 @@ async function sendChatRequest(config, messages, tools) {
     headers["HTTP-Referer"] = "https://github.com/GhelgenWhy/NEI";
     headers["X-Title"] = "NEI AI Assistant Obsidian Plugin";
   }
+  const cleanMessages = messages.map((m) => ({
+    role: m.role,
+    content: m.content || "",
+    ...m.name ? { name: m.name } : {},
+    ...m.tool_call_id ? { tool_call_id: m.tool_call_id } : {},
+    ...m.tool_calls ? { tool_calls: m.tool_calls } : {}
+  }));
   const body = {
     model: config.model,
-    messages
+    messages: cleanMessages
   };
   if (tools && tools.length > 0) {
     body.tools = tools;
@@ -24516,13 +24523,16 @@ async function sendChatRequest(config, messages, tools) {
   }
   const data = await response.json();
   if (!data.choices || data.choices.length === 0) {
-    throw new Error("\u0418\u0418 \u0432\u0435\u0440\u043D\u0443\u043B \u043F\u0443\u0441\u0442\u043E\u0439 \u043E\u0442\u0432\u0435\u0442.");
+    throw new Error("\u0418\u0418 \u0432\u0435\u0440\u043D\u0443\u043B \u043F\u0443\u0441\u0442\u043E\u0439 \u0432\u044B\u0431\u043E\u0440 \u043E\u0442\u0432\u0435\u0442\u0430 (empty choices).");
   }
-  const choiceMessage = data.choices[0].message;
+  const choiceMessage = data.choices[0].message || {};
+  const content = choiceMessage.content || "";
+  const tool_calls = choiceMessage.tool_calls || void 0;
+  const reasoning = choiceMessage.reasoning || choiceMessage.reasoning_content || void 0;
   return {
-    content: choiceMessage.content || null,
-    tool_calls: choiceMessage.tool_calls || void 0,
-    reasoning: choiceMessage.reasoning || choiceMessage.reasoning_content || void 0
+    content,
+    tool_calls,
+    reasoning
   };
 }
 
@@ -25749,8 +25759,7 @@ ${prefetchedBlocks.join("\n\n")}
 
 \u0418\u041D\u0421\u0422\u0420\u0423\u041A\u0426\u0418\u0418 \u0418 \u042D\u041A\u041E\u041D\u041E\u041C\u0418\u042F \u0422\u041E\u041A\u0415\u041D\u041E\u0412:
 - \u0412\u0441\u044F \u043D\u0435\u043E\u0431\u0445\u043E\u0434\u0438\u043C\u0430\u044F \u0438\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0438\u044F \u0438\u0437 \u043F\u0430\u043F\u043E\u043A \u0432\u0430\u0443\u043B\u0442\u0430 \u0438\u043B\u0438 GitHub \u0440\u0435\u043F\u043E\u0437\u0438\u0442\u043E\u0440\u0438\u0435\u0432 \u0443\u0436\u0435 \u043F\u0440\u0435\u0434\u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043D\u0430 \u0432 \u043A\u043E\u043D\u0442\u0435\u043A\u0441\u0442 \u043D\u0438\u0436\u0435.
-- \u0421\u0442\u0430\u0440\u0430\u0439\u0441\u044F \u0441\u0444\u043E\u0440\u043C\u0443\u043B\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u0444\u0438\u043D\u0430\u043B\u044C\u043D\u044B\u0439 \u043E\u0442\u0432\u0435\u0442 \u043C\u0430\u043A\u0441\u0438\u043C\u0430\u043B\u044C\u043D\u043E \u0431\u044B\u0441\u0442\u0440\u043E (\u0437\u0430 1-2 \u0448\u0430\u0433\u0430).
-- \u0415\u0441\u043B\u0438 \u043D\u0443\u0436\u043D\u043E \u0432\u044B\u0437\u0432\u0430\u0442\u044C \u0434\u043E\u043F\u043E\u043B\u043D\u0438\u0442\u0435\u043B\u044C\u043D\u044B\u0439 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442 \u2014 \u0432\u044B\u0437\u044B\u0432\u0430\u0439 \u0435\u0433\u043E. \u0415\u0441\u043B\u0438 \u0434\u0430\u043D\u043D\u044B\u0435 \u0443\u0436\u0435 \u0435\u0441\u0442\u044C \u2014 \u0414\u0410\u0412\u0410\u0419 \u0424\u0418\u041D\u0410\u041B\u042C\u041D\u042B\u0419 \u0410\u041D\u0410\u041B\u0418\u0422\u0418\u0427\u0415\u0421\u041A\u0418\u0419 \u041E\u0422\u0412\u0415\u0422 \u0421\u0420\u0410\u0417\u0423.
+- \u0421\u0444\u043E\u0440\u043C\u0443\u043B\u0438\u0440\u0443\u0439 \u0444\u0438\u043D\u0430\u043B\u044C\u043D\u044B\u0439 \u0430\u043D\u0430\u043B\u0438\u0442\u0438\u0447\u0435\u0441\u043A\u0438\u0439 \u043E\u0442\u0432\u0435\u0442 \u0434\u043B\u044F \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044F \u043D\u0430 \u043E\u0441\u043D\u043E\u0432\u0435 \u044D\u0442\u0438\u0445 \u0434\u0430\u043D\u043D\u044B\u0445.
 
 \u0424\u041E\u0420\u041C\u0410\u0422\u0418\u0420\u041E\u0412\u0410\u041D\u0418\u0415 \u041E\u0422\u0412\u0415\u0422\u0410:
 - \u0427\u0438\u0441\u0442\u044B\u0439 GitHub Flavored Markdown \u0441 \u0442\u0430\u0431\u043B\u0438\u0446\u0430\u043C\u0438, \u0441\u043F\u0438\u0441\u043A\u0430\u043C\u0438, \u0446\u0438\u0442\u0430\u0442\u0430\u043C\u0438 \u0438 \u0440\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0430\u0446\u0438\u044F\u043C\u0438 \u043F\u043E \u0443\u043B\u0443\u0447\u0448\u0435\u043D\u0438\u044E \u043F\u0440\u043E\u0435\u043A\u0442\u0430.
@@ -25780,24 +25789,16 @@ ${s.description}`).join("\n")}
     const messages = [
       { role: "system", content: systemPrompt },
       ...chatHistory.filter((m) => m.role !== "system").slice(-4),
-      // keep only last 4 messages to save tokens
       { role: "user", content: userQuery }
     ];
     const tools = defaultToolRegistry.getToolDefinitions();
     let iteration = 0;
     let finalResponseText = "";
-    let hasExecutedTools = false;
     while (iteration < maxIterations) {
       iteration++;
       console.log(`[AgentLoop] \u0418\u0442\u0435\u0440\u0430\u0446\u0438\u044F ${iteration}/${maxIterations}`);
       const isLastIteration = iteration === maxIterations;
       const activeTools = isLastIteration ? void 0 : tools;
-      if (isLastIteration && hasExecutedTools) {
-        messages.push({
-          role: "user",
-          content: "\u0421\u043E\u0431\u0435\u0440\u0438 \u0432\u0441\u044E \u0438\u043C\u0435\u044E\u0449\u0443\u044E\u0441\u044F \u0438\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0438\u044E \u0438 \u0432\u044B\u0434\u0430\u0439 \u043F\u043E\u0434\u0440\u043E\u0431\u043D\u044B\u0439 \u0438\u0442\u043E\u0433\u043E\u0432\u044B\u0439 \u0430\u043D\u0430\u043B\u0438\u0442\u0438\u0447\u0435\u0441\u043A\u0438\u0439 \u043E\u0442\u0432\u0435\u0442 \u0434\u043B\u044F \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044F \u0431\u0435\u0437 \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u043D\u0438\u044F \u0434\u043E\u043F\u043E\u043B\u043D\u0438\u0442\u0435\u043B\u044C\u043D\u044B\u0445 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u043E\u0432."
-        });
-      }
       const response = await sendChatRequest(config, messages, activeTools);
       if (response.reasoning) {
         steps.push({
@@ -25810,10 +25811,9 @@ ${s.description}`).join("\n")}
         notifySteps();
       }
       if (response.tool_calls && response.tool_calls.length > 0 && !isLastIteration) {
-        hasExecutedTools = true;
         messages.push({
           role: "assistant",
-          content: response.content || null,
+          content: response.content || "\u0412\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u0438\u0435 \u0432\u044B\u0437\u043E\u0432\u0430 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u043E\u0432...",
           tool_calls: response.tool_calls
         });
         for (const toolCall of response.tool_calls) {
@@ -25850,7 +25850,6 @@ ${s.description}`).join("\n")}
           });
         }
       } else if (response.content && this.containsJsonToolCall(response.content) && !isLastIteration) {
-        hasExecutedTools = true;
         const parsedTool = this.extractJsonToolCall(response.content);
         if (parsedTool) {
           const callId = "text_call_" + Date.now();
@@ -25891,7 +25890,13 @@ ${trimmedResult}`
           break;
         }
       } else {
-        finalResponseText = response.content || "\u0410\u0433\u0435\u043D\u0442 \u0437\u0430\u0432\u0435\u0440\u0448\u0438\u043B \u0430\u043D\u0430\u043B\u0438\u0437.";
+        finalResponseText = response.content.trim();
+        if (!finalResponseText && prefetchedContext) {
+          finalResponseText = `### \u0410\u043D\u0430\u043B\u0438\u0437 \u0434\u0430\u043D\u043D\u044B\u0445:
+${prefetchedContext}`;
+        } else if (!finalResponseText) {
+          finalResponseText = "\u0410\u0433\u0435\u043D\u0442 \u0437\u0430\u0432\u0435\u0440\u0448\u0438\u043B \u043E\u0431\u0440\u0430\u0431\u043E\u0442\u043A\u0443 \u0432\u0430\u0448\u0435\u0439 \u0437\u0430\u0434\u0430\u0447\u0438.";
+        }
         if (this.shouldAutoCreateNote(userQuery, finalResponseText)) {
           await this.attemptAutoCreateNote(app, userQuery, finalResponseText, steps, notifySteps);
         }
@@ -25903,7 +25908,7 @@ ${trimmedResult}`
       }
     }
     if (!finalResponseText) {
-      finalResponseText = "\u0410\u0433\u0435\u043D\u0442 \u0437\u0430\u0432\u0435\u0440\u0448\u0438\u043B \u043E\u0431\u0440\u0430\u0431\u043E\u0442\u043A\u0443 \u0434\u0430\u043D\u043D\u044B\u0445.";
+      finalResponseText = "\u0410\u0433\u0435\u043D\u0442 \u0437\u0430\u0432\u0435\u0440\u0448\u0438\u043B \u0430\u043D\u0430\u043B\u0438\u0437 \u0437\u0430\u043F\u0440\u043E\u0441\u0430.";
     }
     return finalResponseText;
   }
