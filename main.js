@@ -26084,6 +26084,8 @@ var ChatPanel = ({ app, settings, saveSettings }) => {
   const [activeSteps, setActiveSteps] = React.useState([]);
   const [showSessionsDrawer, setShowSessionsDrawer] = React.useState(false);
   const [showConfig, setShowConfig] = React.useState(false);
+  const [editingMsgIdx, setEditingMsgIdx] = React.useState(null);
+  const [editingText, setEditingText] = React.useState("");
   const [endpointUrl, setEndpointUrl] = React.useState(settings.endpointUrl || "https://openrouter.ai/api/v1");
   const [apiKey, setApiKey] = React.useState(settings.apiKey || "");
   const [model, setModel] = React.useState(settings.model || "google/gemini-2.5-flash");
@@ -26152,12 +26154,14 @@ var ChatPanel = ({ app, settings, saveSettings }) => {
     setCurrentSession(newSess);
     setActiveSteps([]);
     setShowSessionsDrawer(false);
+    setEditingMsgIdx(null);
   };
   const handleSelectSession = async (sessionId) => {
     const loaded = await ChatStore.loadSession(app, sessionId);
     if (loaded) {
       setCurrentSession(loaded);
       setActiveSteps([]);
+      setEditingMsgIdx(null);
     }
     setShowSessionsDrawer(false);
   };
@@ -26182,6 +26186,14 @@ var ChatPanel = ({ app, settings, saveSettings }) => {
     setShowConfig(false);
     new import_obsidian9.Notice("\u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438 \u043C\u043E\u0434\u0435\u043B\u0435\u0439 NEI Agent \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u044B!");
   };
+  const handleCopyText = async (text) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      new import_obsidian9.Notice("\u0421\u043A\u043E\u043F\u0438\u0440\u043E\u0432\u0430\u043D\u043E \u0432 \u0431\u0443\u0444\u0435\u0440 \u043E\u0431\u043C\u0435\u043D\u0430!");
+    } catch (e) {
+      new import_obsidian9.Notice("\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0441\u043A\u043E\u043F\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u0442\u0435\u043A\u0441\u0442.");
+    }
+  };
   const handleSaveResponseAsNote = async (content) => {
     const notePath = `Tasks/\u0421\u0432\u043E\u0434\u043A\u0430_${Date.now()}.md`;
     try {
@@ -26191,21 +26203,18 @@ var ChatPanel = ({ app, settings, saveSettings }) => {
       new import_obsidian9.Notice(`\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u044F \u0437\u0430\u043C\u0435\u0442\u043A\u0438: ${e?.message || e}`);
     }
   };
-  const handleSendMessage = async () => {
-    if (!input.trim() || loading)
-      return;
-    const userQuery = input.trim();
-    const userMsg = { role: "user", content: userQuery };
-    const updatedMessages = [...currentSession.messages, userMsg];
+  const executeQuery = async (queryText, historySlice) => {
+    setLoading(true);
+    setActiveSteps([]);
+    setEditingMsgIdx(null);
+    const userMsg = { role: "user", content: queryText };
+    const updatedMessages = [...historySlice, userMsg];
     const updatedSession = {
       ...currentSession,
-      title: currentSession.messages.length === 0 ? userQuery.length > 25 ? userQuery.substring(0, 25) + "..." : userQuery : currentSession.title,
+      title: currentSession.messages.length === 0 ? queryText.length > 25 ? queryText.substring(0, 25) + "..." : queryText : currentSession.title,
       messages: updatedMessages
     };
     setCurrentSession(updatedSession);
-    setInput("");
-    setLoading(true);
-    setActiveSteps([]);
     try {
       const llmConfig = {
         provider: "openrouter",
@@ -26216,8 +26225,8 @@ var ChatPanel = ({ app, settings, saveSettings }) => {
       const responseText = await AgentLoop.run({
         app,
         config: llmConfig,
-        userQuery,
-        chatHistory: currentSession.messages,
+        userQuery: queryText,
+        chatHistory: historySlice,
         onStepUpdate: (steps) => {
           setActiveSteps(steps);
         }
@@ -26243,6 +26252,32 @@ var ChatPanel = ({ app, settings, saveSettings }) => {
       setLoading(false);
       setActiveSteps([]);
     }
+  };
+  const handleSendMessage = () => {
+    if (!input.trim() || loading)
+      return;
+    const queryText = input.trim();
+    setInput("");
+    executeQuery(queryText, currentSession.messages);
+  };
+  const handleRetryUserMessage = (msgIdx) => {
+    if (loading)
+      return;
+    const targetMsg = currentSession.messages[msgIdx];
+    if (targetMsg && targetMsg.role === "user" && targetMsg.content) {
+      const historyBefore = currentSession.messages.slice(0, msgIdx);
+      executeQuery(targetMsg.content, historyBefore);
+    }
+  };
+  const handleStartEdit = (idx, content) => {
+    setEditingMsgIdx(idx);
+    setEditingText(content);
+  };
+  const handleSaveEdit = (idx) => {
+    if (!editingText.trim() || loading)
+      return;
+    const historyBefore = currentSession.messages.slice(0, idx);
+    executeQuery(editingText.trim(), historyBefore);
   };
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", flexDirection: "column", height: "100%", padding: "10px", boxSizing: "border-box", position: "relative" }, children: [
     /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", paddingBottom: "8px", borderBottom: "1px solid var(--background-modifier-border)" }, children: [
@@ -26421,7 +26456,7 @@ var ChatPanel = ({ app, settings, saveSettings }) => {
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("br", {}),
         "\u2022 \u041F\u0440\u044F\u043C\u043E\u0439 \u0434\u043E\u0441\u0442\u0443\u043F \u043A \u0437\u0430\u043C\u0435\u0442\u043E\u0447\u043D\u0438\u043A\u0430\u043C \u0438 \u043F\u0430\u043F\u043A\u0430\u043C (`tasks`, `Projects`)",
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("br", {}),
-        "\u2022 \u0410\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u043E\u0435 \u0443\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u0435 \u0432\u044B\u0437\u043E\u0432\u0430\u043C\u0438 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u043E\u0432 \u0438 \u043F\u0440\u0435\u0434\u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0430",
+        "\u2022 \u0420\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435, \u043F\u0435\u0440\u0435\u043E\u0442\u043F\u0440\u0430\u0432\u043A\u0430 \u0438 \u043A\u043E\u043F\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0439",
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("br", {}),
         "\u2022 \u041F\u0440\u043E\u0432\u0435\u0440\u043A\u0430 \u0432\u043E\u0437\u043C\u043E\u0436\u043D\u043E\u0441\u0442\u0435\u0439 \u0432\u044B\u0431\u0440\u0430\u043D\u043D\u043E\u0439 \u043C\u043E\u0434\u0435\u043B\u0438 \u0447\u0435\u0440\u0435\u0437 OpenRouter API"
       ] }),
@@ -26436,19 +26471,100 @@ var ChatPanel = ({ app, settings, saveSettings }) => {
             background: msg.role === "user" ? "var(--interactive-accent)" : "var(--background-secondary)",
             color: msg.role === "user" ? "var(--text-on-accent)" : "var(--text-normal)",
             fontSize: "13px",
-            boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
+            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+            position: "relative"
           },
-          children: msg.role === "user" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { whiteSpace: "pre-wrap" }, children: msg.content }) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ObsidianMarkdown, { markdown: msg.content || "", app }),
-            msg.content && msg.content.length > 50 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-              "button",
-              {
-                onClick: () => handleSaveResponseAsNote(msg.content || ""),
-                style: { marginTop: "8px", padding: "4px 8px", fontSize: "11px", background: "var(--background-primary)", border: "1px solid var(--background-modifier-border)", borderRadius: "4px", cursor: "pointer", color: "var(--text-muted)" },
-                children: "\u{1F4C4} \u0421\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C \u043A\u0430\u043A \u0437\u0430\u043C\u0435\u0442\u043A\u0443"
-              }
-            )
-          ] })
+          children: msg.role === "user" ? editingMsgIdx === idx ? (
+            /* Inline Edit Form for User Message */
+            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", flexDirection: "column", gap: "6px", minWidth: "220px" }, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+                "textarea",
+                {
+                  value: editingText,
+                  onChange: (e) => setEditingText(e.target.value),
+                  rows: 3,
+                  style: { width: "100%", padding: "6px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-primary)", color: "var(--text-normal)", fontSize: "12px", resize: "vertical" }
+                }
+              ),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", gap: "6px", justifyContent: "flex-end" }, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+                  "button",
+                  {
+                    onClick: () => setEditingMsgIdx(null),
+                    style: { padding: "2px 8px", fontSize: "11px", background: "transparent", border: "1px solid var(--text-on-accent)", color: "var(--text-on-accent)", borderRadius: "4px", cursor: "pointer" },
+                    children: "\u041E\u0442\u043C\u0435\u043D\u0430"
+                  }
+                ),
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+                  "button",
+                  {
+                    onClick: () => handleSaveEdit(idx),
+                    disabled: loading,
+                    style: { padding: "2px 8px", fontSize: "11px", background: "var(--background-primary)", color: "var(--text-normal)", border: "none", borderRadius: "4px", cursor: "pointer", fontWeight: "bold" },
+                    children: "\u{1F4BE} \u041E\u0442\u043F\u0440\u0430\u0432\u0438\u0442\u044C"
+                  }
+                )
+              ] })
+            ] })
+          ) : (
+            /* Standard User Message Display */
+            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { whiteSpace: "pre-wrap" }, children: msg.content }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", gap: "8px", marginTop: "6px", justifyContent: "flex-end", fontSize: "11px", opacity: 0.85 }, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+                  "button",
+                  {
+                    onClick: () => handleCopyText(msg.content || ""),
+                    title: "\u0421\u043A\u043E\u043F\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u0442\u0435\u043A\u0441\u0442",
+                    style: { background: "transparent", border: "none", color: "inherit", cursor: "pointer", padding: 0 },
+                    children: "\u{1F4CB} \u041A\u043E\u043F\u0438\u0440\u043E\u0432\u0430\u0442\u044C"
+                  }
+                ),
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+                  "button",
+                  {
+                    onClick: () => handleStartEdit(idx, msg.content || ""),
+                    title: "\u0420\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u0437\u0430\u043F\u0440\u043E\u0441",
+                    style: { background: "transparent", border: "none", color: "inherit", cursor: "pointer", padding: 0 },
+                    children: "\u270F\uFE0F \u0418\u0437\u043C\u0435\u043D\u0438\u0442\u044C"
+                  }
+                ),
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+                  "button",
+                  {
+                    onClick: () => handleRetryUserMessage(idx),
+                    title: "\u041F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u044C \u043E\u0442\u043F\u0440\u0430\u0432\u043A\u0443",
+                    disabled: loading,
+                    style: { background: "transparent", border: "none", color: "inherit", cursor: "pointer", padding: 0 },
+                    children: "\u{1F504} \u041F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u044C"
+                  }
+                )
+              ] })
+            ] })
+          ) : (
+            /* Assistant Message Display */
+            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ObsidianMarkdown, { markdown: msg.content || "", app }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", gap: "10px", marginTop: "8px", alignItems: "center", fontSize: "11px" }, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+                  "button",
+                  {
+                    onClick: () => handleCopyText(msg.content || ""),
+                    style: { background: "var(--background-primary)", border: "1px solid var(--background-modifier-border)", borderRadius: "4px", cursor: "pointer", padding: "3px 8px", color: "var(--text-muted)" },
+                    children: "\u{1F4CB} \u0421\u043A\u043E\u043F\u0438\u0440\u043E\u0432\u0430\u0442\u044C"
+                  }
+                ),
+                msg.content && msg.content.length > 50 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+                  "button",
+                  {
+                    onClick: () => handleSaveResponseAsNote(msg.content || ""),
+                    style: { background: "var(--background-primary)", border: "1px solid var(--background-modifier-border)", borderRadius: "4px", cursor: "pointer", padding: "3px 8px", color: "var(--text-muted)" },
+                    children: "\u{1F4C4} \u0421\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C \u043A\u0430\u043A \u0437\u0430\u043C\u0435\u0442\u043A\u0443"
+                  }
+                )
+              ] })
+            ] })
+          )
         },
         idx
       )),

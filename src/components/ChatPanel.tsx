@@ -43,6 +43,10 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, settings, saveSetting
     const [showSessionsDrawer, setShowSessionsDrawer] = React.useState(false);
     const [showConfig, setShowConfig] = React.useState(false);
 
+    // Edit message inline state
+    const [editingMsgIdx, setEditingMsgIdx] = React.useState<number | null>(null);
+    const [editingText, setEditingText] = React.useState("");
+
     // Local Config State
     const [endpointUrl, setEndpointUrl] = React.useState(settings.endpointUrl || "https://openrouter.ai/api/v1");
     const [apiKey, setApiKey] = React.useState(settings.apiKey || "");
@@ -58,7 +62,6 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, settings, saveSetting
     const [activeModelDetails, setActiveModelDetails] = React.useState<OpenRouterModelInfo | null>(null);
     const [verifyingModel, setVerifyingModel] = React.useState(false);
 
-    // Load Chat Sessions & Check active model info on startup
     React.useEffect(() => {
         refreshSessionsList();
         verifyActiveModel(model, apiKey);
@@ -119,6 +122,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, settings, saveSetting
         setCurrentSession(newSess);
         setActiveSteps([]);
         setShowSessionsDrawer(false);
+        setEditingMsgIdx(null);
     };
 
     const handleSelectSession = async (sessionId: string) => {
@@ -126,6 +130,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, settings, saveSetting
         if (loaded) {
             setCurrentSession(loaded);
             setActiveSteps([]);
+            setEditingMsgIdx(null);
         }
         setShowSessionsDrawer(false);
     };
@@ -153,6 +158,15 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, settings, saveSetting
         new Notice("Настройки моделей NEI Agent сохранены!");
     };
 
+    const handleCopyText = async (text: string) => {
+        try {
+            await navigator.clipboard.writeText(text);
+            new Notice("Скопировано в буфер обмена!");
+        } catch (e) {
+            new Notice("Не удалось скопировать текст.");
+        }
+    };
+
     const handleSaveResponseAsNote = async (content: string) => {
         const notePath = `Tasks/Сводка_${Date.now()}.md`;
         try {
@@ -163,25 +177,24 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, settings, saveSetting
         }
     };
 
-    const handleSendMessage = async () => {
-        if (!input.trim() || loading) return;
+    // Execute agent loop for a query and history slice
+    const executeQuery = async (queryText: string, historySlice: ChatMessage[]) => {
+        setLoading(true);
+        setActiveSteps([]);
+        setEditingMsgIdx(null);
+
+        const userMsg: ChatMessage = { role: "user", content: queryText };
+        const updatedMessages = [...historySlice, userMsg];
         
-        const userQuery = input.trim();
-        const userMsg: ChatMessage = { role: "user", content: userQuery };
-        
-        const updatedMessages = [...currentSession.messages, userMsg];
         const updatedSession: ChatSession = {
             ...currentSession,
             title: currentSession.messages.length === 0 
-                ? (userQuery.length > 25 ? userQuery.substring(0, 25) + "..." : userQuery)
+                ? (queryText.length > 25 ? queryText.substring(0, 25) + "..." : queryText)
                 : currentSession.title,
             messages: updatedMessages
         };
 
         setCurrentSession(updatedSession);
-        setInput("");
-        setLoading(true);
-        setActiveSteps([]);
 
         try {
             const llmConfig = {
@@ -194,8 +207,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, settings, saveSetting
             const responseText = await AgentLoop.run({
                 app,
                 config: llmConfig,
-                userQuery,
-                chatHistory: currentSession.messages,
+                userQuery: queryText,
+                chatHistory: historySlice,
                 onStepUpdate: (steps) => {
                     setActiveSteps(steps);
                 }
@@ -223,6 +236,36 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, settings, saveSetting
             setLoading(false);
             setActiveSteps([]);
         }
+    };
+
+    const handleSendMessage = () => {
+        if (!input.trim() || loading) return;
+        const queryText = input.trim();
+        setInput("");
+        executeQuery(queryText, currentSession.messages);
+    };
+
+    // Retry a user request at index
+    const handleRetryUserMessage = (msgIdx: number) => {
+        if (loading) return;
+        const targetMsg = currentSession.messages[msgIdx];
+        if (targetMsg && targetMsg.role === "user" && targetMsg.content) {
+            const historyBefore = currentSession.messages.slice(0, msgIdx);
+            executeQuery(targetMsg.content, historyBefore);
+        }
+    };
+
+    // Start inline editing of user message
+    const handleStartEdit = (idx: number, content: string) => {
+        setEditingMsgIdx(idx);
+        setEditingText(content);
+    };
+
+    // Save and resend edited user message
+    const handleSaveEdit = (idx: number) => {
+        if (!editingText.trim() || loading) return;
+        const historyBefore = currentSession.messages.slice(0, idx);
+        executeQuery(editingText.trim(), historyBefore);
     };
 
     return (
@@ -374,7 +417,6 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, settings, saveSetting
                             ))}
                         </div>
 
-                        {/* Add new model form */}
                         <div style={{ display: 'flex', gap: '4px' }}>
                             <input 
                                 type="text"
@@ -401,13 +443,13 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, settings, saveSetting
                 </div>
             )}
 
-            {/* Chat Messages */}
+            {/* Chat Messages Container */}
             <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '10px' }}>
                 {currentSession.messages.length === 0 && (
                     <div style={{ textAlign: 'center', color: 'var(--text-muted)', marginTop: '30px', fontSize: '13px' }}>
                         👋 **NEI Super-Agent** готов к работе!<br/><br/>
                         • Прямой доступ к заметочникам и папкам (`tasks`, `Projects`)<br/>
-                        • Автоматическое управление вызовами инструментов и предзагрузка<br/>
+                        • Редактирование, переотправка и копирование сообщений<br/>
                         • Проверка возможностей выбранной модели через OpenRouter API
                     </div>
                 )}
@@ -423,22 +465,86 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, settings, saveSetting
                             background: msg.role === 'user' ? 'var(--interactive-accent)' : 'var(--background-secondary)',
                             color: msg.role === 'user' ? 'var(--text-on-accent)' : 'var(--text-normal)',
                             fontSize: '13px',
-                            boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                            position: 'relative'
                         }}
                     >
                         {msg.role === 'user' ? (
-                            <div style={{ whiteSpace: 'pre-wrap' }}>{msg.content}</div>
+                            editingMsgIdx === idx ? (
+                                /* Inline Edit Form for User Message */
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', minWidth: '220px' }}>
+                                    <textarea
+                                        value={editingText}
+                                        onChange={(e) => setEditingText(e.target.value)}
+                                        rows={3}
+                                        style={{ width: '100%', padding: '6px', borderRadius: '4px', border: '1px solid var(--background-modifier-border)', background: 'var(--background-primary)', color: 'var(--text-normal)', fontSize: '12px', resize: 'vertical' }}
+                                    />
+                                    <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
+                                        <button
+                                            onClick={() => setEditingMsgIdx(null)}
+                                            style={{ padding: '2px 8px', fontSize: '11px', background: 'transparent', border: '1px solid var(--text-on-accent)', color: 'var(--text-on-accent)', borderRadius: '4px', cursor: 'pointer' }}
+                                        >
+                                            Отмена
+                                        </button>
+                                        <button
+                                            onClick={() => handleSaveEdit(idx)}
+                                            disabled={loading}
+                                            style={{ padding: '2px 8px', fontSize: '11px', background: 'var(--background-primary)', color: 'var(--text-normal)', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+                                        >
+                                            💾 Отправить
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                /* Standard User Message Display */
+                                <div>
+                                    <div style={{ whiteSpace: 'pre-wrap' }}>{msg.content}</div>
+                                    <div style={{ display: 'flex', gap: '8px', marginTop: '6px', justifyContent: 'flex-end', fontSize: '11px', opacity: 0.85 }}>
+                                        <button
+                                            onClick={() => handleCopyText(msg.content || "")}
+                                            title="Скопировать текст"
+                                            style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', padding: 0 }}
+                                        >
+                                            📋 Копировать
+                                        </button>
+                                        <button
+                                            onClick={() => handleStartEdit(idx, msg.content || "")}
+                                            title="Редактировать запрос"
+                                            style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', padding: 0 }}
+                                        >
+                                            ✏️ Изменить
+                                        </button>
+                                        <button
+                                            onClick={() => handleRetryUserMessage(idx)}
+                                            title="Повторить отправку"
+                                            disabled={loading}
+                                            style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', padding: 0 }}
+                                        >
+                                            🔄 Повторить
+                                        </button>
+                                    </div>
+                                </div>
+                            )
                         ) : (
+                            /* Assistant Message Display */
                             <div>
                                 <ObsidianMarkdown markdown={msg.content || ""} app={app} />
-                                {msg.content && msg.content.length > 50 && (
+                                <div style={{ display: 'flex', gap: '10px', marginTop: '8px', alignItems: 'center', fontSize: '11px' }}>
                                     <button 
-                                        onClick={() => handleSaveResponseAsNote(msg.content || "")}
-                                        style={{ marginTop: '8px', padding: '4px 8px', fontSize: '11px', background: 'var(--background-primary)', border: '1px solid var(--background-modifier-border)', borderRadius: '4px', cursor: 'pointer', color: 'var(--text-muted)' }}
+                                        onClick={() => handleCopyText(msg.content || "")}
+                                        style={{ background: 'var(--background-primary)', border: '1px solid var(--background-modifier-border)', borderRadius: '4px', cursor: 'pointer', padding: '3px 8px', color: 'var(--text-muted)' }}
                                     >
-                                        📄 Сохранить как заметку
+                                        📋 Скопировать
                                     </button>
-                                )}
+                                    {msg.content && msg.content.length > 50 && (
+                                        <button 
+                                            onClick={() => handleSaveResponseAsNote(msg.content || "")}
+                                            style={{ background: 'var(--background-primary)', border: '1px solid var(--background-modifier-border)', borderRadius: '4px', cursor: 'pointer', padding: '3px 8px', color: 'var(--text-muted)' }}
+                                        >
+                                            📄 Сохранить как заметку
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         )}
                     </div>
