@@ -5,6 +5,9 @@ node_modules/
 main.js.map
 *.log
 
+# Obsidian local plugin settings & runtime data
+data.json
+
 # System files
 .DS_Store
 Thumbs.db
