@@ -75,7 +75,24 @@ export async function sendChatRequest(
 
     if (!response.ok) {
         const errorText = await response.text().catch(() => "");
-        throw new Error(`Ошибка ИИ (${response.status}): ${errorText || response.statusText}`);
+        let userFriendlyMsg = `Ошибка ИИ (${response.status}): ${errorText || response.statusText}`;
+
+        try {
+            const parsedErr = JSON.parse(errorText);
+            if (parsedErr.error) {
+                const errObj = parsedErr.error;
+                const providerName = errObj.metadata?.provider_name || "";
+                if (response.status === 502 || response.status === 503 || response.status === 500) {
+                    userFriendlyMsg = `⚠️ Сбой провайдера OpenRouter ${providerName ? `(${providerName})` : ''} [Код ${response.status}]. Сервер модели временно перегружен. Попробуйте сменить модель в настройках ⚙️ (например, на Claude 3.5 Sonnet или GPT-4o).`;
+                } else if (response.status === 401) {
+                    userFriendlyMsg = `🔑 Ошибка авторизации (401): Неверный API-ключ OpenRouter. Проверьте ключ в настройках ⚙️.`;
+                } else if (errObj.message) {
+                    userFriendlyMsg = `Ошибка ИИ (${response.status}): ${errObj.message}`;
+                }
+            }
+        } catch (e) {}
+
+        throw new Error(userFriendlyMsg);
     }
 
     const data = await response.json();

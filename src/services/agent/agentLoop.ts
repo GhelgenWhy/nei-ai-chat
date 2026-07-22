@@ -37,12 +37,20 @@ export class AgentLoop {
         const agentsRules = await MemoryStore.loadAgentsRules(app);
         const skills = await SkillsLoader.loadSkills(app);
 
-        // 2. PROACTIVE PRE-FETCHING (Vault Folders + GitHub URLs)
+        // 2. CONDITIONAL PRE-FETCHING
         let prefetchedContext = "";
+        const queryLower = userQuery.toLowerCase();
 
-        // A) GitHub URL Detection
+        // A) GitHub URL Detection (ONLY if explicit analysis intent is present)
+        const isAnalysisIntent = queryLower.includes("проанализируй") || 
+                                 queryLower.includes("разбери") || 
+                                 queryLower.includes("анализ") || 
+                                 queryLower.includes("сводк") || 
+                                 queryLower.includes("исследуй") || 
+                                 queryLower.includes("обзор");
+
         const githubMatch = userQuery.match(/https?:\/\/github\.com\/([^\/]+)\/([^\s\/\)]+)/i);
-        if (githubMatch) {
+        if (githubMatch && isAnalysisIntent) {
             const owner = githubMatch[1];
             const repo = githubMatch[2].replace(/\.git$/, "");
             try {
@@ -79,7 +87,6 @@ export class AgentLoop {
             }
         }
 
-        const queryLower = userQuery.toLowerCase();
         const matchedFolderNames: string[] = [];
         for (const folderName of Object.keys(folderMap)) {
             if (queryLower.includes(folderName.toLowerCase()) || queryLower.includes(folderName.toLowerCase().replace(/s$/, ""))) {
@@ -116,8 +123,8 @@ export class AgentLoop {
 Твоя цель: давать исчерпывающие, глубокие и структурированные ответы.
 
 ИНСТРУКЦИИ И ЭКОНОМИЯ ТОКЕНОВ:
-- Вся необходимая информация из папок ваулта или GitHub репозиториев уже предзагружена в контекст ниже.
-- Сформулируй финальный аналитический ответ для пользователя на основе этих данных.
+- Если данные предзагружены ниже, используй их и давай итоговый ответ.
+- При вызове инструментов сжимай ответы и будь лаконичен.
 
 ФОРМАТИРОВАНИЕ ОТВЕТА:
 - Чистый GitHub Flavored Markdown с таблицами, списками, цитатами и рекомендациями по улучшению проекта.
@@ -265,7 +272,6 @@ export class AgentLoop {
                 // Final answer reached
                 finalResponseText = response.content.trim();
                 
-                // Fallback if model returned empty content
                 if (!finalResponseText && prefetchedContext) {
                     finalResponseText = `### Анализ данных:\n${prefetchedContext}`;
                 } else if (!finalResponseText) {
