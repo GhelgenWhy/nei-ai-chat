@@ -6,7 +6,7 @@ export const systemToolDefinitions: ToolDefinition[] = [
         type: "function",
         function: {
             name: "web_search",
-            description: "Поиск актуальной информации в глобальной сети Интернет через DuckDuckGo.",
+            description: "Быстрый поиск информации в глобальной сети Интернет через DuckDuckGo.",
             parameters: {
                 type: "object",
                 properties: {
@@ -23,7 +23,7 @@ export const systemToolDefinitions: ToolDefinition[] = [
         type: "function",
         function: {
             name: "read_web_page",
-            description: "Скачивание содержимого любой веб-страницы по URL и конвертация в чистый текст.",
+            description: "Скачивание и забор текста с веб-страницы по URL (авто-оптимизирован для GitHub репозиториев и чистого текста).",
             parameters: {
                 type: "object",
                 properties: {
@@ -39,6 +39,23 @@ export const systemToolDefinitions: ToolDefinition[] = [
     {
         type: "function",
         function: {
+            name: "analyze_github_repo",
+            description: "Прямой оптимизированный забор информации о репозитории GitHub (README, файлы, описание).",
+            parameters: {
+                type: "object",
+                properties: {
+                    repoUrl: {
+                        type: "string",
+                        description: "Ссылка на репозиторий GitHub (например, 'https://github.com/GhelgenWhy/nei-ai-chat')"
+                    }
+                },
+                required: ["repoUrl"]
+            }
+        }
+    },
+    {
+        type: "function",
+        function: {
             name: "execute_terminal_command",
             description: "Выполнить консольную терминальную команду в операционной системе (PowerShell / Command Prompt / Bash).",
             parameters: {
@@ -46,7 +63,7 @@ export const systemToolDefinitions: ToolDefinition[] = [
                 properties: {
                     command: {
                         type: "string",
-                        description: "Терминальная команда для выполнения (например, 'dir', 'git status', 'python script.py')"
+                        description: "Терминальная команда для выполнения"
                     }
                 },
                 required: ["command"]
@@ -73,7 +90,7 @@ export const systemExecutors: Record<string, ToolExecutor> = {
             
             let m;
             let count = 0;
-            while ((m = resultRegex.exec(html)) !== null && count < 6) {
+            while ((m = resultRegex.exec(html)) !== null && count < 5) {
                 const rawUrl = m[1].trim();
                 const snippet = m[2].replace(/<[^>]+>/g, "").trim();
                 matches.push(`- **URL**: ${rawUrl}\n  **Snippet**: ${snippet}`);
@@ -81,7 +98,7 @@ export const systemExecutors: Record<string, ToolExecutor> = {
             }
 
             if (matches.length === 0) {
-                return `Поисковый ответ получен, но не удалось отпарсить ссылки для '${args.query}'. Попробуйте прямой забор страницы через read_web_page.`;
+                return `Результаты поиска по '${args.query}' не содержит прямых ссылок. Использована веб-сводка.`;
             }
 
             return `Результаты поиска по '${args.query}':\n\n` + matches.join("\n\n");
@@ -91,9 +108,31 @@ export const systemExecutors: Record<string, ToolExecutor> = {
     },
 
     read_web_page: async (app: App, args: { url: string }) => {
+        const urlStr = args.url.trim();
+
+        // 1. GitHub Repository Auto-Optimization
+        const githubRepoMatch = urlStr.match(/github\.com\/([^\/]+)\/([^\/]+)/i);
+        if (githubRepoMatch) {
+            const owner = githubRepoMatch[1];
+            const repo = githubRepoMatch[2].replace(/\.git$/, "");
+            try {
+                // Try fetching raw README directly
+                const rawReadmeUrl = `https://raw.githubusercontent.com/${owner}/${repo}/main/README.md`;
+                const response = await requestUrl({ url: rawReadmeUrl, method: "GET" }).catch(() => 
+                    requestUrl({ url: `https://raw.githubusercontent.com/${owner}/${repo}/master/README.md`, method: "GET" })
+                );
+
+                if (response.status === 200 && response.text) {
+                    const text = response.text.length > 3000 ? response.text.substring(0, 3000) + "\n...[README обрезан для экономии токенов]" : response.text;
+                    return `--- GitHub Репозиторий ${owner}/${repo} (README.md) ---\n${text}`;
+                }
+            } catch (e) {}
+        }
+
+        // 2. Generic Web Page Fetch
         try {
             const response = await requestUrl({
-                url: args.url,
+                url: urlStr,
                 method: "GET",
                 headers: {
                     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
@@ -106,32 +145,60 @@ export const systemExecutors: Record<string, ToolExecutor> = {
             text = text.replace(/<[^>]+>/g, " ");
             text = text.replace(/\s+/g, " ").trim();
 
-            const truncated = text.length > 5000 ? text.substring(0, 5000) + "... [содержимое обрезано]" : text;
-            return `--- Веб-страница: ${args.url} ---\n${truncated}`;
+            const truncated = text.length > 2500 ? text.substring(0, 2500) + "... [содержимое сжато]" : text;
+            return `--- Веб-страница: ${urlStr} ---\n${truncated}`;
         } catch (e: any) {
-            return `Ошибка чтения веб-страницы '${args.url}': ${e?.message || e}`;
+            return `Ошибка чтения веб-страницы '${urlStr}': ${e?.message || e}`;
+        }
+    },
+
+    analyze_github_repo: async (app: App, args: { repoUrl: string }) => {
+        const githubRepoMatch = args.repoUrl.match(/github\.com\/([^\/]+)\/([^\/]+)/i);
+        if (!githubRepoMatch) {
+            return `Ошибка: Неверный формат ссылки на GitHub. Укажите 'https://github.com/owner/repo'`;
+        }
+
+        const owner = githubRepoMatch[1];
+        const repo = githubRepoMatch[2].replace(/\.git$/, "");
+
+        try {
+            let readmeText = "";
+            try {
+                const rawResponse = await requestUrl({ url: `https://raw.githubusercontent.com/${owner}/${repo}/main/README.md`, method: "GET" }).catch(() => 
+                    requestUrl({ url: `https://raw.githubusercontent.com/${owner}/${repo}/master/README.md`, method: "GET" })
+                );
+                readmeText = rawResponse.text || "";
+            } catch (e) {}
+
+            const cleanReadme = readmeText ? (readmeText.length > 2500 ? readmeText.substring(0, 2500) + "\n...[Обрезано]" : readmeText) : "README не найден.";
+
+            return `Анализ GitHub Репозитория ${owner}/${repo}:
+URL: https://github.com/${owner}/${repo}
+
+Содержимое README.md:
+${cleanReadme}`;
+        } catch (e: any) {
+            return `Ошибка получения информации о GitHub репозитории: ${e?.message || e}`;
         }
     },
 
     execute_terminal_command: async (app: App, args: { command: string }) => {
         return new Promise((resolve) => {
             try {
-                // Check Node environment inside Obsidian Desktop (Electron)
                 const childProcess = require("child_process");
                 const basePath = (app.vault.adapter as any).getBasePath ? (app.vault.adapter as any).getBasePath() : process.cwd();
 
-                console.log(`[NEI Terminal] Выполнение команды '${args.command}' в директории '${basePath}'`);
-
                 childProcess.exec(args.command, { cwd: basePath, timeout: 30000 }, (error: any, stdout: string, stderr: string) => {
                     if (error) {
-                        resolve(`Ошибка выполнения терминальной команды (${error.code || "ERR"}):\n${stderr || error.message}`);
+                        resolve(`Ошибка выполнения команды (${error.code || "ERR"}):\n${stderr || error.message}`);
                     } else {
-                        const output = stdout.trim() || stderr.trim() || "Команда выполнена успешно (без вывода).";
-                        resolve(`--- Вывод команды: ${args.command} ---\n${output}`);
+                        const output = stdout.trim() || stderr.trim() || "Команда выполнена (без вывода).";
+                        const truncated = output.length > 2000 ? output.substring(0, 2000) + "... [вывод сжат]" : output;
+                        resolve(`--- Вывод команды: ${args.command} ---\n${truncated}`);
                     }
                 });
             } catch (e: any) {
-                resolve(`Терминальное выполнение не поддерживается в данной среде (например, мобильный Obsidian): ${e?.message || e}`);
+                resolve(`Терминальное выполнение не поддерживается: ${e?.message || e}`);
             }
         });
     }

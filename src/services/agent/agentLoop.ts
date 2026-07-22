@@ -24,29 +24,56 @@ export interface AgentLoopOptions {
 
 export class AgentLoop {
     public static async run(options: AgentLoopOptions): Promise<string> {
-        const { app, config, userQuery, chatHistory, onStepUpdate, maxIterations = 10 } = options;
+        const { app, config, userQuery, chatHistory, onStepUpdate, maxIterations = 6 } = options;
         const steps: AgentStep[] = [];
 
         const notifySteps = () => {
             if (onStepUpdate) onStepUpdate([...steps]);
         };
 
-        // 1. Resolve Vault Context & RAG
+        // 1. Resolve Context & Memory
         const vaultContext = await resolveContext(app, userQuery, true);
         const memory = await MemoryStore.loadMemory(app);
         const agentsRules = await MemoryStore.loadAgentsRules(app);
         const skills = await SkillsLoader.loadSkills(app);
 
-        // 2. ULTRA-SMART VAULT FOLDER & FILES PRE-FETCHING
-        // Find all folders in the Vault dynamically
-        let prefetchedFolderContext = "";
+        // 2. PROACTIVE PRE-FETCHING (Vault Folders + GitHub URLs)
+        let prefetchedContext = "";
+
+        // A) GitHub URL Detection
+        const githubMatch = userQuery.match(/https?:\/\/github\.com\/([^\/]+)\/([^\s\/\)]+)/i);
+        if (githubMatch) {
+            const owner = githubMatch[1];
+            const repo = githubMatch[2].replace(/\.git$/, "");
+            try {
+                const ghResult = await defaultToolRegistry.executeTool(
+                    app,
+                    "gh-prefetch",
+                    "analyze_github_repo",
+                    JSON.stringify({ repoUrl: `https://github.com/${owner}/${repo}` })
+                );
+
+                if (ghResult.result && !ghResult.isError) {
+                    prefetchedContext += `\n--- АВТОМАТИЧЕСКИ ИМПОРТИРОВАННЫЕ ДАННЫЕ GITHUB РЕПОЗИТОРИЯ ${owner}/${repo} ---\n${ghResult.result}\n`;
+                    steps.push({
+                        id: "gh-prefetch-step",
+                        type: "tool_result",
+                        title: `Импортирован GitHub: ${owner}/${repo}`,
+                        detail: "README и описание загружены",
+                        status: "completed"
+                    });
+                    notifySteps();
+                }
+            } catch (e) {}
+        }
+
+        // B) Vault Folder Detection
         const allFiles = app.vault.getMarkdownFiles();
         const folderMap: Record<string, TFile[]> = {};
-
         for (const file of allFiles) {
             const parts = file.path.split("/");
             if (parts.length > 1) {
-                const folderName = parts[0]; // e.g. "Tasks", "Projects"
+                const folderName = parts[0];
                 if (!folderMap[folderName]) folderMap[folderName] = [];
                 folderMap[folderName].push(file);
             }
@@ -54,105 +81,93 @@ export class AgentLoop {
 
         const queryLower = userQuery.toLowerCase();
         const matchedFolderNames: string[] = [];
-
         for (const folderName of Object.keys(folderMap)) {
-            if (queryLower.includes(folderName.toLowerCase()) || 
-                queryLower.includes(folderName.toLowerCase().replace(/s$/, ""))) {
+            if (queryLower.includes(folderName.toLowerCase()) || queryLower.includes(folderName.toLowerCase().replace(/s$/, ""))) {
                 matchedFolderNames.push(folderName);
             }
-        }
-
-        // If no direct folder match, check if query contains words like "tasks", "проекты", "заметки"
-        if (matchedFolderNames.length === 0 && (queryLower.includes("таск") || queryLower.includes("задач") || queryLower.includes("task"))) {
-            const tasksFolder = Object.keys(folderMap).find(f => f.toLowerCase().includes("task") || f.toLowerCase().includes("задач"));
-            if (tasksFolder) matchedFolderNames.push(tasksFolder);
         }
 
         if (matchedFolderNames.length > 0) {
             const prefetchedBlocks: string[] = [];
             for (const folderName of matchedFolderNames) {
                 const filesInFolder = folderMap[folderName] || [];
-                prefetchedBlocks.push(`=== ПАПКА '${folderName}' (Всего заметок: ${filesInFolder.length}) ===`);
-                
+                prefetchedBlocks.push(`=== ПАПКА '${folderName}' (Заметок: ${filesInFolder.length}) ===`);
                 for (const file of filesInFolder) {
                     try {
                         const content = await app.vault.read(file);
-                        prefetchedBlocks.push(`--- ЗАМЕТКА: ${file.path} ---\n${content}`);
-                    } catch (e: any) {
-                        prefetchedBlocks.push(`--- ЗАМЕТКА: ${file.path} (Ошибка чтения) ---`);
-                    }
+                        const cleanContent = content.length > 1500 ? content.substring(0, 1500) + "... [обрезано]" : content;
+                        prefetchedBlocks.push(`--- ЗАМЕТКА: ${file.path} ---\n${cleanContent}`);
+                    } catch (e) {}
                 }
             }
-
-            prefetchedFolderContext = `\n--- АВТОМАТИЧЕСКИ ИНДЕКСИРОВАННЫЕ ЗАМЕТКИ ИЗ ВАУЛТА ---\n${prefetchedBlocks.join("\n\n")}\n`;
+            prefetchedContext += `\n--- АВТОМАТИЧЕСКИ ИНДЕКСИРОВАННЫЕ ЗАМЕТКИ ВАУЛТА ---\n${prefetchedBlocks.join("\n\n")}\n`;
             steps.push({
-                id: "prefetch-step",
+                id: "folder-prefetch-step",
                 type: "tool_result",
-                title: `Инъецированы заметки из папок: ${matchedFolderNames.join(", ")}`,
-                detail: `Загружено файлов: ${matchedFolderNames.reduce((acc, f) => acc + (folderMap[f]?.length || 0), 0)}`,
+                title: `Инъецированы заметки папок: ${matchedFolderNames.join(", ")}`,
+                detail: `Файлов: ${matchedFolderNames.reduce((acc, f) => acc + (folderMap[f]?.length || 0), 0)}`,
                 status: "completed"
             });
             notifySteps();
         }
 
-        // 3. Build Master Agent System Prompt
-        let systemPrompt = `Ты — сверхагентный ИИ-помощник NEI в Obsidian с ПОЛНЫМ ДОСТУПЫМ к заметочнику, веб-поиску и ОС.
+        // 3. Build System Prompt
+        let systemPrompt = `Ты — сверхагентный ИИ-помощник NEI в Obsidian.
+Твоя цель: давать исчерпывающие, глубокие и структурированные ответы.
 
-КРИТИЧЕСКИ ВАЖНЫЕ ИНСТРУКЦИИ:
-1. У ТЕБЯ ЕСТЬ ПОЛНЫЙ ДОСТУП КО ВСЕМ ЗАМЕТКАМ ВАУЛТА! Содержимое папок автоматически инъецируется в твой контекст ниже.
-2. НИКОГДА НЕ ПИШИ 'У меня нет доступа к файлам/папке'! Если пользователь просит сгруппировать заметки или сделать сводку — ИСПОЛЬЗУЙ ПЕРЕДАННОЕ СОДЕРЖИМОЕ ЗАМЕТОК НИЖЕ И НАПИШИ ПОЛНЫЙ ИТОГОВЫЙ ТЕКСТ.
-3. Если пользователь просит СОЗДАТЬ ЗАМЕТКУ — создай полный текст заметки в Markdown и вызови инструмент \`create_note(path, content)\` или напиши JSON:
-   \`\`\`json
-   { "tool": "create_note", "arguments": { "path": "Tasks/Сводка задач.md", "content": "..." } }
-   \`\`\`
-4. Твои доступные инструменты:
-   - create_note / edit_note / delete_note / rename_note
-   - read_note / read_notes_batch / get_folder_notes
-   - web_search / read_web_page
-   - execute_terminal_command / execute_obsidian_command
-   - save_to_memory / create_agent_skill
+ИНСТРУКЦИИ И ЭКОНОМИЯ ТОКЕНОВ:
+- Вся необходимая информация из папок ваулта или GitHub репозиториев уже предзагружена в контекст ниже.
+- Старайся сформулировать финальный ответ максимально быстро (за 1-2 шага).
+- Если нужно вызвать дополнительный инструмент — вызывай его. Если данные уже есть — ДАВАЙ ФИНАЛЬНЫЙ АНАЛИТИЧЕСКИЙ ОТВЕТ СРАЗУ.
 
 ФОРМАТИРОВАНИЕ ОТВЕТА:
-- Оформляй ответ в чистом GitHub Flavored Markdown с таблицами, списками, фронтматтером и ссылками [[ИмяЗаметки]].
+- Чистый GitHub Flavored Markdown с таблицами, списками, цитатами и рекомендациями по улучшению проекта.
 `;
 
         if (agentsRules.trim()) {
-            systemPrompt += `\n--- ПОЛЬЗОВАТЕЛЬСКИЕ ПРАВИЛА (.nei/AGENTS.md) ---\n${agentsRules}\n`;
+            systemPrompt += `\n--- ПРАВИЛА ПОЛЬЗОВАТЕЛЯ (.nei/AGENTS.md) ---\n${agentsRules}\n`;
         }
 
         if (memory.learnedFacts.length > 0) {
-            systemPrompt += `\n--- ДОЛГОСРОЧНАЯ ПАМЯТЬ АГЕНТА (.nei/memory.json) ---\n${memory.learnedFacts.map(f => `- ${f}`).join("\n")}\n`;
+            systemPrompt += `\n--- ДОЛГОСРОЧНАЯ ПАМЯТЬ (.nei/memory.json) ---\n${memory.learnedFacts.map(f => `- ${f}`).join("\n")}\n`;
         }
 
         if (skills.length > 0) {
-            systemPrompt += `\n--- ДОСТУПНЫЕ ПОЛЬЗОВАТЕЛЬСКИЕ СКИЛЛЫ (.nei/skills/) ---\n${skills.map(s => `[Скилл: ${s.name}]\nОписание: ${s.description}\nИнструкции:\n${s.instructions}`).join("\n\n")}\n`;
+            systemPrompt += `\n--- СКИЛЛЫ (.nei/skills/) ---\n${skills.map(s => `[Скилл: ${s.name}]\n${s.description}`).join("\n")}\n`;
         }
 
-        if (prefetchedFolderContext) {
-            systemPrompt += prefetchedFolderContext;
-        }
-
-        if (vaultContext.activeNoteTitle) {
-            systemPrompt += `\n--- ТЕКУЩАЯ АКТИВНАЯ ЗАМЕТКА ---\nЗаголовок: ${vaultContext.activeNoteTitle}\nСодержимое:\n${vaultContext.activeNoteContent.substring(0, 1500)}\n`;
+        if (prefetchedContext) {
+            systemPrompt += prefetchedContext;
         }
 
         const messages: ChatMessage[] = [
             { role: "system", content: systemPrompt },
-            ...chatHistory.filter(m => m.role !== "system"),
+            ...chatHistory.filter(m => m.role !== "system").slice(-4), // keep only last 4 messages to save tokens
             { role: "user", content: userQuery }
         ];
 
         const tools = defaultToolRegistry.getToolDefinitions();
         let iteration = 0;
         let finalResponseText = "";
+        let hasExecutedTools = false;
 
         while (iteration < maxIterations) {
             iteration++;
             console.log(`[AgentLoop] Итерация ${iteration}/${maxIterations}`);
 
-            const response = await sendChatRequest(config, messages, tools);
+            // Force final answer on the last iteration if tools were executed
+            const isLastIteration = (iteration === maxIterations);
+            const activeTools = isLastIteration ? undefined : tools;
 
-            // Handle Reasoning output if present
+            if (isLastIteration && hasExecutedTools) {
+                messages.push({
+                    role: "user",
+                    content: "Собери всю имеющуюся информацию и выдай подробный итоговый аналитический ответ для пользователя без использования дополнительных инструментов."
+                });
+            }
+
+            const response = await sendChatRequest(config, messages, activeTools);
+
             if (response.reasoning) {
                 steps.push({
                     id: `reasoning-${iteration}`,
@@ -165,7 +180,8 @@ export class AgentLoop {
             }
 
             // A) Native Tool Calls
-            if (response.tool_calls && response.tool_calls.length > 0) {
+            if (response.tool_calls && response.tool_calls.length > 0 && !isLastIteration) {
+                hasExecutedTools = true;
                 messages.push({
                     role: "assistant",
                     content: response.content || null,
@@ -193,10 +209,14 @@ export class AgentLoop {
                         toolArgsStr
                     );
 
+                    // Trim result for token savings
+                    const rawRes = typeof execResult.result === "string" ? execResult.result : JSON.stringify(execResult.result);
+                    const trimmedResult = rawRes.length > 2000 ? rawRes.substring(0, 2000) + "... [содержимое сжато]" : rawRes;
+
                     const currentStep = steps.find(s => s.id === stepId);
                     if (currentStep) {
                         currentStep.status = execResult.isError ? "failed" : "completed";
-                        currentStep.detail = typeof execResult.result === "string" ? execResult.result.substring(0, 500) : JSON.stringify(execResult.result).substring(0, 500);
+                        currentStep.detail = trimmedResult.substring(0, 300);
                     }
                     notifySteps();
 
@@ -204,12 +224,13 @@ export class AgentLoop {
                         role: "tool",
                         name: toolName,
                         tool_call_id: toolCall.id,
-                        content: typeof execResult.result === "string" ? execResult.result : JSON.stringify(execResult.result)
+                        content: trimmedResult
                     });
                 }
             } 
             // B) Fallback: Text-based JSON Tool Call Parser
-            else if (response.content && this.containsJsonToolCall(response.content)) {
+            else if (response.content && this.containsJsonToolCall(response.content) && !isLastIteration) {
+                hasExecutedTools = true;
                 const parsedTool = this.extractJsonToolCall(response.content);
                 if (parsedTool) {
                     const callId = "text_call_" + Date.now();
@@ -221,7 +242,7 @@ export class AgentLoop {
                     steps.push({
                         id: `tool-${callId}`,
                         type: "tool_call",
-                        title: `Инструмент (Текстовый вызов): ${parsedTool.name}`,
+                        title: `Инструмент: ${parsedTool.name}`,
                         detail: `Аргументы: ${JSON.stringify(parsedTool.args)}`,
                         status: "running"
                     });
@@ -234,16 +255,19 @@ export class AgentLoop {
                         JSON.stringify(parsedTool.args)
                     );
 
+                    const rawRes = typeof execResult.result === "string" ? execResult.result : JSON.stringify(execResult.result);
+                    const trimmedResult = rawRes.length > 2000 ? rawRes.substring(0, 2000) + "... [содержимое сжато]" : rawRes;
+
                     const currentStep = steps.find(s => s.id === `tool-${callId}`);
                     if (currentStep) {
                         currentStep.status = execResult.isError ? "failed" : "completed";
-                        currentStep.detail = typeof execResult.result === "string" ? execResult.result.substring(0, 500) : JSON.stringify(execResult.result).substring(0, 500);
+                        currentStep.detail = trimmedResult.substring(0, 300);
                     }
                     notifySteps();
 
                     messages.push({
                         role: "user",
-                        content: `[Результат работы инструмента ${parsedTool.name}]:\n${typeof execResult.result === "string" ? execResult.result : JSON.stringify(execResult.result)}`
+                        content: `[Результат инструмента ${parsedTool.name}]:\n${trimmedResult}`
                     });
                     continue;
                 } else {
@@ -251,11 +275,9 @@ export class AgentLoop {
                     break;
                 }
             } else {
-                // No tool call -> Final Response
-                finalResponseText = response.content || "Агент завершил задачу.";
+                // Final answer reached
+                finalResponseText = response.content || "Агент завершил анализ.";
 
-                // Automatic Note Creation Fallback:
-                // If user asked to create a note and model output contains markdown note body
                 if (this.shouldAutoCreateNote(userQuery, finalResponseText)) {
                     await this.attemptAutoCreateNote(app, userQuery, finalResponseText, steps, notifySteps);
                 }
@@ -268,8 +290,8 @@ export class AgentLoop {
             }
         }
 
-        if (!finalResponseText && iteration >= maxIterations) {
-            finalResponseText = "Достигнут лимит итераций выполнения инструментов агента.";
+        if (!finalResponseText) {
+            finalResponseText = "Агент завершил обработку данных.";
         }
 
         return finalResponseText;
@@ -323,8 +345,6 @@ export class AgentLoop {
                 status: execResult.isError ? "failed" : "completed"
             });
             notifySteps();
-        } catch (e) {
-            console.log("[AutoCreateNote Error]", e);
-        }
+        } catch (e) {}
     }
 }

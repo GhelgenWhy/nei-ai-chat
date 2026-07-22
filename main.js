@@ -25090,7 +25090,7 @@ var systemToolDefinitions = [
     type: "function",
     function: {
       name: "web_search",
-      description: "\u041F\u043E\u0438\u0441\u043A \u0430\u043A\u0442\u0443\u0430\u043B\u044C\u043D\u043E\u0439 \u0438\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0438\u0438 \u0432 \u0433\u043B\u043E\u0431\u0430\u043B\u044C\u043D\u043E\u0439 \u0441\u0435\u0442\u0438 \u0418\u043D\u0442\u0435\u0440\u043D\u0435\u0442 \u0447\u0435\u0440\u0435\u0437 DuckDuckGo.",
+      description: "\u0411\u044B\u0441\u0442\u0440\u044B\u0439 \u043F\u043E\u0438\u0441\u043A \u0438\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0438\u0438 \u0432 \u0433\u043B\u043E\u0431\u0430\u043B\u044C\u043D\u043E\u0439 \u0441\u0435\u0442\u0438 \u0418\u043D\u0442\u0435\u0440\u043D\u0435\u0442 \u0447\u0435\u0440\u0435\u0437 DuckDuckGo.",
       parameters: {
         type: "object",
         properties: {
@@ -25107,7 +25107,7 @@ var systemToolDefinitions = [
     type: "function",
     function: {
       name: "read_web_page",
-      description: "\u0421\u043A\u0430\u0447\u0438\u0432\u0430\u043D\u0438\u0435 \u0441\u043E\u0434\u0435\u0440\u0436\u0438\u043C\u043E\u0433\u043E \u043B\u044E\u0431\u043E\u0439 \u0432\u0435\u0431-\u0441\u0442\u0440\u0430\u043D\u0438\u0446\u044B \u043F\u043E URL \u0438 \u043A\u043E\u043D\u0432\u0435\u0440\u0442\u0430\u0446\u0438\u044F \u0432 \u0447\u0438\u0441\u0442\u044B\u0439 \u0442\u0435\u043A\u0441\u0442.",
+      description: "\u0421\u043A\u0430\u0447\u0438\u0432\u0430\u043D\u0438\u0435 \u0438 \u0437\u0430\u0431\u043E\u0440 \u0442\u0435\u043A\u0441\u0442\u0430 \u0441 \u0432\u0435\u0431-\u0441\u0442\u0440\u0430\u043D\u0438\u0446\u044B \u043F\u043E URL (\u0430\u0432\u0442\u043E-\u043E\u043F\u0442\u0438\u043C\u0438\u0437\u0438\u0440\u043E\u0432\u0430\u043D \u0434\u043B\u044F GitHub \u0440\u0435\u043F\u043E\u0437\u0438\u0442\u043E\u0440\u0438\u0435\u0432 \u0438 \u0447\u0438\u0441\u0442\u043E\u0433\u043E \u0442\u0435\u043A\u0441\u0442\u0430).",
       parameters: {
         type: "object",
         properties: {
@@ -25123,6 +25123,23 @@ var systemToolDefinitions = [
   {
     type: "function",
     function: {
+      name: "analyze_github_repo",
+      description: "\u041F\u0440\u044F\u043C\u043E\u0439 \u043E\u043F\u0442\u0438\u043C\u0438\u0437\u0438\u0440\u043E\u0432\u0430\u043D\u043D\u044B\u0439 \u0437\u0430\u0431\u043E\u0440 \u0438\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0438\u0438 \u043E \u0440\u0435\u043F\u043E\u0437\u0438\u0442\u043E\u0440\u0438\u0438 GitHub (README, \u0444\u0430\u0439\u043B\u044B, \u043E\u043F\u0438\u0441\u0430\u043D\u0438\u0435).",
+      parameters: {
+        type: "object",
+        properties: {
+          repoUrl: {
+            type: "string",
+            description: "\u0421\u0441\u044B\u043B\u043A\u0430 \u043D\u0430 \u0440\u0435\u043F\u043E\u0437\u0438\u0442\u043E\u0440\u0438\u0439 GitHub (\u043D\u0430\u043F\u0440\u0438\u043C\u0435\u0440, 'https://github.com/GhelgenWhy/nei-ai-chat')"
+          }
+        },
+        required: ["repoUrl"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
       name: "execute_terminal_command",
       description: "\u0412\u044B\u043F\u043E\u043B\u043D\u0438\u0442\u044C \u043A\u043E\u043D\u0441\u043E\u043B\u044C\u043D\u0443\u044E \u0442\u0435\u0440\u043C\u0438\u043D\u0430\u043B\u044C\u043D\u0443\u044E \u043A\u043E\u043C\u0430\u043D\u0434\u0443 \u0432 \u043E\u043F\u0435\u0440\u0430\u0446\u0438\u043E\u043D\u043D\u043E\u0439 \u0441\u0438\u0441\u0442\u0435\u043C\u0435 (PowerShell / Command Prompt / Bash).",
       parameters: {
@@ -25130,7 +25147,7 @@ var systemToolDefinitions = [
         properties: {
           command: {
             type: "string",
-            description: "\u0422\u0435\u0440\u043C\u0438\u043D\u0430\u043B\u044C\u043D\u0430\u044F \u043A\u043E\u043C\u0430\u043D\u0434\u0430 \u0434\u043B\u044F \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u0438\u044F (\u043D\u0430\u043F\u0440\u0438\u043C\u0435\u0440, 'dir', 'git status', 'python script.py')"
+            description: "\u0422\u0435\u0440\u043C\u0438\u043D\u0430\u043B\u044C\u043D\u0430\u044F \u043A\u043E\u043C\u0430\u043D\u0434\u0430 \u0434\u043B\u044F \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u0438\u044F"
           }
         },
         required: ["command"]
@@ -25154,7 +25171,7 @@ var systemExecutors = {
       const resultRegex = /<a class="result__url" href="([^"]+)".*?>[\s\S]*?<a class="result__snippet".*?>([\s\S]*?)<\/a>/g;
       let m;
       let count = 0;
-      while ((m = resultRegex.exec(html)) !== null && count < 6) {
+      while ((m = resultRegex.exec(html)) !== null && count < 5) {
         const rawUrl = m[1].trim();
         const snippet = m[2].replace(/<[^>]+>/g, "").trim();
         matches.push(`- **URL**: ${rawUrl}
@@ -25162,7 +25179,7 @@ var systemExecutors = {
         count++;
       }
       if (matches.length === 0) {
-        return `\u041F\u043E\u0438\u0441\u043A\u043E\u0432\u044B\u0439 \u043E\u0442\u0432\u0435\u0442 \u043F\u043E\u043B\u0443\u0447\u0435\u043D, \u043D\u043E \u043D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u043E\u0442\u043F\u0430\u0440\u0441\u0438\u0442\u044C \u0441\u0441\u044B\u043B\u043A\u0438 \u0434\u043B\u044F '${args.query}'. \u041F\u043E\u043F\u0440\u043E\u0431\u0443\u0439\u0442\u0435 \u043F\u0440\u044F\u043C\u043E\u0439 \u0437\u0430\u0431\u043E\u0440 \u0441\u0442\u0440\u0430\u043D\u0438\u0446\u044B \u0447\u0435\u0440\u0435\u0437 read_web_page.`;
+        return `\u0420\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442\u044B \u043F\u043E\u0438\u0441\u043A\u0430 \u043F\u043E '${args.query}' \u043D\u0435 \u0441\u043E\u0434\u0435\u0440\u0436\u0438\u0442 \u043F\u0440\u044F\u043C\u044B\u0445 \u0441\u0441\u044B\u043B\u043E\u043A. \u0418\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u043D\u0430 \u0432\u0435\u0431-\u0441\u0432\u043E\u0434\u043A\u0430.`;
       }
       return `\u0420\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442\u044B \u043F\u043E\u0438\u0441\u043A\u0430 \u043F\u043E '${args.query}':
 
@@ -25172,9 +25189,27 @@ var systemExecutors = {
     }
   },
   read_web_page: async (app, args) => {
+    const urlStr = args.url.trim();
+    const githubRepoMatch = urlStr.match(/github\.com\/([^\/]+)\/([^\/]+)/i);
+    if (githubRepoMatch) {
+      const owner = githubRepoMatch[1];
+      const repo = githubRepoMatch[2].replace(/\.git$/, "");
+      try {
+        const rawReadmeUrl = `https://raw.githubusercontent.com/${owner}/${repo}/main/README.md`;
+        const response = await (0, import_obsidian2.requestUrl)({ url: rawReadmeUrl, method: "GET" }).catch(
+          () => (0, import_obsidian2.requestUrl)({ url: `https://raw.githubusercontent.com/${owner}/${repo}/master/README.md`, method: "GET" })
+        );
+        if (response.status === 200 && response.text) {
+          const text = response.text.length > 3e3 ? response.text.substring(0, 3e3) + "\n...[README \u043E\u0431\u0440\u0435\u0437\u0430\u043D \u0434\u043B\u044F \u044D\u043A\u043E\u043D\u043E\u043C\u0438\u0438 \u0442\u043E\u043A\u0435\u043D\u043E\u0432]" : response.text;
+          return `--- GitHub \u0420\u0435\u043F\u043E\u0437\u0438\u0442\u043E\u0440\u0438\u0439 ${owner}/${repo} (README.md) ---
+${text}`;
+        }
+      } catch (e) {
+      }
+    }
     try {
       const response = await (0, import_obsidian2.requestUrl)({
-        url: args.url,
+        url: urlStr,
         method: "GET",
         headers: {
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
@@ -25185,11 +25220,37 @@ var systemExecutors = {
       text = text.replace(/<style[\s\S]*?<\/style>/gi, "");
       text = text.replace(/<[^>]+>/g, " ");
       text = text.replace(/\s+/g, " ").trim();
-      const truncated = text.length > 5e3 ? text.substring(0, 5e3) + "... [\u0441\u043E\u0434\u0435\u0440\u0436\u0438\u043C\u043E\u0435 \u043E\u0431\u0440\u0435\u0437\u0430\u043D\u043E]" : text;
-      return `--- \u0412\u0435\u0431-\u0441\u0442\u0440\u0430\u043D\u0438\u0446\u0430: ${args.url} ---
+      const truncated = text.length > 2500 ? text.substring(0, 2500) + "... [\u0441\u043E\u0434\u0435\u0440\u0436\u0438\u043C\u043E\u0435 \u0441\u0436\u0430\u0442\u043E]" : text;
+      return `--- \u0412\u0435\u0431-\u0441\u0442\u0440\u0430\u043D\u0438\u0446\u0430: ${urlStr} ---
 ${truncated}`;
     } catch (e) {
-      return `\u041E\u0448\u0438\u0431\u043A\u0430 \u0447\u0442\u0435\u043D\u0438\u044F \u0432\u0435\u0431-\u0441\u0442\u0440\u0430\u043D\u0438\u0446\u044B '${args.url}': ${e?.message || e}`;
+      return `\u041E\u0448\u0438\u0431\u043A\u0430 \u0447\u0442\u0435\u043D\u0438\u044F \u0432\u0435\u0431-\u0441\u0442\u0440\u0430\u043D\u0438\u0446\u044B '${urlStr}': ${e?.message || e}`;
+    }
+  },
+  analyze_github_repo: async (app, args) => {
+    const githubRepoMatch = args.repoUrl.match(/github\.com\/([^\/]+)\/([^\/]+)/i);
+    if (!githubRepoMatch) {
+      return `\u041E\u0448\u0438\u0431\u043A\u0430: \u041D\u0435\u0432\u0435\u0440\u043D\u044B\u0439 \u0444\u043E\u0440\u043C\u0430\u0442 \u0441\u0441\u044B\u043B\u043A\u0438 \u043D\u0430 GitHub. \u0423\u043A\u0430\u0436\u0438\u0442\u0435 'https://github.com/owner/repo'`;
+    }
+    const owner = githubRepoMatch[1];
+    const repo = githubRepoMatch[2].replace(/\.git$/, "");
+    try {
+      let readmeText = "";
+      try {
+        const rawResponse = await (0, import_obsidian2.requestUrl)({ url: `https://raw.githubusercontent.com/${owner}/${repo}/main/README.md`, method: "GET" }).catch(
+          () => (0, import_obsidian2.requestUrl)({ url: `https://raw.githubusercontent.com/${owner}/${repo}/master/README.md`, method: "GET" })
+        );
+        readmeText = rawResponse.text || "";
+      } catch (e) {
+      }
+      const cleanReadme = readmeText ? readmeText.length > 2500 ? readmeText.substring(0, 2500) + "\n...[\u041E\u0431\u0440\u0435\u0437\u0430\u043D\u043E]" : readmeText : "README \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D.";
+      return `\u0410\u043D\u0430\u043B\u0438\u0437 GitHub \u0420\u0435\u043F\u043E\u0437\u0438\u0442\u043E\u0440\u0438\u044F ${owner}/${repo}:
+URL: https://github.com/${owner}/${repo}
+
+\u0421\u043E\u0434\u0435\u0440\u0436\u0438\u043C\u043E\u0435 README.md:
+${cleanReadme}`;
+    } catch (e) {
+      return `\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u043E\u043B\u0443\u0447\u0435\u043D\u0438\u044F \u0438\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0438\u0438 \u043E GitHub \u0440\u0435\u043F\u043E\u0437\u0438\u0442\u043E\u0440\u0438\u0438: ${e?.message || e}`;
     }
   },
   execute_terminal_command: async (app, args) => {
@@ -25197,19 +25258,19 @@ ${truncated}`;
       try {
         const childProcess = require("child_process");
         const basePath = app.vault.adapter.getBasePath ? app.vault.adapter.getBasePath() : process.cwd();
-        console.log(`[NEI Terminal] \u0412\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u0438\u0435 \u043A\u043E\u043C\u0430\u043D\u0434\u044B '${args.command}' \u0432 \u0434\u0438\u0440\u0435\u043A\u0442\u043E\u0440\u0438\u0438 '${basePath}'`);
         childProcess.exec(args.command, { cwd: basePath, timeout: 3e4 }, (error, stdout, stderr) => {
           if (error) {
-            resolve(`\u041E\u0448\u0438\u0431\u043A\u0430 \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u0438\u044F \u0442\u0435\u0440\u043C\u0438\u043D\u0430\u043B\u044C\u043D\u043E\u0439 \u043A\u043E\u043C\u0430\u043D\u0434\u044B (${error.code || "ERR"}):
+            resolve(`\u041E\u0448\u0438\u0431\u043A\u0430 \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u0438\u044F \u043A\u043E\u043C\u0430\u043D\u0434\u044B (${error.code || "ERR"}):
 ${stderr || error.message}`);
           } else {
-            const output = stdout.trim() || stderr.trim() || "\u041A\u043E\u043C\u0430\u043D\u0434\u0430 \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u0430 \u0443\u0441\u043F\u0435\u0448\u043D\u043E (\u0431\u0435\u0437 \u0432\u044B\u0432\u043E\u0434\u0430).";
+            const output = stdout.trim() || stderr.trim() || "\u041A\u043E\u043C\u0430\u043D\u0434\u0430 \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u0430 (\u0431\u0435\u0437 \u0432\u044B\u0432\u043E\u0434\u0430).";
+            const truncated = output.length > 2e3 ? output.substring(0, 2e3) + "... [\u0432\u044B\u0432\u043E\u0434 \u0441\u0436\u0430\u0442]" : output;
             resolve(`--- \u0412\u044B\u0432\u043E\u0434 \u043A\u043E\u043C\u0430\u043D\u0434\u044B: ${args.command} ---
-${output}`);
+${truncated}`);
           }
         });
       } catch (e) {
-        resolve(`\u0422\u0435\u0440\u043C\u0438\u043D\u0430\u043B\u044C\u043D\u043E\u0435 \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u0438\u0435 \u043D\u0435 \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u0438\u0432\u0430\u0435\u0442\u0441\u044F \u0432 \u0434\u0430\u043D\u043D\u043E\u0439 \u0441\u0440\u0435\u0434\u0435 (\u043D\u0430\u043F\u0440\u0438\u043C\u0435\u0440, \u043C\u043E\u0431\u0438\u043B\u044C\u043D\u044B\u0439 Obsidian): ${e?.message || e}`);
+        resolve(`\u0422\u0435\u0440\u043C\u0438\u043D\u0430\u043B\u044C\u043D\u043E\u0435 \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u0438\u0435 \u043D\u0435 \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u0438\u0432\u0430\u0435\u0442\u0441\u044F: ${e?.message || e}`);
       }
     });
   }
@@ -25598,7 +25659,7 @@ ${res.content.substring(0, 1500)}${res.content.length > 1500 ? "..." : ""}
 // src/services/agent/agentLoop.ts
 var AgentLoop = class {
   static async run(options) {
-    const { app, config, userQuery, chatHistory, onStepUpdate, maxIterations = 10 } = options;
+    const { app, config, userQuery, chatHistory, onStepUpdate, maxIterations = 6 } = options;
     const steps = [];
     const notifySteps = () => {
       if (onStepUpdate)
@@ -25608,7 +25669,35 @@ var AgentLoop = class {
     const memory = await MemoryStore.loadMemory(app);
     const agentsRules = await MemoryStore.loadAgentsRules(app);
     const skills = await SkillsLoader.loadSkills(app);
-    let prefetchedFolderContext = "";
+    let prefetchedContext = "";
+    const githubMatch = userQuery.match(/https?:\/\/github\.com\/([^\/]+)\/([^\s\/\)]+)/i);
+    if (githubMatch) {
+      const owner = githubMatch[1];
+      const repo = githubMatch[2].replace(/\.git$/, "");
+      try {
+        const ghResult = await defaultToolRegistry.executeTool(
+          app,
+          "gh-prefetch",
+          "analyze_github_repo",
+          JSON.stringify({ repoUrl: `https://github.com/${owner}/${repo}` })
+        );
+        if (ghResult.result && !ghResult.isError) {
+          prefetchedContext += `
+--- \u0410\u0412\u0422\u041E\u041C\u0410\u0422\u0418\u0427\u0415\u0421\u041A\u0418 \u0418\u041C\u041F\u041E\u0420\u0422\u0418\u0420\u041E\u0412\u0410\u041D\u041D\u042B\u0415 \u0414\u0410\u041D\u041D\u042B\u0415 GITHUB \u0420\u0415\u041F\u041E\u0417\u0418\u0422\u041E\u0420\u0418\u042F ${owner}/${repo} ---
+${ghResult.result}
+`;
+          steps.push({
+            id: "gh-prefetch-step",
+            type: "tool_result",
+            title: `\u0418\u043C\u043F\u043E\u0440\u0442\u0438\u0440\u043E\u0432\u0430\u043D GitHub: ${owner}/${repo}`,
+            detail: "README \u0438 \u043E\u043F\u0438\u0441\u0430\u043D\u0438\u0435 \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043D\u044B",
+            status: "completed"
+          });
+          notifySteps();
+        }
+      } catch (e) {
+      }
+    }
     const allFiles = app.vault.getMarkdownFiles();
     const folderMap = {};
     for (const file of allFiles) {
@@ -25627,102 +25716,89 @@ var AgentLoop = class {
         matchedFolderNames.push(folderName);
       }
     }
-    if (matchedFolderNames.length === 0 && (queryLower.includes("\u0442\u0430\u0441\u043A") || queryLower.includes("\u0437\u0430\u0434\u0430\u0447") || queryLower.includes("task"))) {
-      const tasksFolder = Object.keys(folderMap).find((f) => f.toLowerCase().includes("task") || f.toLowerCase().includes("\u0437\u0430\u0434\u0430\u0447"));
-      if (tasksFolder)
-        matchedFolderNames.push(tasksFolder);
-    }
     if (matchedFolderNames.length > 0) {
       const prefetchedBlocks = [];
       for (const folderName of matchedFolderNames) {
         const filesInFolder = folderMap[folderName] || [];
-        prefetchedBlocks.push(`=== \u041F\u0410\u041F\u041A\u0410 '${folderName}' (\u0412\u0441\u0435\u0433\u043E \u0437\u0430\u043C\u0435\u0442\u043E\u043A: ${filesInFolder.length}) ===`);
+        prefetchedBlocks.push(`=== \u041F\u0410\u041F\u041A\u0410 '${folderName}' (\u0417\u0430\u043C\u0435\u0442\u043E\u043A: ${filesInFolder.length}) ===`);
         for (const file of filesInFolder) {
           try {
             const content = await app.vault.read(file);
+            const cleanContent = content.length > 1500 ? content.substring(0, 1500) + "... [\u043E\u0431\u0440\u0435\u0437\u0430\u043D\u043E]" : content;
             prefetchedBlocks.push(`--- \u0417\u0410\u041C\u0415\u0422\u041A\u0410: ${file.path} ---
-${content}`);
+${cleanContent}`);
           } catch (e) {
-            prefetchedBlocks.push(`--- \u0417\u0410\u041C\u0415\u0422\u041A\u0410: ${file.path} (\u041E\u0448\u0438\u0431\u043A\u0430 \u0447\u0442\u0435\u043D\u0438\u044F) ---`);
           }
         }
       }
-      prefetchedFolderContext = `
---- \u0410\u0412\u0422\u041E\u041C\u0410\u0422\u0418\u0427\u0415\u0421\u041A\u0418 \u0418\u041D\u0414\u0415\u041A\u0421\u0418\u0420\u041E\u0412\u0410\u041D\u041D\u042B\u0415 \u0417\u0410\u041C\u0415\u0422\u041A\u0418 \u0418\u0417 \u0412\u0410\u0423\u041B\u0422\u0410 ---
+      prefetchedContext += `
+--- \u0410\u0412\u0422\u041E\u041C\u0410\u0422\u0418\u0427\u0415\u0421\u041A\u0418 \u0418\u041D\u0414\u0415\u041A\u0421\u0418\u0420\u041E\u0412\u0410\u041D\u041D\u042B\u0415 \u0417\u0410\u041C\u0415\u0422\u041A\u0418 \u0412\u0410\u0423\u041B\u0422\u0410 ---
 ${prefetchedBlocks.join("\n\n")}
 `;
       steps.push({
-        id: "prefetch-step",
+        id: "folder-prefetch-step",
         type: "tool_result",
-        title: `\u0418\u043D\u044A\u0435\u0446\u0438\u0440\u043E\u0432\u0430\u043D\u044B \u0437\u0430\u043C\u0435\u0442\u043A\u0438 \u0438\u0437 \u043F\u0430\u043F\u043E\u043A: ${matchedFolderNames.join(", ")}`,
-        detail: `\u0417\u0430\u0433\u0440\u0443\u0436\u0435\u043D\u043E \u0444\u0430\u0439\u043B\u043E\u0432: ${matchedFolderNames.reduce((acc, f) => acc + (folderMap[f]?.length || 0), 0)}`,
+        title: `\u0418\u043D\u044A\u0435\u0446\u0438\u0440\u043E\u0432\u0430\u043D\u044B \u0437\u0430\u043C\u0435\u0442\u043A\u0438 \u043F\u0430\u043F\u043E\u043A: ${matchedFolderNames.join(", ")}`,
+        detail: `\u0424\u0430\u0439\u043B\u043E\u0432: ${matchedFolderNames.reduce((acc, f) => acc + (folderMap[f]?.length || 0), 0)}`,
         status: "completed"
       });
       notifySteps();
     }
-    let systemPrompt = `\u0422\u044B \u2014 \u0441\u0432\u0435\u0440\u0445\u0430\u0433\u0435\u043D\u0442\u043D\u044B\u0439 \u0418\u0418-\u043F\u043E\u043C\u043E\u0449\u043D\u0438\u043A NEI \u0432 Obsidian \u0441 \u041F\u041E\u041B\u041D\u042B\u041C \u0414\u041E\u0421\u0422\u0423\u041F\u042B\u041C \u043A \u0437\u0430\u043C\u0435\u0442\u043E\u0447\u043D\u0438\u043A\u0443, \u0432\u0435\u0431-\u043F\u043E\u0438\u0441\u043A\u0443 \u0438 \u041E\u0421.
+    let systemPrompt = `\u0422\u044B \u2014 \u0441\u0432\u0435\u0440\u0445\u0430\u0433\u0435\u043D\u0442\u043D\u044B\u0439 \u0418\u0418-\u043F\u043E\u043C\u043E\u0449\u043D\u0438\u043A NEI \u0432 Obsidian.
+\u0422\u0432\u043E\u044F \u0446\u0435\u043B\u044C: \u0434\u0430\u0432\u0430\u0442\u044C \u0438\u0441\u0447\u0435\u0440\u043F\u044B\u0432\u0430\u044E\u0449\u0438\u0435, \u0433\u043B\u0443\u0431\u043E\u043A\u0438\u0435 \u0438 \u0441\u0442\u0440\u0443\u043A\u0442\u0443\u0440\u0438\u0440\u043E\u0432\u0430\u043D\u043D\u044B\u0435 \u043E\u0442\u0432\u0435\u0442\u044B.
 
-\u041A\u0420\u0418\u0422\u0418\u0427\u0415\u0421\u041A\u0418 \u0412\u0410\u0416\u041D\u042B\u0415 \u0418\u041D\u0421\u0422\u0420\u0423\u041A\u0426\u0418\u0418:
-1. \u0423 \u0422\u0415\u0411\u042F \u0415\u0421\u0422\u042C \u041F\u041E\u041B\u041D\u042B\u0419 \u0414\u041E\u0421\u0422\u0423\u041F \u041A\u041E \u0412\u0421\u0415\u041C \u0417\u0410\u041C\u0415\u0422\u041A\u0410\u041C \u0412\u0410\u0423\u041B\u0422\u0410! \u0421\u043E\u0434\u0435\u0440\u0436\u0438\u043C\u043E\u0435 \u043F\u0430\u043F\u043E\u043A \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438 \u0438\u043D\u044A\u0435\u0446\u0438\u0440\u0443\u0435\u0442\u0441\u044F \u0432 \u0442\u0432\u043E\u0439 \u043A\u043E\u043D\u0442\u0435\u043A\u0441\u0442 \u043D\u0438\u0436\u0435.
-2. \u041D\u0418\u041A\u041E\u0413\u0414\u0410 \u041D\u0415 \u041F\u0418\u0428\u0418 '\u0423 \u043C\u0435\u043D\u044F \u043D\u0435\u0442 \u0434\u043E\u0441\u0442\u0443\u043F\u0430 \u043A \u0444\u0430\u0439\u043B\u0430\u043C/\u043F\u0430\u043F\u043A\u0435'! \u0415\u0441\u043B\u0438 \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C \u043F\u0440\u043E\u0441\u0438\u0442 \u0441\u0433\u0440\u0443\u043F\u043F\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u0437\u0430\u043C\u0435\u0442\u043A\u0438 \u0438\u043B\u0438 \u0441\u0434\u0435\u043B\u0430\u0442\u044C \u0441\u0432\u043E\u0434\u043A\u0443 \u2014 \u0418\u0421\u041F\u041E\u041B\u042C\u0417\u0423\u0419 \u041F\u0415\u0420\u0415\u0414\u0410\u041D\u041D\u041E\u0415 \u0421\u041E\u0414\u0415\u0420\u0416\u0418\u041C\u041E\u0415 \u0417\u0410\u041C\u0415\u0422\u041E\u041A \u041D\u0418\u0416\u0415 \u0418 \u041D\u0410\u041F\u0418\u0428\u0418 \u041F\u041E\u041B\u041D\u042B\u0419 \u0418\u0422\u041E\u0413\u041E\u0412\u042B\u0419 \u0422\u0415\u041A\u0421\u0422.
-3. \u0415\u0441\u043B\u0438 \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C \u043F\u0440\u043E\u0441\u0438\u0442 \u0421\u041E\u0417\u0414\u0410\u0422\u042C \u0417\u0410\u041C\u0415\u0422\u041A\u0423 \u2014 \u0441\u043E\u0437\u0434\u0430\u0439 \u043F\u043E\u043B\u043D\u044B\u0439 \u0442\u0435\u043A\u0441\u0442 \u0437\u0430\u043C\u0435\u0442\u043A\u0438 \u0432 Markdown \u0438 \u0432\u044B\u0437\u043E\u0432\u0438 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442 \`create_note(path, content)\` \u0438\u043B\u0438 \u043D\u0430\u043F\u0438\u0448\u0438 JSON:
-   \`\`\`json
-   { "tool": "create_note", "arguments": { "path": "Tasks/\u0421\u0432\u043E\u0434\u043A\u0430 \u0437\u0430\u0434\u0430\u0447.md", "content": "..." } }
-   \`\`\`
-4. \u0422\u0432\u043E\u0438 \u0434\u043E\u0441\u0442\u0443\u043F\u043D\u044B\u0435 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u044B:
-   - create_note / edit_note / delete_note / rename_note
-   - read_note / read_notes_batch / get_folder_notes
-   - web_search / read_web_page
-   - execute_terminal_command / execute_obsidian_command
-   - save_to_memory / create_agent_skill
+\u0418\u041D\u0421\u0422\u0420\u0423\u041A\u0426\u0418\u0418 \u0418 \u042D\u041A\u041E\u041D\u041E\u041C\u0418\u042F \u0422\u041E\u041A\u0415\u041D\u041E\u0412:
+- \u0412\u0441\u044F \u043D\u0435\u043E\u0431\u0445\u043E\u0434\u0438\u043C\u0430\u044F \u0438\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0438\u044F \u0438\u0437 \u043F\u0430\u043F\u043E\u043A \u0432\u0430\u0443\u043B\u0442\u0430 \u0438\u043B\u0438 GitHub \u0440\u0435\u043F\u043E\u0437\u0438\u0442\u043E\u0440\u0438\u0435\u0432 \u0443\u0436\u0435 \u043F\u0440\u0435\u0434\u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043D\u0430 \u0432 \u043A\u043E\u043D\u0442\u0435\u043A\u0441\u0442 \u043D\u0438\u0436\u0435.
+- \u0421\u0442\u0430\u0440\u0430\u0439\u0441\u044F \u0441\u0444\u043E\u0440\u043C\u0443\u043B\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u0444\u0438\u043D\u0430\u043B\u044C\u043D\u044B\u0439 \u043E\u0442\u0432\u0435\u0442 \u043C\u0430\u043A\u0441\u0438\u043C\u0430\u043B\u044C\u043D\u043E \u0431\u044B\u0441\u0442\u0440\u043E (\u0437\u0430 1-2 \u0448\u0430\u0433\u0430).
+- \u0415\u0441\u043B\u0438 \u043D\u0443\u0436\u043D\u043E \u0432\u044B\u0437\u0432\u0430\u0442\u044C \u0434\u043E\u043F\u043E\u043B\u043D\u0438\u0442\u0435\u043B\u044C\u043D\u044B\u0439 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442 \u2014 \u0432\u044B\u0437\u044B\u0432\u0430\u0439 \u0435\u0433\u043E. \u0415\u0441\u043B\u0438 \u0434\u0430\u043D\u043D\u044B\u0435 \u0443\u0436\u0435 \u0435\u0441\u0442\u044C \u2014 \u0414\u0410\u0412\u0410\u0419 \u0424\u0418\u041D\u0410\u041B\u042C\u041D\u042B\u0419 \u0410\u041D\u0410\u041B\u0418\u0422\u0418\u0427\u0415\u0421\u041A\u0418\u0419 \u041E\u0422\u0412\u0415\u0422 \u0421\u0420\u0410\u0417\u0423.
 
 \u0424\u041E\u0420\u041C\u0410\u0422\u0418\u0420\u041E\u0412\u0410\u041D\u0418\u0415 \u041E\u0422\u0412\u0415\u0422\u0410:
-- \u041E\u0444\u043E\u0440\u043C\u043B\u044F\u0439 \u043E\u0442\u0432\u0435\u0442 \u0432 \u0447\u0438\u0441\u0442\u043E\u043C GitHub Flavored Markdown \u0441 \u0442\u0430\u0431\u043B\u0438\u0446\u0430\u043C\u0438, \u0441\u043F\u0438\u0441\u043A\u0430\u043C\u0438, \u0444\u0440\u043E\u043D\u0442\u043C\u0430\u0442\u0442\u0435\u0440\u043E\u043C \u0438 \u0441\u0441\u044B\u043B\u043A\u0430\u043C\u0438 [[\u0418\u043C\u044F\u0417\u0430\u043C\u0435\u0442\u043A\u0438]].
+- \u0427\u0438\u0441\u0442\u044B\u0439 GitHub Flavored Markdown \u0441 \u0442\u0430\u0431\u043B\u0438\u0446\u0430\u043C\u0438, \u0441\u043F\u0438\u0441\u043A\u0430\u043C\u0438, \u0446\u0438\u0442\u0430\u0442\u0430\u043C\u0438 \u0438 \u0440\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0430\u0446\u0438\u044F\u043C\u0438 \u043F\u043E \u0443\u043B\u0443\u0447\u0448\u0435\u043D\u0438\u044E \u043F\u0440\u043E\u0435\u043A\u0442\u0430.
 `;
     if (agentsRules.trim()) {
       systemPrompt += `
---- \u041F\u041E\u041B\u042C\u0417\u041E\u0412\u0410\u0422\u0415\u041B\u042C\u0421\u041A\u0418\u0415 \u041F\u0420\u0410\u0412\u0418\u041B\u0410 (.nei/AGENTS.md) ---
+--- \u041F\u0420\u0410\u0412\u0418\u041B\u0410 \u041F\u041E\u041B\u042C\u0417\u041E\u0412\u0410\u0422\u0415\u041B\u042F (.nei/AGENTS.md) ---
 ${agentsRules}
 `;
     }
     if (memory.learnedFacts.length > 0) {
       systemPrompt += `
---- \u0414\u041E\u041B\u0413\u041E\u0421\u0420\u041E\u0427\u041D\u0410\u042F \u041F\u0410\u041C\u042F\u0422\u042C \u0410\u0413\u0415\u041D\u0422\u0410 (.nei/memory.json) ---
+--- \u0414\u041E\u041B\u0413\u041E\u0421\u0420\u041E\u0427\u041D\u0410\u042F \u041F\u0410\u041C\u042F\u0422\u042C (.nei/memory.json) ---
 ${memory.learnedFacts.map((f) => `- ${f}`).join("\n")}
 `;
     }
     if (skills.length > 0) {
       systemPrompt += `
---- \u0414\u041E\u0421\u0422\u0423\u041F\u041D\u042B\u0415 \u041F\u041E\u041B\u042C\u0417\u041E\u0412\u0410\u0422\u0415\u041B\u042C\u0421\u041A\u0418\u0415 \u0421\u041A\u0418\u041B\u041B\u042B (.nei/skills/) ---
+--- \u0421\u041A\u0418\u041B\u041B\u042B (.nei/skills/) ---
 ${skills.map((s) => `[\u0421\u043A\u0438\u043B\u043B: ${s.name}]
-\u041E\u043F\u0438\u0441\u0430\u043D\u0438\u0435: ${s.description}
-\u0418\u043D\u0441\u0442\u0440\u0443\u043A\u0446\u0438\u0438:
-${s.instructions}`).join("\n\n")}
+${s.description}`).join("\n")}
 `;
     }
-    if (prefetchedFolderContext) {
-      systemPrompt += prefetchedFolderContext;
-    }
-    if (vaultContext.activeNoteTitle) {
-      systemPrompt += `
---- \u0422\u0415\u041A\u0423\u0429\u0410\u042F \u0410\u041A\u0422\u0418\u0412\u041D\u0410\u042F \u0417\u0410\u041C\u0415\u0422\u041A\u0410 ---
-\u0417\u0430\u0433\u043E\u043B\u043E\u0432\u043E\u043A: ${vaultContext.activeNoteTitle}
-\u0421\u043E\u0434\u0435\u0440\u0436\u0438\u043C\u043E\u0435:
-${vaultContext.activeNoteContent.substring(0, 1500)}
-`;
+    if (prefetchedContext) {
+      systemPrompt += prefetchedContext;
     }
     const messages = [
       { role: "system", content: systemPrompt },
-      ...chatHistory.filter((m) => m.role !== "system"),
+      ...chatHistory.filter((m) => m.role !== "system").slice(-4),
+      // keep only last 4 messages to save tokens
       { role: "user", content: userQuery }
     ];
     const tools = defaultToolRegistry.getToolDefinitions();
     let iteration = 0;
     let finalResponseText = "";
+    let hasExecutedTools = false;
     while (iteration < maxIterations) {
       iteration++;
       console.log(`[AgentLoop] \u0418\u0442\u0435\u0440\u0430\u0446\u0438\u044F ${iteration}/${maxIterations}`);
-      const response = await sendChatRequest(config, messages, tools);
+      const isLastIteration = iteration === maxIterations;
+      const activeTools = isLastIteration ? void 0 : tools;
+      if (isLastIteration && hasExecutedTools) {
+        messages.push({
+          role: "user",
+          content: "\u0421\u043E\u0431\u0435\u0440\u0438 \u0432\u0441\u044E \u0438\u043C\u0435\u044E\u0449\u0443\u044E\u0441\u044F \u0438\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0438\u044E \u0438 \u0432\u044B\u0434\u0430\u0439 \u043F\u043E\u0434\u0440\u043E\u0431\u043D\u044B\u0439 \u0438\u0442\u043E\u0433\u043E\u0432\u044B\u0439 \u0430\u043D\u0430\u043B\u0438\u0442\u0438\u0447\u0435\u0441\u043A\u0438\u0439 \u043E\u0442\u0432\u0435\u0442 \u0434\u043B\u044F \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044F \u0431\u0435\u0437 \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u043D\u0438\u044F \u0434\u043E\u043F\u043E\u043B\u043D\u0438\u0442\u0435\u043B\u044C\u043D\u044B\u0445 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u043E\u0432."
+        });
+      }
+      const response = await sendChatRequest(config, messages, activeTools);
       if (response.reasoning) {
         steps.push({
           id: `reasoning-${iteration}`,
@@ -25733,7 +25809,8 @@ ${vaultContext.activeNoteContent.substring(0, 1500)}
         });
         notifySteps();
       }
-      if (response.tool_calls && response.tool_calls.length > 0) {
+      if (response.tool_calls && response.tool_calls.length > 0 && !isLastIteration) {
+        hasExecutedTools = true;
         messages.push({
           role: "assistant",
           content: response.content || null,
@@ -25757,20 +25834,23 @@ ${vaultContext.activeNoteContent.substring(0, 1500)}
             toolName,
             toolArgsStr
           );
+          const rawRes = typeof execResult.result === "string" ? execResult.result : JSON.stringify(execResult.result);
+          const trimmedResult = rawRes.length > 2e3 ? rawRes.substring(0, 2e3) + "... [\u0441\u043E\u0434\u0435\u0440\u0436\u0438\u043C\u043E\u0435 \u0441\u0436\u0430\u0442\u043E]" : rawRes;
           const currentStep = steps.find((s) => s.id === stepId);
           if (currentStep) {
             currentStep.status = execResult.isError ? "failed" : "completed";
-            currentStep.detail = typeof execResult.result === "string" ? execResult.result.substring(0, 500) : JSON.stringify(execResult.result).substring(0, 500);
+            currentStep.detail = trimmedResult.substring(0, 300);
           }
           notifySteps();
           messages.push({
             role: "tool",
             name: toolName,
             tool_call_id: toolCall.id,
-            content: typeof execResult.result === "string" ? execResult.result : JSON.stringify(execResult.result)
+            content: trimmedResult
           });
         }
-      } else if (response.content && this.containsJsonToolCall(response.content)) {
+      } else if (response.content && this.containsJsonToolCall(response.content) && !isLastIteration) {
+        hasExecutedTools = true;
         const parsedTool = this.extractJsonToolCall(response.content);
         if (parsedTool) {
           const callId = "text_call_" + Date.now();
@@ -25781,7 +25861,7 @@ ${vaultContext.activeNoteContent.substring(0, 1500)}
           steps.push({
             id: `tool-${callId}`,
             type: "tool_call",
-            title: `\u0418\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442 (\u0422\u0435\u043A\u0441\u0442\u043E\u0432\u044B\u0439 \u0432\u044B\u0437\u043E\u0432): ${parsedTool.name}`,
+            title: `\u0418\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442: ${parsedTool.name}`,
             detail: `\u0410\u0440\u0433\u0443\u043C\u0435\u043D\u0442\u044B: ${JSON.stringify(parsedTool.args)}`,
             status: "running"
           });
@@ -25792,16 +25872,18 @@ ${vaultContext.activeNoteContent.substring(0, 1500)}
             parsedTool.name,
             JSON.stringify(parsedTool.args)
           );
+          const rawRes = typeof execResult.result === "string" ? execResult.result : JSON.stringify(execResult.result);
+          const trimmedResult = rawRes.length > 2e3 ? rawRes.substring(0, 2e3) + "... [\u0441\u043E\u0434\u0435\u0440\u0436\u0438\u043C\u043E\u0435 \u0441\u0436\u0430\u0442\u043E]" : rawRes;
           const currentStep = steps.find((s) => s.id === `tool-${callId}`);
           if (currentStep) {
             currentStep.status = execResult.isError ? "failed" : "completed";
-            currentStep.detail = typeof execResult.result === "string" ? execResult.result.substring(0, 500) : JSON.stringify(execResult.result).substring(0, 500);
+            currentStep.detail = trimmedResult.substring(0, 300);
           }
           notifySteps();
           messages.push({
             role: "user",
-            content: `[\u0420\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442 \u0440\u0430\u0431\u043E\u0442\u044B \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u0430 ${parsedTool.name}]:
-${typeof execResult.result === "string" ? execResult.result : JSON.stringify(execResult.result)}`
+            content: `[\u0420\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u0430 ${parsedTool.name}]:
+${trimmedResult}`
           });
           continue;
         } else {
@@ -25809,7 +25891,7 @@ ${typeof execResult.result === "string" ? execResult.result : JSON.stringify(exe
           break;
         }
       } else {
-        finalResponseText = response.content || "\u0410\u0433\u0435\u043D\u0442 \u0437\u0430\u0432\u0435\u0440\u0448\u0438\u043B \u0437\u0430\u0434\u0430\u0447\u0443.";
+        finalResponseText = response.content || "\u0410\u0433\u0435\u043D\u0442 \u0437\u0430\u0432\u0435\u0440\u0448\u0438\u043B \u0430\u043D\u0430\u043B\u0438\u0437.";
         if (this.shouldAutoCreateNote(userQuery, finalResponseText)) {
           await this.attemptAutoCreateNote(app, userQuery, finalResponseText, steps, notifySteps);
         }
@@ -25820,8 +25902,8 @@ ${typeof execResult.result === "string" ? execResult.result : JSON.stringify(exe
         break;
       }
     }
-    if (!finalResponseText && iteration >= maxIterations) {
-      finalResponseText = "\u0414\u043E\u0441\u0442\u0438\u0433\u043D\u0443\u0442 \u043B\u0438\u043C\u0438\u0442 \u0438\u0442\u0435\u0440\u0430\u0446\u0438\u0439 \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u0438\u044F \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u043E\u0432 \u0430\u0433\u0435\u043D\u0442\u0430.";
+    if (!finalResponseText) {
+      finalResponseText = "\u0410\u0433\u0435\u043D\u0442 \u0437\u0430\u0432\u0435\u0440\u0448\u0438\u043B \u043E\u0431\u0440\u0430\u0431\u043E\u0442\u043A\u0443 \u0434\u0430\u043D\u043D\u044B\u0445.";
     }
     return finalResponseText;
   }
@@ -25870,7 +25952,6 @@ ${typeof execResult.result === "string" ? execResult.result : JSON.stringify(exe
       });
       notifySteps();
     } catch (e) {
-      console.log("[AutoCreateNote Error]", e);
     }
   }
 };
