@@ -37,45 +37,11 @@ export class AgentLoop {
         const agentsRules = await MemoryStore.loadAgentsRules(app);
         const skills = await SkillsLoader.loadSkills(app);
 
-        // 2. CONDITIONAL PRE-FETCHING
+        // 2. CONDITIONAL PRE-FETCHING & TOKEN OPTIMIZATION
         let prefetchedContext = "";
         const queryLower = userQuery.toLowerCase();
 
-        // A) GitHub URL Detection (ONLY if explicit analysis intent is present)
-        const isAnalysisIntent = queryLower.includes("проанализируй") || 
-                                 queryLower.includes("разбери") || 
-                                 queryLower.includes("анализ") || 
-                                 queryLower.includes("сводк") || 
-                                 queryLower.includes("исследуй") || 
-                                 queryLower.includes("обзор");
-
-        const githubMatch = userQuery.match(/https?:\/\/github\.com\/([^\/]+)\/([^\s\/\)]+)/i);
-        if (githubMatch && isAnalysisIntent) {
-            const owner = githubMatch[1];
-            const repo = githubMatch[2].replace(/\.git$/, "");
-            try {
-                const ghResult = await defaultToolRegistry.executeTool(
-                    app,
-                    "gh-prefetch",
-                    "analyze_github_repo",
-                    JSON.stringify({ repoUrl: `https://github.com/${owner}/${repo}` })
-                );
-
-                if (ghResult.result && !ghResult.isError) {
-                    prefetchedContext += `\n--- АВТОМАТИЧЕСКИ ИМПОРТИРОВАННЫЕ ДАННЫЕ GITHUB РЕПОЗИТОРИЯ ${owner}/${repo} ---\n${ghResult.result}\n`;
-                    steps.push({
-                        id: "gh-prefetch-step",
-                        type: "tool_result",
-                        title: `Импортирован GitHub: ${owner}/${repo}`,
-                        detail: "README и описание загружены",
-                        status: "completed"
-                    });
-                    notifySteps();
-                }
-            } catch (e) {}
-        }
-
-        // B) Vault Folder Detection
+        // A) Vault Folder Detection (Optimized for tokens: snippet 400 chars max per note)
         const allFiles = app.vault.getMarkdownFiles();
         const folderMap: Record<string, TFile[]> = {};
         for (const file of allFiles) {
@@ -97,13 +63,15 @@ export class AgentLoop {
         if (matchedFolderNames.length > 0) {
             const prefetchedBlocks: string[] = [];
             for (const folderName of matchedFolderNames) {
-                const filesInFolder = folderMap[folderName] || [];
+                const filesInFolder = (folderMap[folderName] || []).slice(0, 12); // Limit to top 12 notes max
                 prefetchedBlocks.push(`=== ПАПКА '${folderName}' (Заметок: ${filesInFolder.length}) ===`);
                 for (const file of filesInFolder) {
                     try {
                         const content = await app.vault.read(file);
-                        const cleanContent = content.length > 1500 ? content.substring(0, 1500) + "... [обрезано]" : content;
-                        prefetchedBlocks.push(`--- ЗАМЕТКА: ${file.path} ---\n${cleanContent}`);
+                        // Clean frontmatter and truncate to save tokens
+                        const cleanText = content.replace(/^---[\s\S]*?---\n?/, "").trim();
+                        const snippet = cleanText.length > 400 ? cleanText.substring(0, 400) + "... [обрезано]" : cleanText;
+                        prefetchedBlocks.push(`--- ЗАМЕТКА: [[${file.basename}]] (${file.path}) ---\n${snippet}`);
                     } catch (e) {}
                 }
             }
@@ -112,7 +80,7 @@ export class AgentLoop {
                 id: "folder-prefetch-step",
                 type: "tool_result",
                 title: `Инъецированы заметки папок: ${matchedFolderNames.join(", ")}`,
-                detail: `Файлов: ${matchedFolderNames.reduce((acc, f) => acc + (folderMap[f]?.length || 0), 0)}`,
+                detail: `Папок: ${matchedFolderNames.length}`,
                 status: "completed"
             });
             notifySteps();
@@ -155,6 +123,7 @@ export class AgentLoop {
         const tools = defaultToolRegistry.getToolDefinitions();
         let iteration = 0;
         let finalResponseText = "";
+        const executedCallsMap: Record<string, number> = {};
 
         while (iteration < maxIterations) {
             iteration++;
@@ -187,6 +156,8 @@ export class AgentLoop {
                 for (const toolCall of response.tool_calls) {
                     const toolName = toolCall.function.name;
                     const toolArgsStr = toolCall.function.arguments;
+                    const callKey = `${toolName}:${toolArgsStr}`;
+                    executedCallsMap[callKey] = (executedCallsMap[callKey] || 0) + 1;
 
                     const stepId = `tool-${toolCall.id}`;
                     steps.push({
@@ -198,19 +169,27 @@ export class AgentLoop {
                     });
                     notifySteps();
 
-                    const execResult = await defaultToolRegistry.executeTool(
-                        app,
-                        toolCall.id,
-                        toolName,
-                        toolArgsStr
-                    );
+                    let trimmedResult = "";
+                    let isError = false;
 
-                    const rawRes = typeof execResult.result === "string" ? execResult.result : JSON.stringify(execResult.result);
-                    const trimmedResult = rawRes.length > 2000 ? rawRes.substring(0, 2000) + "... [содержимое сжато]" : rawRes;
+                    if (executedCallsMap[callKey] > 2) {
+                        trimmedResult = `[ВНИМАНИЕ СИСТЕМЫ NEI]: Этот инструмент (${toolName}) с такими аргументами уже вызывался ${executedCallsMap[callKey] - 1} раза. Повторный вызов отменен. Сформируйте окончательный ответ пользователю на основе уже имеющихся сведений.`;
+                        isError = true;
+                    } else {
+                        const execResult = await defaultToolRegistry.executeTool(
+                            app,
+                            toolCall.id,
+                            toolName,
+                            toolArgsStr
+                        );
+                        const rawRes = typeof execResult.result === "string" ? execResult.result : JSON.stringify(execResult.result);
+                        trimmedResult = rawRes.length > 12000 ? rawRes.substring(0, 12000) + "\n\n*(Содержимое обрезано по лимиту 12,000 символов)*" : rawRes;
+                        isError = execResult.isError || false;
+                    }
 
                     const currentStep = steps.find(s => s.id === stepId);
                     if (currentStep) {
-                        currentStep.status = execResult.isError ? "failed" : "completed";
+                        currentStep.status = isError ? "failed" : "completed";
                         currentStep.detail = trimmedResult.substring(0, 300);
                     }
                     notifySteps();
@@ -228,6 +207,9 @@ export class AgentLoop {
                 const parsedTool = this.extractJsonToolCall(response.content);
                 if (parsedTool) {
                     const callId = "text_call_" + Date.now();
+                    const callKey = `${parsedTool.name}:${JSON.stringify(parsedTool.args)}`;
+                    executedCallsMap[callKey] = (executedCallsMap[callKey] || 0) + 1;
+
                     messages.push({
                         role: "assistant",
                         content: response.content
@@ -242,19 +224,26 @@ export class AgentLoop {
                     });
                     notifySteps();
 
-                    const execResult = await defaultToolRegistry.executeTool(
-                        app,
-                        callId,
-                        parsedTool.name,
-                        JSON.stringify(parsedTool.args)
-                    );
+                    let trimmedResult = "";
+                    let isError = false;
 
-                    const rawRes = typeof execResult.result === "string" ? execResult.result : JSON.stringify(execResult.result);
-                    const trimmedResult = rawRes.length > 2000 ? rawRes.substring(0, 2000) + "... [содержимое сжато]" : rawRes;
-
+                    if (executedCallsMap[callKey] > 2) {
+                        trimmedResult = `[ВНИМАНИЕ СИСТЕМЫ NEI]: Инструмент ${parsedTool.name} уже вызывался с аналогичными параметрами. Сформируйте развернутый финальный ответ.`;
+                        isError = true;
+                    } else {
+                        const execResult = await defaultToolRegistry.executeTool(
+                            app,
+                            callId,
+                            parsedTool.name,
+                            JSON.stringify(parsedTool.args)
+                        );
+                        const rawRes = typeof execResult.result === "string" ? execResult.result : JSON.stringify(execResult.result);
+                        trimmedResult = rawRes.length > 12000 ? rawRes.substring(0, 12000) + "\n\n*(Содержимое обрезано по лимиту 12,000 символов)*" : rawRes;
+                        isError = execResult.isError || false;
+                    }
                     const currentStep = steps.find(s => s.id === `tool-${callId}`);
                     if (currentStep) {
-                        currentStep.status = execResult.isError ? "failed" : "completed";
+                        currentStep.status = isError ? "failed" : "completed";
                         currentStep.detail = trimmedResult.substring(0, 300);
                     }
                     notifySteps();
@@ -270,8 +259,18 @@ export class AgentLoop {
                 }
             } else {
                 // Final answer reached
-                finalResponseText = response.content.trim();
-                
+                const rawContent = (response.content || "").trim();
+
+                if (!rawContent && iteration < maxIterations) {
+                    // Prompt model to produce the actual response text instead of finishing with empty content
+                    messages.push({
+                        role: "user",
+                        content: "Предоставь подробный, структурированный итоговый ответ с выводами и рекомендациями на основе полученных данных."
+                    });
+                    continue;
+                }
+
+                finalResponseText = rawContent;
                 if (!finalResponseText && prefetchedContext) {
                     finalResponseText = `### Анализ данных:\n${prefetchedContext}`;
                 } else if (!finalResponseText) {

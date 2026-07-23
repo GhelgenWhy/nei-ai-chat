@@ -24526,11 +24526,13 @@ async function sendChatRequest(config, messages, tools) {
         const errObj = parsedErr.error;
         const providerName = errObj.metadata?.provider_name || "";
         if (response.status === 502 || response.status === 503 || response.status === 500) {
-          userFriendlyMsg = `\u26A0\uFE0F \u0421\u0431\u043E\u0439 \u043F\u0440\u043E\u0432\u0430\u0439\u0434\u0435\u0440\u0430 OpenRouter ${providerName ? `(${providerName})` : ""} [\u041A\u043E\u0434 ${response.status}]. \u0421\u0435\u0440\u0432\u0435\u0440 \u043C\u043E\u0434\u0435\u043B\u0438 \u0432\u0440\u0435\u043C\u0435\u043D\u043D\u043E \u043F\u0435\u0440\u0435\u0433\u0440\u0443\u0436\u0435\u043D. \u041F\u043E\u043F\u0440\u043E\u0431\u0443\u0439\u0442\u0435 \u0441\u043C\u0435\u043D\u0438\u0442\u044C \u043C\u043E\u0434\u0435\u043B\u044C \u0432 \u043D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0430\u0445 \u2699\uFE0F (\u043D\u0430\u043F\u0440\u0438\u043C\u0435\u0440, \u043D\u0430 Claude 3.5 Sonnet \u0438\u043B\u0438 GPT-4o).`;
+          userFriendlyMsg = `\u26A0\uFE0F \u0421\u0431\u043E\u0439 \u043F\u0440\u043E\u0432\u0430\u0439\u0434\u0435\u0440\u0430 OpenRouter ${providerName ? `(${providerName})` : ""} [\u041A\u043E\u0434 ${response.status}]: \u0421\u0435\u0440\u0432\u0435\u0440 \u0432\u044B\u0431\u0440\u0430\u043D\u043D\u043E\u0439 \u043C\u043E\u0434\u0435\u043B\u0438 \u0432\u0440\u0435\u043C\u0435\u043D\u043D\u043E \u043F\u0435\u0440\u0435\u0433\u0440\u0443\u0436\u0435\u043D \u0438\u043B\u0438 \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u0435\u043D. \u0412\u044B \u043C\u043E\u0436\u0435\u0442\u0435 \u043F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u044C \u0437\u0430\u043F\u0440\u043E\u0441 \u0447\u0435\u0440\u0435\u0437 \u043F\u0430\u0440\u0443 \u0441\u0435\u043A\u0443\u043D\u0434 \u0438\u043B\u0438 \u0432\u0440\u0435\u043C\u0435\u043D\u043D\u043E \u0432\u044B\u0431\u0440\u0430\u0442\u044C \u0434\u0440\u0443\u0433\u0443\u044E \u043C\u043E\u0434\u0435\u043B\u044C \u0432 \u043D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0430\u0445 \u2699\uFE0F.`;
+        } else if (response.status === 429) {
+          userFriendlyMsg = `\u23F3 \u041F\u0440\u0435\u0432\u044B\u0448\u0435\u043D \u043B\u0438\u043C\u0438\u0442 \u0437\u0430\u043F\u0440\u043E\u0441\u043E\u0432 (429 Rate Limit): \u041F\u0440\u043E\u0432\u0430\u0439\u0434\u0435\u0440 \u0432\u0440\u0435\u043C\u0435\u043D\u043D\u043E \u043E\u0433\u0440\u0430\u043D\u0438\u0447\u0438\u043B \u0447\u0430\u0441\u0442\u043E\u0442\u0443 \u0432\u044B\u0437\u043E\u0432\u043E\u0432. \u041F\u043E\u0434\u043E\u0436\u0434\u0438\u0442\u0435 \u043D\u0435\u0441\u043A\u043E\u043B\u044C\u043A\u043E \u0441\u0435\u043A\u0443\u043D\u0434 \u0438 \u043F\u043E\u043F\u0440\u043E\u0431\u0443\u0439\u0442\u0435 \u0441\u043D\u043E\u0432\u0430.`;
         } else if (response.status === 401) {
-          userFriendlyMsg = `\u{1F511} \u041E\u0448\u0438\u0431\u043A\u0430 \u0430\u0432\u0442\u043E\u0440\u0438\u0437\u0430\u0446\u0438\u0438 (401): \u041D\u0435\u0432\u0435\u0440\u043D\u044B\u0439 API-\u043A\u043B\u044E\u0447 OpenRouter. \u041F\u0440\u043E\u0432\u0435\u0440\u044C\u0442\u0435 \u043A\u043B\u044E\u0447 \u0432 \u043D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0430\u0445 \u2699\uFE0F.`;
+          userFriendlyMsg = `\u{1F511} \u041E\u0448\u0438\u0431\u043A\u0430 \u0430\u0432\u0442\u043E\u0440\u0438\u0437\u0430\u0446\u0438\u0438 (401): \u041D\u0435\u0432\u0435\u0440\u043D\u044B\u0439 \u0438\u043B\u0438 \u043E\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u0443\u044E\u0449\u0438\u0439 API-\u043A\u043B\u044E\u0447 OpenRouter. \u041F\u0440\u043E\u0432\u0435\u0440\u044C\u0442\u0435 \u0432\u0430\u0448 \u043A\u043B\u044E\u0447 \u0432 \u043D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0430\u0445 \u2699\uFE0F.`;
         } else if (errObj.message) {
-          userFriendlyMsg = `\u041E\u0448\u0438\u0431\u043A\u0430 \u0418\u0418 (${response.status}): ${errObj.message}`;
+          userFriendlyMsg = `\u26A0\uFE0F \u0421\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0435 \u043F\u0440\u043E\u0432\u0430\u0439\u0434\u0435\u0440\u0430 OpenRouter [\u041A\u043E\u0434 ${response.status}]: ${errObj.message}`;
         }
       }
     } catch (e) {
@@ -25254,26 +25256,56 @@ ${truncated}`;
     }
   },
   analyze_github_repo: async (app, args) => {
-    const githubRepoMatch = args.repoUrl.match(/github\.com\/([^\/]+)\/([^\/]+)/i);
+    const githubRepoMatch = args.repoUrl.match(/github\.com\/([^\/]+)\/([^\s\/\)]+)/i);
     if (!githubRepoMatch) {
       return `\u041E\u0448\u0438\u0431\u043A\u0430: \u041D\u0435\u0432\u0435\u0440\u043D\u044B\u0439 \u0444\u043E\u0440\u043C\u0430\u0442 \u0441\u0441\u044B\u043B\u043A\u0438 \u043D\u0430 GitHub. \u0423\u043A\u0430\u0436\u0438\u0442\u0435 'https://github.com/owner/repo'`;
     }
     const owner = githubRepoMatch[1];
-    const repo = githubRepoMatch[2].replace(/\.git$/, "");
+    const repo = githubRepoMatch[2].replace(/\.git$/, "").replace(/#.*$/, "");
     try {
-      let readmeText = "";
+      let repoMetaInfo = "";
       try {
-        const rawResponse = await (0, import_obsidian2.requestUrl)({ url: `https://raw.githubusercontent.com/${owner}/${repo}/main/README.md`, method: "GET" }).catch(
-          () => (0, import_obsidian2.requestUrl)({ url: `https://raw.githubusercontent.com/${owner}/${repo}/master/README.md`, method: "GET" })
-        );
-        readmeText = rawResponse.text || "";
+        const metaRes = await (0, import_obsidian2.requestUrl)({
+          url: `https://api.github.com/repos/${owner}/${repo}`,
+          method: "GET",
+          headers: { "User-Agent": "NEI-Obsidian-Plugin" }
+        });
+        if (metaRes.status === 200 && metaRes.json) {
+          const j = metaRes.json;
+          repoMetaInfo = `\u041D\u0430\u0437\u0432\u0430\u043D\u0438\u0435: ${j.full_name || `${owner}/${repo}`}
+\u041E\u043F\u0438\u0441\u0430\u043D\u0438\u0435: ${j.description || "\u041E\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u0443\u0435\u0442"}
+\u041E\u0441\u043D\u043E\u0432\u043D\u043E\u0439 \u044F\u0437\u044B\u043A: ${j.language || "\u041D\u0435 \u0443\u043A\u0430\u0437\u0430\u043D"}
+\u0417\u0432\u0451\u0437\u0434\u044B: ${j.stargazers_count || 0} | \u0424\u043E\u0440\u043A\u0438: ${j.forks_count || 0}
+\u041E\u0442\u043A\u0440\u044B\u0442\u044B\u0435 issues: ${j.open_issues_count || 0}
+`;
+        }
       } catch (e) {
       }
-      const cleanReadme = readmeText ? readmeText.length > 2500 ? readmeText.substring(0, 2500) + "\n...[\u041E\u0431\u0440\u0435\u0437\u0430\u043D\u043E]" : readmeText : "README \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D.";
-      return `\u0410\u043D\u0430\u043B\u0438\u0437 GitHub \u0420\u0435\u043F\u043E\u0437\u0438\u0442\u043E\u0440\u0438\u044F ${owner}/${repo}:
+      let readmeText = "";
+      const branches = ["main", "master"];
+      const filenames = ["README.md", "readme.md", "Readme.md"];
+      for (const branch of branches) {
+        if (readmeText)
+          break;
+        for (const fname of filenames) {
+          try {
+            const res = await (0, import_obsidian2.requestUrl)({
+              url: `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${fname}`,
+              method: "GET"
+            });
+            if (res.status === 200 && res.text) {
+              readmeText = res.text;
+              break;
+            }
+          } catch (e) {
+          }
+        }
+      }
+      const cleanReadme = readmeText ? readmeText.length > 12e3 ? readmeText.substring(0, 12e3) + "\n\n*(README \u043E\u0431\u0440\u0435\u0437\u0430\u043D \u043F\u043E \u0434\u043B\u0438\u043D\u0435 12,000 \u0441\u0438\u043C\u0432\u043E\u043B\u043E\u0432)*" : readmeText : "README.md \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D \u0438\u043B\u0438 \u043F\u0443\u0441\u0442.";
+      return `=== \u0418\u041D\u0424\u041E\u0420\u041C\u0410\u0426\u0418\u042F \u041E GITHUB \u0420\u0415\u041F\u041E\u0417\u0418\u0422\u041E\u0420\u0418\u0418 ${owner}/${repo} ===
 URL: https://github.com/${owner}/${repo}
-
-\u0421\u043E\u0434\u0435\u0440\u0436\u0438\u043C\u043E\u0435 README.md:
+${repoMetaInfo}
+--- \u0422\u0415\u041A\u0421\u0422 README.md ---
 ${cleanReadme}`;
     } catch (e) {
       return `\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u043E\u043B\u0443\u0447\u0435\u043D\u0438\u044F \u0438\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0438\u0438 \u043E GitHub \u0440\u0435\u043F\u043E\u0437\u0438\u0442\u043E\u0440\u0438\u0438: ${e?.message || e}`;
@@ -25697,35 +25729,6 @@ var AgentLoop = class {
     const skills = await SkillsLoader.loadSkills(app);
     let prefetchedContext = "";
     const queryLower = userQuery.toLowerCase();
-    const isAnalysisIntent = queryLower.includes("\u043F\u0440\u043E\u0430\u043D\u0430\u043B\u0438\u0437\u0438\u0440\u0443\u0439") || queryLower.includes("\u0440\u0430\u0437\u0431\u0435\u0440\u0438") || queryLower.includes("\u0430\u043D\u0430\u043B\u0438\u0437") || queryLower.includes("\u0441\u0432\u043E\u0434\u043A") || queryLower.includes("\u0438\u0441\u0441\u043B\u0435\u0434\u0443\u0439") || queryLower.includes("\u043E\u0431\u0437\u043E\u0440");
-    const githubMatch = userQuery.match(/https?:\/\/github\.com\/([^\/]+)\/([^\s\/\)]+)/i);
-    if (githubMatch && isAnalysisIntent) {
-      const owner = githubMatch[1];
-      const repo = githubMatch[2].replace(/\.git$/, "");
-      try {
-        const ghResult = await defaultToolRegistry.executeTool(
-          app,
-          "gh-prefetch",
-          "analyze_github_repo",
-          JSON.stringify({ repoUrl: `https://github.com/${owner}/${repo}` })
-        );
-        if (ghResult.result && !ghResult.isError) {
-          prefetchedContext += `
---- \u0410\u0412\u0422\u041E\u041C\u0410\u0422\u0418\u0427\u0415\u0421\u041A\u0418 \u0418\u041C\u041F\u041E\u0420\u0422\u0418\u0420\u041E\u0412\u0410\u041D\u041D\u042B\u0415 \u0414\u0410\u041D\u041D\u042B\u0415 GITHUB \u0420\u0415\u041F\u041E\u0417\u0418\u0422\u041E\u0420\u0418\u042F ${owner}/${repo} ---
-${ghResult.result}
-`;
-          steps.push({
-            id: "gh-prefetch-step",
-            type: "tool_result",
-            title: `\u0418\u043C\u043F\u043E\u0440\u0442\u0438\u0440\u043E\u0432\u0430\u043D GitHub: ${owner}/${repo}`,
-            detail: "README \u0438 \u043E\u043F\u0438\u0441\u0430\u043D\u0438\u0435 \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043D\u044B",
-            status: "completed"
-          });
-          notifySteps();
-        }
-      } catch (e) {
-      }
-    }
     const allFiles = app.vault.getMarkdownFiles();
     const folderMap = {};
     for (const file of allFiles) {
@@ -25746,14 +25749,15 @@ ${ghResult.result}
     if (matchedFolderNames.length > 0) {
       const prefetchedBlocks = [];
       for (const folderName of matchedFolderNames) {
-        const filesInFolder = folderMap[folderName] || [];
+        const filesInFolder = (folderMap[folderName] || []).slice(0, 12);
         prefetchedBlocks.push(`=== \u041F\u0410\u041F\u041A\u0410 '${folderName}' (\u0417\u0430\u043C\u0435\u0442\u043E\u043A: ${filesInFolder.length}) ===`);
         for (const file of filesInFolder) {
           try {
             const content = await app.vault.read(file);
-            const cleanContent = content.length > 1500 ? content.substring(0, 1500) + "... [\u043E\u0431\u0440\u0435\u0437\u0430\u043D\u043E]" : content;
-            prefetchedBlocks.push(`--- \u0417\u0410\u041C\u0415\u0422\u041A\u0410: ${file.path} ---
-${cleanContent}`);
+            const cleanText = content.replace(/^---[\s\S]*?---\n?/, "").trim();
+            const snippet = cleanText.length > 400 ? cleanText.substring(0, 400) + "... [\u043E\u0431\u0440\u0435\u0437\u0430\u043D\u043E]" : cleanText;
+            prefetchedBlocks.push(`--- \u0417\u0410\u041C\u0415\u0422\u041A\u0410: [[${file.basename}]] (${file.path}) ---
+${snippet}`);
           } catch (e) {
           }
         }
@@ -25766,7 +25770,7 @@ ${prefetchedBlocks.join("\n\n")}
         id: "folder-prefetch-step",
         type: "tool_result",
         title: `\u0418\u043D\u044A\u0435\u0446\u0438\u0440\u043E\u0432\u0430\u043D\u044B \u0437\u0430\u043C\u0435\u0442\u043A\u0438 \u043F\u0430\u043F\u043E\u043A: ${matchedFolderNames.join(", ")}`,
-        detail: `\u0424\u0430\u0439\u043B\u043E\u0432: ${matchedFolderNames.reduce((acc, f) => acc + (folderMap[f]?.length || 0), 0)}`,
+        detail: `\u041F\u0430\u043F\u043E\u043A: ${matchedFolderNames.length}`,
         status: "completed"
       });
       notifySteps();
@@ -25811,6 +25815,7 @@ ${s.description}`).join("\n")}
     const tools = defaultToolRegistry.getToolDefinitions();
     let iteration = 0;
     let finalResponseText = "";
+    const executedCallsMap = {};
     while (iteration < maxIterations) {
       iteration++;
       console.log(`[AgentLoop] \u0418\u0442\u0435\u0440\u0430\u0446\u0438\u044F ${iteration}/${maxIterations}`);
@@ -25836,6 +25841,8 @@ ${s.description}`).join("\n")}
         for (const toolCall of response.tool_calls) {
           const toolName = toolCall.function.name;
           const toolArgsStr = toolCall.function.arguments;
+          const callKey = `${toolName}:${toolArgsStr}`;
+          executedCallsMap[callKey] = (executedCallsMap[callKey] || 0) + 1;
           const stepId = `tool-${toolCall.id}`;
           steps.push({
             id: stepId,
@@ -25845,17 +25852,25 @@ ${s.description}`).join("\n")}
             status: "running"
           });
           notifySteps();
-          const execResult = await defaultToolRegistry.executeTool(
-            app,
-            toolCall.id,
-            toolName,
-            toolArgsStr
-          );
-          const rawRes = typeof execResult.result === "string" ? execResult.result : JSON.stringify(execResult.result);
-          const trimmedResult = rawRes.length > 2e3 ? rawRes.substring(0, 2e3) + "... [\u0441\u043E\u0434\u0435\u0440\u0436\u0438\u043C\u043E\u0435 \u0441\u0436\u0430\u0442\u043E]" : rawRes;
+          let trimmedResult = "";
+          let isError = false;
+          if (executedCallsMap[callKey] > 2) {
+            trimmedResult = `[\u0412\u041D\u0418\u041C\u0410\u041D\u0418\u0415 \u0421\u0418\u0421\u0422\u0415\u041C\u042B NEI]: \u042D\u0442\u043E\u0442 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442 (${toolName}) \u0441 \u0442\u0430\u043A\u0438\u043C\u0438 \u0430\u0440\u0433\u0443\u043C\u0435\u043D\u0442\u0430\u043C\u0438 \u0443\u0436\u0435 \u0432\u044B\u0437\u044B\u0432\u0430\u043B\u0441\u044F ${executedCallsMap[callKey] - 1} \u0440\u0430\u0437\u0430. \u041F\u043E\u0432\u0442\u043E\u0440\u043D\u044B\u0439 \u0432\u044B\u0437\u043E\u0432 \u043E\u0442\u043C\u0435\u043D\u0435\u043D. \u0421\u0444\u043E\u0440\u043C\u0438\u0440\u0443\u0439\u0442\u0435 \u043E\u043A\u043E\u043D\u0447\u0430\u0442\u0435\u043B\u044C\u043D\u044B\u0439 \u043E\u0442\u0432\u0435\u0442 \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044E \u043D\u0430 \u043E\u0441\u043D\u043E\u0432\u0435 \u0443\u0436\u0435 \u0438\u043C\u0435\u044E\u0449\u0438\u0445\u0441\u044F \u0441\u0432\u0435\u0434\u0435\u043D\u0438\u0439.`;
+            isError = true;
+          } else {
+            const execResult = await defaultToolRegistry.executeTool(
+              app,
+              toolCall.id,
+              toolName,
+              toolArgsStr
+            );
+            const rawRes = typeof execResult.result === "string" ? execResult.result : JSON.stringify(execResult.result);
+            trimmedResult = rawRes.length > 12e3 ? rawRes.substring(0, 12e3) + "\n\n*(\u0421\u043E\u0434\u0435\u0440\u0436\u0438\u043C\u043E\u0435 \u043E\u0431\u0440\u0435\u0437\u0430\u043D\u043E \u043F\u043E \u043B\u0438\u043C\u0438\u0442\u0443 12,000 \u0441\u0438\u043C\u0432\u043E\u043B\u043E\u0432)*" : rawRes;
+            isError = execResult.isError || false;
+          }
           const currentStep = steps.find((s) => s.id === stepId);
           if (currentStep) {
-            currentStep.status = execResult.isError ? "failed" : "completed";
+            currentStep.status = isError ? "failed" : "completed";
             currentStep.detail = trimmedResult.substring(0, 300);
           }
           notifySteps();
@@ -25870,6 +25885,8 @@ ${s.description}`).join("\n")}
         const parsedTool = this.extractJsonToolCall(response.content);
         if (parsedTool) {
           const callId = "text_call_" + Date.now();
+          const callKey = `${parsedTool.name}:${JSON.stringify(parsedTool.args)}`;
+          executedCallsMap[callKey] = (executedCallsMap[callKey] || 0) + 1;
           messages.push({
             role: "assistant",
             content: response.content
@@ -25882,17 +25899,25 @@ ${s.description}`).join("\n")}
             status: "running"
           });
           notifySteps();
-          const execResult = await defaultToolRegistry.executeTool(
-            app,
-            callId,
-            parsedTool.name,
-            JSON.stringify(parsedTool.args)
-          );
-          const rawRes = typeof execResult.result === "string" ? execResult.result : JSON.stringify(execResult.result);
-          const trimmedResult = rawRes.length > 2e3 ? rawRes.substring(0, 2e3) + "... [\u0441\u043E\u0434\u0435\u0440\u0436\u0438\u043C\u043E\u0435 \u0441\u0436\u0430\u0442\u043E]" : rawRes;
+          let trimmedResult = "";
+          let isError = false;
+          if (executedCallsMap[callKey] > 2) {
+            trimmedResult = `[\u0412\u041D\u0418\u041C\u0410\u041D\u0418\u0415 \u0421\u0418\u0421\u0422\u0415\u041C\u042B NEI]: \u0418\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442 ${parsedTool.name} \u0443\u0436\u0435 \u0432\u044B\u0437\u044B\u0432\u0430\u043B\u0441\u044F \u0441 \u0430\u043D\u0430\u043B\u043E\u0433\u0438\u0447\u043D\u044B\u043C\u0438 \u043F\u0430\u0440\u0430\u043C\u0435\u0442\u0440\u0430\u043C\u0438. \u0421\u0444\u043E\u0440\u043C\u0438\u0440\u0443\u0439\u0442\u0435 \u0440\u0430\u0437\u0432\u0435\u0440\u043D\u0443\u0442\u044B\u0439 \u0444\u0438\u043D\u0430\u043B\u044C\u043D\u044B\u0439 \u043E\u0442\u0432\u0435\u0442.`;
+            isError = true;
+          } else {
+            const execResult = await defaultToolRegistry.executeTool(
+              app,
+              callId,
+              parsedTool.name,
+              JSON.stringify(parsedTool.args)
+            );
+            const rawRes = typeof execResult.result === "string" ? execResult.result : JSON.stringify(execResult.result);
+            trimmedResult = rawRes.length > 12e3 ? rawRes.substring(0, 12e3) + "\n\n*(\u0421\u043E\u0434\u0435\u0440\u0436\u0438\u043C\u043E\u0435 \u043E\u0431\u0440\u0435\u0437\u0430\u043D\u043E \u043F\u043E \u043B\u0438\u043C\u0438\u0442\u0443 12,000 \u0441\u0438\u043C\u0432\u043E\u043B\u043E\u0432)*" : rawRes;
+            isError = execResult.isError || false;
+          }
           const currentStep = steps.find((s) => s.id === `tool-${callId}`);
           if (currentStep) {
-            currentStep.status = execResult.isError ? "failed" : "completed";
+            currentStep.status = isError ? "failed" : "completed";
             currentStep.detail = trimmedResult.substring(0, 300);
           }
           notifySteps();
@@ -25907,7 +25932,15 @@ ${trimmedResult}`
           break;
         }
       } else {
-        finalResponseText = response.content.trim();
+        const rawContent = (response.content || "").trim();
+        if (!rawContent && iteration < maxIterations) {
+          messages.push({
+            role: "user",
+            content: "\u041F\u0440\u0435\u0434\u043E\u0441\u0442\u0430\u0432\u044C \u043F\u043E\u0434\u0440\u043E\u0431\u043D\u044B\u0439, \u0441\u0442\u0440\u0443\u043A\u0442\u0443\u0440\u0438\u0440\u043E\u0432\u0430\u043D\u043D\u044B\u0439 \u0438\u0442\u043E\u0433\u043E\u0432\u044B\u0439 \u043E\u0442\u0432\u0435\u0442 \u0441 \u0432\u044B\u0432\u043E\u0434\u0430\u043C\u0438 \u0438 \u0440\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0430\u0446\u0438\u044F\u043C\u0438 \u043D\u0430 \u043E\u0441\u043D\u043E\u0432\u0435 \u043F\u043E\u043B\u0443\u0447\u0435\u043D\u043D\u044B\u0445 \u0434\u0430\u043D\u043D\u044B\u0445."
+          });
+          continue;
+        }
+        finalResponseText = rawContent;
         if (!finalResponseText && prefetchedContext) {
           finalResponseText = `### \u0410\u043D\u0430\u043B\u0438\u0437 \u0434\u0430\u043D\u043D\u044B\u0445:
 ${prefetchedContext}`;
@@ -25983,9 +26016,8 @@ var import_obsidian7 = require("obsidian");
 var ChatStore = class {
   static async listSessions(app) {
     try {
-      const indexFile = app.vault.getAbstractFileByPath(this.INDEX_FILE);
-      if (indexFile instanceof import_obsidian7.TFile) {
-        const content = await app.vault.read(indexFile);
+      if (await app.vault.adapter.exists(this.INDEX_FILE)) {
+        const content = await app.vault.adapter.read(this.INDEX_FILE);
         return JSON.parse(content);
       }
     } catch (e) {
@@ -25996,9 +26028,8 @@ var ChatStore = class {
   static async loadSession(app, sessionId) {
     const path = `${this.CHATS_FOLDER}/${sessionId}.json`;
     try {
-      const file = app.vault.getAbstractFileByPath(path);
-      if (file instanceof import_obsidian7.TFile) {
-        const content = await app.vault.read(file);
+      if (await app.vault.adapter.exists(path)) {
+        const content = await app.vault.adapter.read(path);
         return JSON.parse(content);
       }
     } catch (e) {
@@ -26012,12 +26043,7 @@ var ChatStore = class {
       session.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
       const sessionPath = `${this.CHATS_FOLDER}/${session.id}.json`;
       const content = JSON.stringify(session, null, 2);
-      const file = app.vault.getAbstractFileByPath(sessionPath);
-      if (file instanceof import_obsidian7.TFile) {
-        await app.vault.modify(file, content);
-      } else {
-        await app.vault.create(sessionPath, content);
-      }
+      await app.vault.adapter.write(sessionPath, content);
       const sessions = await this.listSessions(app);
       const existingIdx = sessions.findIndex((s) => s.id === session.id);
       const summary = {
@@ -26030,13 +26056,8 @@ var ChatStore = class {
       } else {
         sessions.unshift(summary);
       }
-      const indexFile = app.vault.getAbstractFileByPath(this.INDEX_FILE);
       const indexContent = JSON.stringify(sessions, null, 2);
-      if (indexFile instanceof import_obsidian7.TFile) {
-        await app.vault.modify(indexFile, indexContent);
-      } else {
-        await app.vault.create(this.INDEX_FILE, indexContent);
-      }
+      await app.vault.adapter.write(this.INDEX_FILE, indexContent);
     } catch (e) {
       console.error("[NEI ChatStore] Error saving session:", e);
     }
@@ -26044,18 +26065,28 @@ var ChatStore = class {
   static async deleteSession(app, sessionId) {
     try {
       const path = `${this.CHATS_FOLDER}/${sessionId}.json`;
-      const file = app.vault.getAbstractFileByPath(path);
-      if (file instanceof import_obsidian7.TFile) {
-        await app.vault.delete(file);
+      if (await app.vault.adapter.exists(path)) {
+        await app.vault.adapter.remove(path);
       }
       const sessions = await this.listSessions(app);
       const filtered = sessions.filter((s) => s.id !== sessionId);
-      const indexFile = app.vault.getAbstractFileByPath(this.INDEX_FILE);
-      if (indexFile instanceof import_obsidian7.TFile) {
-        await app.vault.modify(indexFile, JSON.stringify(filtered, null, 2));
-      }
+      await app.vault.adapter.write(this.INDEX_FILE, JSON.stringify(filtered, null, 2));
     } catch (e) {
       console.error(`[NEI ChatStore] Error deleting session ${sessionId}:`, e);
+    }
+  }
+  static async clearAllSessions(app) {
+    try {
+      const sessions = await this.listSessions(app);
+      for (const s of sessions) {
+        const path = `${this.CHATS_FOLDER}/${s.id}.json`;
+        if (await app.vault.adapter.exists(path)) {
+          await app.vault.adapter.remove(path);
+        }
+      }
+      await app.vault.adapter.write(this.INDEX_FILE, JSON.stringify([], null, 2));
+    } catch (e) {
+      console.error("[NEI ChatStore] Error clearing all sessions:", e);
     }
   }
   static createNewSession() {
@@ -26070,17 +26101,8 @@ var ChatStore = class {
   }
   static async ensureFolder(app, folderPath) {
     const norm = (0, import_obsidian7.normalizePath)(folderPath);
-    const folder = app.vault.getAbstractFileByPath(norm);
-    if (!folder) {
-      const parts = norm.split("/");
-      let current = "";
-      for (const part of parts) {
-        current = current ? `${current}/${part}` : part;
-        const existing = app.vault.getAbstractFileByPath(current);
-        if (!existing) {
-          await app.vault.createFolder(current);
-        }
-      }
+    if (!await app.vault.adapter.exists(norm)) {
+      await app.vault.adapter.mkdir(norm);
     }
   }
 };
@@ -26179,7 +26201,32 @@ var ObsidianMarkdown = ({ markdown, app }) => {
   }, [markdown]);
   return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { ref: containerRef, className: "markdown-preview-view markdown-rendered", style: { background: "transparent", padding: 0 } });
 };
-var ChatPanel = ({ app, settings, saveSettings }) => {
+var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
+  const isMainTab = viewLeaf ? viewLeaf.getRoot() === app.workspace.rootSplit : false;
+  const handleToggleTabMode = async () => {
+    try {
+      const workspace = app.workspace;
+      if (isMainTab) {
+        const rightLeaf = workspace.getRightLeaf(false);
+        if (rightLeaf) {
+          await rightLeaf.setViewState({ type: "nei-chat-view", active: true });
+          workspace.revealLeaf(rightLeaf);
+        }
+        if (viewLeaf) {
+          viewLeaf.detach();
+        }
+      } else {
+        const tabLeaf = workspace.getLeaf("tab");
+        await tabLeaf.setViewState({ type: "nei-chat-view", active: true });
+        workspace.revealLeaf(tabLeaf);
+        if (viewLeaf) {
+          viewLeaf.detach();
+        }
+      }
+    } catch (e) {
+      new import_obsidian9.Notice(`\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0435\u0440\u0435\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u044F \u0440\u0435\u0436\u0438\u043C\u0430: ${e?.message || e}`);
+    }
+  };
   const [currentSession, setCurrentSession] = React.useState(() => ChatStore.createNewSession());
   const [sessionsList, setSessionsList] = React.useState([]);
   const [input, setInput] = React.useState("");
@@ -26274,6 +26321,14 @@ var ChatPanel = ({ app, settings, saveSettings }) => {
     await refreshSessionsList();
     if (currentSession.id === sessionId) {
       handleNewChat();
+    }
+  };
+  const handleClearAllSessions = async () => {
+    if (confirm("\u0412\u044B \u0443\u0432\u0435\u0440\u0435\u043D\u044B, \u0447\u0442\u043E \u0445\u043E\u0442\u0438\u0442\u0435 \u043F\u043E\u043B\u043D\u043E\u0441\u0442\u044C\u044E \u043E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u0438\u0441\u0442\u043E\u0440\u0438\u044E \u0432\u0441\u0435\u0445 \u0447\u0430\u0442\u043E\u0432?")) {
+      await ChatStore.clearAllSessions(app);
+      await refreshSessionsList();
+      handleNewChat();
+      new import_obsidian9.Notice("\u0412\u0441\u044F \u0438\u0441\u0442\u043E\u0440\u0438\u044F \u0447\u0430\u0442\u043E\u0432 \u043E\u0447\u0438\u0449\u0435\u043D\u0430!");
     }
   };
   const handleSaveConfig = async () => {
@@ -26405,20 +26460,40 @@ var ChatPanel = ({ app, settings, saveSettings }) => {
             style: { background: "var(--interactive-accent)", color: "var(--text-on-accent)", border: "none", borderRadius: "4px", cursor: "pointer", padding: "4px 8px", fontSize: "12px", fontWeight: "bold" },
             children: "+ \u041D\u043E\u0432\u044B\u0439"
           }
+        ),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+          "button",
+          {
+            onClick: handleToggleTabMode,
+            title: isMainTab ? "\u041F\u0435\u0440\u0435\u043C\u0435\u0441\u0442\u0438\u0442\u044C \u0447\u0430\u0442 \u0432 \u0431\u043E\u043A\u043E\u0432\u0443\u044E \u043F\u0430\u043D\u0435\u043B\u044C" : "\u041F\u0435\u0440\u0435\u043C\u0435\u0441\u0442\u0438\u0442\u044C \u0447\u0430\u0442 \u043D\u0430 \u0433\u043B\u0430\u0432\u043D\u0443\u044E \u0432\u043A\u043B\u0430\u0434\u043A\u0443",
+            style: { background: "var(--background-secondary)", border: "1px solid var(--background-modifier-border)", borderRadius: "4px", cursor: "pointer", padding: "4px 8px", fontSize: "12px" },
+            children: isMainTab ? "\u2199\uFE0F \u0412 \u043F\u0430\u043D\u0435\u043B\u044C" : "\u{1F5D4} \u0412\u043A\u043B\u0430\u0434\u043A\u0430"
+          }
         )
       ] }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
         "button",
         {
           onClick: () => setShowConfig(!showConfig),
-          style: { background: "transparent", border: "none", cursor: "pointer", fontSize: "14px", color: "var(--text-muted)" },
+          style: { background: "transparent", border: "none", cursor: "pointer", fontSize: "13px", color: "var(--text-muted)" },
           title: "\u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438 \u043C\u043E\u0434\u0435\u043B\u0435\u0439",
           children: "\u2699\uFE0F \u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438"
         }
       )
     ] }),
-    showSessionsDrawer && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { position: "absolute", top: "45px", left: "10px", right: "10px", zIndex: 10, background: "var(--background-primary)", border: "1px solid var(--background-modifier-border)", borderRadius: "8px", boxShadow: "0 4px 12px rgba(0,0,0,0.15)", maxHeight: "250px", overflowY: "auto", padding: "8px" }, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { fontWeight: "bold", fontSize: "12px", marginBottom: "6px", color: "var(--text-muted)", paddingBottom: "4px", borderBottom: "1px solid var(--background-modifier-border)" }, children: "\u0418\u0441\u0442\u043E\u0440\u0438\u044F \u0434\u0438\u0430\u043B\u043E\u0433\u043E\u0432" }),
+    showSessionsDrawer && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { position: "absolute", top: "45px", left: "10px", right: "10px", zIndex: 10, background: "var(--background-primary)", border: "1px solid var(--background-modifier-border)", borderRadius: "8px", boxShadow: "0 4px 12px rgba(0,0,0,0.15)", maxHeight: "280px", overflowY: "auto", padding: "8px" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px", paddingBottom: "4px", borderBottom: "1px solid var(--background-modifier-border)" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { style: { fontWeight: "bold", fontSize: "12px", color: "var(--text-muted)" }, children: "\u0418\u0441\u0442\u043E\u0440\u0438\u044F \u0434\u0438\u0430\u043B\u043E\u0433\u043E\u0432" }),
+        sessionsList.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+          "button",
+          {
+            onClick: handleClearAllSessions,
+            title: "\u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u0432\u0441\u044E \u0438\u0441\u0442\u043E\u0440\u0438\u044E \u0434\u0438\u0430\u043B\u043E\u0433\u043E\u0432",
+            style: { background: "transparent", border: "none", color: "var(--text-error, #ff5555)", cursor: "pointer", fontSize: "11px", fontWeight: "500" },
+            children: "\u{1F5D1}\uFE0F \u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u0432\u0441\u0435"
+          }
+        )
+      ] }),
       sessionsList.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { fontSize: "12px", color: "var(--text-muted)", padding: "6px" }, children: "\u041D\u0435\u0442 \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u043D\u044B\u0445 \u0447\u0430\u0442\u043E\u0432" }) : sessionsList.map((s) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
         "div",
         {
@@ -26743,6 +26818,7 @@ var NeiChatView = class extends import_obsidian10.ItemView {
     this.root.render(
       React2.createElement(ChatPanel, {
         app: this.app,
+        viewLeaf: this.leaf,
         settings: this.plugin.settings,
         saveSettings: async (newSettings) => {
           this.plugin.settings = newSettings;
@@ -26754,6 +26830,15 @@ var NeiChatView = class extends import_obsidian10.ItemView {
   async onClose() {
     if (this.root) {
       this.root.unmount();
+    }
+    const isMainTab = this.leaf.getRoot() === this.app.workspace.rootSplit;
+    if (isMainTab) {
+      setTimeout(() => {
+        const existing = this.app.workspace.getLeavesOfType(VIEW_TYPE_NEI_CHAT);
+        if (existing.length === 0) {
+          this.plugin.activateView();
+        }
+      }, 100);
     }
   }
 };

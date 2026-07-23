@@ -153,29 +153,60 @@ export const systemExecutors: Record<string, ToolExecutor> = {
     },
 
     analyze_github_repo: async (app: App, args: { repoUrl: string }) => {
-        const githubRepoMatch = args.repoUrl.match(/github\.com\/([^\/]+)\/([^\/]+)/i);
+        const githubRepoMatch = args.repoUrl.match(/github\.com\/([^\/]+)\/([^\s\/\)]+)/i);
         if (!githubRepoMatch) {
             return `Ошибка: Неверный формат ссылки на GitHub. Укажите 'https://github.com/owner/repo'`;
         }
 
         const owner = githubRepoMatch[1];
-        const repo = githubRepoMatch[2].replace(/\.git$/, "");
+        const repo = githubRepoMatch[2].replace(/\.git$/, "").replace(/#.*$/, "");
 
         try {
-            let readmeText = "";
+            let repoMetaInfo = "";
             try {
-                const rawResponse = await requestUrl({ url: `https://raw.githubusercontent.com/${owner}/${repo}/main/README.md`, method: "GET" }).catch(() => 
-                    requestUrl({ url: `https://raw.githubusercontent.com/${owner}/${repo}/master/README.md`, method: "GET" })
-                );
-                readmeText = rawResponse.text || "";
+                const metaRes = await requestUrl({
+                    url: `https://api.github.com/repos/${owner}/${repo}`,
+                    method: "GET",
+                    headers: { "User-Agent": "NEI-Obsidian-Plugin" }
+                });
+                if (metaRes.status === 200 && metaRes.json) {
+                    const j = metaRes.json;
+                    repoMetaInfo = `Название: ${j.full_name || `${owner}/${repo}`}
+Описание: ${j.description || 'Отсутствует'}
+Основной язык: ${j.language || 'Не указан'}
+Звёзды: ${j.stargazers_count || 0} | Форки: ${j.forks_count || 0}
+Открытые issues: ${j.open_issues_count || 0}\n`;
+                }
             } catch (e) {}
 
-            const cleanReadme = readmeText ? (readmeText.length > 2500 ? readmeText.substring(0, 2500) + "\n...[Обрезано]" : readmeText) : "README не найден.";
+            let readmeText = "";
+            const branches = ["main", "master"];
+            const filenames = ["README.md", "readme.md", "Readme.md"];
 
-            return `Анализ GitHub Репозитория ${owner}/${repo}:
+            for (const branch of branches) {
+                if (readmeText) break;
+                for (const fname of filenames) {
+                    try {
+                        const res = await requestUrl({
+                            url: `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${fname}`,
+                            method: "GET"
+                        });
+                        if (res.status === 200 && res.text) {
+                            readmeText = res.text;
+                            break;
+                        }
+                    } catch (e) {}
+                }
+            }
+
+            const cleanReadme = readmeText 
+                ? (readmeText.length > 12000 ? readmeText.substring(0, 12000) + "\n\n*(README обрезан по длине 12,000 символов)*" : readmeText)
+                : "README.md не найден или пуст.";
+
+            return `=== ИНФОРМАЦИЯ О GITHUB РЕПОЗИТОРИИ ${owner}/${repo} ===
 URL: https://github.com/${owner}/${repo}
-
-Содержимое README.md:
+${repoMetaInfo}
+--- ТЕКСТ README.md ---
 ${cleanReadme}`;
         } catch (e: any) {
             return `Ошибка получения информации о GitHub репозитории: ${e?.message || e}`;

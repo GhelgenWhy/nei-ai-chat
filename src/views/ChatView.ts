@@ -37,6 +37,7 @@ export class NeiChatView extends ItemView {
         this.root.render(
             React.createElement(ChatPanel, {
                 app: this.app,
+                viewLeaf: this.leaf,
                 settings: this.plugin.settings,
                 saveSettings: async (newSettings: any) => {
                     this.plugin.settings = newSettings;
@@ -49,6 +50,17 @@ export class NeiChatView extends ItemView {
     async onClose() {
         if (this.root) {
             this.root.unmount();
+        }
+
+        // If closing a main tab and no other NEI chat view remains open, automatically return chat to right sidebar
+        const isMainTab = this.leaf.getRoot() === this.app.workspace.rootSplit;
+        if (isMainTab) {
+            setTimeout(() => {
+                const existing = this.app.workspace.getLeavesOfType(VIEW_TYPE_NEI_CHAT);
+                if (existing.length === 0) {
+                    this.plugin.activateView();
+                }
+            }, 100);
         }
     }
 }

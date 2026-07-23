@@ -83,11 +83,13 @@ export async function sendChatRequest(
                 const errObj = parsedErr.error;
                 const providerName = errObj.metadata?.provider_name || "";
                 if (response.status === 502 || response.status === 503 || response.status === 500) {
-                    userFriendlyMsg = `⚠️ Сбой провайдера OpenRouter ${providerName ? `(${providerName})` : ''} [Код ${response.status}]. Сервер модели временно перегружен. Попробуйте сменить модель в настройках ⚙️ (например, на Claude 3.5 Sonnet или GPT-4o).`;
+                    userFriendlyMsg = `⚠️ Сбой провайдера OpenRouter ${providerName ? `(${providerName})` : ''} [Код ${response.status}]: Сервер выбранной модели временно перегружен или недоступен. Вы можете повторить запрос через пару секунд или временно выбрать другую модель в настройках ⚙️.`;
+                } else if (response.status === 429) {
+                    userFriendlyMsg = `⏳ Превышен лимит запросов (429 Rate Limit): Провайдер временно ограничил частоту вызовов. Подождите несколько секунд и попробуйте снова.`;
                 } else if (response.status === 401) {
-                    userFriendlyMsg = `🔑 Ошибка авторизации (401): Неверный API-ключ OpenRouter. Проверьте ключ в настройках ⚙️.`;
+                    userFriendlyMsg = `🔑 Ошибка авторизации (401): Неверный или отсутствующий API-ключ OpenRouter. Проверьте ваш ключ в настройках ⚙️.`;
                 } else if (errObj.message) {
-                    userFriendlyMsg = `Ошибка ИИ (${response.status}): ${errObj.message}`;
+                    userFriendlyMsg = `⚠️ Сообщение провайдера OpenRouter [Код ${response.status}]: ${errObj.message}`;
                 }
             }
         } catch (e) {}

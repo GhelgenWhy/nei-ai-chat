@@ -1,5 +1,5 @@
 import * as React from "react";
-import { App, Component, MarkdownRenderer, Notice } from "obsidian";
+import { App, Component, MarkdownRenderer, Notice, WorkspaceLeaf } from "obsidian";
 import { ChatMessage } from "../services/llm";
 import { AgentLoop, AgentStep } from "../services/agent/agentLoop";
 import { ChatStore, ChatSession } from "../services/chat/chatStore";
@@ -7,6 +7,7 @@ import { OpenRouterService, OpenRouterModelInfo } from "../services/openrouter";
 
 interface ChatPanelProps {
     app: App;
+    viewLeaf?: WorkspaceLeaf;
     settings: any;
     saveSettings: (settings: any) => Promise<void>;
 }
@@ -31,7 +32,36 @@ export const ObsidianMarkdown: React.FC<{ markdown: string; app: App }> = ({ mar
     return <div ref={containerRef} className="markdown-preview-view markdown-rendered" style={{ background: 'transparent', padding: 0 }} />;
 };
 
-export const ChatPanel: React.FC<ChatPanelProps> = ({ app, settings, saveSettings }) => {
+export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, saveSettings }) => {
+
+    const isMainTab = viewLeaf ? (viewLeaf.getRoot() === app.workspace.rootSplit) : false;
+
+    const handleToggleTabMode = async () => {
+        try {
+            const workspace = app.workspace;
+            if (isMainTab) {
+                // Move from main tab to right sidebar
+                const rightLeaf = workspace.getRightLeaf(false);
+                if (rightLeaf) {
+                    await rightLeaf.setViewState({ type: "nei-chat-view", active: true });
+                    workspace.revealLeaf(rightLeaf);
+                }
+                if (viewLeaf) {
+                    viewLeaf.detach();
+                }
+            } else {
+                // Move from sidebar to main editor tab
+                const tabLeaf = workspace.getLeaf("tab");
+                await tabLeaf.setViewState({ type: "nei-chat-view", active: true });
+                workspace.revealLeaf(tabLeaf);
+                if (viewLeaf) {
+                    viewLeaf.detach();
+                }
+            }
+        } catch (e: any) {
+            new Notice(`Ошибка переключения режима: ${e?.message || e}`);
+        }
+    };
     // Active Session State
     const [currentSession, setCurrentSession] = React.useState<ChatSession>(() => ChatStore.createNewSession());
     const [sessionsList, setSessionsList] = React.useState<{ id: string; title: string; updatedAt: string }[]>([]);
@@ -143,6 +173,17 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, settings, saveSetting
             handleNewChat();
         }
     };
+
+    const handleClearAllSessions = async () => {
+        if (confirm("Вы уверены, что хотите полностью очистить историю всех чатов?")) {
+            await ChatStore.clearAllSessions(app);
+            await refreshSessionsList();
+            handleNewChat();
+            new Notice("Вся история чатов очищена!");
+        }
+    };
+
+
 
     const handleSaveConfig = async () => {
         const newSettings = {
@@ -290,10 +331,17 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, settings, saveSetting
                     >
                         + Новый
                     </button>
+                    <button 
+                        onClick={handleToggleTabMode}
+                        title={isMainTab ? "Переместить чат в боковую панель" : "Переместить чат на главную вкладку"}
+                        style={{ background: 'var(--background-secondary)', border: '1px solid var(--background-modifier-border)', borderRadius: '4px', cursor: 'pointer', padding: '4px 8px', fontSize: '12px' }}
+                    >
+                        {isMainTab ? "↙️ В панель" : "🗔 Вкладка"}
+                    </button>
                 </div>
                 <button 
                     onClick={() => setShowConfig(!showConfig)}
-                    style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '14px', color: 'var(--text-muted)' }}
+                    style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '13px', color: 'var(--text-muted)' }}
                     title="Настройки моделей"
                 >
                     ⚙️ Настройки
@@ -302,9 +350,18 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, settings, saveSetting
 
             {/* Sessions History Drawer */}
             {showSessionsDrawer && (
-                <div style={{ position: 'absolute', top: '45px', left: '10px', right: '10px', zIndex: 10, background: 'var(--background-primary)', border: '1px solid var(--background-modifier-border)', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', maxHeight: '250px', overflowY: 'auto', padding: '8px' }}>
-                    <div style={{ fontWeight: 'bold', fontSize: '12px', marginBottom: '6px', color: 'var(--text-muted)', paddingBottom: '4px', borderBottom: '1px solid var(--background-modifier-border)' }}>
-                        История диалогов
+                <div style={{ position: 'absolute', top: '45px', left: '10px', right: '10px', zIndex: 10, background: 'var(--background-primary)', border: '1px solid var(--background-modifier-border)', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', maxHeight: '280px', overflowY: 'auto', padding: '8px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', paddingBottom: '4px', borderBottom: '1px solid var(--background-modifier-border)' }}>
+                        <span style={{ fontWeight: 'bold', fontSize: '12px', color: 'var(--text-muted)' }}>История диалогов</span>
+                        {sessionsList.length > 0 && (
+                            <button 
+                                onClick={handleClearAllSessions}
+                                title="Очистить всю историю диалогов"
+                                style={{ background: 'transparent', border: 'none', color: 'var(--text-error, #ff5555)', cursor: 'pointer', fontSize: '11px', fontWeight: '500' }}
+                            >
+                                🗑️ Очистить все
+                            </button>
+                        )}
                     </div>
                     {sessionsList.length === 0 ? (
                         <div style={{ fontSize: '12px', color: 'var(--text-muted)', padding: '6px' }}>Нет сохраненных чатов</div>
