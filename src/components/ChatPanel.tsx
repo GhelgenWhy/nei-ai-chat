@@ -3,7 +3,9 @@ import { App, Component, MarkdownRenderer, Notice, WorkspaceLeaf } from "obsidia
 import { ChatMessage } from "../services/llm";
 import { AgentLoop, AgentStep } from "../services/agent/agentLoop";
 import { ChatStore, ChatSession } from "../services/chat/chatStore";
-import { OpenRouterService, OpenRouterModelInfo } from "../services/openrouter";
+import { OpenRouterService, OpenRouterModelInfo, OpenRouterKeyInfo } from "../services/openrouter";
+import { ExecutionMode } from "../services/agent/intentRouter";
+import { SafetyMode } from "../services/agent/agentLoop";
 
 interface ChatPanelProps {
     app: App;
@@ -66,21 +68,27 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
     const [currentSession, setCurrentSession] = React.useState<ChatSession>(() => ChatStore.createNewSession());
     const [sessionsList, setSessionsList] = React.useState<{ id: string; title: string; updatedAt: string }[]>([]);
     
-    // UI State
+    // UI & Mode State
     const [input, setInput] = React.useState("");
+    const [attachedImages, setAttachedImages] = React.useState<string[]>([]);
+    const [executionMode, setExecutionMode] = React.useState<ExecutionMode>(settings.executionMode || "auto");
+    const [safetyMode, setSafetyMode] = React.useState<SafetyMode>(settings.safetyMode || "safe");
     const [loading, setLoading] = React.useState(false);
     const [activeSteps, setActiveSteps] = React.useState<AgentStep[]>([]);
     const [showSessionsDrawer, setShowSessionsDrawer] = React.useState(false);
     const [showConfig, setShowConfig] = React.useState(false);
+    const [pendingConfirmation, setPendingConfirmation] = React.useState<{ toolName: string; argsStr: string; resolve: (approved: boolean) => void } | null>(null);
 
     // Edit message inline state
     const [editingMsgIdx, setEditingMsgIdx] = React.useState<number | null>(null);
     const [editingText, setEditingText] = React.useState("");
 
-    // Local Config State
+    // Local Config & OpenRouter Stats State
     const [endpointUrl, setEndpointUrl] = React.useState(settings.endpointUrl || "https://openrouter.ai/api/v1");
     const [apiKey, setApiKey] = React.useState(settings.apiKey || "");
     const [model, setModel] = React.useState(settings.model || "google/gemini-2.5-flash");
+    const [visionModel, setVisionModel] = React.useState(settings.visionModel || "google/gemini-2.5-flash");
+    const [quickModel, setQuickModel] = React.useState(settings.quickModel || "google/gemini-2.5-flash");
     const [customModels, setCustomModels] = React.useState<string[]>(settings.customModels || [
         "google/gemini-2.5-flash",
         "anthropic/claude-3.5-sonnet",
@@ -90,11 +98,15 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
     ]);
     const [newModelInput, setNewModelInput] = React.useState("");
     const [activeModelDetails, setActiveModelDetails] = React.useState<OpenRouterModelInfo | null>(null);
+    const [keyInfo, setKeyInfo] = React.useState<OpenRouterKeyInfo | null>(null);
     const [verifyingModel, setVerifyingModel] = React.useState(false);
 
     React.useEffect(() => {
         refreshSessionsList();
         verifyActiveModel(model, apiKey);
+        if (apiKey) {
+            OpenRouterService.getKeyInfo(apiKey).then(setKeyInfo);
+        }
     }, []);
 
     const refreshSessionsList = async () => {
@@ -219,12 +231,17 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
     };
 
     // Execute agent loop for a query and history slice
-    const executeQuery = async (queryText: string, historySlice: ChatMessage[]) => {
+    const executeQuery = async (queryText: string, historySlice: ChatMessage[], imagesPayload?: string[]) => {
         setLoading(true);
         setActiveSteps([]);
         setEditingMsgIdx(null);
 
-        const userMsg: ChatMessage = { role: "user", content: queryText };
+        const currentImages = imagesPayload || attachedImages;
+        const userMsg: ChatMessage = { 
+            role: "user", 
+            content: queryText,
+            ...(currentImages.length > 0 ? { images: currentImages } : {})
+        };
         const updatedMessages = [...historySlice, userMsg];
         
         const updatedSession: ChatSession = {
@@ -236,26 +253,50 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
         };
 
         setCurrentSession(updatedSession);
+        setAttachedImages([]); // Reset input image attachments
 
         try {
+            // Select active model based on attachments / category
+            let targetModel = model || "google/gemini-2.5-flash";
+            if (currentImages.length > 0 && visionModel) {
+                targetModel = visionModel;
+            } else if (executionMode === "quick" && quickModel) {
+                targetModel = quickModel;
+            }
+
             const llmConfig = {
                 provider: "openrouter" as const,
                 endpointUrl: endpointUrl || "https://openrouter.ai/api/v1",
                 apiKey,
-                model: model || "google/gemini-2.5-flash"
+                model: targetModel
             };
 
-            const responseText = await AgentLoop.run({
+            const result = await AgentLoop.run({
                 app,
                 config: llmConfig,
                 userQuery: queryText,
                 chatHistory: historySlice,
+                images: currentImages,
+                executionMode,
+                safetyMode,
                 onStepUpdate: (steps) => {
                     setActiveSteps(steps);
+                },
+                onConfirmationRequired: (toolName, argsStr) => {
+                    return new Promise<boolean>((resolve) => {
+                        setPendingConfirmation({ toolName, argsStr, resolve });
+                    });
                 }
             });
 
-            const finalMessages: ChatMessage[] = [...updatedMessages, { role: "assistant", content: responseText }];
+            const assistantMsg: ChatMessage = { 
+                role: "assistant", 
+                content: result.responseText,
+                promptTokens: result.promptTokens,
+                completionTokens: result.completionTokens
+            };
+
+            const finalMessages: ChatMessage[] = [...updatedMessages, assistantMsg];
             const finalSession: ChatSession = {
                 ...updatedSession,
                 messages: finalMessages
@@ -264,6 +305,11 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
             setCurrentSession(finalSession);
             await ChatStore.saveSession(app, finalSession);
             await refreshSessionsList();
+
+            // Refresh key info balance after request
+            if (apiKey) {
+                OpenRouterService.getKeyInfo(apiKey).then(setKeyInfo);
+            }
         } catch (e: any) {
             console.error("[NEI Agent Error]", e);
             const errMessages: ChatMessage[] = [...updatedMessages, { role: "assistant", content: `❌ Ошибка выполнения агента: ${e?.message || e}` }];
@@ -276,6 +322,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
         } finally {
             setLoading(false);
             setActiveSteps([]);
+            setPendingConfirmation(null);
         }
     };
 
@@ -309,43 +356,101 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
         executeQuery(editingText.trim(), historyBefore);
     };
 
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (!files || files.length === 0) return;
+
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            if (file.type.startsWith("image/")) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    if (event.target?.result) {
+                        setAttachedImages(prev => [...prev, String(event.target?.result)]);
+                    }
+                };
+                reader.readAsDataURL(file);
+            } else {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    if (event.target?.result) {
+                        setInput(prev => prev + `\n\n=== ФАЙЛ: ${file.name} ===\n` + String(event.target?.result));
+                    }
+                };
+                reader.readAsText(file);
+            }
+        }
+    };
+
     return (
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '10px', boxSizing: 'border-box', position: 'relative' }}>
-            {/* Header / Session Bar */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', paddingBottom: '8px', borderBottom: '1px solid var(--background-modifier-border)' }}>
+            {/* Header / Session & Mode Controls Bar */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', paddingBottom: '8px', borderBottom: '1px solid var(--background-modifier-border)', flexWrap: 'wrap', gap: '6px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <button 
                         onClick={() => setShowSessionsDrawer(!showSessionsDrawer)}
                         title="История диалогов"
-                        style={{ background: 'var(--background-secondary)', border: '1px solid var(--background-modifier-border)', borderRadius: '4px', cursor: 'pointer', padding: '4px 8px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}
+                        style={{ background: 'var(--background-secondary)', border: '1px solid var(--background-modifier-border)', borderRadius: '4px', cursor: 'pointer', padding: '4px 8px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}
                     >
                         <span>💬</span>
-                        <span style={{ maxWidth: '110px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: '500' }}>
+                        <span style={{ maxWidth: '90px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: '500' }}>
                             {currentSession.title}
                         </span>
                     </button>
                     <button 
                         onClick={handleNewChat}
                         title="Новый чат"
-                        style={{ background: 'var(--interactive-accent)', color: 'var(--text-on-accent)', border: 'none', borderRadius: '4px', cursor: 'pointer', padding: '4px 8px', fontSize: '12px', fontWeight: 'bold' }}
+                        style={{ background: 'var(--interactive-accent)', color: 'var(--text-on-accent)', border: 'none', borderRadius: '4px', cursor: 'pointer', padding: '4px 8px', fontSize: '11px', fontWeight: 'bold' }}
                     >
                         + Новый
                     </button>
                     <button 
                         onClick={handleToggleTabMode}
                         title={isMainTab ? "Переместить чат в боковую панель" : "Переместить чат на главную вкладку"}
-                        style={{ background: 'var(--background-secondary)', border: '1px solid var(--background-modifier-border)', borderRadius: '4px', cursor: 'pointer', padding: '4px 8px', fontSize: '12px' }}
+                        style={{ background: 'var(--background-secondary)', border: '1px solid var(--background-modifier-border)', borderRadius: '4px', cursor: 'pointer', padding: '4px 6px', fontSize: '11px' }}
                     >
                         {isMainTab ? "↙️ В панель" : "🗔 Вкладка"}
                     </button>
                 </div>
-                <button 
-                    onClick={() => setShowConfig(!showConfig)}
-                    style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '13px', color: 'var(--text-muted)' }}
-                    title="Настройки моделей"
-                >
-                    ⚙️ Настройки
-                </button>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <select
+                        value={executionMode}
+                        onChange={(e) => {
+                            const val = e.target.value as ExecutionMode;
+                            setExecutionMode(val);
+                            saveSettings({ ...settings, executionMode: val });
+                        }}
+                        title="Режим ИИ: Auto (авто-выбор), Quick (без инструментов), Agent (многошаговый)"
+                        style={{ background: 'var(--background-secondary)', border: '1px solid var(--background-modifier-border)', borderRadius: '4px', fontSize: '11px', padding: '3px 4px', color: 'var(--text-normal)' }}
+                    >
+                        <option value="auto">⚡ Auto</option>
+                        <option value="quick">🚀 Quick</option>
+                        <option value="agent">🧠 Agent</option>
+                    </select>
+
+                    <select
+                        value={safetyMode}
+                        onChange={(e) => {
+                            const val = e.target.value as SafetyMode;
+                            setSafetyMode(val);
+                            saveSettings({ ...settings, safetyMode: val });
+                        }}
+                        title="Режим безопасности: Safe (подтверждение операций), Turbo (автономный)"
+                        style={{ background: 'var(--background-secondary)', border: '1px solid var(--background-modifier-border)', borderRadius: '4px', fontSize: '11px', padding: '3px 4px', color: 'var(--text-normal)' }}
+                    >
+                        <option value="safe">🛡️ Safe</option>
+                        <option value="turbo">🔥 Turbo</option>
+                    </select>
+
+                    <button 
+                        onClick={() => setShowConfig(!showConfig)}
+                        style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '12px', color: 'var(--text-muted)' }}
+                        title="Настройки моделей и API"
+                    >
+                        ⚙️
+                    </button>
+                </div>
             </div>
 
             {/* Sessions History Drawer */}
@@ -412,10 +517,61 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                         />
                     </div>
 
+                    {keyInfo && (
+                        <div style={{ background: 'var(--background-primary)', padding: '6px 10px', borderRadius: '6px', fontSize: '11px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span>💰 Использовано на ключе: <strong>${keyInfo.usage.toFixed(4)}</strong></span>
+                            <span>{keyInfo.isFreeTier ? '🟢 Free Tier' : '💳 Paid Tier'}</span>
+                        </div>
+                    )}
+
+                    {/* Model Category Slots */}
+                    <div style={{ background: 'var(--background-primary)', padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--background-modifier-border)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <div style={{ fontWeight: 'bold', fontSize: '11px' }}>Категории моделей (Мультимодальность):</div>
+                        
+                        <div>
+                            <label style={{ fontSize: '11px', display: 'block', color: 'var(--text-muted)' }}>1. Текст и инструменты (Primary):</label>
+                            <select 
+                                value={model} 
+                                onChange={(e) => handleSelectModel(e.target.value)}
+                                style={{ width: '100%', padding: '4px', borderRadius: '4px', fontSize: '11px', background: 'var(--background-secondary)', color: 'var(--text-normal)', border: '1px solid var(--background-modifier-border)' }}
+                            >
+                                {customModels.map(m => <option key={m} value={m}>{m}</option>)}
+                            </select>
+                        </div>
+
+                        <div>
+                            <label style={{ fontSize: '11px', display: 'block', color: 'var(--text-muted)' }}>2. Файлы и фото (Vision):</label>
+                            <select 
+                                value={visionModel} 
+                                onChange={(e) => {
+                                    setVisionModel(e.target.value);
+                                    saveSettings({ ...settings, visionModel: e.target.value });
+                                }}
+                                style={{ width: '100%', padding: '4px', borderRadius: '4px', fontSize: '11px', background: 'var(--background-secondary)', color: 'var(--text-normal)', border: '1px solid var(--background-modifier-border)' }}
+                            >
+                                {customModels.map(m => <option key={m} value={m}>{m}</option>)}
+                            </select>
+                        </div>
+
+                        <div>
+                            <label style={{ fontSize: '11px', display: 'block', color: 'var(--text-muted)' }}>3. Быстрый режим (Quick Mode Router):</label>
+                            <select 
+                                value={quickModel} 
+                                onChange={(e) => {
+                                    setQuickModel(e.target.value);
+                                    saveSettings({ ...settings, quickModel: e.target.value });
+                                }}
+                                style={{ width: '100%', padding: '4px', borderRadius: '4px', fontSize: '11px', background: 'var(--background-secondary)', color: 'var(--text-normal)', border: '1px solid var(--background-modifier-border)' }}
+                            >
+                                {customModels.map(m => <option key={m} value={m}>{m}</option>)}
+                            </select>
+                        </div>
+                    </div>
+
                     {/* Active Model Capabilities Card */}
                     <div style={{ background: 'var(--background-primary)', padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--background-modifier-border)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                            <strong style={{ fontSize: '12px' }}>Активная модель: {model}</strong>
+                            <strong style={{ fontSize: '11px' }}>Параметры: {model}</strong>
                             <button 
                                 onClick={() => verifyActiveModel(model, apiKey)}
                                 style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '11px', color: 'var(--interactive-accent)' }}
@@ -429,7 +585,10 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                         ) : activeModelDetails ? (
                             <div style={{ fontSize: '11px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
                                 <div style={{ color: activeModelDetails.supportsTools ? 'var(--text-success)' : 'var(--text-warning)', fontWeight: 'bold' }}>
-                                    {activeModelDetails.supportsTools ? '🟢 Нативный Tool Calling поддерживается' : '🟡 Текстовый режим вызова инструментов (JSON Fallback)'}
+                                    {activeModelDetails.supportsTools ? '🟢 Нативный Tool Calling поддерживается' : '🟡 Текстовый режим вызова инструментов'}
+                                </div>
+                                <div style={{ color: activeModelDetails.supportsVision ? 'var(--text-success)' : 'var(--text-muted)' }}>
+                                    {activeModelDetails.supportsVision ? '🖼️ Анализ фото/изображений доступен' : '📝 Только текстовый ввод'}
                                 </div>
                                 {activeModelDetails.contextLength && (
                                     <div>Контекстное окно: <strong>{activeModelDetails.contextLength.toLocaleString()} токенов</strong></div>
@@ -443,7 +602,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                     {/* User Custom Models List */}
                     <div>
                         <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500' }}>Ваши сохраненные модели:</label>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '120px', overflowY: 'auto', marginBottom: '6px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '100px', overflowY: 'auto', marginBottom: '6px' }}>
                             {customModels.map(m => (
                                 <div 
                                     key={m}
@@ -505,9 +664,10 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                 {currentSession.messages.length === 0 && (
                     <div style={{ textAlign: 'center', color: 'var(--text-muted)', marginTop: '30px', fontSize: '13px' }}>
                         👋 **NEI Super-Agent** готов к работе!<br/><br/>
-                        • Прямой доступ к заметочникам и папкам (`tasks`, `Projects`)<br/>
-                        • Редактирование, переотправка и копирование сообщений<br/>
-                        • Проверка возможностей выбранной модели через OpenRouter API
+                        • Прямой доступ к заметочкам и папкам (`tasks`, `Projects`)<br/>
+                        • Режимы **Quick Mode** и **Agent Mode** с авто-роутингом<br/>
+                        • Анализ изображений и поддержка Safe/Turbo безопасности<br/>
+                        • Отслеживание токенов (Вход/Выход) для всех ответов
                     </div>
                 )}
 
@@ -555,6 +715,13 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                             ) : (
                                 /* Standard User Message Display */
                                 <div>
+                                    {msg.images && msg.images.length > 0 && (
+                                        <div style={{ display: 'flex', gap: '4px', marginBottom: '6px', flexWrap: 'wrap' }}>
+                                            {msg.images.map((img, i) => (
+                                                <img key={i} src={img} style={{ width: '60px', height: '60px', borderRadius: '4px', objectFit: 'cover' }} />
+                                            ))}
+                                        </div>
+                                    )}
                                     <div style={{ whiteSpace: 'pre-wrap' }}>{msg.content}</div>
                                     <div style={{ display: 'flex', gap: '8px', marginTop: '6px', justifyContent: 'flex-end', fontSize: '11px', opacity: 0.85 }}>
                                         <button
@@ -586,6 +753,19 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                             /* Assistant Message Display */
                             <div>
                                 <ObsidianMarkdown markdown={msg.content || ""} app={app} />
+                                
+                                {/* Per-message Input/Output Token Counters */}
+                                {(msg.promptTokens !== undefined || msg.completionTokens !== undefined) && (
+                                    <div style={{ display: 'flex', gap: '6px', marginTop: '6px', fontSize: '10px', color: 'var(--text-muted)', borderTop: '1px solid var(--background-modifier-border)', paddingTop: '4px' }}>
+                                        <span style={{ background: 'var(--background-primary)', padding: '2px 6px', borderRadius: '4px' }}>
+                                            📥 Вход: {msg.promptTokens || 0} ток.
+                                        </span>
+                                        <span style={{ background: 'var(--background-primary)', padding: '2px 6px', borderRadius: '4px' }}>
+                                            📤 Выход: {msg.completionTokens || 0} ток.
+                                        </span>
+                                    </div>
+                                )}
+
                                 <div style={{ display: 'flex', gap: '10px', marginTop: '8px', alignItems: 'center', fontSize: '11px' }}>
                                     <button 
                                         onClick={() => handleCopyText(msg.content || "")}
@@ -607,6 +787,33 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                     </div>
                 ))}
 
+                {/* Safe Mode Confirmation Prompt */}
+                {pendingConfirmation && (
+                    <div style={{ background: 'var(--background-secondary-alt)', border: '2px solid var(--interactive-accent)', borderRadius: '8px', padding: '10px', fontSize: '12px' }}>
+                        <div style={{ fontWeight: 'bold', color: 'var(--text-warning, #ffaa00)', marginBottom: '4px' }}>
+                            ⚠️ Подтверждение действия (Safe Mode)
+                        </div>
+                        <div>Агент запрашивает выполнение потенциально опасного инструмента:</div>
+                        <div style={{ fontFamily: 'monospace', background: 'var(--background-primary)', padding: '4px 6px', borderRadius: '4px', margin: '6px 0', wordBreak: 'break-all' }}>
+                            {pendingConfirmation.toolName}({pendingConfirmation.argsStr})
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '8px' }}>
+                            <button
+                                onClick={() => pendingConfirmation.resolve(false)}
+                                style={{ padding: '4px 10px', fontSize: '11px', background: 'var(--background-primary)', border: '1px solid var(--background-modifier-border)', borderRadius: '4px', cursor: 'pointer' }}
+                            >
+                                ❌ Отклонить
+                            </button>
+                            <button
+                                onClick={() => pendingConfirmation.resolve(true)}
+                                style={{ padding: '4px 10px', fontSize: '11px', background: 'var(--interactive-accent)', color: 'var(--text-on-accent)', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+                            >
+                                ✅ Разрешить
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 {/* Active Agent Steps Execution Badges */}
                 {loading && (
                     <div style={{ background: 'var(--background-secondary)', padding: '10px', borderRadius: '8px', fontSize: '12px', borderLeft: '3px solid var(--interactive-accent)' }}>
@@ -625,29 +832,61 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                 )}
             </div>
 
-            {/* Input Form */}
-            <div style={{ display: 'flex', gap: '8px' }}>
-                <textarea
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !e.shiftKey) {
-                            e.preventDefault();
-                            handleSendMessage();
-                        }
-                    }}
-                    placeholder="Задайте задачу агенту... (Enter для отправки)"
-                    disabled={loading}
-                    rows={2}
-                    style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid var(--background-modifier-border)', background: 'var(--background-primary)', color: 'var(--text-normal)', resize: 'none', fontSize: '13px' }}
-                />
-                <button
-                    onClick={handleSendMessage}
-                    disabled={loading || !input.trim()}
-                    style={{ padding: '0 16px', background: 'var(--interactive-accent)', color: 'var(--text-on-accent)', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}
-                >
-                    {loading ? '...' : 'Отправить'}
-                </button>
+            {/* Input Form with Attachment Preview */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                {attachedImages.length > 0 && (
+                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                        {attachedImages.map((img, i) => (
+                            <div key={i} style={{ position: 'relative', width: '44px', height: '44px', borderRadius: '4px', overflow: 'hidden', border: '1px solid var(--background-modifier-border)' }}>
+                                <img src={img} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                <button
+                                    onClick={() => setAttachedImages(prev => prev.filter((_, idx) => idx !== i))}
+                                    style={{ position: 'absolute', top: 0, right: 0, background: 'rgba(0,0,0,0.6)', color: '#fff', border: 'none', cursor: 'pointer', fontSize: '9px', padding: '1px 3px' }}
+                                >
+                                    ✕
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                    <label 
+                        title="Прикрепить фото или текстовый файл"
+                        style={{ padding: '6px 8px', background: 'var(--background-secondary)', border: '1px solid var(--background-modifier-border)', borderRadius: '6px', cursor: 'pointer', fontSize: '14px' }}
+                    >
+                        📎
+                        <input 
+                            type="file" 
+                            accept="image/*,.txt,.md,.json,.js,.ts"
+                            multiple
+                            onChange={handleFileSelect}
+                            style={{ display: 'none' }} 
+                        />
+                    </label>
+
+                    <textarea
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                handleSendMessage();
+                            }
+                        }}
+                        placeholder="Задайте задачу агенту... (Enter для отправки)"
+                        disabled={loading}
+                        rows={2}
+                        style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid var(--background-modifier-border)', background: 'var(--background-primary)', color: 'var(--text-normal)', resize: 'none', fontSize: '13px' }}
+                    />
+                    <button
+                        onClick={handleSendMessage}
+                        disabled={loading || (!input.trim() && attachedImages.length === 0)}
+                        style={{ padding: '0 14px', height: '44px', background: 'var(--interactive-accent)', color: 'var(--text-on-accent)', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}
+                    >
+                        {loading ? '...' : 'Отправить'}
+                    </button>
+                </div>
             </div>
         </div>
     );

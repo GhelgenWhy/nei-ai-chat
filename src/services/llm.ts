@@ -6,6 +6,10 @@ export interface ChatMessage {
     name?: string;
     tool_call_id?: string;
     tool_calls?: ToolCall[];
+    images?: string[];
+    promptTokens?: number;
+    completionTokens?: number;
+    cost?: number;
 }
 
 export interface LlmConfig {
@@ -19,6 +23,11 @@ export interface LlmResponse {
     content: string;
     tool_calls?: ToolCall[];
     reasoning?: string;
+    usage?: {
+        promptTokens: number;
+        completionTokens: number;
+        totalTokens: number;
+    };
 }
 
 /**
@@ -46,14 +55,28 @@ export async function sendChatRequest(
         headers["X-Title"] = "NEI AI Assistant Obsidian Plugin";
     }
 
-    // Clean messages to prevent null content issues on OpenRouter
-    const cleanMessages = messages.map(m => ({
-        role: m.role,
-        content: m.content || "",
-        ...(m.name ? { name: m.name } : {}),
-        ...(m.tool_call_id ? { tool_call_id: m.tool_call_id } : {}),
-        ...(m.tool_calls ? { tool_calls: m.tool_calls } : {})
-    }));
+    // Clean messages & support image arrays
+    const cleanMessages = messages.map(m => {
+        let messageContent: any = m.content || "";
+        if (m.images && m.images.length > 0) {
+            const parts: any[] = [{ type: "text", text: m.content || "" }];
+            for (const img of m.images) {
+                parts.push({
+                    type: "image_url",
+                    image_url: { url: img }
+                });
+            }
+            messageContent = parts;
+        }
+
+        return {
+            role: m.role,
+            content: messageContent,
+            ...(m.name ? { name: m.name } : {}),
+            ...(m.tool_call_id ? { tool_call_id: m.tool_call_id } : {}),
+            ...(m.tool_calls ? { tool_calls: m.tool_calls } : {})
+        };
+    });
 
     const body: Record<string, any> = {
         model: config.model,
@@ -107,9 +130,16 @@ export async function sendChatRequest(
     const tool_calls = choiceMessage.tool_calls || undefined;
     const reasoning = choiceMessage.reasoning || choiceMessage.reasoning_content || undefined;
 
+    const usage = data.usage ? {
+        promptTokens: Number(data.usage.prompt_tokens || 0),
+        completionTokens: Number(data.usage.completion_tokens || 0),
+        totalTokens: Number(data.usage.total_tokens || 0)
+    } : undefined;
+
     return {
         content,
         tool_calls,
-        reasoning
+        reasoning,
+        usage
     };
 }

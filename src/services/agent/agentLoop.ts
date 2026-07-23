@@ -5,6 +5,9 @@ import { MemoryStore } from "../memory/memoryStore";
 import { SkillsLoader } from "../skills/skillsLoader";
 import { resolveContext } from "../context";
 
+import { IntentRouter, ExecutionMode } from "./intentRouter";
+import { ContextManager } from "./contextManager";
+
 export interface AgentStep {
     id: string;
     type: "reasoning" | "tool_call" | "tool_result" | "thought";
@@ -13,23 +16,69 @@ export interface AgentStep {
     status: "running" | "completed" | "failed";
 }
 
+export type SafetyMode = "safe" | "turbo";
+
 export interface AgentLoopOptions {
     app: App;
     config: LlmConfig;
     userQuery: string;
     chatHistory: ChatMessage[];
+    images?: string[];
+    executionMode?: ExecutionMode;
+    safetyMode?: SafetyMode;
     onStepUpdate?: (steps: AgentStep[]) => void;
+    onConfirmationRequired?: (toolName: string, argsStr: string) => Promise<boolean>;
     maxIterations?: number;
 }
 
+export interface AgentLoopResult {
+    responseText: string;
+    promptTokens: number;
+    completionTokens: number;
+    executionModeUsed: "quick" | "agent";
+}
+
 export class AgentLoop {
-    public static async run(options: AgentLoopOptions): Promise<string> {
-        const { app, config, userQuery, chatHistory, onStepUpdate, maxIterations = 6 } = options;
+    public static async run(options: AgentLoopOptions): Promise<AgentLoopResult> {
+        const { 
+            app, 
+            config, 
+            userQuery, 
+            chatHistory, 
+            images,
+            executionMode = "auto", 
+            safetyMode = "safe",
+            onStepUpdate, 
+            onConfirmationRequired,
+            maxIterations = 6 
+        } = options;
         const steps: AgentStep[] = [];
+
+        let totalPromptTokens = 0;
+        let totalCompletionTokens = 0;
 
         const notifySteps = () => {
             if (onStepUpdate) onStepUpdate([...steps]);
         };
+
+        // Determine actual execution mode using IntentRouter if set to 'auto'
+        let actualMode: "quick" | "agent" = "agent";
+        if (executionMode === "quick") {
+            actualMode = "quick";
+        } else if (executionMode === "agent") {
+            actualMode = "agent";
+        } else {
+            const decision = IntentRouter.classifyIntent(userQuery, Boolean(images && images.length > 0));
+            actualMode = decision.mode;
+            steps.push({
+                id: "intent-routing-step",
+                type: "thought",
+                title: `Маршрутизация режима: ${actualMode === "quick" ? "Быстрый ответ (Quick)" : "Агентный анализ (Agent)"}`,
+                detail: decision.reason,
+                status: "completed"
+            });
+            notifySteps();
+        }
 
         // 1. Resolve Context & Memory
         const vaultContext = await resolveContext(app, userQuery, true);
@@ -86,7 +135,13 @@ export class AgentLoop {
             notifySteps();
         }
 
-        // 3. Build System Prompt
+        // 3. Build User Message (with optional images)
+        const userMsg: ChatMessage = { role: "user", content: userQuery };
+        if (images && images.length > 0) {
+            userMsg.images = images;
+        }
+
+        // 4. Build System Prompt & Prune History (ContextManager)
         let systemPrompt = `Ты — сверхагентный ИИ-помощник NEI в Obsidian.
 Твоя цель: давать исчерпывающие, глубокие и структурированные ответы.
 
@@ -114,12 +169,40 @@ export class AgentLoop {
             systemPrompt += prefetchedContext;
         }
 
+        const prunedHistory = ContextManager.pruneHistory(chatHistory, 6);
+
         const messages: ChatMessage[] = [
             { role: "system", content: systemPrompt },
-            ...chatHistory.filter(m => m.role !== "system").slice(-4),
-            { role: "user", content: userQuery }
+            ...prunedHistory.filter(m => m.role !== "system"),
+            userMsg
         ];
 
+        // 5. QUICK MODE (Single Direct Turn)
+        if (actualMode === "quick") {
+            steps.push({
+                id: "quick-exec-step",
+                type: "thought",
+                title: "Прямой отклик (Quick Mode)",
+                status: "completed"
+            });
+            notifySteps();
+
+            const response = await sendChatRequest(config, messages, undefined);
+            if (response.usage) {
+                totalPromptTokens += response.usage.promptTokens;
+                totalCompletionTokens += response.usage.completionTokens;
+            }
+
+            const responseText = response.content || "ИИ не вернул текст ответа.";
+            return {
+                responseText,
+                promptTokens: totalPromptTokens,
+                completionTokens: totalCompletionTokens,
+                executionModeUsed: "quick"
+            };
+        }
+
+        // 6. AGENT MODE (Multi-Iteration Loop with Tools)
         const tools = defaultToolRegistry.getToolDefinitions();
         let iteration = 0;
         let finalResponseText = "";
@@ -133,6 +216,10 @@ export class AgentLoop {
             const activeTools = isLastIteration ? undefined : tools;
 
             const response = await sendChatRequest(config, messages, activeTools);
+            if (response.usage) {
+                totalPromptTokens += response.usage.promptTokens;
+                totalCompletionTokens += response.usage.completionTokens;
+            }
 
             if (response.reasoning) {
                 steps.push({
@@ -172,19 +259,31 @@ export class AgentLoop {
                     let trimmedResult = "";
                     let isError = false;
 
-                    if (executedCallsMap[callKey] > 2) {
-                        trimmedResult = `[ВНИМАНИЕ СИСТЕМЫ NEI]: Этот инструмент (${toolName}) с такими аргументами уже вызывался ${executedCallsMap[callKey] - 1} раза. Повторный вызов отменен. Сформируйте окончательный ответ пользователю на основе уже имеющихся сведений.`;
-                        isError = true;
-                    } else {
-                        const execResult = await defaultToolRegistry.executeTool(
-                            app,
-                            toolCall.id,
-                            toolName,
-                            toolArgsStr
-                        );
-                        const rawRes = typeof execResult.result === "string" ? execResult.result : JSON.stringify(execResult.result);
-                        trimmedResult = rawRes.length > 12000 ? rawRes.substring(0, 12000) + "\n\n*(Содержимое обрезано по лимиту 12,000 символов)*" : rawRes;
-                        isError = execResult.isError || false;
+                    // Safety Mode Check for Destructive Operations
+                    const isDestructive = toolName === "delete_note" || (toolName === "create_note" && toolArgsStr.includes("overwrite"));
+                    if (safetyMode === "safe" && isDestructive && onConfirmationRequired) {
+                        const approved = await onConfirmationRequired(toolName, toolArgsStr);
+                        if (!approved) {
+                            trimmedResult = `[ОТМЕНЕНО ПОЛЬЗОВАТЕЛЕМ]: Выполнение действия ${toolName} отменено пользователем в режиме Safe Mode.`;
+                            isError = true;
+                        }
+                    }
+
+                    if (!trimmedResult) {
+                        if (executedCallsMap[callKey] > 2) {
+                            trimmedResult = `[ВНИМАНИЕ СИСТЕМЫ NEI]: Этот инструмент (${toolName}) с такими аргументами уже вызывался ${executedCallsMap[callKey] - 1} раза. Повторный вызов отменен. Сформируйте окончательный ответ пользователю на основе уже имеющихся сведений.`;
+                            isError = true;
+                        } else {
+                            const execResult = await defaultToolRegistry.executeTool(
+                                app,
+                                toolCall.id,
+                                toolName,
+                                toolArgsStr
+                            );
+                            const rawRes = typeof execResult.result === "string" ? execResult.result : JSON.stringify(execResult.result);
+                            trimmedResult = ContextManager.compactText(rawRes, 12000);
+                            isError = execResult.isError || false;
+                        }
                     }
 
                     const currentStep = steps.find(s => s.id === stepId);
@@ -238,7 +337,7 @@ export class AgentLoop {
                             JSON.stringify(parsedTool.args)
                         );
                         const rawRes = typeof execResult.result === "string" ? execResult.result : JSON.stringify(execResult.result);
-                        trimmedResult = rawRes.length > 12000 ? rawRes.substring(0, 12000) + "\n\n*(Содержимое обрезано по лимиту 12,000 символов)*" : rawRes;
+                        trimmedResult = ContextManager.compactText(rawRes, 12000);
                         isError = execResult.isError || false;
                     }
                     const currentStep = steps.find(s => s.id === `tool-${callId}`);
@@ -293,7 +392,12 @@ export class AgentLoop {
             finalResponseText = "Агент завершил анализ запроса.";
         }
 
-        return finalResponseText;
+        return {
+            responseText: finalResponseText,
+            promptTokens: totalPromptTokens,
+            completionTokens: totalCompletionTokens,
+            executionModeUsed: "agent"
+        };
     }
 
     private static containsJsonToolCall(text: string): boolean {

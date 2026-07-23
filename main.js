@@ -24496,13 +24496,26 @@ async function sendChatRequest(config, messages, tools) {
     headers["HTTP-Referer"] = "https://github.com/GhelgenWhy/NEI";
     headers["X-Title"] = "NEI AI Assistant Obsidian Plugin";
   }
-  const cleanMessages = messages.map((m) => ({
-    role: m.role,
-    content: m.content || "",
-    ...m.name ? { name: m.name } : {},
-    ...m.tool_call_id ? { tool_call_id: m.tool_call_id } : {},
-    ...m.tool_calls ? { tool_calls: m.tool_calls } : {}
-  }));
+  const cleanMessages = messages.map((m) => {
+    let messageContent = m.content || "";
+    if (m.images && m.images.length > 0) {
+      const parts = [{ type: "text", text: m.content || "" }];
+      for (const img of m.images) {
+        parts.push({
+          type: "image_url",
+          image_url: { url: img }
+        });
+      }
+      messageContent = parts;
+    }
+    return {
+      role: m.role,
+      content: messageContent,
+      ...m.name ? { name: m.name } : {},
+      ...m.tool_call_id ? { tool_call_id: m.tool_call_id } : {},
+      ...m.tool_calls ? { tool_calls: m.tool_calls } : {}
+    };
+  });
   const body = {
     model: config.model,
     messages: cleanMessages
@@ -24547,10 +24560,16 @@ async function sendChatRequest(config, messages, tools) {
   const content = choiceMessage.content || "";
   const tool_calls = choiceMessage.tool_calls || void 0;
   const reasoning = choiceMessage.reasoning || choiceMessage.reasoning_content || void 0;
+  const usage = data.usage ? {
+    promptTokens: Number(data.usage.prompt_tokens || 0),
+    completionTokens: Number(data.usage.completion_tokens || 0),
+    totalTokens: Number(data.usage.total_tokens || 0)
+  } : void 0;
   return {
     content,
     tool_calls,
-    reasoning
+    reasoning,
+    usage
   };
 }
 
@@ -25714,15 +25733,117 @@ ${res.content.substring(0, 1500)}${res.content.length > 1500 ? "..." : ""}
   };
 }
 
+// src/services/agent/intentRouter.ts
+var IntentRouter = class {
+  /**
+   * Determines whether a user prompt should execute in Quick Mode (1 turn, no tools)
+   * or Agent Mode (multi-turn tool execution loop).
+   */
+  static classifyIntent(userQuery, hasAttachments = false) {
+    if (hasAttachments) {
+      return { mode: "agent", reason: "\u041F\u0440\u0438\u043A\u0440\u0435\u043F\u043B\u0435\u043D\u044B \u0444\u0430\u0439\u043B\u044B/\u0438\u0437\u043E\u0431\u0440\u0430\u0436\u0435\u043D\u0438\u044F \u0434\u043B\u044F \u0430\u043D\u0430\u043B\u0438\u0437\u0430" };
+    }
+    const queryLower = userQuery.trim().toLowerCase();
+    const agentKeywords = [
+      "\u0441\u043A\u0430\u043D\u0438\u0440\u0443\u0439",
+      "\u0441\u043A\u0430\u043D",
+      "\u043F\u0440\u043E\u0430\u043D\u0430\u043B\u0438\u0437\u0438\u0440\u0443\u0439 \u0440\u0435\u043F\u043E\u0437\u0438\u0442\u043E\u0440\u0438\u0439",
+      "\u043F\u0440\u043E\u0430\u043D\u0430\u043B\u0438\u0437\u0438\u0440\u0443\u0439 \u0441\u0430\u0439\u0442",
+      "\u0432\u0435\u0431-\u0441\u0430\u0439\u0442",
+      "\u043D\u0430\u0439\u0434\u0438 \u0432 \u0432\u0430\u0443\u043B\u0442\u0435",
+      "\u043F\u0440\u043E\u0432\u0435\u0440\u044C \u0432\u0441\u0435 \u0437\u0430\u043C\u0435\u0442\u043A\u0438",
+      "\u0441\u0440\u0430\u0432\u043D\u0438 \u0437\u0430\u043C\u0435\u0442\u043A\u0438",
+      "\u043D\u0430\u0439\u0434\u0438 \u0438 \u043E\u0431\u043D\u043E\u0432\u0438",
+      "\u0441\u0433\u0440\u0443\u043F\u043F\u0438\u0440\u0443\u0439 \u0432\u0441\u0435 \u0442\u0430\u0441\u043A\u0438",
+      "search",
+      "scan vault",
+      "analyze repo",
+      "check all files"
+    ];
+    for (const kw of agentKeywords) {
+      if (queryLower.includes(kw)) {
+        return { mode: "agent", reason: `\u041E\u0431\u043D\u0430\u0440\u0443\u0436\u0435\u043D \u0437\u0430\u043F\u0440\u043E\u0441 \u043D\u0430 \u043C\u043D\u043E\u0433\u043E\u0448\u0430\u0433\u043E\u0432\u044B\u0439 \u0430\u043D\u0430\u043B\u0438\u0437 (${kw})` };
+      }
+    }
+    const isDirectNoteCreation = (queryLower.startsWith("\u0441\u043E\u0437\u0434\u0430\u0439 \u0437\u0430\u043C\u0435\u0442\u043A\u0443") || queryLower.startsWith("\u043D\u0430\u043F\u0438\u0448\u0438 \u0437\u0430\u043C\u0435\u0442\u043A\u0443")) && !queryLower.includes("\u0441\u043A\u0430\u043D\u0438\u0440\u0443\u0439") && !queryLower.includes("\u043D\u0430\u0439\u0434\u0438 \u0432");
+    const isShortQuestion = userQuery.length < 120 && (queryLower.startsWith("\u0447\u0442\u043E \u0442\u0430\u043A\u043E\u0435") || queryLower.startsWith("\u043A\u0430\u043A \u0441\u0434\u0435\u043B\u0430\u0442\u044C") || queryLower.startsWith("\u043E\u0431\u044A\u044F\u0441\u043D\u0438") || queryLower.startsWith("\u043F\u0435\u0440\u0435\u0432\u0435\u0434\u0438") || queryLower.startsWith("\u043D\u0430\u043F\u0438\u0448\u0438 \u043A\u043E\u0434") || queryLower.startsWith("\u043F\u0435\u0440\u0435\u0444\u0440\u0430\u0437\u0438\u0440\u0443\u0439"));
+    if (isDirectNoteCreation || isShortQuestion) {
+      return { mode: "quick", reason: "\u041F\u0440\u043E\u0441\u0442\u0430\u044F 1-\u0448\u0430\u0433\u043E\u0432\u0430\u044F \u0437\u0430\u0434\u0430\u0447\u0430 (\u0431\u044B\u0441\u0442\u0440\u044B\u0439 \u043E\u0442\u043A\u043B\u0438\u043A \u0431\u0435\u0437 \u0432\u044B\u0437\u043E\u0432\u0430 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u043E\u0432)" };
+    }
+    if (userQuery.length > 200) {
+      return { mode: "agent", reason: "\u0420\u0430\u0437\u0432\u0435\u0440\u043D\u0443\u0442\u044B\u0439 \u0437\u0430\u043F\u0440\u043E\u0441 \u0442\u0440\u0435\u0431\u0443\u0435\u0442 \u0430\u0433\u0435\u043D\u0442\u043D\u044B\u0445 \u0440\u0430\u0441\u0441\u0443\u0436\u0434\u0435\u043D\u0438\u0439" };
+    }
+    return { mode: "quick", reason: "\u0421\u0442\u0430\u043D\u0434\u0430\u0440\u0442\u043D\u044B\u0439 \u0432\u043E\u043F\u0440\u043E\u0441 \u0434\u043B\u044F \u043F\u0440\u044F\u043C\u043E\u0433\u043E \u043E\u0442\u0432\u0435\u0442\u0430" };
+  }
+};
+
+// src/services/agent/contextManager.ts
+var ContextManager = class {
+  /**
+   * Limits chat history to a maximum number of turns (sliding window) to prevent token explosion.
+   */
+  static pruneHistory(messages, maxTurns = 6) {
+    const systemMsgs = messages.filter((m) => m.role === "system");
+    const nonSystemMsgs = messages.filter((m) => m.role !== "system");
+    const trimmedNonSystem = nonSystemMsgs.slice(-maxTurns);
+    return [...systemMsgs, ...trimmedNonSystem];
+  }
+  /**
+   * Compacts tool outputs and long file snippets to save tokens.
+   */
+  static compactText(text, maxLength = 8e3) {
+    if (!text || text.length <= maxLength)
+      return text;
+    const half = Math.floor(maxLength / 2);
+    const head = text.substring(0, half);
+    const tail = text.substring(text.length - half);
+    return `${head}
+
+... [\u0421\u0436\u0430\u0442\u043E \u0441\u0438\u0441\u0442\u0435\u043C\u043E\u0439 NEI: \u043F\u0440\u043E\u043F\u0443\u0449\u0435\u043D\u043E ${text.length - maxLength} \u0441\u0438\u043C\u0432\u043E\u043B\u043E\u0432 \u0434\u043B\u044F \u044D\u043A\u043E\u043D\u043E\u043C\u0438\u0438 \u0442\u043E\u043A\u0435\u043D\u043E\u0432] ...
+
+${tail}`;
+  }
+};
+
 // src/services/agent/agentLoop.ts
 var AgentLoop = class {
   static async run(options) {
-    const { app, config, userQuery, chatHistory, onStepUpdate, maxIterations = 6 } = options;
+    const {
+      app,
+      config,
+      userQuery,
+      chatHistory,
+      images,
+      executionMode = "auto",
+      safetyMode = "safe",
+      onStepUpdate,
+      onConfirmationRequired,
+      maxIterations = 6
+    } = options;
     const steps = [];
+    let totalPromptTokens = 0;
+    let totalCompletionTokens = 0;
     const notifySteps = () => {
       if (onStepUpdate)
         onStepUpdate([...steps]);
     };
+    let actualMode = "agent";
+    if (executionMode === "quick") {
+      actualMode = "quick";
+    } else if (executionMode === "agent") {
+      actualMode = "agent";
+    } else {
+      const decision = IntentRouter.classifyIntent(userQuery, Boolean(images && images.length > 0));
+      actualMode = decision.mode;
+      steps.push({
+        id: "intent-routing-step",
+        type: "thought",
+        title: `\u041C\u0430\u0440\u0448\u0440\u0443\u0442\u0438\u0437\u0430\u0446\u0438\u044F \u0440\u0435\u0436\u0438\u043C\u0430: ${actualMode === "quick" ? "\u0411\u044B\u0441\u0442\u0440\u044B\u0439 \u043E\u0442\u0432\u0435\u0442 (Quick)" : "\u0410\u0433\u0435\u043D\u0442\u043D\u044B\u0439 \u0430\u043D\u0430\u043B\u0438\u0437 (Agent)"}`,
+        detail: decision.reason,
+        status: "completed"
+      });
+      notifySteps();
+    }
     const vaultContext = await resolveContext(app, userQuery, true);
     const memory = await MemoryStore.loadMemory(app);
     const agentsRules = await MemoryStore.loadAgentsRules(app);
@@ -25775,6 +25896,10 @@ ${prefetchedBlocks.join("\n\n")}
       });
       notifySteps();
     }
+    const userMsg = { role: "user", content: userQuery };
+    if (images && images.length > 0) {
+      userMsg.images = images;
+    }
     let systemPrompt = `\u0422\u044B \u2014 \u0441\u0432\u0435\u0440\u0445\u0430\u0433\u0435\u043D\u0442\u043D\u044B\u0439 \u0418\u0418-\u043F\u043E\u043C\u043E\u0449\u043D\u0438\u043A NEI \u0432 Obsidian.
 \u0422\u0432\u043E\u044F \u0446\u0435\u043B\u044C: \u0434\u0430\u0432\u0430\u0442\u044C \u0438\u0441\u0447\u0435\u0440\u043F\u044B\u0432\u0430\u044E\u0449\u0438\u0435, \u0433\u043B\u0443\u0431\u043E\u043A\u0438\u0435 \u0438 \u0441\u0442\u0440\u0443\u043A\u0442\u0443\u0440\u0438\u0440\u043E\u0432\u0430\u043D\u043D\u044B\u0435 \u043E\u0442\u0432\u0435\u0442\u044B.
 
@@ -25807,11 +25932,33 @@ ${s.description}`).join("\n")}
     if (prefetchedContext) {
       systemPrompt += prefetchedContext;
     }
+    const prunedHistory = ContextManager.pruneHistory(chatHistory, 6);
     const messages = [
       { role: "system", content: systemPrompt },
-      ...chatHistory.filter((m) => m.role !== "system").slice(-4),
-      { role: "user", content: userQuery }
+      ...prunedHistory.filter((m) => m.role !== "system"),
+      userMsg
     ];
+    if (actualMode === "quick") {
+      steps.push({
+        id: "quick-exec-step",
+        type: "thought",
+        title: "\u041F\u0440\u044F\u043C\u043E\u0439 \u043E\u0442\u043A\u043B\u0438\u043A (Quick Mode)",
+        status: "completed"
+      });
+      notifySteps();
+      const response = await sendChatRequest(config, messages, void 0);
+      if (response.usage) {
+        totalPromptTokens += response.usage.promptTokens;
+        totalCompletionTokens += response.usage.completionTokens;
+      }
+      const responseText = response.content || "\u0418\u0418 \u043D\u0435 \u0432\u0435\u0440\u043D\u0443\u043B \u0442\u0435\u043A\u0441\u0442 \u043E\u0442\u0432\u0435\u0442\u0430.";
+      return {
+        responseText,
+        promptTokens: totalPromptTokens,
+        completionTokens: totalCompletionTokens,
+        executionModeUsed: "quick"
+      };
+    }
     const tools = defaultToolRegistry.getToolDefinitions();
     let iteration = 0;
     let finalResponseText = "";
@@ -25822,6 +25969,10 @@ ${s.description}`).join("\n")}
       const isLastIteration = iteration === maxIterations;
       const activeTools = isLastIteration ? void 0 : tools;
       const response = await sendChatRequest(config, messages, activeTools);
+      if (response.usage) {
+        totalPromptTokens += response.usage.promptTokens;
+        totalCompletionTokens += response.usage.completionTokens;
+      }
       if (response.reasoning) {
         steps.push({
           id: `reasoning-${iteration}`,
@@ -25854,19 +26005,29 @@ ${s.description}`).join("\n")}
           notifySteps();
           let trimmedResult = "";
           let isError = false;
-          if (executedCallsMap[callKey] > 2) {
-            trimmedResult = `[\u0412\u041D\u0418\u041C\u0410\u041D\u0418\u0415 \u0421\u0418\u0421\u0422\u0415\u041C\u042B NEI]: \u042D\u0442\u043E\u0442 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442 (${toolName}) \u0441 \u0442\u0430\u043A\u0438\u043C\u0438 \u0430\u0440\u0433\u0443\u043C\u0435\u043D\u0442\u0430\u043C\u0438 \u0443\u0436\u0435 \u0432\u044B\u0437\u044B\u0432\u0430\u043B\u0441\u044F ${executedCallsMap[callKey] - 1} \u0440\u0430\u0437\u0430. \u041F\u043E\u0432\u0442\u043E\u0440\u043D\u044B\u0439 \u0432\u044B\u0437\u043E\u0432 \u043E\u0442\u043C\u0435\u043D\u0435\u043D. \u0421\u0444\u043E\u0440\u043C\u0438\u0440\u0443\u0439\u0442\u0435 \u043E\u043A\u043E\u043D\u0447\u0430\u0442\u0435\u043B\u044C\u043D\u044B\u0439 \u043E\u0442\u0432\u0435\u0442 \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044E \u043D\u0430 \u043E\u0441\u043D\u043E\u0432\u0435 \u0443\u0436\u0435 \u0438\u043C\u0435\u044E\u0449\u0438\u0445\u0441\u044F \u0441\u0432\u0435\u0434\u0435\u043D\u0438\u0439.`;
-            isError = true;
-          } else {
-            const execResult = await defaultToolRegistry.executeTool(
-              app,
-              toolCall.id,
-              toolName,
-              toolArgsStr
-            );
-            const rawRes = typeof execResult.result === "string" ? execResult.result : JSON.stringify(execResult.result);
-            trimmedResult = rawRes.length > 12e3 ? rawRes.substring(0, 12e3) + "\n\n*(\u0421\u043E\u0434\u0435\u0440\u0436\u0438\u043C\u043E\u0435 \u043E\u0431\u0440\u0435\u0437\u0430\u043D\u043E \u043F\u043E \u043B\u0438\u043C\u0438\u0442\u0443 12,000 \u0441\u0438\u043C\u0432\u043E\u043B\u043E\u0432)*" : rawRes;
-            isError = execResult.isError || false;
+          const isDestructive = toolName === "delete_note" || toolName === "create_note" && toolArgsStr.includes("overwrite");
+          if (safetyMode === "safe" && isDestructive && onConfirmationRequired) {
+            const approved = await onConfirmationRequired(toolName, toolArgsStr);
+            if (!approved) {
+              trimmedResult = `[\u041E\u0422\u041C\u0415\u041D\u0415\u041D\u041E \u041F\u041E\u041B\u042C\u0417\u041E\u0412\u0410\u0422\u0415\u041B\u0415\u041C]: \u0412\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u0438\u0435 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u044F ${toolName} \u043E\u0442\u043C\u0435\u043D\u0435\u043D\u043E \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u0435\u043C \u0432 \u0440\u0435\u0436\u0438\u043C\u0435 Safe Mode.`;
+              isError = true;
+            }
+          }
+          if (!trimmedResult) {
+            if (executedCallsMap[callKey] > 2) {
+              trimmedResult = `[\u0412\u041D\u0418\u041C\u0410\u041D\u0418\u0415 \u0421\u0418\u0421\u0422\u0415\u041C\u042B NEI]: \u042D\u0442\u043E\u0442 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442 (${toolName}) \u0441 \u0442\u0430\u043A\u0438\u043C\u0438 \u0430\u0440\u0433\u0443\u043C\u0435\u043D\u0442\u0430\u043C\u0438 \u0443\u0436\u0435 \u0432\u044B\u0437\u044B\u0432\u0430\u043B\u0441\u044F ${executedCallsMap[callKey] - 1} \u0440\u0430\u0437\u0430. \u041F\u043E\u0432\u0442\u043E\u0440\u043D\u044B\u0439 \u0432\u044B\u0437\u043E\u0432 \u043E\u0442\u043C\u0435\u043D\u0435\u043D. \u0421\u0444\u043E\u0440\u043C\u0438\u0440\u0443\u0439\u0442\u0435 \u043E\u043A\u043E\u043D\u0447\u0430\u0442\u0435\u043B\u044C\u043D\u044B\u0439 \u043E\u0442\u0432\u0435\u0442 \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044E \u043D\u0430 \u043E\u0441\u043D\u043E\u0432\u0435 \u0443\u0436\u0435 \u0438\u043C\u0435\u044E\u0449\u0438\u0445\u0441\u044F \u0441\u0432\u0435\u0434\u0435\u043D\u0438\u0439.`;
+              isError = true;
+            } else {
+              const execResult = await defaultToolRegistry.executeTool(
+                app,
+                toolCall.id,
+                toolName,
+                toolArgsStr
+              );
+              const rawRes = typeof execResult.result === "string" ? execResult.result : JSON.stringify(execResult.result);
+              trimmedResult = ContextManager.compactText(rawRes, 12e3);
+              isError = execResult.isError || false;
+            }
           }
           const currentStep = steps.find((s) => s.id === stepId);
           if (currentStep) {
@@ -25912,7 +26073,7 @@ ${s.description}`).join("\n")}
               JSON.stringify(parsedTool.args)
             );
             const rawRes = typeof execResult.result === "string" ? execResult.result : JSON.stringify(execResult.result);
-            trimmedResult = rawRes.length > 12e3 ? rawRes.substring(0, 12e3) + "\n\n*(\u0421\u043E\u0434\u0435\u0440\u0436\u0438\u043C\u043E\u0435 \u043E\u0431\u0440\u0435\u0437\u0430\u043D\u043E \u043F\u043E \u043B\u0438\u043C\u0438\u0442\u0443 12,000 \u0441\u0438\u043C\u0432\u043E\u043B\u043E\u0432)*" : rawRes;
+            trimmedResult = ContextManager.compactText(rawRes, 12e3);
             isError = execResult.isError || false;
           }
           const currentStep = steps.find((s) => s.id === `tool-${callId}`);
@@ -25960,7 +26121,12 @@ ${prefetchedContext}`;
     if (!finalResponseText) {
       finalResponseText = "\u0410\u0433\u0435\u043D\u0442 \u0437\u0430\u0432\u0435\u0440\u0448\u0438\u043B \u0430\u043D\u0430\u043B\u0438\u0437 \u0437\u0430\u043F\u0440\u043E\u0441\u0430.";
     }
-    return finalResponseText;
+    return {
+      responseText: finalResponseText,
+      promptTokens: totalPromptTokens,
+      completionTokens: totalCompletionTokens,
+      executionModeUsed: "agent"
+    };
   }
   static containsJsonToolCall(text) {
     return /\{\s*["']tool["']\s*:\s*["'][^"']+["']/i.test(text);
@@ -26113,6 +26279,34 @@ ChatStore.INDEX_FILE = ".nei/chats/index.json";
 var import_obsidian8 = require("obsidian");
 var OpenRouterService = class {
   /**
+   * Fetches details about the user's OpenRouter API key (usage, limits).
+   */
+  static async getKeyInfo(apiKey) {
+    if (!apiKey)
+      return null;
+    try {
+      const response = await (0, import_obsidian8.requestUrl)({
+        url: "https://openrouter.ai/api/v1/auth/key",
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${apiKey}`
+        }
+      });
+      if (response.status === 200 && response.json?.data) {
+        const data = response.json.data;
+        return {
+          label: data.label,
+          usage: Number(data.usage || 0),
+          limit: data.limit ? Number(data.limit) : null,
+          isFreeTier: Boolean(data.is_free_tier)
+        };
+      }
+    } catch (e) {
+      console.error("[OpenRouterService] Error fetching key info:", e);
+    }
+    return null;
+  }
+  /**
    * Fetches all available models and their capabilities from OpenRouter API.
    */
   static async fetchModels(apiKey) {
@@ -26230,15 +26424,21 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
   const [currentSession, setCurrentSession] = React.useState(() => ChatStore.createNewSession());
   const [sessionsList, setSessionsList] = React.useState([]);
   const [input, setInput] = React.useState("");
+  const [attachedImages, setAttachedImages] = React.useState([]);
+  const [executionMode, setExecutionMode] = React.useState(settings.executionMode || "auto");
+  const [safetyMode, setSafetyMode] = React.useState(settings.safetyMode || "safe");
   const [loading, setLoading] = React.useState(false);
   const [activeSteps, setActiveSteps] = React.useState([]);
   const [showSessionsDrawer, setShowSessionsDrawer] = React.useState(false);
   const [showConfig, setShowConfig] = React.useState(false);
+  const [pendingConfirmation, setPendingConfirmation] = React.useState(null);
   const [editingMsgIdx, setEditingMsgIdx] = React.useState(null);
   const [editingText, setEditingText] = React.useState("");
   const [endpointUrl, setEndpointUrl] = React.useState(settings.endpointUrl || "https://openrouter.ai/api/v1");
   const [apiKey, setApiKey] = React.useState(settings.apiKey || "");
   const [model, setModel] = React.useState(settings.model || "google/gemini-2.5-flash");
+  const [visionModel, setVisionModel] = React.useState(settings.visionModel || "google/gemini-2.5-flash");
+  const [quickModel, setQuickModel] = React.useState(settings.quickModel || "google/gemini-2.5-flash");
   const [customModels, setCustomModels] = React.useState(settings.customModels || [
     "google/gemini-2.5-flash",
     "anthropic/claude-3.5-sonnet",
@@ -26248,10 +26448,14 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
   ]);
   const [newModelInput, setNewModelInput] = React.useState("");
   const [activeModelDetails, setActiveModelDetails] = React.useState(null);
+  const [keyInfo, setKeyInfo] = React.useState(null);
   const [verifyingModel, setVerifyingModel] = React.useState(false);
   React.useEffect(() => {
     refreshSessionsList();
     verifyActiveModel(model, apiKey);
+    if (apiKey) {
+      OpenRouterService.getKeyInfo(apiKey).then(setKeyInfo);
+    }
   }, []);
   const refreshSessionsList = async () => {
     const list = await ChatStore.listSessions(app);
@@ -26361,11 +26565,16 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
       new import_obsidian9.Notice(`\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u044F \u0437\u0430\u043C\u0435\u0442\u043A\u0438: ${e?.message || e}`);
     }
   };
-  const executeQuery = async (queryText, historySlice) => {
+  const executeQuery = async (queryText, historySlice, imagesPayload) => {
     setLoading(true);
     setActiveSteps([]);
     setEditingMsgIdx(null);
-    const userMsg = { role: "user", content: queryText };
+    const currentImages = imagesPayload || attachedImages;
+    const userMsg = {
+      role: "user",
+      content: queryText,
+      ...currentImages.length > 0 ? { images: currentImages } : {}
+    };
     const updatedMessages = [...historySlice, userMsg];
     const updatedSession = {
       ...currentSession,
@@ -26373,23 +26582,44 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
       messages: updatedMessages
     };
     setCurrentSession(updatedSession);
+    setAttachedImages([]);
     try {
+      let targetModel = model || "google/gemini-2.5-flash";
+      if (currentImages.length > 0 && visionModel) {
+        targetModel = visionModel;
+      } else if (executionMode === "quick" && quickModel) {
+        targetModel = quickModel;
+      }
       const llmConfig = {
         provider: "openrouter",
         endpointUrl: endpointUrl || "https://openrouter.ai/api/v1",
         apiKey,
-        model: model || "google/gemini-2.5-flash"
+        model: targetModel
       };
-      const responseText = await AgentLoop.run({
+      const result = await AgentLoop.run({
         app,
         config: llmConfig,
         userQuery: queryText,
         chatHistory: historySlice,
+        images: currentImages,
+        executionMode,
+        safetyMode,
         onStepUpdate: (steps) => {
           setActiveSteps(steps);
+        },
+        onConfirmationRequired: (toolName, argsStr) => {
+          return new Promise((resolve) => {
+            setPendingConfirmation({ toolName, argsStr, resolve });
+          });
         }
       });
-      const finalMessages = [...updatedMessages, { role: "assistant", content: responseText }];
+      const assistantMsg = {
+        role: "assistant",
+        content: result.responseText,
+        promptTokens: result.promptTokens,
+        completionTokens: result.completionTokens
+      };
+      const finalMessages = [...updatedMessages, assistantMsg];
       const finalSession = {
         ...updatedSession,
         messages: finalMessages
@@ -26397,6 +26627,9 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
       setCurrentSession(finalSession);
       await ChatStore.saveSession(app, finalSession);
       await refreshSessionsList();
+      if (apiKey) {
+        OpenRouterService.getKeyInfo(apiKey).then(setKeyInfo);
+      }
     } catch (e) {
       console.error("[NEI Agent Error]", e);
       const errMessages = [...updatedMessages, { role: "assistant", content: `\u274C \u041E\u0448\u0438\u0431\u043A\u0430 \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u0438\u044F \u0430\u0433\u0435\u043D\u0442\u0430: ${e?.message || e}` }];
@@ -26409,6 +26642,7 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
     } finally {
       setLoading(false);
       setActiveSteps([]);
+      setPendingConfirmation(null);
     }
   };
   const handleSendMessage = () => {
@@ -26437,18 +26671,46 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
     const historyBefore = currentSession.messages.slice(0, idx);
     executeQuery(editingText.trim(), historyBefore);
   };
+  const handleFileSelect = (e) => {
+    const files = e.target.files;
+    if (!files || files.length === 0)
+      return;
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (file.type.startsWith("image/")) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          if (event.target?.result) {
+            setAttachedImages((prev) => [...prev, String(event.target?.result)]);
+          }
+        };
+        reader.readAsDataURL(file);
+      } else {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          if (event.target?.result) {
+            setInput((prev) => prev + `
+
+=== \u0424\u0410\u0419\u041B: ${file.name} ===
+` + String(event.target?.result));
+          }
+        };
+        reader.readAsText(file);
+      }
+    }
+  };
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", flexDirection: "column", height: "100%", padding: "10px", boxSizing: "border-box", position: "relative" }, children: [
-    /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", paddingBottom: "8px", borderBottom: "1px solid var(--background-modifier-border)" }, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", paddingBottom: "8px", borderBottom: "1px solid var(--background-modifier-border)", flexWrap: "wrap", gap: "6px" }, children: [
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: "6px" }, children: [
         /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
           "button",
           {
             onClick: () => setShowSessionsDrawer(!showSessionsDrawer),
             title: "\u0418\u0441\u0442\u043E\u0440\u0438\u044F \u0434\u0438\u0430\u043B\u043E\u0433\u043E\u0432",
-            style: { background: "var(--background-secondary)", border: "1px solid var(--background-modifier-border)", borderRadius: "4px", cursor: "pointer", padding: "4px 8px", fontSize: "13px", display: "flex", alignItems: "center", gap: "4px" },
+            style: { background: "var(--background-secondary)", border: "1px solid var(--background-modifier-border)", borderRadius: "4px", cursor: "pointer", padding: "4px 8px", fontSize: "12px", display: "flex", alignItems: "center", gap: "4px" },
             children: [
               /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "\u{1F4AC}" }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { style: { maxWidth: "110px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: "500" }, children: currentSession.title })
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { style: { maxWidth: "90px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: "500" }, children: currentSession.title })
             ]
           }
         ),
@@ -26457,7 +26719,7 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
           {
             onClick: handleNewChat,
             title: "\u041D\u043E\u0432\u044B\u0439 \u0447\u0430\u0442",
-            style: { background: "var(--interactive-accent)", color: "var(--text-on-accent)", border: "none", borderRadius: "4px", cursor: "pointer", padding: "4px 8px", fontSize: "12px", fontWeight: "bold" },
+            style: { background: "var(--interactive-accent)", color: "var(--text-on-accent)", border: "none", borderRadius: "4px", cursor: "pointer", padding: "4px 8px", fontSize: "11px", fontWeight: "bold" },
             children: "+ \u041D\u043E\u0432\u044B\u0439"
           }
         ),
@@ -26466,20 +26728,57 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
           {
             onClick: handleToggleTabMode,
             title: isMainTab ? "\u041F\u0435\u0440\u0435\u043C\u0435\u0441\u0442\u0438\u0442\u044C \u0447\u0430\u0442 \u0432 \u0431\u043E\u043A\u043E\u0432\u0443\u044E \u043F\u0430\u043D\u0435\u043B\u044C" : "\u041F\u0435\u0440\u0435\u043C\u0435\u0441\u0442\u0438\u0442\u044C \u0447\u0430\u0442 \u043D\u0430 \u0433\u043B\u0430\u0432\u043D\u0443\u044E \u0432\u043A\u043B\u0430\u0434\u043A\u0443",
-            style: { background: "var(--background-secondary)", border: "1px solid var(--background-modifier-border)", borderRadius: "4px", cursor: "pointer", padding: "4px 8px", fontSize: "12px" },
+            style: { background: "var(--background-secondary)", border: "1px solid var(--background-modifier-border)", borderRadius: "4px", cursor: "pointer", padding: "4px 6px", fontSize: "11px" },
             children: isMainTab ? "\u2199\uFE0F \u0412 \u043F\u0430\u043D\u0435\u043B\u044C" : "\u{1F5D4} \u0412\u043A\u043B\u0430\u0434\u043A\u0430"
           }
         )
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-        "button",
-        {
-          onClick: () => setShowConfig(!showConfig),
-          style: { background: "transparent", border: "none", cursor: "pointer", fontSize: "13px", color: "var(--text-muted)" },
-          title: "\u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438 \u043C\u043E\u0434\u0435\u043B\u0435\u0439",
-          children: "\u2699\uFE0F \u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438"
-        }
-      )
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: "4px" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
+          "select",
+          {
+            value: executionMode,
+            onChange: (e) => {
+              const val = e.target.value;
+              setExecutionMode(val);
+              saveSettings({ ...settings, executionMode: val });
+            },
+            title: "\u0420\u0435\u0436\u0438\u043C \u0418\u0418: Auto (\u0430\u0432\u0442\u043E-\u0432\u044B\u0431\u043E\u0440), Quick (\u0431\u0435\u0437 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u043E\u0432), Agent (\u043C\u043D\u043E\u0433\u043E\u0448\u0430\u0433\u043E\u0432\u044B\u0439)",
+            style: { background: "var(--background-secondary)", border: "1px solid var(--background-modifier-border)", borderRadius: "4px", fontSize: "11px", padding: "3px 4px", color: "var(--text-normal)" },
+            children: [
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { value: "auto", children: "\u26A1 Auto" }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { value: "quick", children: "\u{1F680} Quick" }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { value: "agent", children: "\u{1F9E0} Agent" })
+            ]
+          }
+        ),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
+          "select",
+          {
+            value: safetyMode,
+            onChange: (e) => {
+              const val = e.target.value;
+              setSafetyMode(val);
+              saveSettings({ ...settings, safetyMode: val });
+            },
+            title: "\u0420\u0435\u0436\u0438\u043C \u0431\u0435\u0437\u043E\u043F\u0430\u0441\u043D\u043E\u0441\u0442\u0438: Safe (\u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043D\u0438\u0435 \u043E\u043F\u0435\u0440\u0430\u0446\u0438\u0439), Turbo (\u0430\u0432\u0442\u043E\u043D\u043E\u043C\u043D\u044B\u0439)",
+            style: { background: "var(--background-secondary)", border: "1px solid var(--background-modifier-border)", borderRadius: "4px", fontSize: "11px", padding: "3px 4px", color: "var(--text-normal)" },
+            children: [
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { value: "safe", children: "\u{1F6E1}\uFE0F Safe" }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { value: "turbo", children: "\u{1F525} Turbo" })
+            ]
+          }
+        ),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+          "button",
+          {
+            onClick: () => setShowConfig(!showConfig),
+            style: { background: "transparent", border: "none", cursor: "pointer", fontSize: "12px", color: "var(--text-muted)" },
+            title: "\u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438 \u043C\u043E\u0434\u0435\u043B\u0435\u0439 \u0438 API",
+            children: "\u2699\uFE0F"
+          }
+        )
+      ] })
     ] }),
     showSessionsDrawer && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { position: "absolute", top: "45px", left: "10px", right: "10px", zIndex: 10, background: "var(--background-primary)", border: "1px solid var(--background-modifier-border)", borderRadius: "8px", boxShadow: "0 4px 12px rgba(0,0,0,0.15)", maxHeight: "280px", overflowY: "auto", padding: "8px" }, children: [
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px", paddingBottom: "4px", borderBottom: "1px solid var(--background-modifier-border)" }, children: [
@@ -26539,10 +26838,65 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
           }
         )
       ] }),
+      keyInfo && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { background: "var(--background-primary)", padding: "6px 10px", borderRadius: "6px", fontSize: "11px", display: "flex", justifyContent: "space-between", alignItems: "center" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [
+          "\u{1F4B0} \u0418\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u043D\u043E \u043D\u0430 \u043A\u043B\u044E\u0447\u0435: ",
+          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("strong", { children: [
+            "$",
+            keyInfo.usage.toFixed(4)
+          ] })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: keyInfo.isFreeTier ? "\u{1F7E2} Free Tier" : "\u{1F4B3} Paid Tier" })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { background: "var(--background-primary)", padding: "8px 10px", borderRadius: "6px", border: "1px solid var(--background-modifier-border)", display: "flex", flexDirection: "column", gap: "6px" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { fontWeight: "bold", fontSize: "11px" }, children: "\u041A\u0430\u0442\u0435\u0433\u043E\u0440\u0438\u0438 \u043C\u043E\u0434\u0435\u043B\u0435\u0439 (\u041C\u0443\u043B\u044C\u0442\u0438\u043C\u043E\u0434\u0430\u043B\u044C\u043D\u043E\u0441\u0442\u044C):" }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: "1. \u0422\u0435\u043A\u0441\u0442 \u0438 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u044B (Primary):" }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+            "select",
+            {
+              value: model,
+              onChange: (e) => handleSelectModel(e.target.value),
+              style: { width: "100%", padding: "4px", borderRadius: "4px", fontSize: "11px", background: "var(--background-secondary)", color: "var(--text-normal)", border: "1px solid var(--background-modifier-border)" },
+              children: customModels.map((m) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { value: m, children: m }, m))
+            }
+          )
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: "2. \u0424\u0430\u0439\u043B\u044B \u0438 \u0444\u043E\u0442\u043E (Vision):" }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+            "select",
+            {
+              value: visionModel,
+              onChange: (e) => {
+                setVisionModel(e.target.value);
+                saveSettings({ ...settings, visionModel: e.target.value });
+              },
+              style: { width: "100%", padding: "4px", borderRadius: "4px", fontSize: "11px", background: "var(--background-secondary)", color: "var(--text-normal)", border: "1px solid var(--background-modifier-border)" },
+              children: customModels.map((m) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { value: m, children: m }, m))
+            }
+          )
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: "3. \u0411\u044B\u0441\u0442\u0440\u044B\u0439 \u0440\u0435\u0436\u0438\u043C (Quick Mode Router):" }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+            "select",
+            {
+              value: quickModel,
+              onChange: (e) => {
+                setQuickModel(e.target.value);
+                saveSettings({ ...settings, quickModel: e.target.value });
+              },
+              style: { width: "100%", padding: "4px", borderRadius: "4px", fontSize: "11px", background: "var(--background-secondary)", color: "var(--text-normal)", border: "1px solid var(--background-modifier-border)" },
+              children: customModels.map((m) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { value: m, children: m }, m))
+            }
+          )
+        ] })
+      ] }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { background: "var(--background-primary)", padding: "8px 10px", borderRadius: "6px", border: "1px solid var(--background-modifier-border)" }, children: [
         /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("strong", { style: { fontSize: "12px" }, children: [
-            "\u0410\u043A\u0442\u0438\u0432\u043D\u0430\u044F \u043C\u043E\u0434\u0435\u043B\u044C: ",
+          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("strong", { style: { fontSize: "11px" }, children: [
+            "\u041F\u0430\u0440\u0430\u043C\u0435\u0442\u0440\u044B: ",
             model
           ] }),
           /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
@@ -26555,7 +26909,8 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
           )
         ] }),
         verifyingModel ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { color: "var(--text-muted)", fontSize: "11px" }, children: "\u0417\u0430\u043F\u0440\u043E\u0441 \u0432\u043E\u0437\u043C\u043E\u0436\u043D\u043E\u0441\u0442\u0435\u0439 \u0447\u0435\u0440\u0435\u0437 OpenRouter API..." }) : activeModelDetails ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { fontSize: "11px", display: "flex", flexDirection: "column", gap: "2px" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { color: activeModelDetails.supportsTools ? "var(--text-success)" : "var(--text-warning)", fontWeight: "bold" }, children: activeModelDetails.supportsTools ? "\u{1F7E2} \u041D\u0430\u0442\u0438\u0432\u043D\u044B\u0439 Tool Calling \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u0438\u0432\u0430\u0435\u0442\u0441\u044F" : "\u{1F7E1} \u0422\u0435\u043A\u0441\u0442\u043E\u0432\u044B\u0439 \u0440\u0435\u0436\u0438\u043C \u0432\u044B\u0437\u043E\u0432\u0430 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u043E\u0432 (JSON Fallback)" }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { color: activeModelDetails.supportsTools ? "var(--text-success)" : "var(--text-warning)", fontWeight: "bold" }, children: activeModelDetails.supportsTools ? "\u{1F7E2} \u041D\u0430\u0442\u0438\u0432\u043D\u044B\u0439 Tool Calling \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u0438\u0432\u0430\u0435\u0442\u0441\u044F" : "\u{1F7E1} \u0422\u0435\u043A\u0441\u0442\u043E\u0432\u044B\u0439 \u0440\u0435\u0436\u0438\u043C \u0432\u044B\u0437\u043E\u0432\u0430 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u043E\u0432" }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { color: activeModelDetails.supportsVision ? "var(--text-success)" : "var(--text-muted)" }, children: activeModelDetails.supportsVision ? "\u{1F5BC}\uFE0F \u0410\u043D\u0430\u043B\u0438\u0437 \u0444\u043E\u0442\u043E/\u0438\u0437\u043E\u0431\u0440\u0430\u0436\u0435\u043D\u0438\u0439 \u0434\u043E\u0441\u0442\u0443\u043F\u0435\u043D" : "\u{1F4DD} \u0422\u043E\u043B\u044C\u043A\u043E \u0442\u0435\u043A\u0441\u0442\u043E\u0432\u044B\u0439 \u0432\u0432\u043E\u0434" }),
           activeModelDetails.contextLength && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
             "\u041A\u043E\u043D\u0442\u0435\u043A\u0441\u0442\u043D\u043E\u0435 \u043E\u043A\u043D\u043E: ",
             /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("strong", { children: [
@@ -26567,7 +26922,7 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
       ] }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", { style: { display: "block", marginBottom: "4px", fontWeight: "500" }, children: "\u0412\u0430\u0448\u0438 \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u043D\u044B\u0435 \u043C\u043E\u0434\u0435\u043B\u0438:" }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { display: "flex", flexDirection: "column", gap: "4px", maxHeight: "120px", overflowY: "auto", marginBottom: "6px" }, children: customModels.map((m) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { display: "flex", flexDirection: "column", gap: "4px", maxHeight: "100px", overflowY: "auto", marginBottom: "6px" }, children: customModels.map((m) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
           "div",
           {
             onClick: () => handleSelectModel(m),
@@ -26632,11 +26987,13 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
         "\u{1F44B} **NEI Super-Agent** \u0433\u043E\u0442\u043E\u0432 \u043A \u0440\u0430\u0431\u043E\u0442\u0435!",
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("br", {}),
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("br", {}),
-        "\u2022 \u041F\u0440\u044F\u043C\u043E\u0439 \u0434\u043E\u0441\u0442\u0443\u043F \u043A \u0437\u0430\u043C\u0435\u0442\u043E\u0447\u043D\u0438\u043A\u0430\u043C \u0438 \u043F\u0430\u043F\u043A\u0430\u043C (`tasks`, `Projects`)",
+        "\u2022 \u041F\u0440\u044F\u043C\u043E\u0439 \u0434\u043E\u0441\u0442\u0443\u043F \u043A \u0437\u0430\u043C\u0435\u0442\u043E\u0447\u043A\u0430\u043C \u0438 \u043F\u0430\u043F\u043A\u0430\u043C (`tasks`, `Projects`)",
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("br", {}),
-        "\u2022 \u0420\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435, \u043F\u0435\u0440\u0435\u043E\u0442\u043F\u0440\u0430\u0432\u043A\u0430 \u0438 \u043A\u043E\u043F\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0439",
+        "\u2022 \u0420\u0435\u0436\u0438\u043C\u044B **Quick Mode** \u0438 **Agent Mode** \u0441 \u0430\u0432\u0442\u043E-\u0440\u043E\u0443\u0442\u0438\u043D\u0433\u043E\u043C",
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("br", {}),
-        "\u2022 \u041F\u0440\u043E\u0432\u0435\u0440\u043A\u0430 \u0432\u043E\u0437\u043C\u043E\u0436\u043D\u043E\u0441\u0442\u0435\u0439 \u0432\u044B\u0431\u0440\u0430\u043D\u043D\u043E\u0439 \u043C\u043E\u0434\u0435\u043B\u0438 \u0447\u0435\u0440\u0435\u0437 OpenRouter API"
+        "\u2022 \u0410\u043D\u0430\u043B\u0438\u0437 \u0438\u0437\u043E\u0431\u0440\u0430\u0436\u0435\u043D\u0438\u0439 \u0438 \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0430 Safe/Turbo \u0431\u0435\u0437\u043E\u043F\u0430\u0441\u043D\u043E\u0441\u0442\u0438",
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("br", {}),
+        "\u2022 \u041E\u0442\u0441\u043B\u0435\u0436\u0438\u0432\u0430\u043D\u0438\u0435 \u0442\u043E\u043A\u0435\u043D\u043E\u0432 (\u0412\u0445\u043E\u0434/\u0412\u044B\u0445\u043E\u0434) \u0434\u043B\u044F \u0432\u0441\u0435\u0445 \u043E\u0442\u0432\u0435\u0442\u043E\u0432"
       ] }),
       currentSession.messages.map((msg, idx) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
         "div",
@@ -26687,6 +27044,7 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
           ) : (
             /* Standard User Message Display */
             /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
+              msg.images && msg.images.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { display: "flex", gap: "4px", marginBottom: "6px", flexWrap: "wrap" }, children: msg.images.map((img, i) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", { src: img, style: { width: "60px", height: "60px", borderRadius: "4px", objectFit: "cover" } }, i)) }),
               /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { whiteSpace: "pre-wrap" }, children: msg.content }),
               /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", gap: "8px", marginTop: "6px", justifyContent: "flex-end", fontSize: "11px", opacity: 0.85 }, children: [
                 /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
@@ -26723,6 +27081,18 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
             /* Assistant Message Display */
             /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
               /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ObsidianMarkdown, { markdown: msg.content || "", app }),
+              (msg.promptTokens !== void 0 || msg.completionTokens !== void 0) && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", gap: "6px", marginTop: "6px", fontSize: "10px", color: "var(--text-muted)", borderTop: "1px solid var(--background-modifier-border)", paddingTop: "4px" }, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { style: { background: "var(--background-primary)", padding: "2px 6px", borderRadius: "4px" }, children: [
+                  "\u{1F4E5} \u0412\u0445\u043E\u0434: ",
+                  msg.promptTokens || 0,
+                  " \u0442\u043E\u043A."
+                ] }),
+                /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { style: { background: "var(--background-primary)", padding: "2px 6px", borderRadius: "4px" }, children: [
+                  "\u{1F4E4} \u0412\u044B\u0445\u043E\u0434: ",
+                  msg.completionTokens || 0,
+                  " \u0442\u043E\u043A."
+                ] })
+              ] }),
               /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", gap: "10px", marginTop: "8px", alignItems: "center", fontSize: "11px" }, children: [
                 /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
                   "button",
@@ -26746,6 +27116,34 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
         },
         idx
       )),
+      pendingConfirmation && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { background: "var(--background-secondary-alt)", border: "2px solid var(--interactive-accent)", borderRadius: "8px", padding: "10px", fontSize: "12px" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { fontWeight: "bold", color: "var(--text-warning, #ffaa00)", marginBottom: "4px" }, children: "\u26A0\uFE0F \u041F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043D\u0438\u0435 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u044F (Safe Mode)" }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { children: "\u0410\u0433\u0435\u043D\u0442 \u0437\u0430\u043F\u0440\u0430\u0448\u0438\u0432\u0430\u0435\u0442 \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u0438\u0435 \u043F\u043E\u0442\u0435\u043D\u0446\u0438\u0430\u043B\u044C\u043D\u043E \u043E\u043F\u0430\u0441\u043D\u043E\u0433\u043E \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u0430:" }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { fontFamily: "monospace", background: "var(--background-primary)", padding: "4px 6px", borderRadius: "4px", margin: "6px 0", wordBreak: "break-all" }, children: [
+          pendingConfirmation.toolName,
+          "(",
+          pendingConfirmation.argsStr,
+          ")"
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", gap: "8px", justifyContent: "flex-end", marginTop: "8px" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+            "button",
+            {
+              onClick: () => pendingConfirmation.resolve(false),
+              style: { padding: "4px 10px", fontSize: "11px", background: "var(--background-primary)", border: "1px solid var(--background-modifier-border)", borderRadius: "4px", cursor: "pointer" },
+              children: "\u274C \u041E\u0442\u043A\u043B\u043E\u043D\u0438\u0442\u044C"
+            }
+          ),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+            "button",
+            {
+              onClick: () => pendingConfirmation.resolve(true),
+              style: { padding: "4px 10px", fontSize: "11px", background: "var(--interactive-accent)", color: "var(--text-on-accent)", border: "none", borderRadius: "4px", cursor: "pointer", fontWeight: "bold" },
+              children: "\u2705 \u0420\u0430\u0437\u0440\u0435\u0448\u0438\u0442\u044C"
+            }
+          )
+        ] })
+      ] }),
       loading && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { background: "var(--background-secondary)", padding: "10px", borderRadius: "8px", fontSize: "12px", borderLeft: "3px solid var(--interactive-accent)" }, children: [
         /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { fontWeight: "bold", marginBottom: "6px", display: "flex", alignItems: "center", gap: "6px" }, children: [
           /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "\u26A1" }),
@@ -26761,33 +27159,66 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
         ] }, step.id))
       ] })
     ] }),
-    /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", gap: "8px" }, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-        "textarea",
-        {
-          value: input,
-          onChange: (e) => setInput(e.target.value),
-          onKeyDown: (e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              handleSendMessage();
-            }
-          },
-          placeholder: "\u0417\u0430\u0434\u0430\u0439\u0442\u0435 \u0437\u0430\u0434\u0430\u0447\u0443 \u0430\u0433\u0435\u043D\u0442\u0443... (Enter \u0434\u043B\u044F \u043E\u0442\u043F\u0440\u0430\u0432\u043A\u0438)",
-          disabled: loading,
-          rows: 2,
-          style: { flex: 1, padding: "8px", borderRadius: "6px", border: "1px solid var(--background-modifier-border)", background: "var(--background-primary)", color: "var(--text-normal)", resize: "none", fontSize: "13px" }
-        }
-      ),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-        "button",
-        {
-          onClick: handleSendMessage,
-          disabled: loading || !input.trim(),
-          style: { padding: "0 16px", background: "var(--interactive-accent)", color: "var(--text-on-accent)", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px" },
-          children: loading ? "..." : "\u041E\u0442\u043F\u0440\u0430\u0432\u0438\u0442\u044C"
-        }
-      )
+    /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", flexDirection: "column", gap: "6px" }, children: [
+      attachedImages.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { display: "flex", gap: "6px", flexWrap: "wrap" }, children: attachedImages.map((img, i) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { position: "relative", width: "44px", height: "44px", borderRadius: "4px", overflow: "hidden", border: "1px solid var(--background-modifier-border)" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", { src: img, style: { width: "100%", height: "100%", objectFit: "cover" } }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+          "button",
+          {
+            onClick: () => setAttachedImages((prev) => prev.filter((_, idx) => idx !== i)),
+            style: { position: "absolute", top: 0, right: 0, background: "rgba(0,0,0,0.6)", color: "#fff", border: "none", cursor: "pointer", fontSize: "9px", padding: "1px 3px" },
+            children: "\u2715"
+          }
+        )
+      ] }, i)) }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", gap: "6px", alignItems: "center" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
+          "label",
+          {
+            title: "\u041F\u0440\u0438\u043A\u0440\u0435\u043F\u0438\u0442\u044C \u0444\u043E\u0442\u043E \u0438\u043B\u0438 \u0442\u0435\u043A\u0441\u0442\u043E\u0432\u044B\u0439 \u0444\u0430\u0439\u043B",
+            style: { padding: "6px 8px", background: "var(--background-secondary)", border: "1px solid var(--background-modifier-border)", borderRadius: "6px", cursor: "pointer", fontSize: "14px" },
+            children: [
+              "\u{1F4CE}",
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+                "input",
+                {
+                  type: "file",
+                  accept: "image/*,.txt,.md,.json,.js,.ts",
+                  multiple: true,
+                  onChange: handleFileSelect,
+                  style: { display: "none" }
+                }
+              )
+            ]
+          }
+        ),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+          "textarea",
+          {
+            value: input,
+            onChange: (e) => setInput(e.target.value),
+            onKeyDown: (e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleSendMessage();
+              }
+            },
+            placeholder: "\u0417\u0430\u0434\u0430\u0439\u0442\u0435 \u0437\u0430\u0434\u0430\u0447\u0443 \u0430\u0433\u0435\u043D\u0442\u0443... (Enter \u0434\u043B\u044F \u043E\u0442\u043F\u0440\u0430\u0432\u043A\u0438)",
+            disabled: loading,
+            rows: 2,
+            style: { flex: 1, padding: "8px", borderRadius: "6px", border: "1px solid var(--background-modifier-border)", background: "var(--background-primary)", color: "var(--text-normal)", resize: "none", fontSize: "13px" }
+          }
+        ),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+          "button",
+          {
+            onClick: handleSendMessage,
+            disabled: loading || !input.trim() && attachedImages.length === 0,
+            style: { padding: "0 14px", height: "44px", background: "var(--interactive-accent)", color: "var(--text-on-accent)", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px" },
+            children: loading ? "..." : "\u041E\u0442\u043F\u0440\u0430\u0432\u0438\u0442\u044C"
+          }
+        )
+      ] })
     ] })
   ] });
 };

@@ -13,9 +13,45 @@ export interface OpenRouterModelInfo {
     };
 }
 
+export interface OpenRouterKeyInfo {
+    label?: string;
+    usage: number;
+    limit: number | null;
+    isFreeTier: boolean;
+}
+
 export class OpenRouterService {
     private static cachedModels: Map<string, OpenRouterModelInfo> = new Map();
     private static lastFetchTime = 0;
+
+    /**
+     * Fetches details about the user's OpenRouter API key (usage, limits).
+     */
+    public static async getKeyInfo(apiKey: string): Promise<OpenRouterKeyInfo | null> {
+        if (!apiKey) return null;
+        try {
+            const response = await requestUrl({
+                url: "https://openrouter.ai/api/v1/auth/key",
+                method: "GET",
+                headers: {
+                    "Authorization": `Bearer ${apiKey}`
+                }
+            });
+
+            if (response.status === 200 && response.json?.data) {
+                const data = response.json.data;
+                return {
+                    label: data.label,
+                    usage: Number(data.usage || 0),
+                    limit: data.limit ? Number(data.limit) : null,
+                    isFreeTier: Boolean(data.is_free_tier)
+                };
+            }
+        } catch (e) {
+            console.error("[OpenRouterService] Error fetching key info:", e);
+        }
+        return null;
+    }
 
     /**
      * Fetches all available models and their capabilities from OpenRouter API.
@@ -95,3 +131,4 @@ export class OpenRouterService {
         return models.find(m => m.id === modelId) || null;
     }
 }
+
