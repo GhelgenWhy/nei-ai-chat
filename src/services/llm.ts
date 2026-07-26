@@ -115,7 +115,7 @@ export async function sendChatRequest(
                     userFriendlyMsg = `⚠️ Сообщение провайдера OpenRouter [Код ${response.status}]: ${errObj.message}`;
                 }
             }
-        } catch (e: unknown) {
+        } catch {
             /* ignore JSON parse error */
         }
 

@@ -31,7 +31,7 @@ export async function searchVaultLexical(app: App, query: string, limit = 5): Pr
         let content = "";
         try {
             content = await app.vault.cachedRead(file);
-        } catch (e: unknown) {
+        } catch {
             /* ignore read errors */
         }
 

@@ -118,7 +118,7 @@ export class AgentLoop {
                         const cleanText = content.replace(/^---[\s\S]*?---\n?/, "").trim();
                         const snippet = cleanText.length > 400 ? cleanText.substring(0, 400) + "... [обрезано]" : cleanText;
                         prefetchedBlocks.push(`--- ЗАМЕТКА: [[${file.basename}]] (${file.path}) ---\n${snippet}`);
-                    } catch (_e: unknown) {
+                    } catch {
                         /* ignore file read error */
                     }
                 }
@@ -389,7 +389,7 @@ export class AgentLoop {
                     };
                 }
             }
-        } catch (_e: unknown) {
+        } catch {
             /* ignore JSON parse error */
         }
         return null;
@@ -439,7 +439,7 @@ export class AgentLoop {
                 status: execResult.isError ? "failed" : "completed"
             });
             notifySteps();
-        } catch (_e: unknown) {
+        } catch {
             /* ignore auto create error */
         }
     }

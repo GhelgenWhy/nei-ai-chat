@@ -2,7 +2,7 @@
   "id": "nei-ai-chat",
   "name": "NEI AI Chat",
   "version": "1.0.0",
-  "minAppVersion": "1.7.0",
+  "minAppVersion": "1.7.2",
   "description": "Integrate a smart AI assistant with deep vault access, multi-model support via OpenRouter, RAG, tools, and multilingual UI.",
   "author": "Ghelgen",
   "authorUrl": "https://github.com/GhelgenWhy",

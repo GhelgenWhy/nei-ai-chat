@@ -86,7 +86,7 @@ export class McpService {
                             }
                         });
 
-                        executors[mcpToolName] = async (app, args) => {
+                        executors[mcpToolName] = async (_app, args) => {
                             return await this.callMcpTool(server, tool.name, args);
                         };
                     }
@@ -122,8 +122,8 @@ export class McpService {
                 if (json.error) {
                     return `Ошибка MCP инструмента '${originalToolName}': ${json.error.message || JSON.stringify(json.error)}`;
                 }
-                const contentBlocks = json.result?.content || [];
-                const textOutputs = contentBlocks.map(c => c.text || JSON.stringify(c)).join("\n");
+                const contentBlocks: Array<{ text?: string }> = json.result?.content || [];
+                const textOutputs = contentBlocks.map((c: { text?: string }) => c.text || JSON.stringify(c)).join("\n");
                 return `[Ответ MCP сервера '${server.name}']:\n${textOutputs || "Инструмент выполнен успешно."}`;
             }
 

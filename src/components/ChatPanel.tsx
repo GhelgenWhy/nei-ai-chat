@@ -121,7 +121,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
         try {
             const details = await OpenRouterService.getModelDetails(targetModel, key);
             setActiveModelDetails(details);
-        } catch (_e: unknown) {
+        } catch {
             setActiveModelDetails(null);
         } finally {
             setVerifyingModel(false);
@@ -235,7 +235,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
         try {
             await navigator.clipboard.writeText(text);
             new Notice(t("copied", language));
-        } catch (_e: unknown) {
+        } catch {
             new Notice(t("copyError", language));
         }
     };

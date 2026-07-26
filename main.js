@@ -24549,7 +24549,7 @@ async function sendChatRequest(config, messages, tools) {
           userFriendlyMsg = `\u26A0\uFE0F \u0421\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0435 \u043F\u0440\u043E\u0432\u0430\u0439\u0434\u0435\u0440\u0430 OpenRouter [\u041A\u043E\u0434 ${response.status}]: ${errObj.message}`;
         }
       }
-    } catch (e) {
+    } catch {
     }
     throw new Error(userFriendlyMsg);
   }
@@ -24940,7 +24940,7 @@ ${content}`);
           output.push(`--- \u0417\u0410\u041C\u0415\u0422\u041A\u0410: ${file.path} ---
 ${content}
 `);
-        } catch (e) {
+        } catch {
           output.push(`--- \u0417\u0410\u041C\u0415\u0422\u041A\u0410: ${file.path} (\u041E\u0448\u0438\u0431\u043A\u0430 \u0447\u0442\u0435\u043D\u0438\u044F) ---
 `);
         }
@@ -25117,7 +25117,7 @@ ${content}
     if (file) {
       try {
         oldContent = await app.vault.read(file);
-      } catch (e) {
+      } catch {
       }
     }
     return {
@@ -25250,7 +25250,8 @@ var systemToolDefinitions = [
   }
 ];
 var systemExecutors = {
-  web_search: async (app, args) => {
+  web_search: async (_app, rawArgs) => {
+    const args = rawArgs;
     try {
       const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(args.query)}`;
       const response = await (0, import_obsidian3.requestUrl)({
@@ -25283,7 +25284,8 @@ var systemExecutors = {
       return `\u041E\u0448\u0438\u0431\u043A\u0430 \u0432\u0435\u0431-\u043F\u043E\u0438\u0441\u043A\u0430: ${err?.message || String(e)}`;
     }
   },
-  read_web_page: async (app, args) => {
+  read_web_page: async (_app, rawArgs) => {
+    const args = rawArgs;
     const urlStr = args.url.trim();
     const githubRepoMatch = urlStr.match(/github\.com\/([^/]+)\/([^/]+)/i);
     if (githubRepoMatch) {
@@ -25299,7 +25301,7 @@ var systemExecutors = {
           return `--- GitHub \u0420\u0435\u043F\u043E\u0437\u0438\u0442\u043E\u0440\u0438\u0439 ${owner}/${repo} (README.md) ---
 ${text}`;
         }
-      } catch (e) {
+      } catch {
       }
     }
     try {
@@ -25323,7 +25325,8 @@ ${truncated}`;
       return `\u041E\u0448\u0438\u0431\u043A\u0430 \u0447\u0442\u0435\u043D\u0438\u044F \u0432\u0435\u0431-\u0441\u0442\u0440\u0430\u043D\u0438\u0446\u044B '${urlStr}': ${err?.message || String(e)}`;
     }
   },
-  analyze_github_repo: async (app, args) => {
+  analyze_github_repo: async (_app, rawArgs) => {
+    const args = rawArgs;
     const githubRepoMatch = args.repoUrl.match(/github\.com\/([^/]+)\/([^\s/)]+)/i);
     if (!githubRepoMatch) {
       return `\u041E\u0448\u0438\u0431\u043A\u0430: \u041D\u0435\u0432\u0435\u0440\u043D\u044B\u0439 \u0444\u043E\u0440\u043C\u0430\u0442 \u0441\u0441\u044B\u043B\u043A\u0438 \u043D\u0430 GitHub. \u0423\u043A\u0430\u0436\u0438\u0442\u0435 'https://github.com/owner/repo'`;
@@ -25347,7 +25350,7 @@ ${truncated}`;
 \u041E\u0442\u043A\u0440\u044B\u0442\u044B\u0435 issues: ${j.open_issues_count || 0}
 `;
         }
-      } catch (e) {
+      } catch {
       }
       let readmeText = "";
       const branches = ["main", "master"];
@@ -25365,7 +25368,7 @@ ${truncated}`;
               readmeText = res.text;
               break;
             }
-          } catch (e) {
+          } catch {
           }
         }
       }
@@ -25432,7 +25435,7 @@ var MemoryStore = class {
       if (file instanceof import_obsidian4.TFile) {
         return await app.vault.read(file);
       }
-    } catch (e) {
+    } catch {
     }
     return "";
   }
@@ -25668,7 +25671,7 @@ async function searchVaultLexical(app, query, limit = 5) {
     let content = "";
     try {
       content = await app.vault.cachedRead(file);
-    } catch (e) {
+    } catch {
     }
     if (!content)
       continue;
@@ -25700,7 +25703,7 @@ async function resolveContext(app, query, useRag, limitRag = 3) {
     activeNoteTitle = activeFile.basename;
     try {
       activeNoteContent = await app.vault.cachedRead(activeFile);
-    } catch (e) {
+    } catch {
     }
   }
   const appPluginContainer = app;
@@ -25915,7 +25918,7 @@ var AgentLoop = class {
             const snippet = cleanText.length > 400 ? cleanText.substring(0, 400) + "... [\u043E\u0431\u0440\u0435\u0437\u0430\u043D\u043E]" : cleanText;
             prefetchedBlocks.push(`--- \u0417\u0410\u041C\u0415\u0422\u041A\u0410: [[${file.basename}]] (${file.path}) ---
 ${snippet}`);
-          } catch (_e) {
+          } catch {
           }
         }
       }
@@ -26154,7 +26157,7 @@ ${s.description}`).join("\n")}
           };
         }
       }
-    } catch (_e) {
+    } catch {
     }
     return null;
   }
@@ -26193,7 +26196,7 @@ ${s.description}`).join("\n")}
         status: execResult.isError ? "failed" : "completed"
       });
       notifySteps();
-    } catch (_e) {
+    } catch {
     }
   }
 };
@@ -27406,7 +27409,7 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
     try {
       const details = await OpenRouterService.getModelDetails(targetModel, key);
       setActiveModelDetails(details);
-    } catch (_e) {
+    } catch {
       setActiveModelDetails(null);
     } finally {
       setVerifyingModel(false);
@@ -27509,7 +27512,7 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
     try {
       await navigator.clipboard.writeText(text);
       new import_obsidian10.Notice(t("copied", language));
-    } catch (_e) {
+    } catch {
       new import_obsidian10.Notice(t("copyError", language));
     }
   };

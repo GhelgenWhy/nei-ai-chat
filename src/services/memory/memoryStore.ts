@@ -63,7 +63,7 @@ export class MemoryStore {
             if (file instanceof TFile) {
                 return await app.vault.read(file);
             }
-        } catch (e: unknown) {
+        } catch {
             /* ignore rules read error */
         }
         return "";

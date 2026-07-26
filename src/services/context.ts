@@ -86,7 +86,7 @@ export async function resolveContext(
         activeNoteTitle = activeFile.basename;
         try {
             activeNoteContent = await app.vault.cachedRead(activeFile);
-        } catch (e: unknown) {
+        } catch {
             /* ignore read error */
         }
     }

@@ -56,7 +56,8 @@ export const systemToolDefinitions: ToolDefinition[] = [
 ];
 
 export const systemExecutors: Record<string, ToolExecutor> = {
-    web_search: async (app: App, args: { query: string }) => {
+    web_search: async (_app: App, rawArgs: Record<string, unknown>) => {
+        const args = rawArgs as { query: string };
         try {
             const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(args.query)}`;
             const response = await requestUrl({
@@ -91,7 +92,8 @@ export const systemExecutors: Record<string, ToolExecutor> = {
         }
     },
 
-    read_web_page: async (app: App, args: { url: string }) => {
+    read_web_page: async (_app: App, rawArgs: Record<string, unknown>) => {
+        const args = rawArgs as { url: string };
         const urlStr = args.url.trim();
 
         // 1. GitHub Repository Auto-Optimization
@@ -110,7 +112,7 @@ export const systemExecutors: Record<string, ToolExecutor> = {
                     const text = response.text.length > 3000 ? response.text.substring(0, 3000) + "\n...[README обрезан для экономии токенов]" : response.text;
                     return `--- GitHub Репозиторий ${owner}/${repo} (README.md) ---\n${text}`;
                 }
-            } catch (e: unknown) {
+            } catch {
                 /* ignore raw readme error */
             }
         }
@@ -139,7 +141,8 @@ export const systemExecutors: Record<string, ToolExecutor> = {
         }
     },
 
-    analyze_github_repo: async (app: App, args: { repoUrl: string }) => {
+    analyze_github_repo: async (_app: App, rawArgs: Record<string, unknown>) => {
+        const args = rawArgs as { repoUrl: string };
         const githubRepoMatch = args.repoUrl.match(/github\.com\/([^/]+)\/([^\s/)]+)/i);
         if (!githubRepoMatch) {
             return `Ошибка: Неверный формат ссылки на GitHub. Укажите 'https://github.com/owner/repo'`;
@@ -171,7 +174,7 @@ export const systemExecutors: Record<string, ToolExecutor> = {
 Звёзды: ${j.stargazers_count || 0} | Форки: ${j.forks_count || 0}
 Открытые issues: ${j.open_issues_count || 0}\n`;
                 }
-            } catch (e: unknown) {
+            } catch {
                 /* ignore meta error */
             }
 
@@ -191,7 +194,7 @@ export const systemExecutors: Record<string, ToolExecutor> = {
                             readmeText = res.text;
                             break;
                         }
-                    } catch (e: unknown) {
+                    } catch {
                         /* ignore branch fetch error */
                     }
                 }

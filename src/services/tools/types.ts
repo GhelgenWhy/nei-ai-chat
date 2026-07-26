@@ -46,4 +46,4 @@ export interface ToolExecutionResult {
     };
 }
 
-export type ToolExecutor = (app: App, args: any) => Promise<string | ToolExecutionResult>;
+export type ToolExecutor = (app: App, args: Record<string, unknown>) => Promise<string | ToolExecutionResult>;

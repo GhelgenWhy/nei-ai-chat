@@ -376,7 +376,7 @@ export const vaultExecutors: Record<string, ToolExecutor> = {
                 try {
                     const content = await app.vault.read(file);
                     output.push(`--- ЗАМЕТКА: ${file.path} ---\n${content}\n`);
-                } catch (e: unknown) {
+                } catch {
                     output.push(`--- ЗАМЕТКА: ${file.path} (Ошибка чтения) ---\n`);
                 }
             } else {
@@ -579,7 +579,7 @@ export const vaultExecutors: Record<string, ToolExecutor> = {
         if (file) {
             try {
                 oldContent = await app.vault.read(file);
-            } catch (e: unknown) {
+            } catch {
                 /* ignore read error */
             }
         }
