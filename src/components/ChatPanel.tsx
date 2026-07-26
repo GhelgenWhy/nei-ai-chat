@@ -6,12 +6,13 @@ import { ChatStore, ChatSession } from "../services/chat/chatStore";
 import { OpenRouterService, OpenRouterModelInfo, OpenRouterKeyInfo } from "../services/openrouter";
 import { ExecutionMode } from "../services/agent/intentRouter";
 import { t, SupportedLanguage } from "../i18n/translations";
+import { NeiAiChatSettings } from "../../main";
 
 interface ChatPanelProps {
     app: App;
     viewLeaf?: WorkspaceLeaf;
-    settings: any;
-    saveSettings: (settings: any) => Promise<void>;
+    settings: NeiAiChatSettings;
+    saveSettings: (settings: NeiAiChatSettings) => Promise<void>;
 }
 
 export const ObsidianMarkdown: React.FC<{ markdown: string; app: App }> = ({ markdown, app }) => {
@@ -22,7 +23,7 @@ export const ObsidianMarkdown: React.FC<{ markdown: string; app: App }> = ({ mar
             containerRef.current.empty();
             const component = new Component();
             component.load();
-            MarkdownRenderer.renderMarkdown(
+            void MarkdownRenderer.renderMarkdown(
                 markdown,
                 containerRef.current,
                 "",
@@ -46,7 +47,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                 const rightLeaf = workspace.getRightLeaf(false);
                 if (rightLeaf) {
                     await rightLeaf.setViewState({ type: "nei-chat-view", active: true });
-                    workspace.revealLeaf(rightLeaf);
+                    void workspace.revealLeaf(rightLeaf);
                 }
                 if (viewLeaf) {
                     viewLeaf.detach();
@@ -55,7 +56,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                 // Move from sidebar to main editor tab
                 const tabLeaf = workspace.getLeaf("tab");
                 await tabLeaf.setViewState({ type: "nei-chat-view", active: true });
-                workspace.revealLeaf(tabLeaf);
+                void workspace.revealLeaf(tabLeaf);
                 if (viewLeaf) {
                     viewLeaf.detach();
                 }
@@ -101,10 +102,10 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
     const [verifyingModel, setVerifyingModel] = React.useState(false);
 
     React.useEffect(() => {
-        refreshSessionsList();
-        verifyActiveModel(model, apiKey);
+        void refreshSessionsList();
+        void verifyActiveModel(model, apiKey);
         if (apiKey) {
-            OpenRouterService.getKeyInfo(apiKey).then(setKeyInfo);
+            void OpenRouterService.getKeyInfo(apiKey).then(setKeyInfo);
         }
     }, []);
 
@@ -134,8 +135,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
 
     const handleSelectModel = (selectedModel: string) => {
         setModel(selectedModel);
-        verifyActiveModel(selectedModel, apiKey);
-        saveSettings({ ...settings, model: selectedModel, visionModel, quickModel, executionMode });
+        void verifyActiveModel(selectedModel, apiKey);
+        void saveSettings({ ...settings, model: selectedModel, visionModel, quickModel, executionMode });
     };
 
     const handleAddModel = () => {
@@ -145,7 +146,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
             const updated = [...customModels, trimmed];
             setCustomModels(updated);
             setModel(trimmed);
-            verifyActiveModel(trimmed, apiKey);
+            void verifyActiveModel(trimmed, apiKey);
             new Notice(`${t("modelAddedNotice", language)} ${trimmed}`);
         }
         setNewModelInput("");
@@ -162,7 +163,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
         if (model === targetModel) {
             const nextModel = updated[0];
             setModel(nextModel);
-            verifyActiveModel(nextModel, apiKey);
+            void verifyActiveModel(nextModel, apiKey);
         }
     };
 
@@ -193,19 +194,25 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
         }
     };
 
+    const [confirmingClear, setConfirmingClear] = React.useState(false);
+
     const handleClearAllSessions = async () => {
-        if (confirm(t("confirmClearChats", language))) {
-            await ChatStore.clearAllSessions(app);
-            await refreshSessionsList();
-            handleNewChat();
-            new Notice(t("historyClearedNotice", language));
+        if (!confirmingClear) {
+            setConfirmingClear(true);
+            setTimeout(() => setConfirmingClear(false), 3000);
+            return;
         }
+        setConfirmingClear(false);
+        await ChatStore.clearAllSessions(app);
+        await refreshSessionsList();
+        handleNewChat();
+        new Notice(t("historyClearedNotice", language));
     };
 
     const [language, setLanguage] = React.useState<SupportedLanguage>(settings.language || "auto");
 
     const handleSaveConfig = async () => {
-        const newSettings = {
+        const newSettings: NeiAiChatSettings = {
             ...settings,
             provider: "openrouter",
             endpointUrl,
@@ -318,7 +325,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
 
             // Refresh key info balance after request
             if (apiKey) {
-                OpenRouterService.getKeyInfo(apiKey).then(setKeyInfo);
+                void OpenRouterService.getKeyInfo(apiKey).then(setKeyInfo);
             }
         } catch (e: any) {
             console.error("[NEI Agent Error]", e);
@@ -340,7 +347,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
         if (!input.trim() || loading) return;
         const queryText = input.trim();
         setInput("");
-        executeQuery(queryText, currentSession.messages);
+        void executeQuery(queryText, currentSession.messages);
     };
 
     // Retry a user request at index
@@ -349,7 +356,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
         const targetMsg = currentSession.messages[msgIdx];
         if (targetMsg && targetMsg.role === "user" && targetMsg.content) {
             const historyBefore = currentSession.messages.slice(0, msgIdx);
-            executeQuery(targetMsg.content, historyBefore);
+            void executeQuery(targetMsg.content, historyBefore);
         }
     };
 
@@ -363,7 +370,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
     const handleSaveEdit = (idx: number) => {
         if (!editingText.trim() || loading) return;
         const historyBefore = currentSession.messages.slice(0, idx);
-        executeQuery(editingText.trim(), historyBefore);
+        void executeQuery(editingText.trim(), historyBefore);
     };
 
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -415,7 +422,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                         {t("newChat", language)}
                     </button>
                     <button 
-                        onClick={handleToggleTabMode}
+                        onClick={() => { void handleToggleTabMode(); }}
                         title={isMainTab ? t("moveSidebarTitle", language) : t("moveTabTitle", language)}
                         style={{ background: 'var(--background-secondary)', border: '1px solid var(--background-modifier-border)', borderRadius: '4px', cursor: 'pointer', padding: '4px 6px', fontSize: '11px' }}
                     >
@@ -429,7 +436,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                         onChange={(e) => {
                             const val = e.target.value as ExecutionMode;
                             setExecutionMode(val);
-                            saveSettings({ ...settings, executionMode: val });
+                            void saveSettings({ ...settings, executionMode: val });
                         }}
                         title={t("modeAutoTitle", language)}
                         className="nei-select-mode"
@@ -456,11 +463,11 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                         <span style={{ fontWeight: 'bold', fontSize: '12px', color: 'var(--text-muted)' }}>{t("historyTitle", language)}</span>
                         {sessionsList.length > 0 && (
                             <button 
-                                onClick={handleClearAllSessions}
+                                onClick={() => { void handleClearAllSessions(); }}
                                 title={t("clearChats", language)}
                                 style={{ background: 'transparent', border: 'none', color: 'var(--text-error, #ff5555)', cursor: 'pointer', fontSize: '11px', fontWeight: '500' }}
                             >
-                                {t("clearAll", language)}
+                                {confirmingClear ? `⚠️ ${t("confirmClearChats", language)}` : t("clearAll", language)}
                             </button>
                         )}
                     </div>
@@ -470,7 +477,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                         sessionsList.map(s => (
                             <div 
                                 key={s.id}
-                                onClick={() => handleSelectSession(s.id)}
+                                onClick={() => { void handleSelectSession(s.id); }}
                                 style={{
                                     display: 'flex',
                                     justifyContent: 'space-between',
@@ -487,7 +494,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                                     {formatSessionTitle(s.title)}
                                 </span>
                                 <button 
-                                    onClick={(e) => handleDeleteSession(e, s.id)}
+                                    onClick={(e) => { void handleDeleteSession(e, s.id); }}
                                     title={t("deleteChatTooltip", language)}
                                     style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '12px', opacity: 0.6 }}
                                 >
@@ -541,7 +548,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                                 value={visionModel} 
                                 onChange={(e) => {
                                     setVisionModel(e.target.value);
-                                    saveSettings({ ...settings, visionModel: e.target.value });
+                                    void saveSettings({ ...settings, visionModel: e.target.value });
                                 }}
                                 style={{ width: '100%', padding: '4px', borderRadius: '4px', fontSize: '11px', background: 'var(--background-secondary)', color: 'var(--text-normal)', border: '1px solid var(--background-modifier-border)' }}
                             >
@@ -555,7 +562,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                                 value={quickModel} 
                                 onChange={(e) => {
                                     setQuickModel(e.target.value);
-                                    saveSettings({ ...settings, quickModel: e.target.value });
+                                    void saveSettings({ ...settings, quickModel: e.target.value });
                                 }}
                                 style={{ width: '100%', padding: '4px', borderRadius: '4px', fontSize: '11px', background: 'var(--background-secondary)', color: 'var(--text-normal)', border: '1px solid var(--background-modifier-border)' }}
                             >
@@ -570,7 +577,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                                 onChange={(e) => {
                                     const langVal = e.target.value as SupportedLanguage;
                                     setLanguage(langVal);
-                                    saveSettings({ ...settings, language: langVal });
+                                    void saveSettings({ ...settings, language: langVal });
                                 }}
                                 style={{ width: '100%', padding: '4px', borderRadius: '4px', fontSize: '11px', background: 'var(--background-secondary)', color: 'var(--text-normal)', border: '1px solid var(--background-modifier-border)' }}
                             >
@@ -593,10 +600,10 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
                             <strong style={{ fontSize: '11px' }}>{t("parameters", language)}: {model}</strong>
                             <button 
-                                onClick={() => verifyActiveModel(model, apiKey)}
+                                onClick={() => { void verifyActiveModel(model, apiKey); }}
                                 style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '11px', color: 'var(--interactive-accent)' }}
                             >
-                                {t("checkApi", language)}
+                                {verifyingModel ? t("checkingApi", language) : t("checkApi", language)}
                             </button>
                         </div>
 
@@ -671,7 +678,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                     </div>
 
                     <button 
-                        onClick={handleSaveConfig}
+                        onClick={() => { void handleSaveConfig(); }}
                         style={{ marginTop: '4px', padding: '6px 12px', background: 'var(--interactive-accent)', color: 'var(--text-on-accent)', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
                     >
                         {t("saveSettings", language)}
@@ -897,8 +904,10 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                         value={input}
                         onChange={(e) => {
                             setInput(e.target.value);
-                            e.target.style.height = 'auto';
-                            e.target.style.height = `${Math.min(e.target.scrollHeight, 280)}px`;
+                            const target = e.target as HTMLElement;
+                            target.setCssStyles({
+                                height: `${Math.min(target.scrollHeight, 280)}px`
+                            });
                         }}
                         onKeyDown={(e) => {
                             if (e.key === 'Enter' && !e.shiftKey) {

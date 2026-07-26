@@ -19,9 +19,10 @@ export class ChatStore {
         try {
             if (await app.vault.adapter.exists(this.INDEX_FILE)) {
                 const content = await app.vault.adapter.read(this.INDEX_FILE);
-                return JSON.parse(content);
+                const parsed = JSON.parse(content) as { id: string; title: string; updatedAt: string }[];
+                return Array.isArray(parsed) ? parsed : [];
             }
-        } catch (e) {
+        } catch (e: unknown) {
             console.error("[NEI ChatStore] Error reading chat index:", e);
         }
         return [];
@@ -32,9 +33,9 @@ export class ChatStore {
         try {
             if (await app.vault.adapter.exists(path)) {
                 const content = await app.vault.adapter.read(path);
-                return JSON.parse(content);
+                return JSON.parse(content) as ChatSession;
             }
-        } catch (e) {
+        } catch (e: unknown) {
             console.error(`[NEI ChatStore] Error loading session ${sessionId}:`, e);
         }
         return null;
@@ -67,7 +68,7 @@ export class ChatStore {
 
             const indexContent = JSON.stringify(sessions, null, 2);
             await app.vault.adapter.write(this.INDEX_FILE, indexContent);
-        } catch (e) {
+        } catch (e: unknown) {
             console.error("[NEI ChatStore] Error saving session:", e);
         }
     }
@@ -83,7 +84,7 @@ export class ChatStore {
             const filtered = sessions.filter(s => s.id !== sessionId);
 
             await app.vault.adapter.write(this.INDEX_FILE, JSON.stringify(filtered, null, 2));
-        } catch (e) {
+        } catch (e: unknown) {
             console.error(`[NEI ChatStore] Error deleting session ${sessionId}:`, e);
         }
     }
@@ -98,7 +99,7 @@ export class ChatStore {
                 }
             }
             await app.vault.adapter.write(this.INDEX_FILE, JSON.stringify([], null, 2));
-        } catch (e) {
+        } catch (e: unknown) {
             console.error("[NEI ChatStore] Error clearing all sessions:", e);
         }
     }

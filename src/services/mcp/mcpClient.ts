@@ -1,5 +1,5 @@
 import { requestUrl } from "obsidian";
-import { ToolDefinition, ToolExecutor } from "../tools/types";
+import { ToolDefinition, ToolExecutor, FunctionParameterSchema } from "../tools/types";
 
 export interface McpServerConfig {
     id: string;
@@ -11,8 +11,37 @@ export interface McpServerConfig {
 export interface McpTool {
     name: string;
     description: string;
-    inputSchema: any;
+    inputSchema: {
+        type: "object";
+        properties: Record<string, FunctionParameterSchema>;
+        required?: string[];
+    };
     serverId: string;
+}
+
+interface RawMcpToolItem {
+    name: string;
+    description?: string;
+    inputSchema?: {
+        type: "object";
+        properties: Record<string, FunctionParameterSchema>;
+        required?: string[];
+    };
+}
+
+interface RawMcpListResponse {
+    result?: {
+        tools?: RawMcpToolItem[];
+    };
+}
+
+interface RawMcpCallResponse {
+    error?: {
+        message?: string;
+    };
+    result?: {
+        content?: Array<{ text?: string }>;
+    };
 }
 
 export class McpService {
@@ -41,8 +70,8 @@ export class McpService {
                     body: JSON.stringify({ jsonrpc: "2.0", method: "tools/list", id: "1" })
                 });
 
-                if (response.status === 200) {
-                    const json = response.json;
+                if (response.status === 200 && response.json) {
+                    const json = response.json as RawMcpListResponse;
                     const tools = json.result?.tools || [];
 
                     for (const tool of tools) {
@@ -62,8 +91,9 @@ export class McpService {
                         };
                     }
                 }
-            } catch (e: any) {
-                console.error(`[McpService] Failed to discover tools from MCP server '${server.name}':`, e?.message || e);
+            } catch (e: unknown) {
+                const err = e as { message?: string };
+                console.error(`[McpService] Failed to discover tools from MCP server '${server.name}':`, err?.message || String(e));
             }
         }
 
@@ -73,7 +103,7 @@ export class McpService {
     /**
      * Executes a tool on a specific MCP server.
      */
-    private static async callMcpTool(server: McpServerConfig, originalToolName: string, args: any): Promise<string> {
+    private static async callMcpTool(server: McpServerConfig, originalToolName: string, args: Record<string, unknown>): Promise<string> {
         try {
             const response = await requestUrl({
                 url: server.endpointUrl.endsWith("/") ? `${server.endpointUrl}tools/call` : `${server.endpointUrl}/tools/call`,
@@ -87,19 +117,20 @@ export class McpService {
                 })
             });
 
-            if (response.status === 200) {
-                const json = response.json;
+            if (response.status === 200 && response.json) {
+                const json = response.json as RawMcpCallResponse;
                 if (json.error) {
                     return `Ошибка MCP инструмента '${originalToolName}': ${json.error.message || JSON.stringify(json.error)}`;
                 }
                 const contentBlocks = json.result?.content || [];
-                const textOutputs = contentBlocks.map((c: any) => c.text || JSON.stringify(c)).join("\n");
+                const textOutputs = contentBlocks.map(c => c.text || JSON.stringify(c)).join("\n");
                 return `[Ответ MCP сервера '${server.name}']:\n${textOutputs || "Инструмент выполнен успешно."}`;
             }
 
             return `Ошибка MCP сервера '${server.name}' (HTTP ${response.status})`;
-        } catch (e: any) {
-            return `Ошибка вызова MCP инструмента '${originalToolName}' на сервере '${server.name}': ${e?.message || e}`;
+        } catch (e: unknown) {
+            const err = e as { message?: string };
+            return `Ошибка вызова MCP инструмента '${originalToolName}' на сервере '${server.name}': ${err?.message || String(e)}`;
         }
     }
 }

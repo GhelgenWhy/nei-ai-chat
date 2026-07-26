@@ -47,11 +47,11 @@ export default class NeiAiChatPlugin extends Plugin {
 
         // Add Ribbon Icon for Chat
         this.addRibbonIcon("bot", "NEI AI Chat", () => {
-            this.activateView();
+            void this.activateView();
         });
     }
 
-    async onunload() {
+    onunload(): void {
         // Resources are cleaned up by Obsidian automatically
     }
 
@@ -72,13 +72,13 @@ export default class NeiAiChatPlugin extends Plugin {
         }
 
         if (leaf) {
-            workspace.revealLeaf(leaf);
+            void workspace.revealLeaf(leaf);
         }
     }
 
     async loadSettings() {
-        const loadedData = await this.loadData();
-        this.settings = Object.assign({}, DEFAULT_SETTINGS, loadedData);
+        const loadedData = (await this.loadData()) as Partial<NeiAiChatSettings> | null;
+        this.settings = Object.assign({}, DEFAULT_SETTINGS, loadedData || {});
         if (!this.settings.customModels || this.settings.customModels.length === 0) {
             this.settings.customModels = DEFAULT_SETTINGS.customModels;
         }

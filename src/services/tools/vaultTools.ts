@@ -448,8 +448,8 @@ export const vaultExecutors: Record<string, ToolExecutor> = {
         if (!file) return `Ошибка: Файл '${args.path}' не найден.`;
 
         try {
-            await app.vault.delete(file);
-            return `Успешно удален файл '${file.path}'.`;
+            await app.fileManager.trashFile(file);
+            return `Успешно помещен в корзину файл '${file.path}'.`;
         } catch (e: any) {
             return `Ошибка удаления: ${e?.message || e}`;
         }

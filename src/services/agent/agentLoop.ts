@@ -117,7 +117,9 @@ export class AgentLoop {
                         const cleanText = content.replace(/^---[\s\S]*?---\n?/, "").trim();
                         const snippet = cleanText.length > 400 ? cleanText.substring(0, 400) + "... [обрезано]" : cleanText;
                         prefetchedBlocks.push(`--- ЗАМЕТКА: [[${file.basename}]] (${file.path}) ---\n${snippet}`);
-                    } catch (e) {}
+                    } catch (e: unknown) {
+                        /* ignore file read error */
+                    }
                 }
             }
             prefetchedContext += `\n--- АВТОМАТИЧЕСКИ ИНДЕКСИРОВАННЫЕ ЗАМЕТКИ ВАУЛТА ---\n${prefetchedBlocks.join("\n\n")}\n`;
@@ -397,11 +399,13 @@ export class AgentLoop {
                 if (toolName) {
                     return {
                         name: toolName,
-                        args: parsed.arguments || parsed.args || parsed.action_input || {}
+                        args: (parsed.arguments || parsed.args || parsed.action_input || {}) as Record<string, unknown>
                     };
                 }
             }
-        } catch (e) {}
+        } catch (e: unknown) {
+            /* ignore JSON parse error */
+        }
         return null;
     }
 
@@ -419,8 +423,8 @@ export class AgentLoop {
     private static async attemptAutoCreateNote(app: App, query: string, responseText: string, steps: AgentStep[], notifySteps: () => void): Promise<void> {
         let notePath = "";
 
-        const folderMatch = query.match(/(?:папке|папку|folder|directory)\s+["']?([a-zA-Z0-9_\-\/А-Яа-яЁё ]+?)["']?(?:\s|$)/i);
-        const fileMatch = query.match(/(?:заметку|файл|note|file)\s+["']?([a-zA-Z0-9_\-\/А-Яа-яЁё ]+?\.md)["']?/i);
+        const folderMatch = query.match(/(?:папке|папку|folder|directory)\s+["']?([a-zA-Z0-9_\-/А-Яа-яЁё ]+?)["']?(?:\s|$)/i);
+        const fileMatch = query.match(/(?:заметку|файл|note|file)\s+["']?([a-zA-Z0-9_\-/А-Яа-яЁё ]+?\.md)["']?/i);
 
         if (fileMatch && fileMatch[1]) {
             notePath = fileMatch[1].trim();
@@ -449,6 +453,8 @@ export class AgentLoop {
                 status: execResult.isError ? "failed" : "completed"
             });
             notifySteps();
-        } catch (e) {}
+        } catch (e: unknown) {
+            /* ignore auto create error */
+        }
     }
 }

@@ -20,6 +20,34 @@ export interface OpenRouterKeyInfo {
     isFreeTier: boolean;
 }
 
+interface RawKeyInfoResponse {
+    data?: {
+        label?: string;
+        usage?: number;
+        limit?: number | null;
+        is_free_tier?: boolean;
+    };
+}
+
+interface RawModelItem {
+    id: string;
+    name?: string;
+    description?: string;
+    context_length?: number;
+    supported_parameters?: string[];
+    architecture?: {
+        modality?: string;
+    };
+    pricing?: {
+        prompt: string;
+        completion: string;
+    };
+}
+
+interface RawModelsResponse {
+    data?: RawModelItem[];
+}
+
 export class OpenRouterService {
     private static cachedModels: Map<string, OpenRouterModelInfo> = new Map();
     private static lastFetchTime = 0;
@@ -38,16 +66,19 @@ export class OpenRouterService {
                 }
             });
 
-            if (response.status === 200 && response.json?.data) {
-                const data = response.json.data;
-                return {
-                    label: data.label,
-                    usage: Number(data.usage || 0),
-                    limit: data.limit ? Number(data.limit) : null,
-                    isFreeTier: Boolean(data.is_free_tier)
-                };
+            if (response.status === 200 && response.json) {
+                const json = response.json as RawKeyInfoResponse;
+                if (json.data) {
+                    const data = json.data;
+                    return {
+                        label: data.label,
+                        usage: Number(data.usage || 0),
+                        limit: data.limit ? Number(data.limit) : null,
+                        isFreeTier: Boolean(data.is_free_tier)
+                    };
+                }
             }
-        } catch (e) {
+        } catch (e: unknown) {
             console.error("[OpenRouterService] Error fetching key info:", e);
         }
         return null;
@@ -82,7 +113,7 @@ export class OpenRouterService {
                 throw new Error(`OpenRouter API status: ${response.status}`);
             }
 
-            const json = response.json;
+            const json = response.json as RawModelsResponse;
             const modelsData = json.data || [];
             const result: OpenRouterModelInfo[] = [];
 
@@ -114,7 +145,7 @@ export class OpenRouterService {
 
             this.lastFetchTime = now;
             return result;
-        } catch (e: any) {
+        } catch (e: unknown) {
             console.error("[OpenRouterService] Error fetching models:", e);
             return Array.from(this.cachedModels.values());
         }
@@ -131,4 +162,3 @@ export class OpenRouterService {
         return models.find(m => m.id === modelId) || null;
     }
 }
-

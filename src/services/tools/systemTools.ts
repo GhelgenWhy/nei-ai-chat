@@ -6,13 +6,13 @@ export const systemToolDefinitions: ToolDefinition[] = [
         type: "function",
         function: {
             name: "web_search",
-            description: "Быстрый поиск информации в глобальной сети Интернет через DuckDuckGo.",
+            description: "Выполняет поиск в Интернете через DuckDuckGo (HTML) и возвращает краткие сниппеты с прямыми ссылками.",
             parameters: {
                 type: "object",
                 properties: {
                     query: {
                         type: "string",
-                        description: "Поисковый запрос"
+                        description: "Поисковый запрос на русском или английском языке (например, 'Obsidian API plugin docs' или 'Python 3.12 release notes')"
                     }
                 },
                 required: ["query"]
@@ -23,13 +23,13 @@ export const systemToolDefinitions: ToolDefinition[] = [
         type: "function",
         function: {
             name: "read_web_page",
-            description: "Скачивание и забор текста с веб-страницы по URL (авто-оптимизирован для GitHub репозиториев и чистого текста).",
+            description: "Скачивает текстовое содержимое произвольной веб-страницы или GitHub README по URL.",
             parameters: {
                 type: "object",
                 properties: {
                     url: {
                         type: "string",
-                        description: "Ссылка на веб-страницу (HTTP/HTTPS)"
+                        description: "Полная ссылка на веб-страницу (например, 'https://github.com/GhelgenWhy/nei-ai-chat')"
                     }
                 },
                 required: ["url"]
@@ -40,7 +40,7 @@ export const systemToolDefinitions: ToolDefinition[] = [
         type: "function",
         function: {
             name: "analyze_github_repo",
-            description: "Прямой оптимизированный забор информации о репозитории GitHub (README, файлы, описание).",
+            description: "Специализированный инструмент для мгновенного сбора полной информации о репозитории GitHub (звёзды, описание, открытые issues, полная выжимка README.md).",
             parameters: {
                 type: "object",
                 properties: {
@@ -85,8 +85,9 @@ export const systemExecutors: Record<string, ToolExecutor> = {
             }
 
             return `Результаты поиска по '${args.query}':\n\n` + matches.join("\n\n");
-        } catch (e: any) {
-            return `Ошибка веб-поиска: ${e?.message || e}`;
+        } catch (e: unknown) {
+            const err = e as { message?: string };
+            return `Ошибка веб-поиска: ${err?.message || String(e)}`;
         }
     },
 
@@ -94,7 +95,7 @@ export const systemExecutors: Record<string, ToolExecutor> = {
         const urlStr = args.url.trim();
 
         // 1. GitHub Repository Auto-Optimization
-        const githubRepoMatch = urlStr.match(/github\.com\/([^\/]+)\/([^\/]+)/i);
+        const githubRepoMatch = urlStr.match(/github\.com\/([^/]+)\/([^/]+)/i);
         if (githubRepoMatch) {
             const owner = githubRepoMatch[1];
             const repo = githubRepoMatch[2].replace(/\.git$/, "");
@@ -109,7 +110,9 @@ export const systemExecutors: Record<string, ToolExecutor> = {
                     const text = response.text.length > 3000 ? response.text.substring(0, 3000) + "\n...[README обрезан для экономии токенов]" : response.text;
                     return `--- GitHub Репозиторий ${owner}/${repo} (README.md) ---\n${text}`;
                 }
-            } catch (e) {}
+            } catch (e: unknown) {
+                /* ignore raw readme error */
+            }
         }
 
         // 2. Generic Web Page Fetch
@@ -130,13 +133,14 @@ export const systemExecutors: Record<string, ToolExecutor> = {
 
             const truncated = text.length > 2500 ? text.substring(0, 2500) + "... [содержимое сжато]" : text;
             return `--- Веб-страница: ${urlStr} ---\n${truncated}`;
-        } catch (e: any) {
-            return `Ошибка чтения веб-страницы '${urlStr}': ${e?.message || e}`;
+        } catch (e: unknown) {
+            const err = e as { message?: string };
+            return `Ошибка чтения веб-страницы '${urlStr}': ${err?.message || String(e)}`;
         }
     },
 
     analyze_github_repo: async (app: App, args: { repoUrl: string }) => {
-        const githubRepoMatch = args.repoUrl.match(/github\.com\/([^\/]+)\/([^\s\/\)]+)/i);
+        const githubRepoMatch = args.repoUrl.match(/github\.com\/([^/]+)\/([^\s/)]+)/i);
         if (!githubRepoMatch) {
             return `Ошибка: Неверный формат ссылки на GitHub. Укажите 'https://github.com/owner/repo'`;
         }
@@ -153,14 +157,23 @@ export const systemExecutors: Record<string, ToolExecutor> = {
                     headers: { "User-Agent": "NEI-Obsidian-Plugin" }
                 });
                 if (metaRes.status === 200 && metaRes.json) {
-                    const j = metaRes.json;
+                    const j = metaRes.json as {
+                        full_name?: string;
+                        description?: string;
+                        language?: string;
+                        stargazers_count?: number;
+                        forks_count?: number;
+                        open_issues_count?: number;
+                    };
                     repoMetaInfo = `Название: ${j.full_name || `${owner}/${repo}`}
 Описание: ${j.description || 'Отсутствует'}
 Основной язык: ${j.language || 'Не указан'}
 Звёзды: ${j.stargazers_count || 0} | Форки: ${j.forks_count || 0}
 Открытые issues: ${j.open_issues_count || 0}\n`;
                 }
-            } catch (e) {}
+            } catch (e: unknown) {
+                /* ignore meta error */
+            }
 
             let readmeText = "";
             const branches = ["main", "master"];
@@ -178,7 +191,9 @@ export const systemExecutors: Record<string, ToolExecutor> = {
                             readmeText = res.text;
                             break;
                         }
-                    } catch (e) {}
+                    } catch (e: unknown) {
+                        /* ignore branch fetch error */
+                    }
                 }
             }
 
@@ -191,8 +206,9 @@ URL: https://github.com/${owner}/${repo}
 ${repoMetaInfo}
 --- ТЕКСТ README.md ---
 ${cleanReadme}`;
-        } catch (e: any) {
-            return `Ошибка получения информации о GitHub репозитории: ${e?.message || e}`;
+        } catch (e: unknown) {
+            const err = e as { message?: string };
+            return `Ошибка получения информации о GitHub репозитории: ${err?.message || String(e)}`;
         }
     }
 };

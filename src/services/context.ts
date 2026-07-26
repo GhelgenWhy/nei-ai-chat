@@ -1,13 +1,72 @@
 import { App, TFile } from "obsidian";
 import { searchVaultLexical } from "./rag";
 
+export interface SkillStat {
+    name: string;
+    level: number;
+    currentXp: number;
+    maxXp: number;
+}
+
+export interface EffectStat {
+    name: string;
+    description: string;
+    isActive: boolean;
+}
+
+export interface CharacterProfile {
+    name: string;
+    level: number;
+    currentXp: number;
+    maxXp: number;
+    gold: number;
+    stats: {
+        INT: number;
+        DEX: number;
+        STR: number;
+        FOC: number;
+        WIS: number;
+        CHA: number;
+    };
+    skills: SkillStat[];
+    effects: EffectStat[];
+}
+
+export interface QuestItem {
+    id: string;
+    title: string;
+    status: string;
+    difficulty: string;
+    rewards: {
+        xp: number;
+        gold: number;
+    };
+}
+
 export interface SystemPromptContext {
     activeNoteTitle: string;
     activeNoteContent: string;
     activePlugins: string[];
-    characterStats?: any;
-    activeQuests?: any[];
+    characterStats?: CharacterProfile;
+    activeQuests?: QuestItem[];
     ragContext: string;
+}
+
+interface PluginContainer {
+    plugins?: {
+        manifests?: Record<string, unknown>;
+        enabledPlugins?: Set<string>;
+        getPlugin?: (id: string) => {
+            enabled?: boolean;
+            api?: {
+                loadCharacterProfile: () => Promise<CharacterProfile>;
+                getAllQuests: () => Promise<QuestItem[]>;
+            };
+        } | undefined;
+    };
+    internalPlugins?: {
+        enabledPlugins?: Set<string>;
+    };
 }
 
 /**
@@ -27,24 +86,31 @@ export async function resolveContext(
         activeNoteTitle = activeFile.basename;
         try {
             activeNoteContent = await app.vault.cachedRead(activeFile);
-        } catch (e) {}
+        } catch (e: unknown) {
+            /* ignore read error */
+        }
     }
 
-    // Get active plugins list
-    const activePlugins: string[] = (Array.from((app as any).internalPlugins?.enabledPlugins || []) as string[])
-        .concat(Object.keys((app as any).plugins?.manifests || {}))
-        .filter(id => (app as any).plugins?.enabledPlugins?.has(id) || (app as any).internalPlugins?.enabledPlugins?.has(id)) as string[];
+    // Get active plugins list safely
+    const appPluginContainer = app as unknown as PluginContainer;
+    const internalSet = appPluginContainer.internalPlugins?.enabledPlugins;
+    const communitySet = appPluginContainer.plugins?.enabledPlugins;
+    const manifests = appPluginContainer.plugins?.manifests;
+
+    const enabledInternal = Array.from(internalSet || []);
+    const enabledCommunity = Object.keys(manifests || {}).filter(id => communitySet?.has(id));
+    const activePlugins: string[] = [...enabledInternal, ...enabledCommunity];
 
     // Get RPG Context if nei-core-plugin is active
-    let characterStats: any = undefined;
-    let activeQuests: any[] = [];
+    let characterStats: CharacterProfile | undefined = undefined;
+    let activeQuests: QuestItem[] = [];
     
-    const corePlugin = (app as any).plugins?.getPlugin("nei-core-plugin");
+    const corePlugin = appPluginContainer.plugins?.getPlugin?.("nei-core-plugin");
     if (corePlugin && corePlugin.enabled && corePlugin.api) {
         try {
             characterStats = await corePlugin.api.loadCharacterProfile();
             activeQuests = await corePlugin.api.getAllQuests();
-        } catch (e) {
+        } catch (e: unknown) {
             console.error("[NEI AI Chat] Error pulling RPG stats from Core plugin:", e);
         }
     }
@@ -63,7 +129,7 @@ ${res.content.substring(0, 1500)}${res.content.length > 1500 ? "..." : ""}
 ---`)
                     .join("\n\n");
             }
-        } catch (e) {
+        } catch (e: unknown) {
             console.error("[NEI AI Chat] RAG search error:", e);
         }
     }
@@ -85,7 +151,7 @@ export function buildSystemPrompt(context: SystemPromptContext): string {
     const isGameMaster = !!context.characterStats;
     let prompt = "";
 
-    if (isGameMaster) {
+    if (isGameMaster && context.characterStats) {
         const stats = context.characterStats;
         const quests = context.activeQuests || [];
         const activeQuestsStr = quests
@@ -94,12 +160,12 @@ export function buildSystemPrompt(context: SystemPromptContext): string {
             .join("\n");
 
         const skillsStr = stats.skills
-            .map((s: any) => `- ${s.name} (Lvl ${s.level}, XP: ${s.currentXp}/${s.maxXp})`)
+            .map(s => `- ${s.name} (Lvl ${s.level}, XP: ${s.currentXp}/${s.maxXp})`)
             .join("\n");
 
         const activeEffectsStr = stats.effects
-            .filter((e: any) => e.isActive)
-            .map((e: any) => `- ${e.name}: ${e.description}`)
+            .filter(e => e.isActive)
+            .map(e => `- ${e.name}: ${e.description}`)
             .join("\n") || "Нет";
 
         prompt = `Ты — Neural Game Master в RPG-системе NEI (Neural Evolution Interface), встроенной в Obsidian. 

@@ -1,4 +1,4 @@
-# NEI AI Assistant — Super-Agentic AI Plugin for Obsidian 🤖🧠
+# NEI AI Chat
 
 [![Obsidian Plugin](https://img.shields.io/badge/Obsidian-Plugin-purple.svg)](https://obsidian.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)

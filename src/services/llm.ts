@@ -1,3 +1,4 @@
+import { requestUrl } from "obsidian";
 import { ToolDefinition, ToolCall } from "./tools/types";
 
 export interface ChatMessage {
@@ -57,9 +58,9 @@ export async function sendChatRequest(
 
     // Clean messages & support image arrays
     const cleanMessages = messages.map(m => {
-        let messageContent: any = m.content || "";
+        let messageContent: string | Array<Record<string, unknown>> = m.content || "";
         if (m.images && m.images.length > 0) {
-            const parts: any[] = [{ type: "text", text: m.content || "" }];
+            const parts: Array<Record<string, unknown>> = [{ type: "text", text: m.content || "" }];
             for (const img of m.images) {
                 parts.push({
                     type: "image_url",
@@ -78,7 +79,7 @@ export async function sendChatRequest(
         };
     });
 
-    const body: Record<string, any> = {
+    const body: Record<string, unknown> = {
         model: config.model,
         messages: cleanMessages
     };
@@ -88,20 +89,19 @@ export async function sendChatRequest(
         body.tool_choice = "auto";
     }
 
-
-
-    const response = await fetch(url, {
+    const response = await requestUrl({
+        url,
         method: "POST",
         headers,
         body: JSON.stringify(body)
     });
 
-    if (!response.ok) {
-        const errorText = await response.text().catch(() => "");
-        let userFriendlyMsg = `Ошибка ИИ (${response.status}): ${errorText || response.statusText}`;
+    if (response.status < 200 || response.status >= 300) {
+        const errorText = response.text || "";
+        let userFriendlyMsg = `Ошибка ИИ (${response.status}): ${errorText}`;
 
         try {
-            const parsedErr = JSON.parse(errorText);
+            const parsedErr = JSON.parse(errorText) as { error?: { message?: string; metadata?: { provider_name?: string } } };
             if (parsedErr.error) {
                 const errObj = parsedErr.error;
                 const providerName = errObj.metadata?.provider_name || "";
@@ -115,17 +115,34 @@ export async function sendChatRequest(
                     userFriendlyMsg = `⚠️ Сообщение провайдера OpenRouter [Код ${response.status}]: ${errObj.message}`;
                 }
             }
-        } catch (e) {}
+        } catch (e: unknown) {
+            /* ignore JSON parse error */
+        }
 
         throw new Error(userFriendlyMsg);
     }
 
-    const data = await response.json();
+    const data = response.json as { 
+        choices?: Array<{ 
+            message?: { 
+                content?: string; 
+                tool_calls?: ToolCall[]; 
+                reasoning?: string; 
+                reasoning_content?: string 
+            } 
+        }>; 
+        usage?: { 
+            prompt_tokens?: number; 
+            completion_tokens?: number; 
+            total_tokens?: number 
+        } 
+    };
+
     if (!data.choices || data.choices.length === 0) {
         throw new Error("ИИ вернул пустой выбор ответа (empty choices).");
     }
 
-    const choiceMessage = data.choices[0].message || {};
+    const choiceMessage = data.choices[0]?.message || {};
     const content = choiceMessage.content || "";
     const tool_calls = choiceMessage.tool_calls || undefined;
     const reasoning = choiceMessage.reasoning || choiceMessage.reasoning_content || undefined;

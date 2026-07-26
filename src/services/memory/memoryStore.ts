@@ -1,7 +1,7 @@
 import { App, TFile, normalizePath } from "obsidian";
 
 export interface NeiMemory {
-    userPreferences: Record<string, any>;
+    userPreferences: Record<string, unknown>;
     projectContexts: Record<string, string>;
     learnedFacts: string[];
     lastUpdated: string;
@@ -23,9 +23,10 @@ export class MemoryStore {
             const file = app.vault.getAbstractFileByPath(this.MEMORY_PATH);
             if (file instanceof TFile) {
                 const content = await app.vault.read(file);
-                return Object.assign({}, DEFAULT_MEMORY, JSON.parse(content));
+                const parsed = JSON.parse(content) as Partial<NeiMemory>;
+                return Object.assign({}, DEFAULT_MEMORY, parsed);
             }
-        } catch (e) {
+        } catch (e: unknown) {
             console.error("[NEI Memory] Ошибка чтения memory.json:", e);
         }
         return DEFAULT_MEMORY;
@@ -43,7 +44,7 @@ export class MemoryStore {
             } else {
                 await app.vault.create(this.MEMORY_PATH, content);
             }
-        } catch (e) {
+        } catch (e: unknown) {
             console.error("[NEI Memory] Ошибка сохранения memory.json:", e);
         }
     }
@@ -62,7 +63,9 @@ export class MemoryStore {
             if (file instanceof TFile) {
                 return await app.vault.read(file);
             }
-        } catch (e) {}
+        } catch (e: unknown) {
+            /* ignore rules read error */
+        }
         return "";
     }
 
