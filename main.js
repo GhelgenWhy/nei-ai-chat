@@ -24524,7 +24524,6 @@ async function sendChatRequest(config, messages, tools) {
     body.tools = tools;
     body.tool_choice = "auto";
   }
-  console.log(`[NEI Agent LLM] \u0412\u044B\u0437\u043E\u0432 API: ${config.provider} (${config.model}), \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0439: ${messages.length}, \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u043E\u0432: ${tools?.length || 0}`);
   const response = await fetch(url, {
     method: "POST",
     headers,
@@ -25061,9 +25060,9 @@ ${content}
     const matched = [];
     for (const file of files) {
       const cache = app.metadataCache.getFileCache(file);
-      const tagsInFile = (cache?.tags || []).map((t) => t.tag.toLowerCase());
+      const tagsInFile = (cache?.tags || []).map((t2) => t2.tag.toLowerCase());
       const frontmatterTags = cache?.frontmatter?.tags || [];
-      const normalizedFmTags = Array.isArray(frontmatterTags) ? frontmatterTags.map((t) => t.startsWith("#") ? t.toLowerCase() : "#" + t.toLowerCase()) : [];
+      const normalizedFmTags = Array.isArray(frontmatterTags) ? frontmatterTags.map((t2) => t2.startsWith("#") ? t2.toLowerCase() : "#" + t2.toLowerCase()) : [];
       if (tagsInFile.includes(cleanTag) || normalizedFmTags.includes(cleanTag)) {
         matched.push(file.path);
       }
@@ -25079,9 +25078,9 @@ ${content}
     const tagMap = {};
     for (const file of files) {
       const cache = app.metadataCache.getFileCache(file);
-      const tagsInFile = (cache?.tags || []).map((t) => t.tag);
-      for (const t of tagsInFile) {
-        tagMap[t] = (tagMap[t] || 0) + 1;
+      const tagsInFile = (cache?.tags || []).map((t2) => t2.tag);
+      for (const t2 of tagsInFile) {
+        tagMap[t2] = (tagMap[t2] || 0) + 1;
       }
     }
     const entries = Object.entries(tagMap).sort((a, b) => b[1] - a[1]);
@@ -25181,23 +25180,6 @@ var systemToolDefinitions = [
           }
         },
         required: ["repoUrl"]
-      }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "execute_terminal_command",
-      description: "\u0412\u044B\u043F\u043E\u043B\u043D\u0438\u0442\u044C \u043A\u043E\u043D\u0441\u043E\u043B\u044C\u043D\u0443\u044E \u0442\u0435\u0440\u043C\u0438\u043D\u0430\u043B\u044C\u043D\u0443\u044E \u043A\u043E\u043C\u0430\u043D\u0434\u0443 \u0432 \u043E\u043F\u0435\u0440\u0430\u0446\u0438\u043E\u043D\u043D\u043E\u0439 \u0441\u0438\u0441\u0442\u0435\u043C\u0435 (PowerShell / Command Prompt / Bash).",
-      parameters: {
-        type: "object",
-        properties: {
-          command: {
-            type: "string",
-            description: "\u0422\u0435\u0440\u043C\u0438\u043D\u0430\u043B\u044C\u043D\u0430\u044F \u043A\u043E\u043C\u0430\u043D\u0434\u0430 \u0434\u043B\u044F \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u0438\u044F"
-          }
-        },
-        required: ["command"]
       }
     }
   }
@@ -25329,27 +25311,6 @@ ${cleanReadme}`;
     } catch (e) {
       return `\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u043E\u043B\u0443\u0447\u0435\u043D\u0438\u044F \u0438\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0438\u0438 \u043E GitHub \u0440\u0435\u043F\u043E\u0437\u0438\u0442\u043E\u0440\u0438\u0438: ${e?.message || e}`;
     }
-  },
-  execute_terminal_command: async (app, args) => {
-    return new Promise((resolve) => {
-      try {
-        const childProcess = require("child_process");
-        const basePath = app.vault.adapter.getBasePath ? app.vault.adapter.getBasePath() : process.cwd();
-        childProcess.exec(args.command, { cwd: basePath, timeout: 3e4 }, (error, stdout, stderr) => {
-          if (error) {
-            resolve(`\u041E\u0448\u0438\u0431\u043A\u0430 \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u0438\u044F \u043A\u043E\u043C\u0430\u043D\u0434\u044B (${error.code || "ERR"}):
-${stderr || error.message}`);
-          } else {
-            const output = stdout.trim() || stderr.trim() || "\u041A\u043E\u043C\u0430\u043D\u0434\u0430 \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u0430 (\u0431\u0435\u0437 \u0432\u044B\u0432\u043E\u0434\u0430).";
-            const truncated = output.length > 2e3 ? output.substring(0, 2e3) + "... [\u0432\u044B\u0432\u043E\u0434 \u0441\u0436\u0430\u0442]" : output;
-            resolve(`--- \u0412\u044B\u0432\u043E\u0434 \u043A\u043E\u043C\u0430\u043D\u0434\u044B: ${args.command} ---
-${truncated}`);
-          }
-        });
-      } catch (e) {
-        resolve(`\u0422\u0435\u0440\u043C\u0438\u043D\u0430\u043B\u044C\u043D\u043E\u0435 \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u0438\u0435 \u043D\u0435 \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u0438\u0432\u0430\u0435\u0442\u0441\u044F: ${e?.message || e}`);
-      }
-    });
   }
 };
 
@@ -25542,7 +25503,6 @@ var ToolRegistry = class {
       };
     }
     try {
-      console.log(`[NEI Agent Engine] \u0412\u044B\u0437\u043E\u0432 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u0430 '${name}' \u0441 \u0430\u0440\u0433\u0443\u043C\u0435\u043D\u0442\u0430\u043C\u0438:`, parsedArgs);
       const execResult = await executor(app, parsedArgs);
       if (typeof execResult === "object" && execResult !== null && "result" in execResult) {
         return execResult;
@@ -25744,36 +25704,60 @@ var IntentRouter = class {
       return { mode: "agent", reason: "\u041F\u0440\u0438\u043A\u0440\u0435\u043F\u043B\u0435\u043D\u044B \u0444\u0430\u0439\u043B\u044B/\u0438\u0437\u043E\u0431\u0440\u0430\u0436\u0435\u043D\u0438\u044F \u0434\u043B\u044F \u0430\u043D\u0430\u043B\u0438\u0437\u0430" };
     }
     const queryLower = userQuery.trim().toLowerCase();
-    const agentKeywords = [
+    const vaultActionKeywords = [
+      "\u0441\u043E\u0437\u0434\u0430\u0439",
+      "\u043D\u0430\u043F\u0438\u0448\u0438 \u0437\u0430\u043C\u0435\u0442\u043A\u0443",
+      "\u0441\u043E\u0437\u0434\u0430\u0442\u044C \u0437\u0430\u043C\u0435\u0442\u043A\u0443",
+      "\u0441\u043E\u0437\u0434\u0430\u0439 \u0437\u0430\u043C\u0435\u0442\u043A\u0443",
+      "\u0441\u043E\u0437\u0434\u0430\u0439 \u043F\u0430\u043F\u043A\u0443",
+      "\u0441\u043E\u0437\u0434\u0430\u0439 \u0444\u0430\u0439\u043B",
+      "\u0441\u043E\u0445\u0440\u0430\u043D\u0438",
+      "\u0441\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C",
+      "\u0437\u0430\u043F\u0438\u0448\u0438 \u0432",
+      "\u0441\u043E\u0437\u0434\u0430\u0439 \u0432",
+      "\u0441\u0434\u0435\u043B\u0430\u0439 \u0437\u0430\u043C\u0435\u0442\u043A\u0443",
+      "\u0441\u0433\u0435\u043D\u0435\u0440\u0438\u0440\u0443\u0439 \u0437\u0430\u043C\u0435\u0442\u043A\u0443",
+      "\u043F\u0440\u043E\u0430\u043D\u0430\u043B\u0438\u0437\u0438\u0440\u0443\u0439",
+      "\u043D\u0430\u0439\u0434\u0438",
+      "\u043F\u043E\u0438\u0449\u0438",
       "\u0441\u043A\u0430\u043D\u0438\u0440\u0443\u0439",
       "\u0441\u043A\u0430\u043D",
-      "\u043F\u0440\u043E\u0430\u043D\u0430\u043B\u0438\u0437\u0438\u0440\u0443\u0439 \u0440\u0435\u043F\u043E\u0437\u0438\u0442\u043E\u0440\u0438\u0439",
-      "\u043F\u0440\u043E\u0430\u043D\u0430\u043B\u0438\u0437\u0438\u0440\u0443\u0439 \u0441\u0430\u0439\u0442",
-      "\u0432\u0435\u0431-\u0441\u0430\u0439\u0442",
-      "\u043D\u0430\u0439\u0434\u0438 \u0432 \u0432\u0430\u0443\u043B\u0442\u0435",
-      "\u043F\u0440\u043E\u0432\u0435\u0440\u044C \u0432\u0441\u0435 \u0437\u0430\u043C\u0435\u0442\u043A\u0438",
-      "\u0441\u0440\u0430\u0432\u043D\u0438 \u0437\u0430\u043C\u0435\u0442\u043A\u0438",
-      "\u043D\u0430\u0439\u0434\u0438 \u0438 \u043E\u0431\u043D\u043E\u0432\u0438",
-      "\u0441\u0433\u0440\u0443\u043F\u043F\u0438\u0440\u0443\u0439 \u0432\u0441\u0435 \u0442\u0430\u0441\u043A\u0438",
+      "\u043F\u0440\u043E\u0432\u0435\u0440\u044C",
+      "\u0441\u0440\u0430\u0432\u043D\u0438",
+      "\u0443\u0434\u0430\u043B\u0438",
+      "\u043F\u0435\u0440\u0435\u0438\u043C\u0435\u043D\u0443\u0439",
+      "\u043E\u0431\u043D\u043E\u0432\u0438",
+      "\u0441\u0433\u0440\u0443\u043F\u043F\u0438\u0440\u0443\u0439",
+      "\u0442\u0430\u0441\u043A\u0438",
+      "\u043F\u0430\u043F\u043A\u0435",
+      "\u0437\u0430\u043C\u0435\u0442\u043A\u0435",
+      "\u0432\u0430\u0443\u043B\u0442",
+      "vault",
+      "create note",
+      "make note",
+      "write note",
+      "save note",
+      "create folder",
+      "create file",
       "search",
-      "scan vault",
-      "analyze repo",
-      "check all files"
+      "find",
+      "analyze",
+      "scan",
+      "check notes"
     ];
-    for (const kw of agentKeywords) {
+    for (const kw of vaultActionKeywords) {
       if (queryLower.includes(kw)) {
-        return { mode: "agent", reason: `\u041E\u0431\u043D\u0430\u0440\u0443\u0436\u0435\u043D \u0437\u0430\u043F\u0440\u043E\u0441 \u043D\u0430 \u043C\u043D\u043E\u0433\u043E\u0448\u0430\u0433\u043E\u0432\u044B\u0439 \u0430\u043D\u0430\u043B\u0438\u0437 (${kw})` };
+        return { mode: "agent", reason: `\u041E\u0431\u043D\u0430\u0440\u0443\u0436\u0435\u043D \u0437\u0430\u043F\u0440\u043E\u0441 \u0440\u0430\u0431\u043E\u0442\u044B \u0441 \u0437\u0430\u043C\u0435\u0442\u043A\u0430\u043C\u0438/\u0432\u0430\u0443\u043B\u0442\u043E\u043C (${kw})` };
       }
     }
-    const isDirectNoteCreation = (queryLower.startsWith("\u0441\u043E\u0437\u0434\u0430\u0439 \u0437\u0430\u043C\u0435\u0442\u043A\u0443") || queryLower.startsWith("\u043D\u0430\u043F\u0438\u0448\u0438 \u0437\u0430\u043C\u0435\u0442\u043A\u0443")) && !queryLower.includes("\u0441\u043A\u0430\u043D\u0438\u0440\u0443\u0439") && !queryLower.includes("\u043D\u0430\u0439\u0434\u0438 \u0432");
-    const isShortQuestion = userQuery.length < 120 && (queryLower.startsWith("\u0447\u0442\u043E \u0442\u0430\u043A\u043E\u0435") || queryLower.startsWith("\u043A\u0430\u043A \u0441\u0434\u0435\u043B\u0430\u0442\u044C") || queryLower.startsWith("\u043E\u0431\u044A\u044F\u0441\u043D\u0438") || queryLower.startsWith("\u043F\u0435\u0440\u0435\u0432\u0435\u0434\u0438") || queryLower.startsWith("\u043D\u0430\u043F\u0438\u0448\u0438 \u043A\u043E\u0434") || queryLower.startsWith("\u043F\u0435\u0440\u0435\u0444\u0440\u0430\u0437\u0438\u0440\u0443\u0439"));
-    if (isDirectNoteCreation || isShortQuestion) {
-      return { mode: "quick", reason: "\u041F\u0440\u043E\u0441\u0442\u0430\u044F 1-\u0448\u0430\u0433\u043E\u0432\u0430\u044F \u0437\u0430\u0434\u0430\u0447\u0430 (\u0431\u044B\u0441\u0442\u0440\u044B\u0439 \u043E\u0442\u043A\u043B\u0438\u043A \u0431\u0435\u0437 \u0432\u044B\u0437\u043E\u0432\u0430 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u043E\u0432)" };
+    const isPureQuestion = userQuery.length < 150 && (queryLower.startsWith("\u0447\u0442\u043E \u0442\u0430\u043A\u043E\u0435") || queryLower.startsWith("\u043A\u0430\u043A \u0441\u0434\u0435\u043B\u0430\u0442\u044C") || queryLower.startsWith("\u043E\u0431\u044A\u044F\u0441\u043D\u0438") || queryLower.startsWith("\u043F\u0435\u0440\u0435\u0432\u0435\u0434\u0438") || queryLower.startsWith("\u043D\u0430\u043F\u0438\u0448\u0438 \u043A\u043E\u0434") || queryLower.startsWith("\u043F\u0435\u0440\u0435\u0444\u0440\u0430\u0437\u0438\u0440\u0443\u0439") || queryLower.startsWith("\u0447\u0442\u043E \u0437\u043D\u0430\u0447\u0438\u0442") || queryLower.startsWith("\u043A\u0430\u043A\u0430\u044F \u0440\u0430\u0437\u043D\u0438\u0446\u0430"));
+    if (isPureQuestion) {
+      return { mode: "quick", reason: "\u041F\u0440\u044F\u043C\u043E\u0439 \u0432\u043E\u043F\u0440\u043E\u0441/\u043E\u0442\u0432\u0435\u0442 (\u0431\u0435\u0437 \u0432\u0437\u0430\u0438\u043C\u043E\u0434\u0435\u0439\u0441\u0442\u0432\u0438\u044F \u0441 \u0445\u0440\u0430\u043D\u0438\u043B\u0438\u0449\u0435\u043C)" };
     }
-    if (userQuery.length > 200) {
-      return { mode: "agent", reason: "\u0420\u0430\u0437\u0432\u0435\u0440\u043D\u0443\u0442\u044B\u0439 \u0437\u0430\u043F\u0440\u043E\u0441 \u0442\u0440\u0435\u0431\u0443\u0435\u0442 \u0430\u0433\u0435\u043D\u0442\u043D\u044B\u0445 \u0440\u0430\u0441\u0441\u0443\u0436\u0434\u0435\u043D\u0438\u0439" };
+    if (userQuery.length > 150) {
+      return { mode: "agent", reason: "\u0420\u0430\u0437\u0432\u0435\u0440\u043D\u0443\u0442\u044B\u0439 \u0437\u0430\u043F\u0440\u043E\u0441 \u0442\u0440\u0435\u0431\u0443\u0435\u0442 \u0430\u0433\u0435\u043D\u0442\u043D\u043E\u0433\u043E \u0440\u0435\u0436\u0438\u043C\u0430" };
     }
-    return { mode: "quick", reason: "\u0421\u0442\u0430\u043D\u0434\u0430\u0440\u0442\u043D\u044B\u0439 \u0432\u043E\u043F\u0440\u043E\u0441 \u0434\u043B\u044F \u043F\u0440\u044F\u043C\u043E\u0433\u043E \u043E\u0442\u0432\u0435\u0442\u0430" };
+    return { mode: "quick", reason: "\u041F\u0440\u043E\u0441\u0442\u0430\u044F \u0431\u0435\u0441\u0435\u0434\u0430 \u0431\u0435\u0437 \u043E\u0431\u0440\u0430\u0449\u0435\u043D\u0438\u044F \u043A \u0432\u0430\u0443\u043B\u0442\u0443" };
   }
 };
 
@@ -25815,7 +25799,6 @@ var AgentLoop = class {
       chatHistory,
       images,
       executionMode = "auto",
-      safetyMode = "safe",
       onStepUpdate,
       onConfirmationRequired,
       maxIterations = 6
@@ -25901,14 +25884,15 @@ ${prefetchedBlocks.join("\n\n")}
       userMsg.images = images;
     }
     let systemPrompt = `\u0422\u044B \u2014 \u0441\u0432\u0435\u0440\u0445\u0430\u0433\u0435\u043D\u0442\u043D\u044B\u0439 \u0418\u0418-\u043F\u043E\u043C\u043E\u0449\u043D\u0438\u043A NEI \u0432 Obsidian.
-\u0422\u0432\u043E\u044F \u0446\u0435\u043B\u044C: \u0434\u0430\u0432\u0430\u0442\u044C \u0438\u0441\u0447\u0435\u0440\u043F\u044B\u0432\u0430\u044E\u0449\u0438\u0435, \u0433\u043B\u0443\u0431\u043E\u043A\u0438\u0435 \u0438 \u0441\u0442\u0440\u0443\u043A\u0442\u0443\u0440\u0438\u0440\u043E\u0432\u0430\u043D\u043D\u044B\u0435 \u043E\u0442\u0432\u0435\u0442\u044B.
+\u0422\u0432\u043E\u044F \u0446\u0435\u043B\u044C: \u043F\u043E\u043C\u043E\u0433\u0430\u0442\u044C \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044E \u0440\u0430\u0431\u043E\u0442\u0430\u0442\u044C \u0441 \u0445\u0440\u0430\u043D\u0438\u043B\u0438\u0449\u0435\u043C \u0437\u0430\u043C\u0435\u0442\u043E\u043A Vault \u0438 \u043E\u0442\u0432\u0435\u0447\u0430\u0442\u044C \u043D\u0430 \u0435\u0433\u043E \u0432\u043E\u043F\u0440\u043E\u0441\u044B.
 
-\u0418\u041D\u0421\u0422\u0420\u0423\u041A\u0426\u0418\u0418 \u0418 \u042D\u041A\u041E\u041D\u041E\u041C\u0418\u042F \u0422\u041E\u041A\u0415\u041D\u041E\u0412:
-- \u0415\u0441\u043B\u0438 \u0434\u0430\u043D\u043D\u044B\u0435 \u043F\u0440\u0435\u0434\u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043D\u044B \u043D\u0438\u0436\u0435, \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u0443\u0439 \u0438\u0445 \u0438 \u0434\u0430\u0432\u0430\u0439 \u0438\u0442\u043E\u0433\u043E\u0432\u044B\u0439 \u043E\u0442\u0432\u0435\u0442.
-- \u041F\u0440\u0438 \u0432\u044B\u0437\u043E\u0432\u0435 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u043E\u0432 \u0441\u0436\u0438\u043C\u0430\u0439 \u043E\u0442\u0432\u0435\u0442\u044B \u0438 \u0431\u0443\u0434\u044C \u043B\u0430\u043A\u043E\u043D\u0438\u0447\u0435\u043D.
+\u041E\u0411\u042F\u0417\u0410\u0422\u0415\u041B\u042C\u041D\u042B\u0415 \u041F\u0420\u0410\u0412\u0418\u041B\u0410 \u0418\u0421\u041F\u041E\u041B\u042C\u0417\u041E\u0412\u0410\u041D\u0418\u042F \u0418\u041D\u0421\u0422\u0420\u0423\u041C\u0415\u041D\u0422\u041E\u0412:
+1. \u0415\u0441\u043B\u0438 \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C \u043F\u0440\u043E\u0441\u0438\u0442 "\u0441\u043E\u0437\u0434\u0430\u0439 \u0437\u0430\u043C\u0435\u0442\u043A\u0443", "\u0441\u043E\u0437\u0434\u0430\u0439 \u043F\u0430\u043F\u043A\u0443", "\u0441\u043E\u0437\u0434\u0430\u0439 \u0444\u0430\u0439\u043B" \u0438\u043B\u0438 "\u0441\u043E\u0445\u0440\u0430\u043D\u0438": \u0422\u042B \u041E\u0411\u042F\u0417\u0410\u041D \u0412\u042B\u0417\u0412\u0410\u0422\u042C \u0418\u041D\u0421\u0422\u0420\u0423\u041C\u0415\u041D\u0422 \`create_note(path, content)\`. \u041D\u0435 \u043E\u0433\u0440\u0430\u043D\u0438\u0447\u0438\u0432\u0430\u0439\u0441\u044F \u043E\u0431\u044B\u0447\u043D\u044B\u043C \u0442\u0435\u043A\u0441\u0442\u043E\u0432\u044B\u043C \u043E\u0442\u0432\u0435\u0442\u043E\u043C \u0432 \u0447\u0430\u0442!
+2. \u0414\u043B\u044F \u0447\u0442\u0435\u043D\u0438\u044F \u0437\u0430\u043C\u0435\u0442\u043E\u043A \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u0443\u0439 \`read_note\` \u0438\u043B\u0438 \`get_folder_notes\`.
+3. \u041F\u0440\u0438 \u043D\u0435\u043E\u0431\u0445\u043E\u0434\u0438\u043C\u043E\u0441\u0442\u0438 \u0441\u043E\u0437\u0434\u0430\u0442\u044C \u0441\u0442\u0440\u0443\u043A\u0442\u0443\u0440\u0443 \u043F\u0430\u043F\u043E\u043A (\u043D\u0430\u043F\u0440\u0438\u043C\u0435\u0440 \`Projects/Subfolder/Note.md\`), \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442 \`create_note\` \u0441\u0430\u043C \u0441\u043E\u0437\u0434\u0430\u0441\u0442 \u0432\u0441\u0435 \u043D\u0443\u0436\u043D\u044B\u0435 \u043F\u0430\u043F\u043A\u0438 \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438.
 
 \u0424\u041E\u0420\u041C\u0410\u0422\u0418\u0420\u041E\u0412\u0410\u041D\u0418\u0415 \u041E\u0422\u0412\u0415\u0422\u0410:
-- \u0427\u0438\u0441\u0442\u044B\u0439 GitHub Flavored Markdown \u0441 \u0442\u0430\u0431\u043B\u0438\u0446\u0430\u043C\u0438, \u0441\u043F\u0438\u0441\u043A\u0430\u043C\u0438, \u0446\u0438\u0442\u0430\u0442\u0430\u043C\u0438 \u0438 \u0440\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0430\u0446\u0438\u044F\u043C\u0438 \u043F\u043E \u0443\u043B\u0443\u0447\u0448\u0435\u043D\u0438\u044E \u043F\u0440\u043E\u0435\u043A\u0442\u0430.
+- \u0427\u0438\u0441\u0442\u044B\u0439 GitHub Flavored Markdown \u0441 \u0442\u0430\u0431\u043B\u0438\u0446\u0430\u043C\u0438, \u0441\u043F\u0438\u0441\u043A\u0430\u043C\u0438, \u0446\u0438\u0442\u0430\u0442\u0430\u043C\u0438 \u0438 \u043F\u043E\u043D\u044F\u0442\u043D\u043E\u0439 \u0441\u0442\u0440\u0443\u043A\u0442\u0443\u0440\u043E\u0439.
 `;
     if (agentsRules.trim()) {
       systemPrompt += `
@@ -25962,10 +25946,10 @@ ${s.description}`).join("\n")}
     const tools = defaultToolRegistry.getToolDefinitions();
     let iteration = 0;
     let finalResponseText = "";
+    let toolCalledCount = 0;
     const executedCallsMap = {};
     while (iteration < maxIterations) {
       iteration++;
-      console.log(`[AgentLoop] \u0418\u0442\u0435\u0440\u0430\u0446\u0438\u044F ${iteration}/${maxIterations}`);
       const isLastIteration = iteration === maxIterations;
       const activeTools = isLastIteration ? void 0 : tools;
       const response = await sendChatRequest(config, messages, activeTools);
@@ -25984,6 +25968,7 @@ ${s.description}`).join("\n")}
         notifySteps();
       }
       if (response.tool_calls && response.tool_calls.length > 0 && !isLastIteration) {
+        toolCalledCount += response.tool_calls.length;
         messages.push({
           role: "assistant",
           content: response.content || "\u0412\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u0438\u0435 \u0432\u044B\u0437\u043E\u0432\u0430 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u043E\u0432...",
@@ -26005,14 +25990,6 @@ ${s.description}`).join("\n")}
           notifySteps();
           let trimmedResult = "";
           let isError = false;
-          const isDestructive = toolName === "delete_note" || toolName === "create_note" && toolArgsStr.includes("overwrite");
-          if (safetyMode === "safe" && isDestructive && onConfirmationRequired) {
-            const approved = await onConfirmationRequired(toolName, toolArgsStr);
-            if (!approved) {
-              trimmedResult = `[\u041E\u0422\u041C\u0415\u041D\u0415\u041D\u041E \u041F\u041E\u041B\u042C\u0417\u041E\u0412\u0410\u0422\u0415\u041B\u0415\u041C]: \u0412\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u0438\u0435 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u044F ${toolName} \u043E\u0442\u043C\u0435\u043D\u0435\u043D\u043E \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u0435\u043C \u0432 \u0440\u0435\u0436\u0438\u043C\u0435 Safe Mode.`;
-              isError = true;
-            }
-          }
           if (!trimmedResult) {
             if (executedCallsMap[callKey] > 2) {
               trimmedResult = `[\u0412\u041D\u0418\u041C\u0410\u041D\u0418\u0415 \u0421\u0418\u0421\u0422\u0415\u041C\u042B NEI]: \u042D\u0442\u043E\u0442 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442 (${toolName}) \u0441 \u0442\u0430\u043A\u0438\u043C\u0438 \u0430\u0440\u0433\u0443\u043C\u0435\u043D\u0442\u0430\u043C\u0438 \u0443\u0436\u0435 \u0432\u044B\u0437\u044B\u0432\u0430\u043B\u0441\u044F ${executedCallsMap[callKey] - 1} \u0440\u0430\u0437\u0430. \u041F\u043E\u0432\u0442\u043E\u0440\u043D\u044B\u0439 \u0432\u044B\u0437\u043E\u0432 \u043E\u0442\u043C\u0435\u043D\u0435\u043D. \u0421\u0444\u043E\u0440\u043C\u0438\u0440\u0443\u0439\u0442\u0435 \u043E\u043A\u043E\u043D\u0447\u0430\u0442\u0435\u043B\u044C\u043D\u044B\u0439 \u043E\u0442\u0432\u0435\u0442 \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044E \u043D\u0430 \u043E\u0441\u043D\u043E\u0432\u0435 \u0443\u0436\u0435 \u0438\u043C\u0435\u044E\u0449\u0438\u0445\u0441\u044F \u0441\u0432\u0435\u0434\u0435\u043D\u0438\u0439.`;
@@ -26045,6 +26022,7 @@ ${s.description}`).join("\n")}
       } else if (response.content && this.containsJsonToolCall(response.content) && !isLastIteration) {
         const parsedTool = this.extractJsonToolCall(response.content);
         if (parsedTool) {
+          toolCalledCount++;
           const callId = "text_call_" + Date.now();
           const callKey = `${parsedTool.name}:${JSON.stringify(parsedTool.args)}`;
           executedCallsMap[callKey] = (executedCallsMap[callKey] || 0) + 1;
@@ -26052,49 +26030,38 @@ ${s.description}`).join("\n")}
             role: "assistant",
             content: response.content
           });
+          const stepId = `tool-${callId}`;
           steps.push({
-            id: `tool-${callId}`,
+            id: stepId,
             type: "tool_call",
-            title: `\u0418\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442: ${parsedTool.name}`,
+            title: `\u0418\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442 (\u0422\u0435\u043A\u0441\u0442): ${parsedTool.name}`,
             detail: `\u0410\u0440\u0433\u0443\u043C\u0435\u043D\u0442\u044B: ${JSON.stringify(parsedTool.args)}`,
             status: "running"
           });
           notifySteps();
-          let trimmedResult = "";
-          let isError = false;
-          if (executedCallsMap[callKey] > 2) {
-            trimmedResult = `[\u0412\u041D\u0418\u041C\u0410\u041D\u0418\u0415 \u0421\u0418\u0421\u0422\u0415\u041C\u042B NEI]: \u0418\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442 ${parsedTool.name} \u0443\u0436\u0435 \u0432\u044B\u0437\u044B\u0432\u0430\u043B\u0441\u044F \u0441 \u0430\u043D\u0430\u043B\u043E\u0433\u0438\u0447\u043D\u044B\u043C\u0438 \u043F\u0430\u0440\u0430\u043C\u0435\u0442\u0440\u0430\u043C\u0438. \u0421\u0444\u043E\u0440\u043C\u0438\u0440\u0443\u0439\u0442\u0435 \u0440\u0430\u0437\u0432\u0435\u0440\u043D\u0443\u0442\u044B\u0439 \u0444\u0438\u043D\u0430\u043B\u044C\u043D\u044B\u0439 \u043E\u0442\u0432\u0435\u0442.`;
-            isError = true;
-          } else {
-            const execResult = await defaultToolRegistry.executeTool(
-              app,
-              callId,
-              parsedTool.name,
-              JSON.stringify(parsedTool.args)
-            );
-            const rawRes = typeof execResult.result === "string" ? execResult.result : JSON.stringify(execResult.result);
-            trimmedResult = ContextManager.compactText(rawRes, 12e3);
-            isError = execResult.isError || false;
-          }
-          const currentStep = steps.find((s) => s.id === `tool-${callId}`);
+          const execResult = await defaultToolRegistry.executeTool(
+            app,
+            callId,
+            parsedTool.name,
+            JSON.stringify(parsedTool.args)
+          );
+          const rawRes = typeof execResult.result === "string" ? execResult.result : JSON.stringify(execResult.result);
+          const trimmedResult = ContextManager.compactText(rawRes, 12e3);
+          const currentStep = steps.find((s) => s.id === stepId);
           if (currentStep) {
-            currentStep.status = isError ? "failed" : "completed";
+            currentStep.status = execResult.isError ? "failed" : "completed";
             currentStep.detail = trimmedResult.substring(0, 300);
           }
           notifySteps();
           messages.push({
             role: "user",
-            content: `[\u0420\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u0430 ${parsedTool.name}]:
+            content: `[\u0420\u0415\u0417\u0423\u041B\u042C\u0422\u0410\u0422 \u0412\u042B\u0417\u041E\u0412\u0410 \u0418\u041D\u0421\u0422\u0420\u0423\u041C\u0415\u041D\u0422\u0410 ${parsedTool.name}]:
 ${trimmedResult}`
           });
-          continue;
-        } else {
-          finalResponseText = response.content;
-          break;
         }
       } else {
-        const rawContent = (response.content || "").trim();
-        if (!rawContent && iteration < maxIterations) {
+        const rawContent = response.content || "";
+        if (!rawContent && iteration < maxIterations - 1) {
           messages.push({
             role: "user",
             content: "\u041F\u0440\u0435\u0434\u043E\u0441\u0442\u0430\u0432\u044C \u043F\u043E\u0434\u0440\u043E\u0431\u043D\u044B\u0439, \u0441\u0442\u0440\u0443\u043A\u0442\u0443\u0440\u0438\u0440\u043E\u0432\u0430\u043D\u043D\u044B\u0439 \u0438\u0442\u043E\u0433\u043E\u0432\u044B\u0439 \u043E\u0442\u0432\u0435\u0442 \u0441 \u0432\u044B\u0432\u043E\u0434\u0430\u043C\u0438 \u0438 \u0440\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0430\u0446\u0438\u044F\u043C\u0438 \u043D\u0430 \u043E\u0441\u043D\u043E\u0432\u0435 \u043F\u043E\u043B\u0443\u0447\u0435\u043D\u043D\u044B\u0445 \u0434\u0430\u043D\u043D\u044B\u0445."
@@ -26108,7 +26075,7 @@ ${prefetchedContext}`;
         } else if (!finalResponseText) {
           finalResponseText = "\u0410\u0433\u0435\u043D\u0442 \u0437\u0430\u0432\u0435\u0440\u0448\u0438\u043B \u043E\u0431\u0440\u0430\u0431\u043E\u0442\u043A\u0443 \u0432\u0430\u0448\u0435\u0439 \u0437\u0430\u0434\u0430\u0447\u0438.";
         }
-        if (this.shouldAutoCreateNote(userQuery, finalResponseText)) {
+        if (toolCalledCount === 0 && this.shouldAutoCreateNote(userQuery, finalResponseText)) {
           await this.attemptAutoCreateNote(app, userQuery, finalResponseText, steps, notifySteps);
         }
         messages.push({
@@ -26129,17 +26096,20 @@ ${prefetchedContext}`;
     };
   }
   static containsJsonToolCall(text) {
-    return /\{\s*["']tool["']\s*:\s*["'][^"']+["']/i.test(text);
+    return /\{\s*["'](?:tool|name|function|action)["']\s*:\s*["'][^"']+["']/i.test(text) || /<tool_call>/i.test(text);
   }
   static extractJsonToolCall(text) {
     try {
-      const jsonMatch = text.match(/```(?:json)?\s*(\{\s*["']tool["'][\s\S]*?\})\s*```/i) || text.match(/(\{\s*["']tool["'][\s\S]*?\})/i);
+      const xmlMatch = text.match(/<tool_call>\s*([\s\S]*?)\s*<\/tool_call>/i);
+      const rawJson = xmlMatch ? xmlMatch[1] : text;
+      const jsonMatch = rawJson.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/i) || rawJson.match(/(\{[\s\S]*?\})/i);
       if (jsonMatch) {
         const parsed = JSON.parse(jsonMatch[1]);
-        if (parsed.tool) {
+        const toolName = parsed.tool || parsed.name || parsed.function || parsed.action;
+        if (toolName) {
           return {
-            name: parsed.tool,
-            args: parsed.arguments || parsed.args || {}
+            name: toolName,
+            args: parsed.arguments || parsed.args || parsed.action_input || {}
           };
         }
       }
@@ -26149,25 +26119,35 @@ ${prefetchedContext}`;
   }
   static shouldAutoCreateNote(query, responseText) {
     const queryLower = query.toLowerCase();
-    const isCreateRequest = queryLower.includes("\u0441\u043E\u0437\u0434\u0430\u0439 \u0437\u0430\u043C\u0435\u0442\u043A\u0443") || queryLower.includes("\u0441\u043E\u0437\u0434\u0430\u0442\u044C \u0437\u0430\u043C\u0435\u0442\u043A\u0443") || queryLower.includes("\u0441\u0433\u0440\u0443\u043F\u043F\u0438\u0440\u0443\u0439 \u0432\u0441\u0435 \u0442\u0430\u0441\u043A\u0438 \u0432 \u0437\u0430\u043C\u0435\u0442\u043A\u0443");
-    return isCreateRequest && (responseText.includes("# ") || responseText.includes("---"));
+    const isCreateRequest = queryLower.includes("\u0441\u043E\u0437\u0434\u0430\u0439") || queryLower.includes("\u0441\u043E\u0437\u0434\u0430\u0442\u044C") || queryLower.includes("\u043D\u0430\u043F\u0438\u0448\u0438 \u0437\u0430\u043C\u0435\u0442\u043A\u0443") || queryLower.includes("\u0441\u043E\u0445\u0440\u0430\u043D\u0438") || queryLower.includes("create note") || queryLower.includes("save note");
+    return isCreateRequest && responseText.length > 30;
   }
   static async attemptAutoCreateNote(app, query, responseText, steps, notifySteps) {
-    let notePath = "Tasks/\u0421\u0432\u043E\u0434\u043A\u0430 \u0437\u0430\u0434\u0430\u0447.md";
-    if (query.toLowerCase().includes("\u043F\u0440\u043E\u0435\u043A\u0442\u044B") || query.toLowerCase().includes("projects")) {
-      notePath = "Projects/\u0421\u0432\u043E\u0434\u043A\u0430 \u043F\u0440\u043E\u0435\u043A\u0442\u043E\u0432.md";
+    let notePath = "";
+    const folderMatch = query.match(/(?:папке|папку|folder|directory)\s+["']?([a-zA-Z0-9_\-\/А-Яа-яЁё ]+?)["']?(?:\s|$)/i);
+    const fileMatch = query.match(/(?:заметку|файл|note|file)\s+["']?([a-zA-Z0-9_\-\/А-Яа-яЁё ]+?\.md)["']?/i);
+    if (fileMatch && fileMatch[1]) {
+      notePath = fileMatch[1].trim();
+    } else {
+      const folder = folderMatch && folderMatch[1] ? folderMatch[1].trim() : "Notes";
+      const dateStr = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
+      const titleMatch = query.match(/(?:создай|создать|create|write)\s+(?:заметку|файл|название|note)?\s*["']?([^"'\n,]{3,30})["']?/i);
+      let slug = titleMatch && titleMatch[1] ? titleMatch[1].trim().replace(/[^\w\sА-Яа-яЁё-]/g, "") : "New_Note";
+      if (slug.length < 3)
+        slug = "New_Note";
+      notePath = `${folder}/${slug}_${dateStr}.md`;
     }
     try {
       const execResult = await defaultToolRegistry.executeTool(
         app,
-        "auto-create-1",
+        "auto-create-fallback",
         "create_note",
         JSON.stringify({ path: notePath, content: responseText })
       );
       steps.push({
         id: "auto-create-step",
         type: "tool_result",
-        title: `\u0410\u0432\u0442\u043E-\u0441\u043E\u0437\u0434\u0430\u043D\u0430 \u0437\u0430\u043C\u0435\u0442\u043A\u0430: ${notePath}`,
+        title: `\u0410\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438 \u0441\u043E\u0437\u0434\u0430\u043D\u0430 \u0437\u0430\u043C\u0435\u0442\u043A\u0430: ${notePath}`,
         detail: String(execResult.result),
         status: execResult.isError ? "failed" : "completed"
       });
@@ -26376,6 +26356,812 @@ var OpenRouterService = class {
 OpenRouterService.cachedModels = /* @__PURE__ */ new Map();
 OpenRouterService.lastFetchTime = 0;
 
+// src/i18n/translations.ts
+var translations = {
+  ru: {
+    welcomeGreeting: "\u{1F44B} \u041F\u043E\u043C\u043E\u0449\u043D\u0438\u043A NEI \u0432\u0430\u0441 \u043F\u0440\u0438\u0432\u0435\u0442\u0441\u0442\u0432\u0443\u0435\u0442. \u041E\u0436\u0438\u0434\u0430\u044E \u0443\u043A\u0430\u0437\u0430\u043D\u0438\u0439",
+    welcomeSubText: "\u0418\u043D\u0442\u0435\u043B\u043B\u0435\u043A\u0442\u0443\u0430\u043B\u044C\u043D\u044B\u0439 \u0441\u0443\u043F\u0435\u0440\u0430\u0433\u0435\u043D\u0442 \u0433\u043E\u0442\u043E\u0432\u0438\u0442 \u043F\u0435\u0440\u0441\u043E\u043D\u0430\u043B\u044C\u043D\u044B\u0435 \u0440\u0435\u0448\u0435\u043D\u0438\u044F \u0434\u043B\u044F \u0432\u0430\u0448\u0435\u0439 \u0431\u0430\u0437\u044B \u0437\u043D\u0430\u043D\u0438\u0439:",
+    featureNotes: "\u041F\u0440\u044F\u043C\u043E\u0439 \u0434\u043E\u0441\u0442\u0443\u043F \u043A \u0437\u0430\u043C\u0435\u0442\u043A\u0430\u043C, \u043F\u0430\u043F\u043A\u0430\u043C \u0438 \u0441\u0432\u044F\u0437\u044F\u043C Vault",
+    featureRouting: "\u0420\u0435\u0436\u0438\u043C\u044B Quick \u0438 Agent \u0441 \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438\u043C \u043F\u043E\u0434\u0431\u043E\u0440\u043E\u043C \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u043E\u0432",
+    featureVision: "\u0410\u043D\u0430\u043B\u0438\u0437 \u0438\u0437\u043E\u0431\u0440\u0430\u0436\u0435\u043D\u0438\u0439, \u0434\u043E\u043A\u0443\u043C\u0435\u043D\u0442\u043E\u0432 \u0438 \u0432\u0435\u0431-\u0441\u0442\u0440\u0430\u043D\u0438\u0446",
+    featureTokens: "\u041F\u043E\u043B\u043D\u0430\u044F \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0430 RAG, \u043F\u0430\u043C\u044F\u0442\u0438 \u0438 \u0432\u043D\u0435\u0448\u043D\u0438\u0445 MCP \u0441\u0435\u0440\u0432\u0435\u0440\u043E\u0432",
+    inputPlaceholder: "\u0417\u0430\u0434\u0430\u0439\u0442\u0435 \u0432\u043E\u043F\u0440\u043E\u0441 \u0438\u043B\u0438 \u043E\u043F\u0438\u0448\u0438\u0442\u0435 \u0437\u0430\u0434\u0430\u0447\u0443... (Enter \u2014 \u043E\u0442\u043F\u0440\u0430\u0432\u0438\u0442\u044C, Shift+Enter \u2014 \u043F\u0435\u0440\u0435\u043D\u043E\u0441)",
+    attachTooltip: "\u041F\u0440\u0438\u043A\u0440\u0435\u043F\u0438\u0442\u044C \u0438\u0437\u043E\u0431\u0440\u0430\u0436\u0435\u043D\u0438\u0435 \u0438\u043B\u0438 \u0444\u0430\u0439\u043B (.txt, .md, .js, .ts, .json)",
+    quickMode: "\u26A1 \u0411\u044B\u0441\u0442\u0440\u044B\u0439",
+    agentMode: "\u{1F916} \u0410\u0433\u0435\u043D\u0442",
+    ragToggle: "\u{1F9E0} RAG \u0411\u0430\u0437\u0430 \u0437\u043D\u0430\u043D\u0438\u0439",
+    settingsTitle: "\u2699\uFE0F \u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438 NEI AI Chat",
+    providerLabel: "\u041F\u0440\u043E\u0432\u0430\u0439\u0434\u0435\u0440 \u0418\u0418:",
+    endpointLabel: "URL \u044D\u043D\u0434\u043F\u043E\u0438\u043D\u0442\u0430:",
+    apiKeyLabel: "API \u041A\u043B\u044E\u0447:",
+    modelLabel: "\u041C\u043E\u0434\u0435\u043B\u044C:",
+    customModelsLabel: "\u0421\u043F\u0438\u0441\u043E\u043A \u043C\u043E\u0434\u0435\u043B\u0435\u0439 (\u043F\u043E \u043E\u0434\u043D\u043E\u0439 \u043D\u0430 \u0441\u0442\u0440\u043E\u043A\u0443):",
+    languageLabel: "\u042F\u0437\u044B\u043A \u0438\u043D\u0442\u0435\u0440\u0444\u0435\u0439\u0441\u0430:",
+    saveSettings: "\u0421\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C \u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438",
+    checkApi: "\u{1F504} \u041F\u0440\u043E\u0432\u0435\u0440\u0438\u0442\u044C API \u0438 \u041C\u043E\u0434\u0435\u043B\u0438",
+    checkingApi: "\u23F3 \u041F\u0440\u043E\u0432\u0435\u0440\u043A\u0430 \u0441\u0432\u044F\u0437\u0438...",
+    apiCheckSuccess: "\u2705 API \u043F\u043E\u0434\u043A\u043B\u044E\u0447\u0435\u043D \u0443\u0441\u043F\u0435\u0448\u043D\u043E!",
+    apiCheckFailed: "\u274C \u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u043E\u0434\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u044F \u043A API",
+    newChat: "\u2795 \u041D\u043E\u0432\u044B\u0439",
+    newChatSession: "\u041D\u043E\u0432\u044B\u0439 \u0434\u0438\u0430\u043B\u043E\u0433",
+    clearChats: "\u{1F5D1}\uFE0F \u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u0432\u0441\u0435 \u0434\u0438\u0430\u043B\u043E\u0433\u0438",
+    confirmClearChats: "\u0412\u044B \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u0442\u0435\u043B\u044C\u043D\u043E \u0445\u043E\u0442\u0438\u0442\u0435 \u0443\u0434\u0430\u043B\u0438\u0442\u044C \u0432\u0441\u044E \u0438\u0441\u0442\u043E\u0440\u0438\u044E \u0447\u0430\u0442\u043E\u0432?",
+    saveNote: "\u{1F4C4} \u0421\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C \u043A\u0430\u043A \u0437\u0430\u043C\u0435\u0442\u043A\u0443",
+    copyText: "\u{1F4CB} \u041A\u043E\u043F\u0438\u0440\u043E\u0432\u0430\u0442\u044C",
+    copied: "\u2705 \u0421\u043A\u043E\u043F\u0438\u0440\u043E\u0432\u0430\u043D\u043E \u0432 \u0431\u0443\u0444\u0435\u0440 \u043E\u0431\u043C\u0435\u043D\u0430!",
+    agentRunning: "\u26A1 \u0410\u0433\u0435\u043D\u0442 \u0432\u044B\u043F\u043E\u043B\u043D\u044F\u0435\u0442 \u0437\u0430\u0434\u0430\u0447\u0443...",
+    confirmAction: "\u0417\u0430\u043F\u0440\u043E\u0441 \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043D\u0438\u044F:",
+    allow: "\u2705 \u0420\u0430\u0437\u0440\u0435\u0448\u0438\u0442\u044C",
+    deny: "\u274C \u041E\u0442\u043A\u043B\u043E\u043D\u0438\u0442\u044C",
+    autoDetect: "\u0410\u0432\u0442\u043E-\u043E\u043F\u0440\u0435\u0434\u0435\u043B\u0435\u043D\u0438\u0435 (Obsidian)",
+    historyTitle: "\u0418\u0441\u0442\u043E\u0440\u0438\u044F \u0434\u0438\u0430\u043B\u043E\u0433\u043E\u0432",
+    clearAll: "\u{1F5D1}\uFE0F \u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u0432\u0441\u0435",
+    noSavedChats: "\u041D\u0435\u0442 \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u043D\u044B\u0445 \u0447\u0430\u0442\u043E\u0432",
+    moveSidebar: "\u2199\uFE0F \u0412 \u043F\u0430\u043D\u0435\u043B\u044C",
+    moveTab: "\u2197\uFE0F \u0412\u043A\u043B\u0430\u0434\u043A\u0430",
+    moveSidebarTitle: "\u041F\u0435\u0440\u0435\u043C\u0435\u0441\u0442\u0438\u0442\u044C \u0447\u0430\u0442 \u0432 \u0431\u043E\u043A\u043E\u0432\u0443\u044E \u043F\u0430\u043D\u0435\u043B\u044C",
+    moveTabTitle: "\u041F\u0435\u0440\u0435\u043C\u0435\u0441\u0442\u0438\u0442\u044C \u0447\u0430\u0442 \u043D\u0430 \u0433\u043B\u0430\u0432\u043D\u0443\u044E \u0432\u043A\u043B\u0430\u0434\u043A\u0443",
+    modelCategories: "\u041A\u0430\u0442\u0435\u0433\u043E\u0440\u0438\u0438 \u043C\u043E\u0434\u0435\u043B\u0435\u0439 (\u041C\u0443\u043B\u044C\u0442\u0438\u043C\u043E\u0434\u0430\u043B\u044C\u043D\u043E\u0441\u0442\u044C):",
+    primaryModel: "1. \u0422\u0435\u043A\u0441\u0442 \u0438 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u044B (Primary):",
+    visionModel: "2. \u0424\u0430\u0439\u043B\u044B \u0438 \u0444\u043E\u0442\u043E (Vision):",
+    quickModel: "3. \u0411\u044B\u0441\u0442\u0440\u044B\u0439 \u0440\u0435\u0436\u0438\u043C (Quick Mode Router):",
+    parameters: "\u041F\u0430\u0440\u0430\u043C\u0435\u0442\u0440\u044B",
+    requestingCapabilities: "\u0417\u0430\u043F\u0440\u043E\u0441 \u0432\u043E\u0437\u043C\u043E\u0436\u043D\u043E\u0441\u0442\u0435\u0439 \u0447\u0435\u0440\u0435\u0437 OpenRouter API...",
+    nativeToolCalling: "\u{1F7E2} \u041D\u0430\u0442\u0438\u0432\u043D\u044B\u0439 Tool Calling \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u0438\u0432\u0430\u0435\u0442\u0441\u044F",
+    textToolCalling: "\u{1F7E1} \u0422\u0435\u043A\u0441\u0442\u043E\u0432\u044B\u0439 \u0440\u0435\u0436\u0438\u043C \u0432\u044B\u0437\u043E\u0432\u0430 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u043E\u0432",
+    visionSupported: "\u{1F5BC}\uFE0F \u0410\u043D\u0430\u043B\u0438\u0437 \u0444\u043E\u0442\u043E/\u0438\u0437\u043E\u0431\u0440\u0430\u0436\u0435\u043D\u0438\u0439 \u0434\u043E\u0441\u0442\u0443\u043F\u0435\u043D",
+    textOnlyInput: "\u{1F4DD} \u0422\u043E\u043B\u044C\u043A\u043E \u0442\u0435\u043A\u0441\u0442\u043E\u0432\u044B\u0439 \u0432\u0432\u043E\u0434",
+    contextWindow: "\u041A\u043E\u043D\u0442\u0435\u043A\u0441\u0442\u043D\u043E\u0435 \u043E\u043A\u043D\u043E:",
+    tokens: "\u0442\u043E\u043A\u0435\u043D\u043E\u0432",
+    pressCheckApi: '\u041D\u0430\u0436\u043C\u0438\u0442\u0435 "\u041F\u0440\u043E\u0432\u0435\u0440\u0438\u0442\u044C API" \u0434\u043B\u044F \u043F\u043E\u043B\u0443\u0447\u0435\u043D\u0438\u044F \u043F\u0430\u0440\u0430\u043C\u0435\u0442\u0440\u043E\u0432 \u0441 OpenRouter',
+    yourSavedModels: "\u0412\u0430\u0448\u0438 \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u043D\u044B\u0435 \u043C\u043E\u0434\u0435\u043B\u0438:",
+    addModelPlaceholder: "\u041D\u0430\u043F\u0440\u0438\u043C\u0435\u0440: anthropic/claude-3.5-sonnet",
+    addBtn: "+ \u0414\u043E\u0431\u0430\u0432\u0438\u0442\u044C",
+    deleteFromList: "\u0423\u0434\u0430\u043B\u0438\u0442\u044C \u0438\u0437 \u0441\u043F\u0438\u0441\u043A\u0430",
+    keyUsage: "\u0418\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u043D\u043E \u043D\u0430 \u043A\u043B\u044E\u0447\u0435:",
+    modeAutoTitle: "\u0420\u0435\u0436\u0438\u043C \u0418\u0418: \u0410\u0432\u0442\u043E (\u0443\u043C\u043D\u044B\u0439 \u0440\u043E\u0443\u0442\u0438\u043D\u0433), \u0411\u044B\u0441\u0442\u0440\u044B\u0439 (\u0431\u0435\u0437 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u043E\u0432), \u0410\u0433\u0435\u043D\u0442 (\u043C\u043D\u043E\u0433\u043E\u0448\u0430\u0433\u043E\u0432\u044B\u0439)",
+    modeAuto: "\u26A1 \u0410\u0432\u0442\u043E (\u0423\u043C\u043D\u044B\u0439)",
+    modeQuick: "\u{1F680} \u0411\u044B\u0441\u0442\u0440\u044B\u0439 (\u041F\u0440\u044F\u043C\u043E\u0439)",
+    modeAgent: "\u{1F9E0} \u0410\u0433\u0435\u043D\u0442 (\u041C\u043D\u043E\u0433\u043E\u0448\u0430\u0433\u043E\u0432\u044B\u0439)",
+    settingsTooltip: "\u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438 \u043C\u043E\u0434\u0435\u043B\u0435\u0439 \u0438 API",
+    newChatTooltip: "\u041D\u043E\u0432\u044B\u0439 \u0447\u0430\u0442",
+    historyTooltip: "\u0418\u0441\u0442\u043E\u0440\u0438\u044F \u0434\u0438\u0430\u043B\u043E\u0433\u043E\u0432",
+    deleteChatTooltip: "\u0423\u0434\u0430\u043B\u0438\u0442\u044C \u0447\u0430\u0442",
+    noteCreatedSuccess: "\u0423\u0441\u043F\u0435\u0445: \u0421\u043E\u0437\u0434\u0430\u043D\u0430 \u0437\u0430\u043C\u0435\u0442\u043A\u0430",
+    noteCreateError: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u044F \u0437\u0430\u043C\u0435\u0442\u043A\u0438:",
+    copyError: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0441\u043A\u043E\u043F\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u0442\u0435\u043A\u0441\u0442.",
+    modelAddedNotice: "\u0414\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u0430 \u043C\u043E\u0434\u0435\u043B\u044C:",
+    cannotDeleteLastModel: "\u041D\u0435\u043B\u044C\u0437\u044F \u0443\u0434\u0430\u043B\u0438\u0442\u044C \u043F\u043E\u0441\u043B\u0435\u0434\u043D\u044E\u044E \u043C\u043E\u0434\u0435\u043B\u044C \u0438\u0437 \u0441\u043F\u0438\u0441\u043A\u0430!",
+    historyClearedNotice: "\u0412\u0441\u044F \u0438\u0441\u0442\u043E\u0440\u0438\u044F \u0447\u0430\u0442\u043E\u0432 \u043E\u0447\u0438\u0449\u0435\u043D\u0430!",
+    modeSwitchError: "\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0435\u0440\u0435\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u044F \u0440\u0435\u0436\u0438\u043C\u0430:",
+    agentError: "\u274C \u041E\u0448\u0438\u0431\u043A\u0430 \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u0438\u044F \u0430\u0433\u0435\u043D\u0442\u0430:",
+    cancel: "\u041E\u0442\u043C\u0435\u043D\u0430",
+    saveSend: "\u{1F4BE} \u041E\u0442\u043F\u0440\u0430\u0432\u0438\u0442\u044C",
+    editText: "\u270F\uFE0F \u0418\u0437\u043C\u0435\u043D\u0438\u0442\u044C",
+    retry: "\u{1F504} \u041F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u044C",
+    inputTokens: "\u{1F4E5} \u0412\u0445\u043E\u0434:",
+    outputTokens: "\u{1F4E4} \u0412\u044B\u0445\u043E\u0434:",
+    confirmTitle: "\u26A0\uFE0F \u041F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043D\u0438\u0435 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u044F",
+    confirmDetail: "\u0410\u0433\u0435\u043D\u0442 \u0437\u0430\u043F\u0440\u0430\u0448\u0438\u0432\u0430\u0435\u0442 \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u0438\u0435 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u0430:"
+  },
+  en: {
+    welcomeGreeting: "\u{1F44B} NEI Assistant greets you. Awaiting instructions",
+    welcomeSubText: "Your intelligent super-agent ready to assist with your knowledge base:",
+    featureNotes: "Direct access to notes, folders, and vault linkages",
+    featureRouting: "Quick and Agent modes with automatic tool routing",
+    featureVision: "Analysis of images, documents, and web pages",
+    featureTokens: "Full support for RAG, memory, and external MCP servers",
+    inputPlaceholder: "Ask a question or describe a task... (Enter to send, Shift+Enter for newline)",
+    attachTooltip: "Attach image or text file (.txt, .md, .js, .ts, .json)",
+    quickMode: "\u26A1 Quick",
+    agentMode: "\u{1F916} Agent",
+    ragToggle: "\u{1F9E0} RAG Knowledge Vault",
+    settingsTitle: "\u2699\uFE0F NEI AI Chat Settings",
+    providerLabel: "AI Provider:",
+    endpointLabel: "Endpoint URL:",
+    apiKeyLabel: "API Key:",
+    modelLabel: "Model:",
+    customModelsLabel: "Custom Models List (one per line):",
+    languageLabel: "Interface Language:",
+    saveSettings: "Save Settings",
+    checkApi: "\u{1F504} Check API & Models",
+    checkingApi: "\u23F3 Checking connection...",
+    apiCheckSuccess: "\u2705 API connected successfully!",
+    apiCheckFailed: "\u274C API Connection Failed",
+    newChat: "\u2795 New",
+    newChatSession: "New Chat",
+    clearChats: "\u{1F5D1}\uFE0F Clear All Chats",
+    confirmClearChats: "Are you sure you want to delete all chat history?",
+    saveNote: "\u{1F4C4} Save as Note",
+    copyText: "\u{1F4CB} Copy",
+    copied: "\u2705 Copied to clipboard!",
+    agentRunning: "\u26A1 Agent executing task...",
+    confirmAction: "Action Confirmation Required:",
+    allow: "\u2705 Allow",
+    deny: "\u274C Deny",
+    autoDetect: "Auto-detect (Obsidian)",
+    historyTitle: "Chat History",
+    clearAll: "\u{1F5D1}\uFE0F Clear All",
+    noSavedChats: "No saved chats",
+    moveSidebar: "\u2199\uFE0F To Sidebar",
+    moveTab: "\u2197\uFE0F To Tab",
+    moveSidebarTitle: "Move chat to right sidebar",
+    moveTabTitle: "Move chat to main editor tab",
+    modelCategories: "Model Categories (Multimodality):",
+    primaryModel: "1. Text & Tools (Primary):",
+    visionModel: "2. Files & Vision:",
+    quickModel: "3. Quick Mode Router:",
+    parameters: "Parameters",
+    requestingCapabilities: "Fetching capabilities via OpenRouter API...",
+    nativeToolCalling: "\u{1F7E2} Native Tool Calling supported",
+    textToolCalling: "\u{1F7E1} Text fallback tool calling mode",
+    visionSupported: "\u{1F5BC}\uFE0F Image/vision analysis supported",
+    textOnlyInput: "\u{1F4DD} Text input only",
+    contextWindow: "Context window:",
+    tokens: "tokens",
+    pressCheckApi: 'Click "Check API" to retrieve parameters from OpenRouter',
+    yourSavedModels: "Your saved models:",
+    addModelPlaceholder: "e.g., anthropic/claude-3.5-sonnet",
+    addBtn: "+ Add",
+    deleteFromList: "Delete from list",
+    keyUsage: "Used on API key:",
+    modeAutoTitle: "AI Mode: Auto (smart routing), Quick (direct chat), Agent (multi-step reasoning)",
+    modeAuto: "\u26A1 Auto (Smart)",
+    modeQuick: "\u{1F680} Quick (Direct)",
+    modeAgent: "\u{1F9E0} Agent (Multi-step)",
+    settingsTooltip: "Model & API Settings",
+    newChatTooltip: "New Chat",
+    historyTooltip: "Chat History",
+    deleteChatTooltip: "Delete Chat",
+    noteCreatedSuccess: "Success: Created note",
+    noteCreateError: "Error creating note:",
+    copyError: "Failed to copy text.",
+    modelAddedNotice: "Added model:",
+    cannotDeleteLastModel: "Cannot delete the last model!",
+    historyClearedNotice: "Chat history cleared!",
+    modeSwitchError: "Mode switch error:",
+    agentError: "\u274C Agent execution error:",
+    cancel: "Cancel",
+    saveSend: "\u{1F4BE} Send",
+    editText: "\u270F\uFE0F Edit",
+    retry: "\u{1F504} Retry",
+    inputTokens: "\u{1F4E5} In:",
+    outputTokens: "\u{1F4E4} Out:",
+    confirmTitle: "\u26A0\uFE0F Action Confirmation Required",
+    confirmDetail: "Agent requests tool execution:"
+  },
+  es: {
+    welcomeGreeting: "\u{1F44B} El Asistente NEI le da la bienvenida. Esperando instrucciones",
+    welcomeSubText: "Su s\xFAper agente inteligente listo para ayudar con su base de conocimientos:",
+    featureNotes: "Acceso directo a notas, carpetas y enlaces de la b\xF3veda",
+    featureRouting: "Modos R\xE1pido y Agente con enrutamiento autom\xE1tico de herramientas",
+    featureVision: "An\xE1lisis de im\xE1genes, documentos y p\xE1ginas web",
+    featureTokens: "Soporte completo para RAG, memoria y servidores MCP externos",
+    inputPlaceholder: "Haga una pregunta o describa una tarea... (Enter para enviar)",
+    attachTooltip: "Adjuntar imagen o archivo de texto",
+    quickMode: "\u26A1 R\xE1pido",
+    agentMode: "\u{1F916} Agente",
+    ragToggle: "\u{1F9E0} B\xF3veda RAG",
+    settingsTitle: "\u2699\uFE0F Configuraci\xF3n de NEI AI Chat",
+    providerLabel: "Proveedor de IA:",
+    endpointLabel: "URL del punto final:",
+    apiKeyLabel: "Clave API:",
+    modelLabel: "Modelo:",
+    customModelsLabel: "Lista de modelos personalizados:",
+    languageLabel: "Idioma de la interfaz:",
+    saveSettings: "Guardar configuraci\xF3n",
+    checkApi: "\u{1F504} Verificar API y modelos",
+    checkingApi: "\u23F3 Verificando conexi\xF3n...",
+    apiCheckSuccess: "\u2705 \xA1API conectada con \xE9xito!",
+    apiCheckFailed: "\u274C Conexi\xF3n a API fallida",
+    newChat: "\u2795 Nuevo",
+    newChatSession: "Nuevo chat",
+    clearChats: "\u{1F5D1}\uFE0F Borrar todos los chats",
+    confirmClearChats: "\xBFEst\xE1 seguro de que desea eliminar todo el historial?",
+    saveNote: "\u{1F4C4} Guardar como nota",
+    copyText: "\u{1F4CB} Copiar",
+    copied: "\u2705 \xA1Copiado al portapapeles!",
+    agentRunning: "\u26A1 El agente est\xE1 ejecutando la tarea...",
+    confirmAction: "Confirmaci\xF3n de acci\xF3n requerida:",
+    allow: "\u2705 Permitir",
+    deny: "\u274C Denegar",
+    autoDetect: "Detecci\xF3n autom\xE1tica (Obsidian)",
+    historyTitle: "Historial de chats",
+    clearAll: "\u{1F5D1}\uFE0F Borrar todo",
+    noSavedChats: "Sin chats guardados",
+    moveSidebar: "\u2199\uFE0F A la barra",
+    moveTab: "\u2197\uFE0F A pesta\xF1a",
+    moveSidebarTitle: "Mover chat a la barra lateral",
+    moveTabTitle: "Mover chat a la pesta\xF1a principal",
+    modelCategories: "Categor\xEDas de modelos:",
+    primaryModel: "1. Texto y Herramientas (Principal):",
+    visionModel: "2. Archivos e Im\xE1genes (Visi\xF3n):",
+    quickModel: "3. Enrutador Modo R\xE1pido:",
+    parameters: "Par\xE1metros",
+    requestingCapabilities: "Obteniendo capacidades de OpenRouter API...",
+    nativeToolCalling: "\u{1F7E2} Llamadas a herramientas nativas soportadas",
+    textToolCalling: "\u{1F7E1} Modo de herramientas por texto",
+    visionSupported: "\u{1F5BC}\uFE0F An\xE1lisis de im\xE1genes soportado",
+    textOnlyInput: "\u{1F4DD} Solo entrada de texto",
+    contextWindow: "Ventana de contexto:",
+    tokens: "tokens",
+    pressCheckApi: 'Haga clic en "Verificar API" para obtener par\xE1metros',
+    yourSavedModels: "Sus modelos guardados:",
+    addModelPlaceholder: "ej., anthropic/claude-3.5-sonnet",
+    addBtn: "+ A\xF1adir",
+    deleteFromList: "Eliminar de la lista",
+    keyUsage: "Usado en clave API:",
+    modeAutoTitle: "Modo IA: Auto (inteligente), R\xE1pido (directo), Agente (multi-paso)",
+    modeAuto: "\u26A1 Auto (Inteligente)",
+    modeQuick: "\u{1F680} R\xE1pido (Directo)",
+    modeAgent: "\u{1F9E0} Agente (Multi-paso)",
+    settingsTooltip: "Configuraci\xF3n de API y Modelos",
+    newChatTooltip: "Nuevo Chat",
+    historyTooltip: "Historial de chats",
+    deleteChatTooltip: "Eliminar chat",
+    noteCreatedSuccess: "\xC9xito: Nota creada",
+    noteCreateError: "Error al crear la nota:",
+    copyError: "Error al copiar el texto.",
+    modelAddedNotice: "Modelo a\xF1adido:",
+    cannotDeleteLastModel: "\xA1No se puede eliminar el \xFAltimo modelo!",
+    historyClearedNotice: "\xA1Historial de chats borrado!",
+    modeSwitchError: "Error de cambio de modo:",
+    agentError: "\u274C Error de ejecuci\xF3n del agente:",
+    cancel: "Cancelar",
+    saveSend: "\u{1F4BE} Enviar",
+    editText: "\u270F\uFE0F Editar",
+    retry: "\u{1F504} Reintentar",
+    inputTokens: "\u{1F4E5} Ent:",
+    outputTokens: "\u{1F4E4} Sal:",
+    confirmTitle: "\u26A0\uFE0F Confirmaci\xF3n de acci\xF3n requerida",
+    confirmDetail: "El agente solicita la ejecuci\xF3n de la herramienta:"
+  },
+  de: {
+    welcomeGreeting: "\u{1F44B} NEI Assistent begr\xFC\xDFt Sie. Warten auf Anweisungen",
+    welcomeSubText: "Ihr intelligenter Super-Agent bereit f\xFCr Ihre Wissensdatenbank:",
+    featureNotes: "Direkter Zugriff auf Notizen, Ordner und Vault-Verkn\xFCpfungen",
+    featureRouting: "Schnell- und Agenten-Modus mit automatischer Werkzeugauswahl",
+    featureVision: "Analyse von Bildern, Dokumenten und Webseiten",
+    featureTokens: "Vollst\xE4ndige Unterst\xFCtzung f\xFCr RAG, Speicher und externe MCP-Server",
+    inputPlaceholder: "Stellen Sie eine Frage... (Enter zum Senden)",
+    attachTooltip: "Bild oder Textdatei anh\xE4ngen",
+    quickMode: "\u26A1 Schnell",
+    agentMode: "\u{1F916} Agent",
+    ragToggle: "\u{1F9E0} RAG Wissen",
+    settingsTitle: "\u2699\uFE0F NEI AI Chat Einstellungen",
+    providerLabel: "KI-Anbieter:",
+    endpointLabel: "Endpunkt-URL:",
+    apiKeyLabel: "API-Schl\xFCssel:",
+    modelLabel: "Modell:",
+    customModelsLabel: "Benutzerdefinierte Modelle:",
+    languageLabel: "Oberfl\xE4chensprache:",
+    saveSettings: "Einstellungen speichern",
+    checkApi: "\u{1F504} API & Modelle pr\xFCfen",
+    checkingApi: "\u23F3 Verbindung wird gepr\xFCft...",
+    apiCheckSuccess: "\u2705 API erfolgreich verbunden!",
+    apiCheckFailed: "\u274C API-Verbindung fehlgeschlagen",
+    newChat: "\u2795 Neu",
+    newChatSession: "Neuer Chat",
+    clearChats: "\u{1F5D1}\uFE0F Alle Chats l\xF6schen",
+    confirmClearChats: "M\xF6chten Sie wirklich den gesamten Verlauf l\xF6schen?",
+    saveNote: "\u{1F4C4} Als Notiz speichern",
+    copyText: "\u{1F4CB} Kopieren",
+    copied: "\u2705 In Zwischenablage kopiert!",
+    agentRunning: "\u26A1 Agent f\xFChrt Aufgabe aus...",
+    confirmAction: "Aktionsbest\xE4tigung erforderlich:",
+    allow: "\u2705 Erlauben",
+    deny: "\u274C Ablehnen",
+    autoDetect: "Automatisch (Obsidian)",
+    historyTitle: "Chat-Verlauf",
+    clearAll: "\u{1F5D1}\uFE0F Alle l\xF6schen",
+    noSavedChats: "Keine gespeicherten Chats",
+    moveSidebar: "\u2199\uFE0F Zur Leiste",
+    moveTab: "\u2197\uFE0F Zum Tab",
+    moveSidebarTitle: "Chat in rechte Seitenleiste verschieben",
+    moveTabTitle: "Chat in Haupt-Tab verschieben",
+    modelCategories: "Modellkategorien:",
+    primaryModel: "1. Text & Werkzeuge (Haupt):",
+    visionModel: "2. Dateien & Bilder (Vision):",
+    quickModel: "3. Schnell-Modus Router:",
+    parameters: "Parameter",
+    requestingCapabilities: "Funktionen von OpenRouter API abrufen...",
+    nativeToolCalling: "\u{1F7E2} Natives Tool Calling unterst\xFCtzt",
+    textToolCalling: "\u{1F7E1} Textbasiertes Tool Calling",
+    visionSupported: "\u{1F5BC}\uFE0F Bildanalyse unterst\xFCtzt",
+    textOnlyInput: "\u{1F4DD} Nur Texteingabe",
+    contextWindow: "Kontextfenster:",
+    tokens: "Tokens",
+    pressCheckApi: 'Klicken Sie auf "API pr\xFCfen", um Parameter abzurufen',
+    yourSavedModels: "Ihre gespeicherten Modelle:",
+    addModelPlaceholder: "z.B. anthropic/claude-3.5-sonnet",
+    addBtn: "+ Hinzuf\xFCgen",
+    deleteFromList: "Aus Liste l\xF6schen",
+    keyUsage: "API-Schl\xFCssel Nutzung:",
+    modeAutoTitle: "KI-Modus: Auto (intelligent), Schnell (direkt), Agent (mehrstufig)",
+    modeAuto: "\u26A1 Auto (Smart)",
+    modeQuick: "\u{1F680} Schnell (Direkt)",
+    modeAgent: "\u{1F9E0} Agent (Mehrstufig)",
+    settingsTooltip: "Einstellungen f\xFCr Modelle & API",
+    newChatTooltip: "Neuer Chat",
+    historyTooltip: "Chat-Verlauf",
+    deleteChatTooltip: "Chat l\xF6schen",
+    noteCreatedSuccess: "Erfolg: Notiz erstellt",
+    noteCreateError: "Fehler beim Erstellen der Notiz:",
+    copyError: "Text konnte nicht kopiert werden.",
+    modelAddedNotice: "Modell hinzugef\xFCgt:",
+    cannotDeleteLastModel: "Das letzte Modell kann nicht gel\xF6scht werden!",
+    historyClearedNotice: "Verlauf gel\xF6scht!",
+    modeSwitchError: "Fehler beim Wechseln des Modus:",
+    agentError: "\u274C Agenten-Ausf\xFChrungsfehler:",
+    cancel: "Abbrechen",
+    saveSend: "\u{1F4BE} Senden",
+    editText: "\u270F\uFE0F Bearbeiten",
+    retry: "\u{1F504} Wiederholen",
+    inputTokens: "\u{1F4E5} In:",
+    outputTokens: "\u{1F4E4} Out:",
+    confirmTitle: "\u26A0\uFE0F Aktionsbest\xE4tigung erforderlich",
+    confirmDetail: "Agent fordert Werkzeugausf\xFChrung an:"
+  },
+  fr: {
+    welcomeGreeting: "\u{1F44B} L'assistant NEI vous souhaite la bienvenue. En attente d'instructions",
+    welcomeSubText: "Votre super-agent intelligent pr\xEAt \xE0 analyser votre base de connaissances :",
+    featureNotes: "Acc\xE8s direct aux notes, dossiers et liens du coffre",
+    featureRouting: "Modes Rapide et Agent avec routage automatique des outils",
+    featureVision: "Analyse d'images, de documents et de pages web",
+    featureTokens: "Prise en charge compl\xE8te du RAG, de la m\xE9moire et des serveurs MCP",
+    inputPlaceholder: "Posez une question... (Entr\xE9e pour envoyer)",
+    attachTooltip: "Joindre une image ou un fichier texte",
+    quickMode: "\u26A1 Rapide",
+    agentMode: "\u{1F916} Agent",
+    ragToggle: "\u{1F9E0} Base RAG",
+    settingsTitle: "\u2699\uFE0F Param\xE8tres NEI AI Chat",
+    providerLabel: "Fournisseur d'IA :",
+    endpointLabel: "URL du point d'acc\xE8s :",
+    apiKeyLabel: "Cl\xE9 API :",
+    modelLabel: "Mod\xE8le :",
+    customModelsLabel: "Liste des mod\xE8les personnalis\xE9s :",
+    languageLabel: "Langue de l'interface :",
+    saveSettings: "Enregistrer les param\xE8tres",
+    checkApi: "\u{1F504} V\xE9rifier l'API et les mod\xE8les",
+    checkingApi: "\u23F3 Connexion en cours...",
+    apiCheckSuccess: "\u2705 API connect\xE9e avec succ\xE8s !",
+    apiCheckFailed: "\u274C \xC9chec de connexion API",
+    newChat: "\u2795 Nouveau",
+    newChatSession: "Nouveau chat",
+    clearChats: "\u{1F5D1}\uFE0F Effacer tous les chats",
+    confirmClearChats: "Voulez-vous vraiment supprimer tout l'historique ?",
+    saveNote: "\u{1F4C4} Enregistrer comme note",
+    copyText: "\u{1F4CB} Copier",
+    copied: "\u2705 Copi\xE9 dans le presse-papiers !",
+    agentRunning: "\u26A1 L'agent ex\xE9cute la t\xE2che...",
+    confirmAction: "Confirmation d'action requise :",
+    allow: "\u2705 Autoriser",
+    deny: "\u274C Refuser",
+    autoDetect: "D\xE9tection auto (Obsidian)",
+    historyTitle: "Historique des chats",
+    clearAll: "\u{1F5D1}\uFE0F Tout effacer",
+    noSavedChats: "Aucun chat enregistr\xE9",
+    moveSidebar: "\u2199\uFE0F Vers volet",
+    moveTab: "\u2197\uFE0F Vers onglet",
+    moveSidebarTitle: "D\xE9placer le chat vers le panneau lat\xE9ral",
+    moveTabTitle: "D\xE9placer le chat vers l'onglet principal",
+    modelCategories: "Cat\xE9gories de mod\xE8les :",
+    primaryModel: "1. Texte et Outils (Principal) :",
+    visionModel: "2. Fichiers et Images (Vision) :",
+    quickModel: "3. Routeur Mode Rapide :",
+    parameters: "Param\xE8tres",
+    requestingCapabilities: "R\xE9cup\xE9ration des capacit\xE9s via OpenRouter...",
+    nativeToolCalling: "\u{1F7E2} Appel d'outils natifs pris en charge",
+    textToolCalling: "\u{1F7E1} Mode outils par texte",
+    visionSupported: "\u{1F5BC}\uFE0F Analyse d'images prise en charge",
+    textOnlyInput: "\u{1F4DD} Saisie texte uniquement",
+    contextWindow: "Fen\xEAtre de contexte :",
+    tokens: "jetons",
+    pressCheckApi: `Cliquez sur "V\xE9rifier l'API" pour obtenir les param\xE8tres`,
+    yourSavedModels: "Vos mod\xE8les enregistr\xE9s :",
+    addModelPlaceholder: "ex. anthropic/claude-3.5-sonnet",
+    addBtn: "+ Ajouter",
+    deleteFromList: "Supprimer de la liste",
+    keyUsage: "Utilis\xE9 sur la cl\xE9 API :",
+    modeAutoTitle: "Mode IA : Auto (intelligent), Rapide (direct), Agent (multi-\xE9tapes)",
+    modeAuto: "\u26A1 Auto (Intelligent)",
+    modeQuick: "\u{1F680} Rapide (Direct)",
+    modeAgent: "\u{1F9E0} Agent (Multi-\xE9tapes)",
+    settingsTooltip: "Param\xE8tres des mod\xE8les et de l'API",
+    newChatTooltip: "Nouveau chat",
+    historyTooltip: "Historique des chats",
+    deleteChatTooltip: "Supprimer le chat",
+    noteCreatedSuccess: "Succ\xE8s : Note cr\xE9\xE9e",
+    noteCreateError: "Erreur lors de la cr\xE9ation de la note :",
+    copyError: "Impossible de copier le texte.",
+    modelAddedNotice: "Mod\xE8le ajout\xE9 :",
+    cannotDeleteLastModel: "Impossible de supprimer le dernier mod\xE8le !",
+    historyClearedNotice: "Historique effac\xE9 !",
+    modeSwitchError: "Erreur de changement de mode :",
+    agentError: "\u274C Erreur d'ex\xE9cution de l'agent :",
+    cancel: "Annuler",
+    saveSend: "\u{1F4BE} Envoyer",
+    editText: "\u270F\uFE0F Modifier",
+    retry: "\u{1F504} R\xE9essayer",
+    inputTokens: "\u{1F4E5} Ent :",
+    outputTokens: "\u{1F4E4} Sort :",
+    confirmTitle: "\u26A0\uFE0F Confirmation d'action requise",
+    confirmDetail: "L'agent demande l'ex\xE9cution de l'outil :"
+  },
+  zh: {
+    welcomeGreeting: "\u{1F44B} NEI \u52A9\u624B\u5411\u60A8\u81F4\u610F\u3002\u7B49\u5F85\u6307\u4EE4\u4E2D",
+    welcomeSubText: "\u60A8\u7684\u667A\u80FD\u8D85\u7EA7\u4EE3\u7406\u968F\u65F6\u4E3A\u60A8\u670D\u52A1\uFF0C\u5904\u7406\u60A8\u7684\u77E5\u8BC6\u5E93\uFF1A",
+    featureNotes: "\u76F4\u63A5\u8BBF\u95EE Vault \u7B14\u8BB0\u3001\u6587\u4EF6\u5939\u548C\u76F8\u5173\u94FE\u63A5",
+    featureRouting: "\u62E5\u6709\u81EA\u52A8\u5DE5\u5177\u8DEF\u7531\u7684\u5FEB\u901F\u6A21\u5F0F\u4E0E\u4EE3\u7406\u6A21\u5F0F",
+    featureVision: "\u56FE\u50CF\u3001\u6587\u6863\u548C\u7F51\u9875\u5206\u6790",
+    featureTokens: "\u5168\u9762\u652F\u6301 RAG\u3001\u8BB0\u5FC6\u5E93\u548C\u5916\u90E8 MCP \u670D\u52A1\u5668",
+    inputPlaceholder: "\u8F93\u5165\u95EE\u9898\u6216\u4EFB\u52A1... (Enter \u53D1\u9001)",
+    attachTooltip: "\u9644\u52A0\u56FE\u50CF\u6216\u6587\u672C\u6587\u4EF6",
+    quickMode: "\u26A1 \u5FEB\u901F",
+    agentMode: "\u{1F916} \u4EE3\u7406",
+    ragToggle: "\u{1F9E0} RAG \u77E5\u8BC6\u5E93",
+    settingsTitle: "\u2699\uFE0F NEI AI Chat \u8BBE\u7F6E",
+    providerLabel: "AI \u63D0\u4F9B\u5546\uFF1A",
+    endpointLabel: "\u7AEF\u70B9 URL\uFF1A",
+    apiKeyLabel: "API \u5BC6\u94A5\uFF1A",
+    modelLabel: "\u6A21\u578B\uFF1A",
+    customModelsLabel: "\u81EA\u5B9A\u4E49\u6A21\u578B\u5217\u8868\uFF1A",
+    languageLabel: "\u754C\u9762\u8BED\u8A00\uFF1A",
+    saveSettings: "\u4FDD\u5B58\u8BBE\u7F6E",
+    checkApi: "\u{1F504} \u68C0\u67E5 API \u4E0E\u6A21\u578B",
+    checkingApi: "\u23F3 \u6B63\u5728\u68C0\u67E5\u8FDE\u63A5...",
+    apiCheckSuccess: "\u2705 API \u8FDE\u63A5\u6210\u529F\uFF01",
+    apiCheckFailed: "\u274C API \u8FDE\u63A5\u5931\u8D25",
+    newChat: "\u2795 \u65B0\u5EFA",
+    newChatSession: "\u65B0\u5BF9\u8BDD",
+    clearChats: "\u{1F5D1}\uFE0F \u6E05\u7A7A\u6240\u6709\u5BF9\u8BDD",
+    confirmClearChats: "\u786E\u5B9A\u8981\u5220\u9664\u6240\u6709\u5386\u53F2\u5BF9\u8BDD\u5417\uFF1F",
+    saveNote: "\u{1F4C4} \u4FDD\u5B58\u4E3A\u7B14\u8BB0",
+    copyText: "\u{1F4CB} \u590D\u5236",
+    copied: "\u2705 \u5DF2\u590D\u5236\u5230\u526A\u8D34\u677F\uFF01",
+    agentRunning: "\u26A1 \u4EE3\u7406\u6B63\u5728\u6267\u884C\u4EFB\u52A1...",
+    confirmAction: "\u9700\u8981\u786E\u8BA4\u64CD\u4F5C\uFF1A",
+    allow: "\u2705 \u5141\u8BB8",
+    deny: "\u274C \u62D2\u7EDD",
+    autoDetect: "\u81EA\u52A8\u68C0\u6D4B (Obsidian)",
+    historyTitle: "\u5BF9\u8BDD\u5386\u53F2",
+    clearAll: "\u{1F5D1}\uFE0F \u6E05\u7A7A\u5168\u90E8",
+    noSavedChats: "\u65E0\u5DF2\u4FDD\u5B58\u5BF9\u8BDD",
+    moveSidebar: "\u2199\uFE0F \u81F3\u4FA7\u8FB9\u680F",
+    moveTab: "\u2197\uFE0F \u81F3\u6807\u7B7E\u9875",
+    moveSidebarTitle: "\u5C06\u5BF9\u8BDD\u79FB\u52A8\u81F3\u53F3\u4FA7\u8FB9\u680F",
+    moveTabTitle: "\u5C06\u5BF9\u8BDD\u79FB\u52A8\u81F3\u4E3B\u7F16\u8F91\u6807\u7B7E\u9875",
+    modelCategories: "\u6A21\u578B\u5206\u7C7B (\u591A\u6A21\u6001)\uFF1A",
+    primaryModel: "1. \u6587\u672C\u4E0E\u5DE5\u5177 (\u4E3B\u6A21\u578B)\uFF1A",
+    visionModel: "2. \u6587\u4EF6\u4E0E\u56FE\u50CF (Vision)\uFF1A",
+    quickModel: "3. \u5FEB\u901F\u6A21\u5F0F\u8DEF\u7531\u5668\uFF1A",
+    parameters: "\u53C2\u6570",
+    requestingCapabilities: "\u6B63\u5728\u901A\u8FC7 OpenRouter API \u83B7\u53D6\u529F\u80FD...",
+    nativeToolCalling: "\u{1F7E2} \u652F\u6301\u539F\u751F\u5DE5\u5177\u8C03\u7528",
+    textToolCalling: "\u{1F7E1} \u6587\u672C\u964D\u7EA7\u5DE5\u5177\u6A21\u5F0F",
+    visionSupported: "\u{1F5BC}\uFE0F \u652F\u6301\u56FE\u50CF\u5206\u6790",
+    textOnlyInput: "\u{1F4DD} \u4EC5\u652F\u6301\u6587\u672C\u8F93\u5165",
+    contextWindow: "\u4E0A\u4E0B\u6587\u7A97\u53E3\uFF1A",
+    tokens: "Tokens",
+    pressCheckApi: "\u70B9\u51FB\u201C\u68C0\u67E5 API\u201D\u83B7\u53D6 OpenRouter \u53C2\u6570",
+    yourSavedModels: "\u5DF2\u4FDD\u5B58\u7684\u6A21\u578B\uFF1A",
+    addModelPlaceholder: "\u4F8B\u5982\uFF1Aanthropic/claude-3.5-sonnet",
+    addBtn: "+ \u6DFB\u52A0",
+    deleteFromList: "\u4ECE\u5217\u8868\u4E2D\u5220\u9664",
+    keyUsage: "API \u5BC6\u94A5\u5DF2\u7528\u989D\u5EA6\uFF1A",
+    modeAutoTitle: "AI \u6A21\u5F0F\uFF1A\u81EA\u52A8\uFF08\u667A\u80FD\u8DEF\u7531\uFF09\uFF0C\u5FEB\u901F\uFF08\u76F4\u63A5\u56DE\u7B54\uFF09\uFF0C\u4EE3\u7406\uFF08\u591A\u6B65\u63A8\u7406\uFF09",
+    modeAuto: "\u26A1 \u81EA\u52A8 (\u667A\u80FD)",
+    modeQuick: "\u{1F680} \u5FEB\u901F (\u76F4\u63A5)",
+    modeAgent: "\u{1F9E0} \u4EE3\u7406 (\u591A\u6B65)",
+    settingsTooltip: "\u6A21\u578B\u4E0E API \u8BBE\u7F6E",
+    newChatTooltip: "\u65B0\u5EFA\u5BF9\u8BDD",
+    historyTooltip: "\u5BF9\u8BDD\u5386\u53F2",
+    deleteChatTooltip: "\u5220\u9664\u5BF9\u8BDD",
+    noteCreatedSuccess: "\u6210\u529F\uFF1A\u7B14\u8BB0\u5DF2\u521B\u5EFA",
+    noteCreateError: "\u521B\u5EFA\u7B14\u8BB0\u5931\u8D25\uFF1A",
+    copyError: "\u590D\u5236\u6587\u672C\u5931\u8D25\u3002",
+    modelAddedNotice: "\u5DF2\u6DFB\u52A0\u6A21\u578B\uFF1A",
+    cannotDeleteLastModel: "\u65E0\u6CD5\u5220\u9664\u5217\u8868\u4E2D\u6700\u540E\u4E00\u4E2A\u6A21\u578B\uFF01",
+    historyClearedNotice: "\u6240\u6709\u5BF9\u8BDD\u5386\u53F2\u5DF2\u6E05\u7A7A\uFF01",
+    modeSwitchError: "\u5207\u6362\u6A21\u5F0F\u5931\u8D25\uFF1A",
+    agentError: "\u274C \u4EE3\u7406\u6267\u884C\u9519\u8BEF\uFF1A",
+    cancel: "\u53D6\u6D88",
+    saveSend: "\u{1F4BE} \u53D1\u9001",
+    editText: "\u270F\uFE0F \u7F16\u8F91",
+    retry: "\u{1F504} \u91CD\u8BD5",
+    inputTokens: "\u{1F4E5} \u8F93\u5165\uFF1A",
+    outputTokens: "\u{1F4E4} \u8F93\u51FA\uFF1A",
+    confirmTitle: "\u26A0\uFE0F \u9700\u8981\u786E\u8BA4\u64CD\u4F5C",
+    confirmDetail: "\u4EE3\u7406\u8BF7\u6C42\u6267\u884C\u5DE5\u5177\uFF1A"
+  },
+  ja: {
+    welcomeGreeting: "\u{1F44B} NEI \u30A2\u30B7\u30B9\u30BF\u30F3\u30C8\u3078\u3088\u3046\u3053\u305D\u3002\u6307\u793A\u3092\u5F85\u3063\u3066\u3044\u307E\u3059",
+    welcomeSubText: "\u3042\u306A\u305F\u306E\u30CA\u30EC\u30C3\u30B8\u30D9\u30FC\u30B9\u3092\u30B5\u30DD\u30FC\u30C8\u3059\u308B\u30A4\u30F3\u30C6\u30EA\u30B8\u30A7\u30F3\u30C8\u30FB\u30B9\u30FC\u30D1\u30FC\u30A8\u30FC\u30B8\u30A7\u30F3\u30C8\uFF1A",
+    featureNotes: "\u30CE\u30FC\u30C8\u3001\u30D5\u30A9\u30EB\u30C0\u3001\u4FDD\u7BA1\u5EAB\u306E\u30EA\u30F3\u30AF\u3078\u306E\u76F4\u63A5\u30A2\u30AF\u30BB\u30B9",
+    featureRouting: "\u81EA\u52D5\u30C4\u30FC\u30EB\u30EB\u30FC\u30C6\u30A3\u30F3\u30B0\u3092\u5099\u3048\u305F Quick / Agent \u30E2\u30FC\u30C9",
+    featureVision: "\u753B\u50CF\u3001\u30C9\u30AD\u30E5\u30E1\u30F3\u30C8\u3001Web \u30DA\u30FC\u30B8\u306E\u89E3\u6790",
+    featureTokens: "RAG\u3001\u30E1\u30E2\u30EA\u3001\u5916\u90E8 MCP \u30B5\u30FC\u30D0\u30FC\u306E\u30D5\u30EB\u30B5\u30DD\u30FC\u30C8",
+    inputPlaceholder: "\u8CEA\u554F\u3084\u30BF\u30B9\u30AF\u3092\u5165\u529B... (Enter \u3067\u9001\u4FE1)",
+    attachTooltip: "\u753B\u50CF\u307E\u305F\u306F\u30C6\u30AD\u30B9\u30C8\u30D5\u30A1\u30A4\u30EB\u3092\u6DFB\u4ED8",
+    quickMode: "\u26A1 \u30AF\u30A4\u30C3\u30AF",
+    agentMode: "\u{1F916} \u30A8\u30FC\u30B8\u30A7\u30F3\u30C8",
+    ragToggle: "\u{1F9E0} RAG \u77E5\u8B58\u30D9\u30FC\u30B9",
+    settingsTitle: "\u2699\uFE0F NEI AI Chat \u8A2D\u5B9A",
+    providerLabel: "AI \u30D7\u30ED\u30D0\u30A4\u30C0\u30FC:",
+    endpointLabel: "\u30A8\u30F3\u30C9\u30DD\u30A4\u30F3\u30C8 URL:",
+    apiKeyLabel: "API \u30AD\u30FC:",
+    modelLabel: "\u30E2\u30C7\u30EB:",
+    customModelsLabel: "\u30AB\u30B9\u30BF\u30E0\u30E2\u30C7\u30EB\u30EA\u30B9\u30C8:",
+    languageLabel: "\u8868\u793A\u8A00\u8A9E:",
+    saveSettings: "\u8A2D\u5B9A\u3092\u4FDD\u5B58",
+    checkApi: "\u{1F504} API \u3068\u30E2\u30C7\u30EB\u3092\u78BA\u8A8D",
+    checkingApi: "\u23F3 \u63A5\u7D9A\u78BA\u8A8D\u4E2D...",
+    apiCheckSuccess: "\u2705 API \u63A5\u7D9A\u306B\u6210\u529F\u3057\u307E\u3057\u305F\uFF01",
+    apiCheckFailed: "\u274C API \u63A5\u7D9A\u5931\u6557",
+    newChat: "\u2795 \u65B0\u898F",
+    newChatSession: "\u65B0\u3057\u3044\u30C1\u30E3\u30C3\u30C8",
+    clearChats: "\u{1F5D1}\uFE0F \u3059\u3079\u3066\u306E\u30C1\u30E3\u30C3\u30C8\u3092\u6D88\u53BB",
+    confirmClearChats: "\u3059\u3079\u3066\u306E\u5C65\u6B74\uB97C \u524A\u9664\u3057\u3066\u3082\u3088\u308D\u3057\u3044\u3067\u3059\u304B\uFF1F",
+    saveNote: "\u{1F4C4} \u30CE\u30FC\u30C8\u3068\u3057\u3066\u4FDD\u5B58",
+    copyText: "\u{1F4CB} \u30B3\u30D4\u30FC",
+    copied: "\u2705 \u30AF\u30EA\u30C3\u30D7\u30DC\u30FC\u30C9\u306B\u30B3\u30D4\u30FC\u3057\u307E\u3057\u305F\uFF01",
+    agentRunning: "\u26A1 \u30A8\u30FC\u30B8\u30A7\u30F3\u30C8\u304C\u30BF\u30B9\u30AF\u3092\u5B9F\u884C\u4E2D...",
+    confirmAction: "\u30A2\u30AF\u30B7\u30E7\u30F3\u306E\u78BA\u8A8D\u304C\u5FC5\u8981\u3067\u3059:",
+    allow: "\u2705 \u8A31\u53EF",
+    deny: "\u274C \u62D2\u5426",
+    autoDetect: "\u81EA\u52D5\u691C\u51FA (Obsidian)",
+    historyTitle: "\u30C1\u30E3\u30C3\u30C8\u5C65\u6B74",
+    clearAll: "\u{1F5D1}\uFE0F \u3059\u3079\u3066\u524A\u9664",
+    noSavedChats: "\u4FDD\u5B58\u3055\u308C\u305F\u30C1\u30E3\u30C3\u30C8\u306F\u3042\u308A\u307E\u305B\u3093",
+    moveSidebar: "\u2199\uFE0F \u30B5\u30A4\u30C9\u30D0\u30FC\u3078",
+    moveTab: "\u2197\uFE0F \u30BF\u30D6\u3078",
+    moveSidebarTitle: "\u30C1\u30E3\u30C3\u30C8\u3092\u53F3\u30B5\u30A4\u30C9\u30D0\u30FC\u306B\u79FB\u52D5",
+    moveTabTitle: "\u30C1\u30E3\u30C3\u30C8\u3092\u30E1\u30A4\u30F3\u30BF\u30D6\u306B\u79FB\u52D5",
+    modelCategories: "\u30E2\u30C7\u30EB\u30AB\u30C6\u30B4\u30EA:",
+    primaryModel: "1. \u30C6\u30AD\u30B9\u30C8\u3068\u30C4\u30FC\u30EB (\u30E1\u30A4\u30F3):",
+    visionModel: "2. \u30D5\u30A1\u30A4\u30EB\u3068\u753B\u50CF (Vision):",
+    quickModel: "3. \u30AF\u30A4\u30C3\u30AF\u30E2\u30FC\u30C9\u30EB\u30FC\u30BF\u30FC:",
+    parameters: "\u30D1\u30E9\u30E1\u30FC\u30BF",
+    requestingCapabilities: "OpenRouter API \u304B\u3089\u60C5\u5831\u3092\u53D6\u5F97\u4E2D...",
+    nativeToolCalling: "\u{1F7E2} \u30CD\u30A4\u30C6\u30A3\u30D6 Tool Calling \u5BFE\u5FDC",
+    textToolCalling: "\u{1F7E1} \u30C6\u30AD\u30B9\u30C8\u30D5\u30A9\u30FC\u30EB\u30D0\u30C3\u30AF\u30E2\u30FC\u30C9",
+    visionSupported: "\u{1F5BC}\uFE0F \u753B\u50CF\u89E3\u6790\u5BFE\u5FDC",
+    textOnlyInput: "\u{1F4DD} \u30C6\u30AD\u30B9\u30C8\u5165\u529B\u306E\u307F",
+    contextWindow: "\u30B3\u30F3\u30C6\u30AD\u30B9\u30C8\u30A6\u30A3\u30F3\u30C9\u30A6:",
+    tokens: "\u30C8\u30FC\u30AF\u30F3",
+    pressCheckApi: "\u300CAPI \u3092\u78BA\u8A8D\u300D\u3092\u30AF\u30EA\u30C3\u30AF\u3057\u3066\u30D1\u30E9\u30E1\u30FC\u30BF\u3092\u53D6\u5F97",
+    yourSavedModels: "\u4FDD\u5B58\u3055\u308C\u305F\u30E2\u30C7\u30EB:",
+    addModelPlaceholder: "\u4F8B: anthropic/claude-3.5-sonnet",
+    addBtn: "+ \u8FFD\u52A0",
+    deleteFromList: "\u30EA\u30B9\u30C8\u304B\u3089\u524A\u9664",
+    keyUsage: "API \u30AD\u30FC\u4F7F\u7528\u91CF:",
+    modeAutoTitle: "AI \u30E2\u30FC\u30C9: Auto\uFF08\u30B9\u30DE\u30FC\u30C8\uFF09\u3001Quick\uFF08\u76F4\u63A5\uFF09\u3001Agent\uFF08\u591A\u6BB5\u968E\uFF09",
+    modeAuto: "\u26A1 \u81EA\u52D5 (\u30B9\u30DE\u30FC\u30C8)",
+    modeQuick: "\u{1F680} \u30AF\u30A4\u30C3\u30AF (\u76F4\u63A5)",
+    modeAgent: "\u{1F9E0} \u30A8\u30FC\u30B8\u30A7\u30F3\u30C8 (\u591A\u6BB5\u968E)",
+    settingsTooltip: "\u30E2\u30C7\u30EB\u3068 API \u306E\u8A2D\u5B9A",
+    newChatTooltip: "\u65B0\u3057\u3044\u30C1\u30E3\u30C3\u30C8",
+    historyTooltip: "\u30C1\u30E3\u30C3\u30C8\u5C65\u6B74",
+    deleteChatTooltip: "\u30C1\u30E3\u30C3\u30C8\u3092\u524A\u9664",
+    noteCreatedSuccess: "\u6210\u529F: \u30CE\u30FC\u30C8\u3092\u4F5C\u6210\u3057\u307E\u3057\u305F",
+    noteCreateError: "\u30CE\u30FC\u30C8\u4F5C\u6210\u30A8\u30E9\u30FC:",
+    copyError: "\u30C6\u30AD\u30B9\u30C8\u306E\u30B3\u30D4\u30FC\u306B\u5931\u6557\u3057\u307E\u3057\u305F\u3002",
+    modelAddedNotice: "\u30E2\u30C7\u30EB\u3092\u8FFD\u52A0\u3057\u307E\u3057\u305F:",
+    cannotDeleteLastModel: "\u6700\u5F8C\u306E\u30E2\u30C7\u30EB\u306F\u524A\u9664\u3067\u304D\u307E\u305B\u3093\uFF01",
+    historyClearedNotice: "\u30C1\u30E3\u30C3\u30C8\u5C65\u6B74\u3092\u6D88\u53BB\u3057\u307E\u3057\u305F\uFF01",
+    modeSwitchError: "\u30E2\u30FC\u30C9\u5207\u308A\u66FF\u3048\u30A8\u30E9\u30FC:",
+    agentError: "\u274C \u30A8\u30FC\u30B8\u30A7\u30F3\u30C8\u5B9F\u884C\u30A8\u30E9\u30FC:",
+    cancel: "\u30AD\u30E3\u30F3\u30BB\u30EB",
+    saveSend: "\u{1F4BE} \u9001\u4FE1",
+    editText: "\u270F\uFE0F \u7DE8\u96C6",
+    retry: "\u{1F504} \u518D\u8A66\u884C",
+    inputTokens: "\u{1F4E5} \u5165\u529B:",
+    outputTokens: "\u{1F4E4} \u51FA\u529B:",
+    confirmTitle: "\u26A0\uFE0F \u30A2\u30AF\u30B7\u30E7\u30F3\u306E\u78BA\u8A8D\u304C\u5FC5\u8981\u3067\u3059",
+    confirmDetail: "\u30A8\u30FC\u30B8\u30A7\u30F3\u30C8\u304C\u30C4\u30FC\u30EB\u306E\u5B9F\u884C\u3092\u8981\u6C42\u3057\u3066\u3044\u307E\u3059:"
+  },
+  pt: {
+    welcomeGreeting: "\u{1F44B} O Assistente NEI sa\xFAda voc\xEA. Aguardando instru\xE7\xF5es",
+    welcomeSubText: "Seu superagente inteligente pronto para auxiliar na sua base de conhecimento:",
+    featureNotes: "Acesso direto a notas, pastas e links do cofre",
+    featureRouting: "Modos R\xE1pido e Agente com roteamento autom\xE1tico de ferramentas",
+    featureVision: "An\xE1lise de imagens, documentos e p\xE1ginas da web",
+    featureTokens: "Suporte completo para RAG, mem\xF3ria e servidores MCP externos",
+    inputPlaceholder: "Fa\xE7a uma pergunta... (Enter para enviar)",
+    attachTooltip: "Anexar imagem ou arquivo de texto",
+    quickMode: "\u26A1 R\xE1pido",
+    agentMode: "\u{1F916} Agente",
+    ragToggle: "\u{1F9E0} Cofre RAG",
+    settingsTitle: "\u2699\uFE0F Configura\xE7\xF5es do NEI AI Chat",
+    providerLabel: "Provedor de IA:",
+    endpointLabel: "URL do ponto de extremidade:",
+    apiKeyLabel: "Chave API:",
+    modelLabel: "Modelo:",
+    customModelsLabel: "Lista de modelos personalizados:",
+    languageLabel: "Idioma da interface:",
+    saveSettings: "Salvar configura\xE7\xF5es",
+    checkApi: "\u{1F504} Verificar API e Modelos",
+    checkingApi: "\u23F3 Verificando conex\xE3o...",
+    apiCheckSuccess: "\u2705 API conectada com sucesso!",
+    apiCheckFailed: "\u274C Falha na conex\xE3o da API",
+    newChat: "\u2795 Novo",
+    newChatSession: "Novo chat",
+    clearChats: "\u{1F5D1}\uFE0F Limpar todos os chats",
+    confirmClearChats: "Tem certeza de que deseja excluir todo o hist\xF3rico?",
+    saveNote: "\u{1F4C4} Salvar como nota",
+    copyText: "\u{1F4CB} Copiar",
+    copied: "\u2705 Copiado para a \xE1rea de transfer\xEAncia!",
+    agentRunning: "\u26A1 Agente executando tarefa...",
+    confirmAction: "Confirma\xE7\xE3o de a\xE7\xE3o necess\xE1ria:",
+    allow: "\u2705 Permitir",
+    deny: "\u274C Negar",
+    autoDetect: "Detec\xE7\xE3o autom\xE1tica (Obsidian)",
+    historyTitle: "Hist\xF3rico de Chats",
+    clearAll: "\u{1F5D1}\uFE0F Limpar Tudo",
+    noSavedChats: "Nenhum chat salvo",
+    moveSidebar: "\u2199\uFE0F Para Painel",
+    moveTab: "\u2197\uFE0F Para Aba",
+    moveSidebarTitle: "Mover chat para a barra lateral direita",
+    moveTabTitle: "Mover chat para a aba principal",
+    modelCategories: "Categorias de modelos:",
+    primaryModel: "1. Texto e Ferramentas (Principal):",
+    visionModel: "2. Arquivos e Imagens (Vis\xE3o):",
+    quickModel: "3. Roteador Modo R\xE1pido:",
+    parameters: "Par\xE2metros",
+    requestingCapabilities: "Obtendo recursos via OpenRouter API...",
+    nativeToolCalling: "\u{1F7E2} Chamada de ferramenta nativa suportada",
+    textToolCalling: "\u{1F7E1} Modo de ferramenta por texto",
+    visionSupported: "\u{1F5BC}\uFE0F An\xE1lise de imagem suportada",
+    textOnlyInput: "\u{1F4DD} Apenas entrada de texto",
+    contextWindow: "Janela de contexto:",
+    tokens: "tokens",
+    pressCheckApi: 'Clique em "Verificar API" para obter par\xE2metros',
+    yourSavedModels: "Seus modelos salvos:",
+    addModelPlaceholder: "ex: anthropic/claude-3.5-sonnet",
+    addBtn: "+ Adicionar",
+    deleteFromList: "Excluir da lista",
+    keyUsage: "Uso na chave API:",
+    modeAutoTitle: "Modo IA: Auto (inteligente), R\xE1pido (direto), Agente (multi-etapas)",
+    modeAuto: "\u26A1 Auto (Inteligente)",
+    modeQuick: "\u{1F680} R\xE1pido (Direto)",
+    modeAgent: "\u{1F9E0} Agente (Multi-etapas)",
+    settingsTooltip: "Configura\xE7\xF5es de modelos e API",
+    newChatTooltip: "Novo chat",
+    historyTooltip: "Hist\xF3rico de chats",
+    deleteChatTooltip: "Excluir chat",
+    noteCreatedSuccess: "Sucesso: Nota criada",
+    noteCreateError: "Erro ao criar nota:",
+    copyError: "Falha ao copiar texto.",
+    modelAddedNotice: "Modelo adicionado:",
+    cannotDeleteLastModel: "N\xE3o \xE9 poss\xEDvel excluir o \xFAltimo modelo!",
+    historyClearedNotice: "Hist\xF3rico limpo!",
+    modeSwitchError: "Erro ao alternar modo:",
+    agentError: "\u274C Erro na execu\xE7\xE3o do agente:",
+    cancel: "Cancelar",
+    saveSend: "\u{1F4BE} Enviar",
+    editText: "\u270F\uFE0F Editar",
+    retry: "\u{1F504} Tentar novamente",
+    inputTokens: "\u{1F4E5} Ent:",
+    outputTokens: "\u{1F4E4} Sa\xED:",
+    confirmTitle: "\u26A0\uFE0F Confirma\xE7\xE3o de a\xE7\xE3o necess\xE1ria",
+    confirmDetail: "O agente solicita a execu\xE7\xE3o da ferramenta:"
+  },
+  ko: {
+    welcomeGreeting: "\u{1F44B} NEI \uC5B4\uC2DC\uC2A4\uD134\uD2B8\uAC00 \uC778\uC0AC\uB4DC\uB9BD\uB2C8\uB2E4. \uC9C0\uC2DC\uB97C \uAE30\uB2E4\uB9AC\uB294 \uC911\uC785\uB2C8\uB2E4",
+    welcomeSubText: "\uC9C0\uC2DD \uBCA0\uC774\uC2A4 \uAD00\uB9AC \uBC0F \uC791\uC131\uC744 \uC9C0\uC6D0\uD558\uB294 \uC9C0\uB2A5\uD615 \uC288\uD37C \uC5D0\uC774\uC804\uD2B8:",
+    featureNotes: "\uBCF4\uAD00\uD568\uC758 \uB178\uD2B8, \uD3F4\uB354 \uBC0F \uB9C1\uD06C\uC5D0 \uC9C1\uC811 \uC811\uADFC",
+    featureRouting: "\uC790\uB3D9 \uB3C4\uAD6C \uB77C\uC6B0\uD305\uC774 \uD3EC\uD568\uB41C Quick \uBC0F Agent \uBAA8\uB4DC",
+    featureVision: "\uC774\uBBF8\uC9C0, \uBB38\uC11C \uBC0F \uC6F9 \uD398\uC774\uC9C0 \uBD84\uC11D",
+    featureTokens: "RAG, \uBA54\uBAA8\uB9AC \uBC0F \uC678\uBD80 MCP \uC11C\uBC84 \uC644\uBCBD \uC9C0\uC6D0",
+    inputPlaceholder: "\uC9C8\uBB38\uC774\uB098 \uC791\uC5C5 \uB0B4\uC6A9\uC744 \uC785\uB825\uD558\uC138\uC694... (Enter\uB85C \uC804\uC1A1)",
+    attachTooltip: "\uC774\uBBF8\uC9C0 \uB610\uB294 \uD14D\uC2A4\uD2B8 \uD30C\uC77C \uCCA8\uBD80",
+    quickMode: "\u26A1 \uBE60\uB978",
+    agentMode: "\u{1F916} \uC5D0\uC774\uC804\uD2B8",
+    ragToggle: "\u{1F9E0} RAG \uC9C0\uC2DD \uBCA0\uC774\uC2A4",
+    settingsTitle: "\u2699\uFE0F NEI AI Chat \uC124\uC815",
+    providerLabel: "AI \uC81C\uACF5\uC5C5\uCCB4:",
+    endpointLabel: "\uC5D4\uB4DC\uD3EC\uC778\uD2B8 URL:",
+    apiKeyLabel: "API \uD0A4:",
+    modelLabel: "\uBAA8\uB378:",
+    customModelsLabel: "\uC0AC\uC6A9\uC790 \uC9C0\uC815 \uBAA8\uB378 \uBAA9\uB85D:",
+    languageLabel: "\uC778\uD130\uD398\uC774\uC2A4 \uC5B8\uC5B4:",
+    saveSettings: "\uC124\uC815 \uC800\uC7A5",
+    checkApi: "\u{1F504} API \uBC0F \uBAA8\uB378 \uD655\uC778",
+    checkingApi: "\u23F3 \uC5F0\uACB0 \uD655\uC778 \uC911...",
+    apiCheckSuccess: "\u2705 API \uC5F0\uACB0 \uC131\uACF5!",
+    apiCheckFailed: "\u274C API \uC5F0\uACB0 \uC2E4\uD328",
+    newChat: "\u2795 \uC0C8\uB85C \uB9CC\uB4E4\uAE30",
+    newChatSession: "\uC0C8 \uCC44\uD305",
+    clearChats: "\u{1F5D1}\uFE0F \uBAA8\uB4E0 \uCC44\uD305 \uC9C0\uC6B0\uAE30",
+    confirmClearChats: "\uBAA8\uB4E0 \uCC44\uD305 \uAE30\uB85D\uC744 \uC0AD\uC81C\uD558\uC2DC\uACA0\uC2B5\uB2C8\uAE4C?",
+    saveNote: "\u{1F4C4} \uB178\uD2B8\uB85C \uC800\uC7A5",
+    copyText: "\u{1F4CB} \uBCF5\uC0AC",
+    copied: "\u2705 \uD074\uB9BD\uBCF4\uB4DC\uC5D0 \uBCF5\uC0AC\uB418\uC5C8\uC2B5\uB2C8\uB2E4!",
+    agentRunning: "\u26A1 \uC5D0\uC774\uC804\uD2B8\uAC00 \uC791\uC5C5\uC744 \uC218\uD589 \uC911...",
+    confirmAction: "\uC791\uC5C5 \uC2B9\uC778 \uD544\uC694:",
+    allow: "\u2705 \uD5C8\uC6A9",
+    deny: "\u274C \uAC70\uBD80",
+    autoDetect: "\uC790\uB3D9 \uAC10\uC9C0 (Obsidian)",
+    historyTitle: "\uCC44\uD305 \uAE30\uB85D",
+    clearAll: "\u{1F5D1}\uFE0F \uBAA8\uB450 \uC9C0\uC6B0\uAE30",
+    noSavedChats: "\uC800\uC7A5\uB41C \uCC44\uD305 \uC5C6\uC74C",
+    moveSidebar: "\u2199\uFE0F \uC0AC\uC774\uB4DC\uBC14\uB85C",
+    moveTab: "\u2197\uFE0F \uD0ED\uC73C\uB85C",
+    moveSidebarTitle: "\uCC44\uD305\uC744 \uC624\uB978\uCABD \uC0AC\uC774\uB4DC\uBC14\uB85C \uC774\uB3D9",
+    moveTabTitle: "\uCC44\uD305\uC744 \uC8FC \uD3B8\uC9D1 \uD0ED\uC73C\uB85C \uC774\uB3D9",
+    modelCategories: "\uBAA8\uB378 \uBC94\uC8FC:",
+    primaryModel: "1. \uD14D\uC2A4\uD2B8 \uBC0F \uB3C4\uAD6C (\uAE30\uBCF8):",
+    visionModel: "2. \uD30C\uC77C \uBC0F \uC774\uBBF8\uC9C0 (Vision):",
+    quickModel: "3. \uBE60\uB978 \uBAA8\uB4DC \uB77C\uC6B0\uD130:",
+    parameters: "\uB9E4\uAC1C\uBCC0\uC218",
+    requestingCapabilities: "OpenRouter API\uC5D0\uC11C \uC0AC\uC591\uC744 \uAC00\uC838\uC624\uB294 \uC911...",
+    nativeToolCalling: "\u{1F7E2} \uAE30\uBCF8 Tool Calling \uC9C0\uC6D0",
+    textToolCalling: "\u{1F7E1} \uD14D\uC2A4\uD2B8 \uD3F4\uBC31 \uB3C4\uAD6C \uBAA8\uB4DC",
+    visionSupported: "\u{1F5BC}\uFE0F \uC774\uBBF8\uC9C0 \uBD84\uC11D \uC9C0\uC6D0",
+    textOnlyInput: "\u{1F4DD} \uD14D\uC2A4\uD2B8 \uC785\uB825\uB9CC \uAC00\uB2A5",
+    contextWindow: "\uCEE8\uD14D\uC2A4\uD2B8 \uCC3D:",
+    tokens: "\uD1A0\uD070",
+    pressCheckApi: '"API \uD655\uC778"\uC744 \uD074\uB9AD\uD558\uC5EC \uB9E4\uAC1C\uBCC0\uC218\uB97C \uAC00\uC838\uC624\uC138\uC694',
+    yourSavedModels: "\uC800\uC7A5\uB41C \uBAA8\uB378 \uBAA9\uB85D:",
+    addModelPlaceholder: "\uC608: anthropic/claude-3.5-sonnet",
+    addBtn: "+ \uCD94\uAC00",
+    deleteFromList: "\uBAA9\uB85D\uC5D0\uC11C \uC0AD\uC81C",
+    keyUsage: "API \uD0A4 \uC0AC\uC6A9\uB7C9:",
+    modeAutoTitle: "AI \uBAA8\uB4DC: Auto(\uC2A4\uB9C8\uD2B8 \uB77C\uC6B0\uD305), Quick(\uC9C1\uC811 \uB300\uD654), Agent(\uB2E4\uB2E8\uACC4 \uCD94\uB860)",
+    modeAuto: "\u26A1 \uC790\uB3D9 (\uC2A4\uB9C8\uD2B8)",
+    modeQuick: "\u{1F680} \uBE60\uB978 (\uC9C1\uC811)",
+    modeAgent: "\u{1F9E0} \uC5D0\uC774\uC804\uD2B8 (\uB2E4\uB2E8\uACC4)",
+    settingsTooltip: "\uBAA8\uB378 \uBC0F API \uC124\uC815",
+    newChatTooltip: "\uC0C8 \uCC44\uD305",
+    historyTooltip: "\uCC44\uD305 \uAE30\uB85D",
+    deleteChatTooltip: "\uCC44\uD305 \uC0AD\uC81C",
+    noteCreatedSuccess: "\uC131\uACF5: \uB178\uD2B8\uAC00 \uC0DD\uC131\uB418\uC5C8\uC2B5\uB2C8\uB2E4",
+    noteCreateError: "\uB178\uD2B8 \uC0DD\uC131 \uC624\uB958:",
+    copyError: "\uD14D\uC2A4\uD2B8 \uBCF5\uC0AC \uC2E4\uD328.",
+    modelAddedNotice: "\uBAA8\uB378 \uCD94\uAC00\uB428:",
+    cannotDeleteLastModel: "\uB9C8\uC9C0\uB9C9 \uBAA8\uB378\uC740 \uC0AD\uC81C\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4!",
+    historyClearedNotice: "\uCC44\uD305 \uAE30\uB85D\uC774 \uC9C0\uC6CC\uC84C\uC2B5\uB2C8\uB2E4!",
+    modeSwitchError: "\uBAA8\uB4DC \uC804\uD658 \uC624\uB958:",
+    agentError: "\u274C \uC5D0\uC774\uC804\uD2B8 \uC2E4\uD589 \uC624\uB958:",
+    cancel: "\uCDE8\uC18C",
+    saveSend: "\u{1F4BE} \uC804\uC1A1",
+    editText: "\u270F\uFE0F \uD3B8\uC9D1",
+    retry: "\u{1F504} \uB2E4\uC2DC \uC2DC\uB3C4",
+    inputTokens: "\u{1F4E5} \uC785\uB825:",
+    outputTokens: "\u{1F4E4} \uCD9C\uB825:",
+    confirmTitle: "\u26A0\uFE0F \uC791\uC5C5 \uC2B9\uC778 \uD544\uC694",
+    confirmDetail: "\uC5D0\uC774\uC804\uD2B8\uAC00 \uB3C4\uAD6C \uC2E4\uD589\uC744 \uC694\uCCAD\uD569\uB2C8\uB2E4:"
+  }
+};
+function detectLanguage() {
+  try {
+    const obsLang = (window.localStorage.getItem("language") || navigator.language || "en").toLowerCase();
+    if (obsLang.startsWith("ru"))
+      return "ru";
+    if (obsLang.startsWith("es"))
+      return "es";
+    if (obsLang.startsWith("de"))
+      return "de";
+    if (obsLang.startsWith("fr"))
+      return "fr";
+    if (obsLang.startsWith("zh"))
+      return "zh";
+    if (obsLang.startsWith("ja"))
+      return "ja";
+    if (obsLang.startsWith("pt"))
+      return "pt";
+    if (obsLang.startsWith("ko"))
+      return "ko";
+  } catch (e) {
+  }
+  return "en";
+}
+function t(key, lang) {
+  const selectedLang = !lang || lang === "auto" ? detectLanguage() : lang;
+  const dict = translations[selectedLang] || translations.en;
+  return dict[key] || translations.en[key] || key;
+}
+
 // src/components/ChatPanel.tsx
 var import_jsx_runtime = __toESM(require_jsx_runtime());
 var ObsidianMarkdown = ({ markdown, app }) => {
@@ -26418,7 +27204,7 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
         }
       }
     } catch (e) {
-      new import_obsidian9.Notice(`\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0435\u0440\u0435\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u044F \u0440\u0435\u0436\u0438\u043C\u0430: ${e?.message || e}`);
+      new import_obsidian9.Notice(`${t("modeSwitchError", language)} ${e?.message || e}`);
     }
   };
   const [currentSession, setCurrentSession] = React.useState(() => ChatStore.createNewSession());
@@ -26426,7 +27212,6 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
   const [input, setInput] = React.useState("");
   const [attachedImages, setAttachedImages] = React.useState([]);
   const [executionMode, setExecutionMode] = React.useState(settings.executionMode || "auto");
-  const [safetyMode, setSafetyMode] = React.useState(settings.safetyMode || "safe");
   const [loading, setLoading] = React.useState(false);
   const [activeSteps, setActiveSteps] = React.useState([]);
   const [showSessionsDrawer, setShowSessionsDrawer] = React.useState(false);
@@ -26472,9 +27257,16 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
       setVerifyingModel(false);
     }
   };
+  const formatSessionTitle = (tTitle) => {
+    if (!tTitle || tTitle === "\u041D\u043E\u0432\u044B\u0439 \u0434\u0438\u0430\u043B\u043E\u0433" || tTitle === "\u041D\u043E\u0432\u044B\u0439 \u0447\u0430\u0442" || tTitle === "New Chat") {
+      return t("newChatSession", language);
+    }
+    return tTitle;
+  };
   const handleSelectModel = (selectedModel) => {
     setModel(selectedModel);
     verifyActiveModel(selectedModel, apiKey);
+    saveSettings({ ...settings, model: selectedModel, visionModel, quickModel, executionMode });
   };
   const handleAddModel = () => {
     if (!newModelInput.trim())
@@ -26485,14 +27277,14 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
       setCustomModels(updated);
       setModel(trimmed);
       verifyActiveModel(trimmed, apiKey);
-      new import_obsidian9.Notice(`\u0414\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u0430 \u043C\u043E\u0434\u0435\u043B\u044C: ${trimmed}`);
+      new import_obsidian9.Notice(`${t("modelAddedNotice", language)} ${trimmed}`);
     }
     setNewModelInput("");
   };
   const handleDeleteModel = (e, targetModel) => {
     e.stopPropagation();
     if (customModels.length <= 1) {
-      new import_obsidian9.Notice("\u041D\u0435\u043B\u044C\u0437\u044F \u0443\u0434\u0430\u043B\u0438\u0442\u044C \u043F\u043E\u0441\u043B\u0435\u0434\u043D\u044E\u044E \u043C\u043E\u0434\u0435\u043B\u044C \u0438\u0437 \u0441\u043F\u0438\u0441\u043A\u0430!");
+      new import_obsidian9.Notice(t("cannotDeleteLastModel", language));
       return;
     }
     const updated = customModels.filter((m) => m !== targetModel);
@@ -26528,13 +27320,14 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
     }
   };
   const handleClearAllSessions = async () => {
-    if (confirm("\u0412\u044B \u0443\u0432\u0435\u0440\u0435\u043D\u044B, \u0447\u0442\u043E \u0445\u043E\u0442\u0438\u0442\u0435 \u043F\u043E\u043B\u043D\u043E\u0441\u0442\u044C\u044E \u043E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u0438\u0441\u0442\u043E\u0440\u0438\u044E \u0432\u0441\u0435\u0445 \u0447\u0430\u0442\u043E\u0432?")) {
+    if (confirm(t("confirmClearChats", language))) {
       await ChatStore.clearAllSessions(app);
       await refreshSessionsList();
       handleNewChat();
-      new import_obsidian9.Notice("\u0412\u0441\u044F \u0438\u0441\u0442\u043E\u0440\u0438\u044F \u0447\u0430\u0442\u043E\u0432 \u043E\u0447\u0438\u0449\u0435\u043D\u0430!");
+      new import_obsidian9.Notice(t("historyClearedNotice", language));
     }
   };
+  const [language, setLanguage] = React.useState(settings.language || "auto");
   const handleSaveConfig = async () => {
     const newSettings = {
       ...settings,
@@ -26542,27 +27335,31 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
       endpointUrl,
       apiKey,
       model,
-      customModels
+      visionModel,
+      quickModel,
+      executionMode,
+      customModels,
+      language
     };
     await saveSettings(newSettings);
     setShowConfig(false);
-    new import_obsidian9.Notice("\u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438 \u043C\u043E\u0434\u0435\u043B\u0435\u0439 NEI Agent \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u044B!");
+    new import_obsidian9.Notice(t("saveSettings", language) + "!");
   };
   const handleCopyText = async (text) => {
     try {
       await navigator.clipboard.writeText(text);
-      new import_obsidian9.Notice("\u0421\u043A\u043E\u043F\u0438\u0440\u043E\u0432\u0430\u043D\u043E \u0432 \u0431\u0443\u0444\u0435\u0440 \u043E\u0431\u043C\u0435\u043D\u0430!");
+      new import_obsidian9.Notice(t("copied", language));
     } catch (e) {
-      new import_obsidian9.Notice("\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0441\u043A\u043E\u043F\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u0442\u0435\u043A\u0441\u0442.");
+      new import_obsidian9.Notice(t("copyError", language));
     }
   };
   const handleSaveResponseAsNote = async (content) => {
-    const notePath = `Tasks/\u0421\u0432\u043E\u0434\u043A\u0430_${Date.now()}.md`;
+    const notePath = `Tasks/Summary_${Date.now()}.md`;
     try {
       await app.vault.create(notePath, content);
-      new import_obsidian9.Notice(`\u0423\u0441\u043F\u0435\u0445: \u0421\u043E\u0437\u0434\u0430\u043D\u0430 \u0437\u0430\u043C\u0435\u0442\u043A\u0430 '${notePath}'!`);
+      new import_obsidian9.Notice(`${t("noteCreatedSuccess", language)} '${notePath}'!`);
     } catch (e) {
-      new import_obsidian9.Notice(`\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u044F \u0437\u0430\u043C\u0435\u0442\u043A\u0438: ${e?.message || e}`);
+      new import_obsidian9.Notice(`${t("noteCreateError", language)} ${e?.message || e}`);
     }
   };
   const executeQuery = async (queryText, historySlice, imagesPayload) => {
@@ -26603,7 +27400,6 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
         chatHistory: historySlice,
         images: currentImages,
         executionMode,
-        safetyMode,
         onStepUpdate: (steps) => {
           setActiveSteps(steps);
         },
@@ -26632,7 +27428,7 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
       }
     } catch (e) {
       console.error("[NEI Agent Error]", e);
-      const errMessages = [...updatedMessages, { role: "assistant", content: `\u274C \u041E\u0448\u0438\u0431\u043A\u0430 \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u0438\u044F \u0430\u0433\u0435\u043D\u0442\u0430: ${e?.message || e}` }];
+      const errMessages = [...updatedMessages, { role: "assistant", content: `${t("agentError", language)} ${e?.message || e}` }];
       const errSession = {
         ...updatedSession,
         messages: errMessages
@@ -26691,7 +27487,7 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
           if (event.target?.result) {
             setInput((prev) => prev + `
 
-=== \u0424\u0410\u0419\u041B: ${file.name} ===
+=== FILE: ${file.name} ===
 ` + String(event.target?.result));
           }
         };
@@ -26706,11 +27502,11 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
           "button",
           {
             onClick: () => setShowSessionsDrawer(!showSessionsDrawer),
-            title: "\u0418\u0441\u0442\u043E\u0440\u0438\u044F \u0434\u0438\u0430\u043B\u043E\u0433\u043E\u0432",
+            title: t("historyTooltip", language),
             style: { background: "var(--background-secondary)", border: "1px solid var(--background-modifier-border)", borderRadius: "4px", cursor: "pointer", padding: "4px 8px", fontSize: "12px", display: "flex", alignItems: "center", gap: "4px" },
             children: [
               /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "\u{1F4AC}" }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { style: { maxWidth: "90px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: "500" }, children: currentSession.title })
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { style: { maxWidth: "90px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: "500" }, children: formatSessionTitle(currentSession.title) })
             ]
           }
         ),
@@ -26718,18 +27514,18 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
           "button",
           {
             onClick: handleNewChat,
-            title: "\u041D\u043E\u0432\u044B\u0439 \u0447\u0430\u0442",
+            title: t("newChatTooltip", language),
             style: { background: "var(--interactive-accent)", color: "var(--text-on-accent)", border: "none", borderRadius: "4px", cursor: "pointer", padding: "4px 8px", fontSize: "11px", fontWeight: "bold" },
-            children: "+ \u041D\u043E\u0432\u044B\u0439"
+            children: t("newChat", language)
           }
         ),
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
           "button",
           {
             onClick: handleToggleTabMode,
-            title: isMainTab ? "\u041F\u0435\u0440\u0435\u043C\u0435\u0441\u0442\u0438\u0442\u044C \u0447\u0430\u0442 \u0432 \u0431\u043E\u043A\u043E\u0432\u0443\u044E \u043F\u0430\u043D\u0435\u043B\u044C" : "\u041F\u0435\u0440\u0435\u043C\u0435\u0441\u0442\u0438\u0442\u044C \u0447\u0430\u0442 \u043D\u0430 \u0433\u043B\u0430\u0432\u043D\u0443\u044E \u0432\u043A\u043B\u0430\u0434\u043A\u0443",
+            title: isMainTab ? t("moveSidebarTitle", language) : t("moveTabTitle", language),
             style: { background: "var(--background-secondary)", border: "1px solid var(--background-modifier-border)", borderRadius: "4px", cursor: "pointer", padding: "4px 6px", fontSize: "11px" },
-            children: isMainTab ? "\u2199\uFE0F \u0412 \u043F\u0430\u043D\u0435\u043B\u044C" : "\u{1F5D4} \u0412\u043A\u043B\u0430\u0434\u043A\u0430"
+            children: isMainTab ? t("moveSidebar", language) : t("moveTab", language)
           }
         )
       ] }),
@@ -26743,29 +27539,12 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
               setExecutionMode(val);
               saveSettings({ ...settings, executionMode: val });
             },
-            title: "\u0420\u0435\u0436\u0438\u043C \u0418\u0418: Auto (\u0430\u0432\u0442\u043E-\u0432\u044B\u0431\u043E\u0440), Quick (\u0431\u0435\u0437 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u043E\u0432), Agent (\u043C\u043D\u043E\u0433\u043E\u0448\u0430\u0433\u043E\u0432\u044B\u0439)",
-            style: { background: "var(--background-secondary)", border: "1px solid var(--background-modifier-border)", borderRadius: "4px", fontSize: "11px", padding: "3px 4px", color: "var(--text-normal)" },
+            title: t("modeAutoTitle", language),
+            className: "nei-select-mode",
             children: [
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { value: "auto", children: "\u26A1 Auto" }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { value: "quick", children: "\u{1F680} Quick" }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { value: "agent", children: "\u{1F9E0} Agent" })
-            ]
-          }
-        ),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
-          "select",
-          {
-            value: safetyMode,
-            onChange: (e) => {
-              const val = e.target.value;
-              setSafetyMode(val);
-              saveSettings({ ...settings, safetyMode: val });
-            },
-            title: "\u0420\u0435\u0436\u0438\u043C \u0431\u0435\u0437\u043E\u043F\u0430\u0441\u043D\u043E\u0441\u0442\u0438: Safe (\u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043D\u0438\u0435 \u043E\u043F\u0435\u0440\u0430\u0446\u0438\u0439), Turbo (\u0430\u0432\u0442\u043E\u043D\u043E\u043C\u043D\u044B\u0439)",
-            style: { background: "var(--background-secondary)", border: "1px solid var(--background-modifier-border)", borderRadius: "4px", fontSize: "11px", padding: "3px 4px", color: "var(--text-normal)" },
-            children: [
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { value: "safe", children: "\u{1F6E1}\uFE0F Safe" }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { value: "turbo", children: "\u{1F525} Turbo" })
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { value: "auto", children: t("modeAuto", language) }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { value: "quick", children: t("modeQuick", language) }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { value: "agent", children: t("modeAgent", language) })
             ]
           }
         ),
@@ -26774,7 +27553,7 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
           {
             onClick: () => setShowConfig(!showConfig),
             style: { background: "transparent", border: "none", cursor: "pointer", fontSize: "12px", color: "var(--text-muted)" },
-            title: "\u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438 \u043C\u043E\u0434\u0435\u043B\u0435\u0439 \u0438 API",
+            title: t("settingsTooltip", language),
             children: "\u2699\uFE0F"
           }
         )
@@ -26782,18 +27561,18 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
     ] }),
     showSessionsDrawer && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { position: "absolute", top: "45px", left: "10px", right: "10px", zIndex: 10, background: "var(--background-primary)", border: "1px solid var(--background-modifier-border)", borderRadius: "8px", boxShadow: "0 4px 12px rgba(0,0,0,0.15)", maxHeight: "280px", overflowY: "auto", padding: "8px" }, children: [
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px", paddingBottom: "4px", borderBottom: "1px solid var(--background-modifier-border)" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { style: { fontWeight: "bold", fontSize: "12px", color: "var(--text-muted)" }, children: "\u0418\u0441\u0442\u043E\u0440\u0438\u044F \u0434\u0438\u0430\u043B\u043E\u0433\u043E\u0432" }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { style: { fontWeight: "bold", fontSize: "12px", color: "var(--text-muted)" }, children: t("historyTitle", language) }),
         sessionsList.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
           "button",
           {
             onClick: handleClearAllSessions,
-            title: "\u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u0432\u0441\u044E \u0438\u0441\u0442\u043E\u0440\u0438\u044E \u0434\u0438\u0430\u043B\u043E\u0433\u043E\u0432",
+            title: t("clearChats", language),
             style: { background: "transparent", border: "none", color: "var(--text-error, #ff5555)", cursor: "pointer", fontSize: "11px", fontWeight: "500" },
-            children: "\u{1F5D1}\uFE0F \u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u0432\u0441\u0435"
+            children: t("clearAll", language)
           }
         )
       ] }),
-      sessionsList.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { fontSize: "12px", color: "var(--text-muted)", padding: "6px" }, children: "\u041D\u0435\u0442 \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u043D\u044B\u0445 \u0447\u0430\u0442\u043E\u0432" }) : sessionsList.map((s) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
+      sessionsList.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { fontSize: "12px", color: "var(--text-muted)", padding: "6px" }, children: t("noSavedChats", language) }) : sessionsList.map((s) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
         "div",
         {
           onClick: () => handleSelectSession(s.id),
@@ -26809,12 +27588,12 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
             marginBottom: "2px"
           },
           children: [
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { style: { textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", maxWidth: "80%" }, children: s.title }),
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { style: { textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", maxWidth: "80%" }, children: formatSessionTitle(s.title) }),
             /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
               "button",
               {
                 onClick: (e) => handleDeleteSession(e, s.id),
-                title: "\u0423\u0434\u0430\u043B\u0438\u0442\u044C \u0447\u0430\u0442",
+                title: t("deleteChatTooltip", language),
                 style: { background: "transparent", border: "none", cursor: "pointer", fontSize: "12px", opacity: 0.6 },
                 children: "\u{1F5D1}\uFE0F"
               }
@@ -26840,7 +27619,9 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
       ] }),
       keyInfo && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { background: "var(--background-primary)", padding: "6px 10px", borderRadius: "6px", fontSize: "11px", display: "flex", justifyContent: "space-between", alignItems: "center" }, children: [
         /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [
-          "\u{1F4B0} \u0418\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u043D\u043E \u043D\u0430 \u043A\u043B\u044E\u0447\u0435: ",
+          "\u{1F4B0} ",
+          t("keyUsage", language),
+          " ",
           /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("strong", { children: [
             "$",
             keyInfo.usage.toFixed(4)
@@ -26849,9 +27630,9 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: keyInfo.isFreeTier ? "\u{1F7E2} Free Tier" : "\u{1F4B3} Paid Tier" })
       ] }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { background: "var(--background-primary)", padding: "8px 10px", borderRadius: "6px", border: "1px solid var(--background-modifier-border)", display: "flex", flexDirection: "column", gap: "6px" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { fontWeight: "bold", fontSize: "11px" }, children: "\u041A\u0430\u0442\u0435\u0433\u043E\u0440\u0438\u0438 \u043C\u043E\u0434\u0435\u043B\u0435\u0439 (\u041C\u0443\u043B\u044C\u0442\u0438\u043C\u043E\u0434\u0430\u043B\u044C\u043D\u043E\u0441\u0442\u044C):" }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { fontWeight: "bold", fontSize: "11px" }, children: t("modelCategories", language) }),
         /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: "1. \u0422\u0435\u043A\u0441\u0442 \u0438 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u044B (Primary):" }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("primaryModel", language) }),
           /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
             "select",
             {
@@ -26863,7 +27644,7 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
           )
         ] }),
         /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: "2. \u0424\u0430\u0439\u043B\u044B \u0438 \u0444\u043E\u0442\u043E (Vision):" }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("visionModel", language) }),
           /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
             "select",
             {
@@ -26878,7 +27659,7 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
           )
         ] }),
         /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: "3. \u0411\u044B\u0441\u0442\u0440\u044B\u0439 \u0440\u0435\u0436\u0438\u043C (Quick Mode Router):" }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("quickModel", language) }),
           /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
             "select",
             {
@@ -26891,12 +27672,46 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
               children: customModels.map((m) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { value: m, children: m }, m))
             }
           )
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)", fontWeight: "bold", marginTop: "4px" }, children: [
+            "\u{1F310} ",
+            t("languageLabel", language)
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
+            "select",
+            {
+              value: language,
+              onChange: (e) => {
+                const langVal = e.target.value;
+                setLanguage(langVal);
+                saveSettings({ ...settings, language: langVal });
+              },
+              style: { width: "100%", padding: "4px", borderRadius: "4px", fontSize: "11px", background: "var(--background-secondary)", color: "var(--text-normal)", border: "1px solid var(--background-modifier-border)" },
+              children: [
+                /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("option", { value: "auto", children: [
+                  "\u{1F310} ",
+                  t("autoDetect", language)
+                ] }),
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { value: "ru", children: "\u{1F310} RU \u2014 \u0420\u0443\u0441\u0441\u043A\u0438\u0439" }),
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { value: "en", children: "\u{1F310} EN \u2014 English" }),
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { value: "es", children: "\u{1F310} ES \u2014 Espa\xF1ol" }),
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { value: "de", children: "\u{1F310} DE \u2014 Deutsch" }),
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { value: "fr", children: "\u{1F310} FR \u2014 Fran\xE7ais" }),
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { value: "zh", children: "\u{1F310} ZH \u2014 \u4E2D\u6587" }),
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { value: "ja", children: "\u{1F310} JA \u2014 \u65E5\u672C\u8A9E" }),
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { value: "pt", children: "\u{1F310} PT \u2014 Portugu\xEAs" }),
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { value: "ko", children: "\u{1F310} KO \u2014 \uD55C\uAD6D\uC5B4" })
+              ]
+            }
+          )
         ] })
       ] }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { background: "var(--background-primary)", padding: "8px 10px", borderRadius: "6px", border: "1px solid var(--background-modifier-border)" }, children: [
         /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }, children: [
           /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("strong", { style: { fontSize: "11px" }, children: [
-            "\u041F\u0430\u0440\u0430\u043C\u0435\u0442\u0440\u044B: ",
+            t("parameters", language),
+            ": ",
             model
           ] }),
           /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
@@ -26904,24 +27719,26 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
             {
               onClick: () => verifyActiveModel(model, apiKey),
               style: { background: "transparent", border: "none", cursor: "pointer", fontSize: "11px", color: "var(--interactive-accent)" },
-              children: "\u{1F504} \u041F\u0440\u043E\u0432\u0435\u0440\u0438\u0442\u044C API"
+              children: t("checkApi", language)
             }
           )
         ] }),
-        verifyingModel ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { color: "var(--text-muted)", fontSize: "11px" }, children: "\u0417\u0430\u043F\u0440\u043E\u0441 \u0432\u043E\u0437\u043C\u043E\u0436\u043D\u043E\u0441\u0442\u0435\u0439 \u0447\u0435\u0440\u0435\u0437 OpenRouter API..." }) : activeModelDetails ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { fontSize: "11px", display: "flex", flexDirection: "column", gap: "2px" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { color: activeModelDetails.supportsTools ? "var(--text-success)" : "var(--text-warning)", fontWeight: "bold" }, children: activeModelDetails.supportsTools ? "\u{1F7E2} \u041D\u0430\u0442\u0438\u0432\u043D\u044B\u0439 Tool Calling \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u0438\u0432\u0430\u0435\u0442\u0441\u044F" : "\u{1F7E1} \u0422\u0435\u043A\u0441\u0442\u043E\u0432\u044B\u0439 \u0440\u0435\u0436\u0438\u043C \u0432\u044B\u0437\u043E\u0432\u0430 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u043E\u0432" }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { color: activeModelDetails.supportsVision ? "var(--text-success)" : "var(--text-muted)" }, children: activeModelDetails.supportsVision ? "\u{1F5BC}\uFE0F \u0410\u043D\u0430\u043B\u0438\u0437 \u0444\u043E\u0442\u043E/\u0438\u0437\u043E\u0431\u0440\u0430\u0436\u0435\u043D\u0438\u0439 \u0434\u043E\u0441\u0442\u0443\u043F\u0435\u043D" : "\u{1F4DD} \u0422\u043E\u043B\u044C\u043A\u043E \u0442\u0435\u043A\u0441\u0442\u043E\u0432\u044B\u0439 \u0432\u0432\u043E\u0434" }),
+        verifyingModel ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { color: "var(--text-muted)", fontSize: "11px" }, children: t("requestingCapabilities", language) }) : activeModelDetails ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { fontSize: "11px", display: "flex", flexDirection: "column", gap: "2px" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { color: activeModelDetails.supportsTools ? "var(--text-success)" : "var(--text-warning)", fontWeight: "bold" }, children: activeModelDetails.supportsTools ? t("nativeToolCalling", language) : t("textToolCalling", language) }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { color: activeModelDetails.supportsVision ? "var(--text-success)" : "var(--text-muted)" }, children: activeModelDetails.supportsVision ? t("visionSupported", language) : t("textOnlyInput", language) }),
           activeModelDetails.contextLength && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
-            "\u041A\u043E\u043D\u0442\u0435\u043A\u0441\u0442\u043D\u043E\u0435 \u043E\u043A\u043D\u043E: ",
+            t("contextWindow", language),
+            " ",
             /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("strong", { children: [
               activeModelDetails.contextLength.toLocaleString(),
-              " \u0442\u043E\u043A\u0435\u043D\u043E\u0432"
+              " ",
+              t("tokens", language)
             ] })
           ] })
-        ] }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { color: "var(--text-muted)", fontSize: "11px" }, children: '\u041D\u0430\u0436\u043C\u0438\u0442\u0435 "\u041F\u0440\u043E\u0432\u0435\u0440\u0438\u0442\u044C API" \u0434\u043B\u044F \u043F\u043E\u043B\u0443\u0447\u0435\u043D\u0438\u044F \u043F\u0430\u0440\u0430\u043C\u0435\u0442\u0440\u043E\u0432 \u0441 OpenRouter' })
+        ] }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { color: "var(--text-muted)", fontSize: "11px" }, children: t("pressCheckApi", language) })
       ] }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", { style: { display: "block", marginBottom: "4px", fontWeight: "500" }, children: "\u0412\u0430\u0448\u0438 \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u043D\u044B\u0435 \u043C\u043E\u0434\u0435\u043B\u0438:" }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", { style: { display: "block", marginBottom: "4px", fontWeight: "500" }, children: t("yourSavedModels", language) }),
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { display: "flex", flexDirection: "column", gap: "4px", maxHeight: "100px", overflowY: "auto", marginBottom: "6px" }, children: customModels.map((m) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
           "div",
           {
@@ -26943,7 +27760,7 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
                 "button",
                 {
                   onClick: (e) => handleDeleteModel(e, m),
-                  title: "\u0423\u0434\u0430\u043B\u0438\u0442\u044C \u0438\u0437 \u0441\u043F\u0438\u0441\u043A\u0430",
+                  title: t("deleteFromList", language),
                   style: { background: "transparent", border: "none", color: m === model ? "var(--text-on-accent)" : "var(--text-muted)", cursor: "pointer" },
                   children: "\u{1F5D1}\uFE0F"
                 }
@@ -26959,7 +27776,7 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
               type: "text",
               value: newModelInput,
               onChange: (e) => setNewModelInput(e.target.value),
-              placeholder: "\u041D\u0430\u043F\u0440\u0438\u043C\u0435\u0440: anthropic/claude-3.5-sonnet",
+              placeholder: t("addModelPlaceholder", language),
               style: { flex: 1, padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-primary)", color: "var(--text-normal)" }
             }
           ),
@@ -26968,7 +27785,7 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
             {
               onClick: handleAddModel,
               style: { padding: "4px 8px", fontSize: "11px", background: "var(--interactive-accent)", color: "var(--text-on-accent)", border: "none", borderRadius: "4px", cursor: "pointer", fontWeight: "bold" },
-              children: "+ \u0414\u043E\u0431\u0430\u0432\u0438\u0442\u044C"
+              children: t("addBtn", language)
             }
           )
         ] })
@@ -26978,29 +27795,35 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
         {
           onClick: handleSaveConfig,
           style: { marginTop: "4px", padding: "6px 12px", background: "var(--interactive-accent)", color: "var(--text-on-accent)", border: "none", borderRadius: "4px", cursor: "pointer", fontWeight: "bold" },
-          children: "\u0421\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C \u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438"
+          children: t("saveSettings", language)
         }
       )
     ] }),
     /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: "12px", marginBottom: "10px" }, children: [
-      currentSession.messages.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { textAlign: "center", color: "var(--text-muted)", marginTop: "30px", fontSize: "13px" }, children: [
-        "\u{1F44B} **NEI Super-Agent** \u0433\u043E\u0442\u043E\u0432 \u043A \u0440\u0430\u0431\u043E\u0442\u0435!",
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("br", {}),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("br", {}),
-        "\u2022 \u041F\u0440\u044F\u043C\u043E\u0439 \u0434\u043E\u0441\u0442\u0443\u043F \u043A \u0437\u0430\u043C\u0435\u0442\u043E\u0447\u043A\u0430\u043C \u0438 \u043F\u0430\u043F\u043A\u0430\u043C (`tasks`, `Projects`)",
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("br", {}),
-        "\u2022 \u0420\u0435\u0436\u0438\u043C\u044B **Quick Mode** \u0438 **Agent Mode** \u0441 \u0430\u0432\u0442\u043E-\u0440\u043E\u0443\u0442\u0438\u043D\u0433\u043E\u043C",
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("br", {}),
-        "\u2022 \u0410\u043D\u0430\u043B\u0438\u0437 \u0438\u0437\u043E\u0431\u0440\u0430\u0436\u0435\u043D\u0438\u0439 \u0438 \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0430 Safe/Turbo \u0431\u0435\u0437\u043E\u043F\u0430\u0441\u043D\u043E\u0441\u0442\u0438",
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("br", {}),
-        "\u2022 \u041E\u0442\u0441\u043B\u0435\u0436\u0438\u0432\u0430\u043D\u0438\u0435 \u0442\u043E\u043A\u0435\u043D\u043E\u0432 (\u0412\u0445\u043E\u0434/\u0412\u044B\u0445\u043E\u0434) \u0434\u043B\u044F \u0432\u0441\u0435\u0445 \u043E\u0442\u0432\u0435\u0442\u043E\u0432"
+      currentSession.messages.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { textAlign: "center", color: "var(--text-muted)", marginTop: "24px", padding: "0 12px", fontSize: "13px" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { fontSize: "15px", fontWeight: "bold", marginBottom: "8px", color: "var(--text-normal)" }, children: t("welcomeGreeting", language) }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { fontSize: "12px", marginBottom: "16px", opacity: 0.85 }, children: t("welcomeSubText", language) }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { textAlign: "left", display: "inline-block", fontSize: "12px", lineHeight: "1.8", background: "var(--background-secondary)", padding: "12px 16px", borderRadius: "10px", border: "1px solid var(--background-modifier-border)", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }, children: [
+          "\u2022 ",
+          t("featureNotes", language),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("br", {}),
+          "\u2022 ",
+          t("featureRouting", language),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("br", {}),
+          "\u2022 ",
+          t("featureVision", language),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("br", {}),
+          "\u2022 ",
+          t("featureTokens", language)
+        ] })
       ] }),
       currentSession.messages.map((msg, idx) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
         "div",
         {
+          className: "nei-chat-bubble",
           style: {
             alignSelf: msg.role === "user" ? "flex-end" : "flex-start",
-            maxWidth: "88%",
+            maxWidth: "92%",
             padding: "10px 14px",
             borderRadius: "12px",
             background: msg.role === "user" ? "var(--interactive-accent)" : "var(--background-secondary)",
@@ -27027,7 +27850,7 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
                   {
                     onClick: () => setEditingMsgIdx(null),
                     style: { padding: "2px 8px", fontSize: "11px", background: "transparent", border: "1px solid var(--text-on-accent)", color: "var(--text-on-accent)", borderRadius: "4px", cursor: "pointer" },
-                    children: "\u041E\u0442\u043C\u0435\u043D\u0430"
+                    children: t("cancel", language)
                   }
                 ),
                 /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
@@ -27036,7 +27859,7 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
                     onClick: () => handleSaveEdit(idx),
                     disabled: loading,
                     style: { padding: "2px 8px", fontSize: "11px", background: "var(--background-primary)", color: "var(--text-normal)", border: "none", borderRadius: "4px", cursor: "pointer", fontWeight: "bold" },
-                    children: "\u{1F4BE} \u041E\u0442\u043F\u0440\u0430\u0432\u0438\u0442\u044C"
+                    children: t("saveSend", language)
                   }
                 )
               ] })
@@ -27046,68 +27869,72 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
             /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
               msg.images && msg.images.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { display: "flex", gap: "4px", marginBottom: "6px", flexWrap: "wrap" }, children: msg.images.map((img, i) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", { src: img, style: { width: "60px", height: "60px", borderRadius: "4px", objectFit: "cover" } }, i)) }),
               /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { whiteSpace: "pre-wrap" }, children: msg.content }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", gap: "8px", marginTop: "6px", justifyContent: "flex-end", fontSize: "11px", opacity: 0.85 }, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", gap: "6px", marginTop: "6px", justifyContent: "flex-end", fontSize: "11px", flexWrap: "wrap", maxWidth: "100%", opacity: 0.9 }, children: [
                 /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
                   "button",
                   {
                     onClick: () => handleCopyText(msg.content || ""),
-                    title: "\u0421\u043A\u043E\u043F\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u0442\u0435\u043A\u0441\u0442",
-                    style: { background: "transparent", border: "none", color: "inherit", cursor: "pointer", padding: 0 },
-                    children: "\u{1F4CB} \u041A\u043E\u043F\u0438\u0440\u043E\u0432\u0430\u0442\u044C"
+                    title: t("copyText", language),
+                    style: { background: "transparent", border: "none", color: "inherit", cursor: "pointer", padding: "2px 4px", borderRadius: "4px", fontSize: "11px", whiteSpace: "nowrap" },
+                    children: t("copyText", language)
                   }
                 ),
                 /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
                   "button",
                   {
                     onClick: () => handleStartEdit(idx, msg.content || ""),
-                    title: "\u0420\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u0437\u0430\u043F\u0440\u043E\u0441",
-                    style: { background: "transparent", border: "none", color: "inherit", cursor: "pointer", padding: 0 },
-                    children: "\u270F\uFE0F \u0418\u0437\u043C\u0435\u043D\u0438\u0442\u044C"
+                    title: t("editText", language),
+                    style: { background: "transparent", border: "none", color: "inherit", cursor: "pointer", padding: "2px 4px", borderRadius: "4px", fontSize: "11px", whiteSpace: "nowrap" },
+                    children: t("editText", language)
                   }
                 ),
                 /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
                   "button",
                   {
                     onClick: () => handleRetryUserMessage(idx),
-                    title: "\u041F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u044C \u043E\u0442\u043F\u0440\u0430\u0432\u043A\u0443",
+                    title: t("retry", language),
                     disabled: loading,
-                    style: { background: "transparent", border: "none", color: "inherit", cursor: "pointer", padding: 0 },
-                    children: "\u{1F504} \u041F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u044C"
+                    style: { background: "transparent", border: "none", color: "inherit", cursor: "pointer", padding: "2px 4px", borderRadius: "4px", fontSize: "11px", whiteSpace: "nowrap" },
+                    children: t("retry", language)
                   }
                 )
               ] })
             ] })
           ) : (
             /* Assistant Message Display */
-            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
+            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { minWidth: 0 }, children: [
               /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ObsidianMarkdown, { markdown: msg.content || "", app }),
-              (msg.promptTokens !== void 0 || msg.completionTokens !== void 0) && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", gap: "6px", marginTop: "6px", fontSize: "10px", color: "var(--text-muted)", borderTop: "1px solid var(--background-modifier-border)", paddingTop: "4px" }, children: [
+              (msg.promptTokens !== void 0 || msg.completionTokens !== void 0) && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", gap: "6px", marginTop: "6px", fontSize: "10px", color: "var(--text-muted)", borderTop: "1px solid var(--background-modifier-border)", paddingTop: "4px", flexWrap: "wrap", maxWidth: "100%" }, children: [
                 /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { style: { background: "var(--background-primary)", padding: "2px 6px", borderRadius: "4px" }, children: [
-                  "\u{1F4E5} \u0412\u0445\u043E\u0434: ",
+                  t("inputTokens", language),
+                  " ",
                   msg.promptTokens || 0,
-                  " \u0442\u043E\u043A."
+                  " ",
+                  t("tokens", language)
                 ] }),
                 /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { style: { background: "var(--background-primary)", padding: "2px 6px", borderRadius: "4px" }, children: [
-                  "\u{1F4E4} \u0412\u044B\u0445\u043E\u0434: ",
+                  t("outputTokens", language),
+                  " ",
                   msg.completionTokens || 0,
-                  " \u0442\u043E\u043A."
+                  " ",
+                  t("tokens", language)
                 ] })
               ] }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", gap: "10px", marginTop: "8px", alignItems: "center", fontSize: "11px" }, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", gap: "6px", marginTop: "8px", alignItems: "center", flexWrap: "wrap", fontSize: "11px", maxWidth: "100%" }, children: [
                 /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
                   "button",
                   {
                     onClick: () => handleCopyText(msg.content || ""),
-                    style: { background: "var(--background-primary)", border: "1px solid var(--background-modifier-border)", borderRadius: "4px", cursor: "pointer", padding: "3px 8px", color: "var(--text-muted)" },
-                    children: "\u{1F4CB} \u0421\u043A\u043E\u043F\u0438\u0440\u043E\u0432\u0430\u0442\u044C"
+                    style: { background: "var(--background-primary)", border: "1px solid var(--background-modifier-border)", borderRadius: "4px", cursor: "pointer", padding: "3px 8px", color: "var(--text-muted)", fontSize: "11px", whiteSpace: "nowrap", maxWidth: "100%" },
+                    children: t("copyText", language)
                   }
                 ),
                 msg.content && msg.content.length > 50 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
                   "button",
                   {
                     onClick: () => handleSaveResponseAsNote(msg.content || ""),
-                    style: { background: "var(--background-primary)", border: "1px solid var(--background-modifier-border)", borderRadius: "4px", cursor: "pointer", padding: "3px 8px", color: "var(--text-muted)" },
-                    children: "\u{1F4C4} \u0421\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C \u043A\u0430\u043A \u0437\u0430\u043C\u0435\u0442\u043A\u0443"
+                    style: { background: "var(--background-primary)", border: "1px solid var(--background-modifier-border)", borderRadius: "4px", cursor: "pointer", padding: "3px 8px", color: "var(--text-muted)", fontSize: "11px", whiteSpace: "nowrap", maxWidth: "100%" },
+                    children: t("saveNote", language)
                   }
                 )
               ] })
@@ -27117,8 +27944,8 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
         idx
       )),
       pendingConfirmation && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { background: "var(--background-secondary-alt)", border: "2px solid var(--interactive-accent)", borderRadius: "8px", padding: "10px", fontSize: "12px" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { fontWeight: "bold", color: "var(--text-warning, #ffaa00)", marginBottom: "4px" }, children: "\u26A0\uFE0F \u041F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043D\u0438\u0435 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u044F (Safe Mode)" }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { children: "\u0410\u0433\u0435\u043D\u0442 \u0437\u0430\u043F\u0440\u0430\u0448\u0438\u0432\u0430\u0435\u0442 \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u0438\u0435 \u043F\u043E\u0442\u0435\u043D\u0446\u0438\u0430\u043B\u044C\u043D\u043E \u043E\u043F\u0430\u0441\u043D\u043E\u0433\u043E \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u0430:" }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { fontWeight: "bold", color: "var(--text-warning, #ffaa00)", marginBottom: "4px" }, children: t("confirmTitle", language) }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { children: t("confirmDetail", language) }),
         /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { fontFamily: "monospace", background: "var(--background-primary)", padding: "4px 6px", borderRadius: "4px", margin: "6px 0", wordBreak: "break-all" }, children: [
           pendingConfirmation.toolName,
           "(",
@@ -27131,7 +27958,7 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
             {
               onClick: () => pendingConfirmation.resolve(false),
               style: { padding: "4px 10px", fontSize: "11px", background: "var(--background-primary)", border: "1px solid var(--background-modifier-border)", borderRadius: "4px", cursor: "pointer" },
-              children: "\u274C \u041E\u0442\u043A\u043B\u043E\u043D\u0438\u0442\u044C"
+              children: t("deny", language)
             }
           ),
           /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
@@ -27139,7 +27966,7 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
             {
               onClick: () => pendingConfirmation.resolve(true),
               style: { padding: "4px 10px", fontSize: "11px", background: "var(--interactive-accent)", color: "var(--text-on-accent)", border: "none", borderRadius: "4px", cursor: "pointer", fontWeight: "bold" },
-              children: "\u2705 \u0420\u0430\u0437\u0440\u0435\u0448\u0438\u0442\u044C"
+              children: t("allow", language)
             }
           )
         ] })
@@ -27147,7 +27974,7 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
       loading && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { background: "var(--background-secondary)", padding: "10px", borderRadius: "8px", fontSize: "12px", borderLeft: "3px solid var(--interactive-accent)" }, children: [
         /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { fontWeight: "bold", marginBottom: "6px", display: "flex", alignItems: "center", gap: "6px" }, children: [
           /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "\u26A1" }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "\u0410\u0433\u0435\u043D\u0442 \u0432\u044B\u043F\u043E\u043B\u043D\u044F\u0435\u0442 \u0437\u0430\u0434\u0430\u0447\u0443..." })
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: t("agentRunning", language) })
         ] }),
         activeSteps.map((step) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { marginTop: "4px", color: step.status === "failed" ? "var(--text-error)" : "var(--text-muted)" }, children: [
           /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [
@@ -27171,12 +27998,12 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
           }
         )
       ] }, i)) }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", gap: "6px", alignItems: "center" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", gap: "6px", alignItems: "flex-end" }, children: [
         /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
           "label",
           {
-            title: "\u041F\u0440\u0438\u043A\u0440\u0435\u043F\u0438\u0442\u044C \u0444\u043E\u0442\u043E \u0438\u043B\u0438 \u0442\u0435\u043A\u0441\u0442\u043E\u0432\u044B\u0439 \u0444\u0430\u0439\u043B",
-            style: { padding: "6px 8px", background: "var(--background-secondary)", border: "1px solid var(--background-modifier-border)", borderRadius: "6px", cursor: "pointer", fontSize: "14px" },
+            title: t("attachTooltip", language),
+            style: { padding: "8px 10px", background: "var(--background-secondary)", border: "1px solid var(--background-modifier-border)", borderRadius: "6px", cursor: "pointer", fontSize: "14px", marginBottom: "2px" },
             children: [
               "\u{1F4CE}",
               /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
@@ -27196,17 +28023,34 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
           "textarea",
           {
             value: input,
-            onChange: (e) => setInput(e.target.value),
+            onChange: (e) => {
+              setInput(e.target.value);
+              e.target.style.height = "auto";
+              e.target.style.height = `${Math.min(e.target.scrollHeight, 280)}px`;
+            },
             onKeyDown: (e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
                 handleSendMessage();
               }
             },
-            placeholder: "\u0417\u0430\u0434\u0430\u0439\u0442\u0435 \u0437\u0430\u0434\u0430\u0447\u0443 \u0430\u0433\u0435\u043D\u0442\u0443... (Enter \u0434\u043B\u044F \u043E\u0442\u043F\u0440\u0430\u0432\u043A\u0438)",
+            placeholder: t("inputPlaceholder", language),
             disabled: loading,
-            rows: 2,
-            style: { flex: 1, padding: "8px", borderRadius: "6px", border: "1px solid var(--background-modifier-border)", background: "var(--background-primary)", color: "var(--text-normal)", resize: "none", fontSize: "13px" }
+            rows: 3,
+            style: {
+              flex: 1,
+              minHeight: "60px",
+              maxHeight: "280px",
+              padding: "8px 10px",
+              borderRadius: "6px",
+              border: "1px solid var(--background-modifier-border)",
+              background: "var(--background-primary)",
+              color: "var(--text-normal)",
+              resize: "vertical",
+              fontSize: "13px",
+              lineHeight: "1.4",
+              fontFamily: "inherit"
+            }
           }
         ),
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
@@ -27214,8 +28058,8 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
           {
             onClick: handleSendMessage,
             disabled: loading || !input.trim() && attachedImages.length === 0,
-            style: { padding: "0 14px", height: "44px", background: "var(--interactive-accent)", color: "var(--text-on-accent)", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px" },
-            children: loading ? "..." : "\u041E\u0442\u043F\u0440\u0430\u0432\u0438\u0442\u044C"
+            style: { padding: "0 14px", height: "60px", background: "var(--interactive-accent)", color: "var(--text-on-accent)", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px", marginBottom: "2px" },
+            children: loading ? "..." : "\u27A4"
           }
         )
       ] })
@@ -27235,7 +28079,7 @@ var NeiChatView = class extends import_obsidian10.ItemView {
     return VIEW_TYPE_NEI_CHAT;
   }
   getDisplayText() {
-    return "NEI \u0418\u0418 \u0427\u0430\u0442";
+    return "NEI AI Chat";
   }
   getIcon() {
     return "bot";
@@ -27280,6 +28124,9 @@ var DEFAULT_SETTINGS = {
   endpointUrl: "https://openrouter.ai/api/v1",
   apiKey: "",
   model: "google/gemini-2.5-flash",
+  visionModel: "google/gemini-2.5-flash",
+  quickModel: "google/gemini-2.5-flash",
+  executionMode: "auto",
   customModels: [
     "google/gemini-2.5-flash",
     "anthropic/claude-3.5-sonnet",
@@ -27287,7 +28134,8 @@ var DEFAULT_SETTINGS = {
     "openai/gpt-4o",
     "deepseek/deepseek-chat"
   ],
-  useRag: true
+  useRag: true,
+  language: "auto"
 };
 var NeiAiChatPlugin = class extends import_obsidian11.Plugin {
   constructor() {
@@ -27295,18 +28143,16 @@ var NeiAiChatPlugin = class extends import_obsidian11.Plugin {
     this.settings = DEFAULT_SETTINGS;
   }
   async onload() {
-    console.log("\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 NEI AI Chat (Assistant) \u043F\u043B\u0430\u0433\u0438\u043D\u0430...");
     await this.loadSettings();
     this.registerView(
       VIEW_TYPE_NEI_CHAT,
       (leaf) => new NeiChatView(leaf, this)
     );
-    this.addRibbonIcon("bot", "NEI \u0418\u0418 \u0427\u0430\u0442", () => {
+    this.addRibbonIcon("bot", "NEI AI Chat", () => {
       this.activateView();
     });
   }
   async onunload() {
-    this.app.workspace.detachLeavesOfType(VIEW_TYPE_NEI_CHAT);
   }
   async activateView() {
     const { workspace } = this.app;

@@ -20,7 +20,7 @@ export class NeiChatView extends ItemView {
     }
 
     getDisplayText(): string {
-        return "NEI ИИ Чат";
+        return "NEI AI Chat";
     }
 
     getIcon(): string {

@@ -52,23 +52,6 @@ export const systemToolDefinitions: ToolDefinition[] = [
                 required: ["repoUrl"]
             }
         }
-    },
-    {
-        type: "function",
-        function: {
-            name: "execute_terminal_command",
-            description: "Выполнить консольную терминальную команду в операционной системе (PowerShell / Command Prompt / Bash).",
-            parameters: {
-                type: "object",
-                properties: {
-                    command: {
-                        type: "string",
-                        description: "Терминальная команда для выполнения"
-                    }
-                },
-                required: ["command"]
-            }
-        }
     }
 ];
 
@@ -211,26 +194,5 @@ ${cleanReadme}`;
         } catch (e: any) {
             return `Ошибка получения информации о GitHub репозитории: ${e?.message || e}`;
         }
-    },
-
-    execute_terminal_command: async (app: App, args: { command: string }) => {
-        return new Promise((resolve) => {
-            try {
-                const childProcess = require("child_process");
-                const basePath = (app.vault.adapter as any).getBasePath ? (app.vault.adapter as any).getBasePath() : process.cwd();
-
-                childProcess.exec(args.command, { cwd: basePath, timeout: 30000 }, (error: any, stdout: string, stderr: string) => {
-                    if (error) {
-                        resolve(`Ошибка выполнения команды (${error.code || "ERR"}):\n${stderr || error.message}`);
-                    } else {
-                        const output = stdout.trim() || stderr.trim() || "Команда выполнена (без вывода).";
-                        const truncated = output.length > 2000 ? output.substring(0, 2000) + "... [вывод сжат]" : output;
-                        resolve(`--- Вывод команды: ${args.command} ---\n${truncated}`);
-                    }
-                });
-            } catch (e: any) {
-                resolve(`Терминальное выполнение не поддерживается: ${e?.message || e}`);
-            }
-        });
     }
 };

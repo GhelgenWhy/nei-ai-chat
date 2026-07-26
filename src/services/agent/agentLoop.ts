@@ -16,8 +16,6 @@ export interface AgentStep {
     status: "running" | "completed" | "failed";
 }
 
-export type SafetyMode = "safe" | "turbo";
-
 export interface AgentLoopOptions {
     app: App;
     config: LlmConfig;
@@ -25,7 +23,6 @@ export interface AgentLoopOptions {
     chatHistory: ChatMessage[];
     images?: string[];
     executionMode?: ExecutionMode;
-    safetyMode?: SafetyMode;
     onStepUpdate?: (steps: AgentStep[]) => void;
     onConfirmationRequired?: (toolName: string, argsStr: string) => Promise<boolean>;
     maxIterations?: number;
@@ -47,7 +44,6 @@ export class AgentLoop {
             chatHistory, 
             images,
             executionMode = "auto", 
-            safetyMode = "safe",
             onStepUpdate, 
             onConfirmationRequired,
             maxIterations = 6 
@@ -143,14 +139,15 @@ export class AgentLoop {
 
         // 4. Build System Prompt & Prune History (ContextManager)
         let systemPrompt = `Ты — сверхагентный ИИ-помощник NEI в Obsidian.
-Твоя цель: давать исчерпывающие, глубокие и структурированные ответы.
+Твоя цель: помогать пользователю работать с хранилищем заметок Vault и отвечать на его вопросы.
 
-ИНСТРУКЦИИ И ЭКОНОМИЯ ТОКЕНОВ:
-- Если данные предзагружены ниже, используй их и давай итоговый ответ.
-- При вызове инструментов сжимай ответы и будь лаконичен.
+ОБЯЗАТЕЛЬНЫЕ ПРАВИЛА ИСПОЛЬЗОВАНИЯ ИНСТРУМЕНТОВ:
+1. Если пользователь просит "создай заметку", "создай папку", "создай файл" или "сохрани": ТЫ ОБЯЗАН ВЫЗВАТЬ ИНСТРУМЕНТ \`create_note(path, content)\`. Не ограничивайся обычным текстовым ответом в чат!
+2. Для чтения заметок используй \`read_note\` или \`get_folder_notes\`.
+3. При необходимости создать структуру папок (например \`Projects/Subfolder/Note.md\`), инструмент \`create_note\` сам создаст все нужные папки автоматически.
 
 ФОРМАТИРОВАНИЕ ОТВЕТА:
-- Чистый GitHub Flavored Markdown с таблицами, списками, цитатами и рекомендациями по улучшению проекта.
+- Чистый GitHub Flavored Markdown с таблицами, списками, цитатами и понятной структурой.
 `;
 
         if (agentsRules.trim()) {
@@ -206,11 +203,12 @@ export class AgentLoop {
         const tools = defaultToolRegistry.getToolDefinitions();
         let iteration = 0;
         let finalResponseText = "";
+        let toolCalledCount = 0;
         const executedCallsMap: Record<string, number> = {};
 
         while (iteration < maxIterations) {
             iteration++;
-            console.log(`[AgentLoop] Итерация ${iteration}/${maxIterations}`);
+            // Iteration ${iteration}/${maxIterations}
 
             const isLastIteration = (iteration === maxIterations);
             const activeTools = isLastIteration ? undefined : tools;
@@ -234,6 +232,7 @@ export class AgentLoop {
 
             // A) Native Tool Calls
             if (response.tool_calls && response.tool_calls.length > 0 && !isLastIteration) {
+                toolCalledCount += response.tool_calls.length;
                 messages.push({
                     role: "assistant",
                     content: response.content || "Выполнение вызова инструментов...",
@@ -258,16 +257,6 @@ export class AgentLoop {
 
                     let trimmedResult = "";
                     let isError = false;
-
-                    // Safety Mode Check for Destructive Operations
-                    const isDestructive = toolName === "delete_note" || (toolName === "create_note" && toolArgsStr.includes("overwrite"));
-                    if (safetyMode === "safe" && isDestructive && onConfirmationRequired) {
-                        const approved = await onConfirmationRequired(toolName, toolArgsStr);
-                        if (!approved) {
-                            trimmedResult = `[ОТМЕНЕНО ПОЛЬЗОВАТЕЛЕМ]: Выполнение действия ${toolName} отменено пользователем в режиме Safe Mode.`;
-                            isError = true;
-                        }
-                    }
 
                     if (!trimmedResult) {
                         if (executedCallsMap[callKey] > 2) {
@@ -305,6 +294,7 @@ export class AgentLoop {
             else if (response.content && this.containsJsonToolCall(response.content) && !isLastIteration) {
                 const parsedTool = this.extractJsonToolCall(response.content);
                 if (parsedTool) {
+                    toolCalledCount++;
                     const callId = "text_call_" + Date.now();
                     const callKey = `${parsedTool.name}:${JSON.stringify(parsedTool.args)}`;
                     executedCallsMap[callKey] = (executedCallsMap[callKey] || 0) + 1;
@@ -314,54 +304,43 @@ export class AgentLoop {
                         content: response.content
                     });
 
+                    const stepId = `tool-${callId}`;
                     steps.push({
-                        id: `tool-${callId}`,
+                        id: stepId,
                         type: "tool_call",
-                        title: `Инструмент: ${parsedTool.name}`,
+                        title: `Инструмент (Текст): ${parsedTool.name}`,
                         detail: `Аргументы: ${JSON.stringify(parsedTool.args)}`,
                         status: "running"
                     });
                     notifySteps();
 
-                    let trimmedResult = "";
-                    let isError = false;
+                    const execResult = await defaultToolRegistry.executeTool(
+                        app,
+                        callId,
+                        parsedTool.name,
+                        JSON.stringify(parsedTool.args)
+                    );
+                    const rawRes = typeof execResult.result === "string" ? execResult.result : JSON.stringify(execResult.result);
+                    const trimmedResult = ContextManager.compactText(rawRes, 12000);
 
-                    if (executedCallsMap[callKey] > 2) {
-                        trimmedResult = `[ВНИМАНИЕ СИСТЕМЫ NEI]: Инструмент ${parsedTool.name} уже вызывался с аналогичными параметрами. Сформируйте развернутый финальный ответ.`;
-                        isError = true;
-                    } else {
-                        const execResult = await defaultToolRegistry.executeTool(
-                            app,
-                            callId,
-                            parsedTool.name,
-                            JSON.stringify(parsedTool.args)
-                        );
-                        const rawRes = typeof execResult.result === "string" ? execResult.result : JSON.stringify(execResult.result);
-                        trimmedResult = ContextManager.compactText(rawRes, 12000);
-                        isError = execResult.isError || false;
-                    }
-                    const currentStep = steps.find(s => s.id === `tool-${callId}`);
+                    const currentStep = steps.find(s => s.id === stepId);
                     if (currentStep) {
-                        currentStep.status = isError ? "failed" : "completed";
+                        currentStep.status = execResult.isError ? "failed" : "completed";
                         currentStep.detail = trimmedResult.substring(0, 300);
                     }
                     notifySteps();
 
                     messages.push({
                         role: "user",
-                        content: `[Результат инструмента ${parsedTool.name}]:\n${trimmedResult}`
+                        content: `[РЕЗУЛЬТАТ ВЫЗОВА ИНСТРУМЕНТА ${parsedTool.name}]:\n${trimmedResult}`
                     });
-                    continue;
-                } else {
-                    finalResponseText = response.content;
-                    break;
                 }
-            } else {
-                // Final answer reached
-                const rawContent = (response.content || "").trim();
+            } 
+            // C) Final Assistant Response Text
+            else {
+                const rawContent = response.content || "";
 
-                if (!rawContent && iteration < maxIterations) {
-                    // Prompt model to produce the actual response text instead of finishing with empty content
+                if (!rawContent && iteration < maxIterations - 1) {
                     messages.push({
                         role: "user",
                         content: "Предоставь подробный, структурированный итоговый ответ с выводами и рекомендациями на основе полученных данных."
@@ -376,7 +355,8 @@ export class AgentLoop {
                     finalResponseText = "Агент завершил обработку вашей задачи.";
                 }
 
-                if (this.shouldAutoCreateNote(userQuery, finalResponseText)) {
+                // If user requested note creation, but model did not execute any create_note tool call, execute automatic note creation fallback
+                if (toolCalledCount === 0 && this.shouldAutoCreateNote(userQuery, finalResponseText)) {
                     await this.attemptAutoCreateNote(app, userQuery, finalResponseText, steps, notifySteps);
                 }
 
@@ -401,18 +381,23 @@ export class AgentLoop {
     }
 
     private static containsJsonToolCall(text: string): boolean {
-        return /\{\s*["']tool["']\s*:\s*["'][^"']+["']/i.test(text);
+        return /\{\s*["'](?:tool|name|function|action)["']\s*:\s*["'][^"']+["']/i.test(text) ||
+               /<tool_call>/i.test(text);
     }
 
     private static extractJsonToolCall(text: string): { name: string; args: any } | null {
         try {
-            const jsonMatch = text.match(/```(?:json)?\s*(\{\s*["']tool["'][\s\S]*?\})\s*```/i) || text.match(/(\{\s*["']tool["'][\s\S]*?\})/i);
+            const xmlMatch = text.match(/<tool_call>\s*([\s\S]*?)\s*<\/tool_call>/i);
+            const rawJson = xmlMatch ? xmlMatch[1] : text;
+
+            const jsonMatch = rawJson.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/i) || rawJson.match(/(\{[\s\S]*?\})/i);
             if (jsonMatch) {
                 const parsed = JSON.parse(jsonMatch[1]);
-                if (parsed.tool) {
+                const toolName = parsed.tool || parsed.name || parsed.function || parsed.action;
+                if (toolName) {
                     return {
-                        name: parsed.tool,
-                        args: parsed.arguments || parsed.args || {}
+                        name: toolName,
+                        args: parsed.arguments || parsed.args || parsed.action_input || {}
                     };
                 }
             }
@@ -422,20 +407,36 @@ export class AgentLoop {
 
     private static shouldAutoCreateNote(query: string, responseText: string): boolean {
         const queryLower = query.toLowerCase();
-        const isCreateRequest = queryLower.includes("создай заметку") || queryLower.includes("создать заметку") || queryLower.includes("сгруппируй все таски в заметку");
-        return isCreateRequest && (responseText.includes("# ") || responseText.includes("---"));
+        const isCreateRequest = queryLower.includes("создай") || 
+                                queryLower.includes("создать") || 
+                                queryLower.includes("напиши заметку") ||
+                                queryLower.includes("сохрани") ||
+                                queryLower.includes("create note") ||
+                                queryLower.includes("save note");
+        return isCreateRequest && responseText.length > 30;
     }
 
     private static async attemptAutoCreateNote(app: App, query: string, responseText: string, steps: AgentStep[], notifySteps: () => void): Promise<void> {
-        let notePath = "Tasks/Сводка задач.md";
-        if (query.toLowerCase().includes("проекты") || query.toLowerCase().includes("projects")) {
-            notePath = "Projects/Сводка проектов.md";
+        let notePath = "";
+
+        const folderMatch = query.match(/(?:папке|папку|folder|directory)\s+["']?([a-zA-Z0-9_\-\/А-Яа-яЁё ]+?)["']?(?:\s|$)/i);
+        const fileMatch = query.match(/(?:заметку|файл|note|file)\s+["']?([a-zA-Z0-9_\-\/А-Яа-яЁё ]+?\.md)["']?/i);
+
+        if (fileMatch && fileMatch[1]) {
+            notePath = fileMatch[1].trim();
+        } else {
+            const folder = folderMatch && folderMatch[1] ? folderMatch[1].trim() : "Notes";
+            const dateStr = new Date().toISOString().slice(0, 10);
+            const titleMatch = query.match(/(?:создай|создать|create|write)\s+(?:заметку|файл|название|note)?\s*["']?([^"'\n,]{3,30})["']?/i);
+            let slug = titleMatch && titleMatch[1] ? titleMatch[1].trim().replace(/[^\w\sА-Яа-яЁё-]/g, "") : "New_Note";
+            if (slug.length < 3) slug = "New_Note";
+            notePath = `${folder}/${slug}_${dateStr}.md`;
         }
 
         try {
             const execResult = await defaultToolRegistry.executeTool(
                 app,
-                "auto-create-1",
+                "auto-create-fallback",
                 "create_note",
                 JSON.stringify({ path: notePath, content: responseText })
             );
@@ -443,7 +444,7 @@ export class AgentLoop {
             steps.push({
                 id: "auto-create-step",
                 type: "tool_result",
-                title: `Авто-создана заметка: ${notePath}`,
+                title: `Автоматически создана заметка: ${notePath}`,
                 detail: String(execResult.result),
                 status: execResult.isError ? "failed" : "completed"
             });

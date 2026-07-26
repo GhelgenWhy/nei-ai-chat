@@ -88,7 +88,7 @@ export async function sendChatRequest(
         body.tool_choice = "auto";
     }
 
-    console.log(`[NEI Agent LLM] Вызов API: ${config.provider} (${config.model}), сообщений: ${messages.length}, инструментов: ${tools?.length || 0}`);
+
 
     const response = await fetch(url, {
         method: "POST",

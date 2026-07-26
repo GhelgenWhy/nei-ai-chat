@@ -5,7 +5,7 @@ import { AgentLoop, AgentStep } from "../services/agent/agentLoop";
 import { ChatStore, ChatSession } from "../services/chat/chatStore";
 import { OpenRouterService, OpenRouterModelInfo, OpenRouterKeyInfo } from "../services/openrouter";
 import { ExecutionMode } from "../services/agent/intentRouter";
-import { SafetyMode } from "../services/agent/agentLoop";
+import { t, SupportedLanguage } from "../i18n/translations";
 
 interface ChatPanelProps {
     app: App;
@@ -61,7 +61,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                 }
             }
         } catch (e: any) {
-            new Notice(`Ошибка переключения режима: ${e?.message || e}`);
+            new Notice(`${t("modeSwitchError", language)} ${e?.message || e}`);
         }
     };
     // Active Session State
@@ -72,7 +72,6 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
     const [input, setInput] = React.useState("");
     const [attachedImages, setAttachedImages] = React.useState<string[]>([]);
     const [executionMode, setExecutionMode] = React.useState<ExecutionMode>(settings.executionMode || "auto");
-    const [safetyMode, setSafetyMode] = React.useState<SafetyMode>(settings.safetyMode || "safe");
     const [loading, setLoading] = React.useState(false);
     const [activeSteps, setActiveSteps] = React.useState<AgentStep[]>([]);
     const [showSessionsDrawer, setShowSessionsDrawer] = React.useState(false);
@@ -126,9 +125,17 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
         }
     };
 
+    const formatSessionTitle = (tTitle: string) => {
+        if (!tTitle || tTitle === "Новый диалог" || tTitle === "Новый чат" || tTitle === "New Chat") {
+            return t("newChatSession", language);
+        }
+        return tTitle;
+    };
+
     const handleSelectModel = (selectedModel: string) => {
         setModel(selectedModel);
         verifyActiveModel(selectedModel, apiKey);
+        saveSettings({ ...settings, model: selectedModel, visionModel, quickModel, executionMode });
     };
 
     const handleAddModel = () => {
@@ -139,7 +146,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
             setCustomModels(updated);
             setModel(trimmed);
             verifyActiveModel(trimmed, apiKey);
-            new Notice(`Добавлена модель: ${trimmed}`);
+            new Notice(`${t("modelAddedNotice", language)} ${trimmed}`);
         }
         setNewModelInput("");
     };
@@ -147,7 +154,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
     const handleDeleteModel = (e: React.MouseEvent, targetModel: string) => {
         e.stopPropagation();
         if (customModels.length <= 1) {
-            new Notice("Нельзя удалить последнюю модель из списка!");
+            new Notice(t("cannotDeleteLastModel", language));
             return;
         }
         const updated = customModels.filter(m => m !== targetModel);
@@ -187,15 +194,15 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
     };
 
     const handleClearAllSessions = async () => {
-        if (confirm("Вы уверены, что хотите полностью очистить историю всех чатов?")) {
+        if (confirm(t("confirmClearChats", language))) {
             await ChatStore.clearAllSessions(app);
             await refreshSessionsList();
             handleNewChat();
-            new Notice("Вся история чатов очищена!");
+            new Notice(t("historyClearedNotice", language));
         }
     };
 
-
+    const [language, setLanguage] = React.useState<SupportedLanguage>(settings.language || "auto");
 
     const handleSaveConfig = async () => {
         const newSettings = {
@@ -204,29 +211,33 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
             endpointUrl,
             apiKey,
             model,
-            customModels
+            visionModel,
+            quickModel,
+            executionMode,
+            customModels,
+            language
         };
         await saveSettings(newSettings);
         setShowConfig(false);
-        new Notice("Настройки моделей NEI Agent сохранены!");
+        new Notice(t("saveSettings", language) + "!");
     };
 
     const handleCopyText = async (text: string) => {
         try {
             await navigator.clipboard.writeText(text);
-            new Notice("Скопировано в буфер обмена!");
+            new Notice(t("copied", language));
         } catch (e) {
-            new Notice("Не удалось скопировать текст.");
+            new Notice(t("copyError", language));
         }
     };
 
     const handleSaveResponseAsNote = async (content: string) => {
-        const notePath = `Tasks/Сводка_${Date.now()}.md`;
+        const notePath = `Tasks/Summary_${Date.now()}.md`;
         try {
             await app.vault.create(notePath, content);
-            new Notice(`Успех: Создана заметка '${notePath}'!`);
+            new Notice(`${t("noteCreatedSuccess", language)} '${notePath}'!`);
         } catch (e: any) {
-            new Notice(`Ошибка создания заметки: ${e?.message || e}`);
+            new Notice(`${t("noteCreateError", language)} ${e?.message || e}`);
         }
     };
 
@@ -278,7 +289,6 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                 chatHistory: historySlice,
                 images: currentImages,
                 executionMode,
-                safetyMode,
                 onStepUpdate: (steps) => {
                     setActiveSteps(steps);
                 },
@@ -312,7 +322,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
             }
         } catch (e: any) {
             console.error("[NEI Agent Error]", e);
-            const errMessages: ChatMessage[] = [...updatedMessages, { role: "assistant", content: `❌ Ошибка выполнения агента: ${e?.message || e}` }];
+            const errMessages: ChatMessage[] = [...updatedMessages, { role: "assistant", content: `${t("agentError", language)} ${e?.message || e}` }];
             const errSession: ChatSession = {
                 ...updatedSession,
                 messages: errMessages
@@ -374,7 +384,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     if (event.target?.result) {
-                        setInput(prev => prev + `\n\n=== ФАЙЛ: ${file.name} ===\n` + String(event.target?.result));
+                        setInput(prev => prev + `\n\n=== FILE: ${file.name} ===\n` + String(event.target?.result));
                     }
                 };
                 reader.readAsText(file);
@@ -389,27 +399,27 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <button 
                         onClick={() => setShowSessionsDrawer(!showSessionsDrawer)}
-                        title="История диалогов"
+                        title={t("historyTooltip", language)}
                         style={{ background: 'var(--background-secondary)', border: '1px solid var(--background-modifier-border)', borderRadius: '4px', cursor: 'pointer', padding: '4px 8px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}
                     >
                         <span>💬</span>
                         <span style={{ maxWidth: '90px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: '500' }}>
-                            {currentSession.title}
+                            {formatSessionTitle(currentSession.title)}
                         </span>
                     </button>
                     <button 
                         onClick={handleNewChat}
-                        title="Новый чат"
+                        title={t("newChatTooltip", language)}
                         style={{ background: 'var(--interactive-accent)', color: 'var(--text-on-accent)', border: 'none', borderRadius: '4px', cursor: 'pointer', padding: '4px 8px', fontSize: '11px', fontWeight: 'bold' }}
                     >
-                        + Новый
+                        {t("newChat", language)}
                     </button>
                     <button 
                         onClick={handleToggleTabMode}
-                        title={isMainTab ? "Переместить чат в боковую панель" : "Переместить чат на главную вкладку"}
+                        title={isMainTab ? t("moveSidebarTitle", language) : t("moveTabTitle", language)}
                         style={{ background: 'var(--background-secondary)', border: '1px solid var(--background-modifier-border)', borderRadius: '4px', cursor: 'pointer', padding: '4px 6px', fontSize: '11px' }}
                     >
-                        {isMainTab ? "↙️ В панель" : "🗔 Вкладка"}
+                        {isMainTab ? t("moveSidebar", language) : t("moveTab", language)}
                     </button>
                 </div>
 
@@ -421,32 +431,18 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                             setExecutionMode(val);
                             saveSettings({ ...settings, executionMode: val });
                         }}
-                        title="Режим ИИ: Auto (авто-выбор), Quick (без инструментов), Agent (многошаговый)"
-                        style={{ background: 'var(--background-secondary)', border: '1px solid var(--background-modifier-border)', borderRadius: '4px', fontSize: '11px', padding: '3px 4px', color: 'var(--text-normal)' }}
+                        title={t("modeAutoTitle", language)}
+                        className="nei-select-mode"
                     >
-                        <option value="auto">⚡ Auto</option>
-                        <option value="quick">🚀 Quick</option>
-                        <option value="agent">🧠 Agent</option>
-                    </select>
-
-                    <select
-                        value={safetyMode}
-                        onChange={(e) => {
-                            const val = e.target.value as SafetyMode;
-                            setSafetyMode(val);
-                            saveSettings({ ...settings, safetyMode: val });
-                        }}
-                        title="Режим безопасности: Safe (подтверждение операций), Turbo (автономный)"
-                        style={{ background: 'var(--background-secondary)', border: '1px solid var(--background-modifier-border)', borderRadius: '4px', fontSize: '11px', padding: '3px 4px', color: 'var(--text-normal)' }}
-                    >
-                        <option value="safe">🛡️ Safe</option>
-                        <option value="turbo">🔥 Turbo</option>
+                        <option value="auto">{t("modeAuto", language)}</option>
+                        <option value="quick">{t("modeQuick", language)}</option>
+                        <option value="agent">{t("modeAgent", language)}</option>
                     </select>
 
                     <button 
                         onClick={() => setShowConfig(!showConfig)}
                         style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '12px', color: 'var(--text-muted)' }}
-                        title="Настройки моделей и API"
+                        title={t("settingsTooltip", language)}
                     >
                         ⚙️
                     </button>
@@ -457,19 +453,19 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
             {showSessionsDrawer && (
                 <div style={{ position: 'absolute', top: '45px', left: '10px', right: '10px', zIndex: 10, background: 'var(--background-primary)', border: '1px solid var(--background-modifier-border)', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', maxHeight: '280px', overflowY: 'auto', padding: '8px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', paddingBottom: '4px', borderBottom: '1px solid var(--background-modifier-border)' }}>
-                        <span style={{ fontWeight: 'bold', fontSize: '12px', color: 'var(--text-muted)' }}>История диалогов</span>
+                        <span style={{ fontWeight: 'bold', fontSize: '12px', color: 'var(--text-muted)' }}>{t("historyTitle", language)}</span>
                         {sessionsList.length > 0 && (
                             <button 
                                 onClick={handleClearAllSessions}
-                                title="Очистить всю историю диалогов"
+                                title={t("clearChats", language)}
                                 style={{ background: 'transparent', border: 'none', color: 'var(--text-error, #ff5555)', cursor: 'pointer', fontSize: '11px', fontWeight: '500' }}
                             >
-                                🗑️ Очистить все
+                                {t("clearAll", language)}
                             </button>
                         )}
                     </div>
                     {sessionsList.length === 0 ? (
-                        <div style={{ fontSize: '12px', color: 'var(--text-muted)', padding: '6px' }}>Нет сохраненных чатов</div>
+                        <div style={{ fontSize: '12px', color: 'var(--text-muted)', padding: '6px' }}>{t("noSavedChats", language)}</div>
                     ) : (
                         sessionsList.map(s => (
                             <div 
@@ -488,11 +484,11 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                                 }}
                             >
                                 <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '80%' }}>
-                                    {s.title}
+                                    {formatSessionTitle(s.title)}
                                 </span>
                                 <button 
                                     onClick={(e) => handleDeleteSession(e, s.id)}
-                                    title="Удалить чат"
+                                    title={t("deleteChatTooltip", language)}
                                     style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '12px', opacity: 0.6 }}
                                 >
                                     🗑️
@@ -519,17 +515,17 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
 
                     {keyInfo && (
                         <div style={{ background: 'var(--background-primary)', padding: '6px 10px', borderRadius: '6px', fontSize: '11px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span>💰 Использовано на ключе: <strong>${keyInfo.usage.toFixed(4)}</strong></span>
+                            <span>💰 {t("keyUsage", language)} <strong>${keyInfo.usage.toFixed(4)}</strong></span>
                             <span>{keyInfo.isFreeTier ? '🟢 Free Tier' : '💳 Paid Tier'}</span>
                         </div>
                     )}
 
                     {/* Model Category Slots */}
                     <div style={{ background: 'var(--background-primary)', padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--background-modifier-border)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        <div style={{ fontWeight: 'bold', fontSize: '11px' }}>Категории моделей (Мультимодальность):</div>
+                        <div style={{ fontWeight: 'bold', fontSize: '11px' }}>{t("modelCategories", language)}</div>
                         
                         <div>
-                            <label style={{ fontSize: '11px', display: 'block', color: 'var(--text-muted)' }}>1. Текст и инструменты (Primary):</label>
+                            <label style={{ fontSize: '11px', display: 'block', color: 'var(--text-muted)' }}>{t("primaryModel", language)}</label>
                             <select 
                                 value={model} 
                                 onChange={(e) => handleSelectModel(e.target.value)}
@@ -540,7 +536,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                         </div>
 
                         <div>
-                            <label style={{ fontSize: '11px', display: 'block', color: 'var(--text-muted)' }}>2. Файлы и фото (Vision):</label>
+                            <label style={{ fontSize: '11px', display: 'block', color: 'var(--text-muted)' }}>{t("visionModel", language)}</label>
                             <select 
                                 value={visionModel} 
                                 onChange={(e) => {
@@ -554,7 +550,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                         </div>
 
                         <div>
-                            <label style={{ fontSize: '11px', display: 'block', color: 'var(--text-muted)' }}>3. Быстрый режим (Quick Mode Router):</label>
+                            <label style={{ fontSize: '11px', display: 'block', color: 'var(--text-muted)' }}>{t("quickModel", language)}</label>
                             <select 
                                 value={quickModel} 
                                 onChange={(e) => {
@@ -566,42 +562,66 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                                 {customModels.map(m => <option key={m} value={m}>{m}</option>)}
                             </select>
                         </div>
+
+                        <div>
+                            <label style={{ fontSize: '11px', display: 'block', color: 'var(--text-muted)', fontWeight: 'bold', marginTop: '4px' }}>🌐 {t("languageLabel", language)}</label>
+                            <select 
+                                value={language} 
+                                onChange={(e) => {
+                                    const langVal = e.target.value as SupportedLanguage;
+                                    setLanguage(langVal);
+                                    saveSettings({ ...settings, language: langVal });
+                                }}
+                                style={{ width: '100%', padding: '4px', borderRadius: '4px', fontSize: '11px', background: 'var(--background-secondary)', color: 'var(--text-normal)', border: '1px solid var(--background-modifier-border)' }}
+                            >
+                                <option value="auto">🌐 {t("autoDetect", language)}</option>
+                                <option value="ru">🌐 RU — Русский</option>
+                                <option value="en">🌐 EN — English</option>
+                                <option value="es">🌐 ES — Español</option>
+                                <option value="de">🌐 DE — Deutsch</option>
+                                <option value="fr">🌐 FR — Français</option>
+                                <option value="zh">🌐 ZH — 中文</option>
+                                <option value="ja">🌐 JA — 日本語</option>
+                                <option value="pt">🌐 PT — Português</option>
+                                <option value="ko">🌐 KO — 한국어</option>
+                            </select>
+                        </div>
                     </div>
 
                     {/* Active Model Capabilities Card */}
                     <div style={{ background: 'var(--background-primary)', padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--background-modifier-border)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                            <strong style={{ fontSize: '11px' }}>Параметры: {model}</strong>
+                            <strong style={{ fontSize: '11px' }}>{t("parameters", language)}: {model}</strong>
                             <button 
                                 onClick={() => verifyActiveModel(model, apiKey)}
                                 style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '11px', color: 'var(--interactive-accent)' }}
                             >
-                                🔄 Проверить API
+                                {t("checkApi", language)}
                             </button>
                         </div>
 
                         {verifyingModel ? (
-                            <div style={{ color: 'var(--text-muted)', fontSize: '11px' }}>Запрос возможностей через OpenRouter API...</div>
+                            <div style={{ color: 'var(--text-muted)', fontSize: '11px' }}>{t("requestingCapabilities", language)}</div>
                         ) : activeModelDetails ? (
                             <div style={{ fontSize: '11px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
                                 <div style={{ color: activeModelDetails.supportsTools ? 'var(--text-success)' : 'var(--text-warning)', fontWeight: 'bold' }}>
-                                    {activeModelDetails.supportsTools ? '🟢 Нативный Tool Calling поддерживается' : '🟡 Текстовый режим вызова инструментов'}
+                                    {activeModelDetails.supportsTools ? t("nativeToolCalling", language) : t("textToolCalling", language)}
                                 </div>
                                 <div style={{ color: activeModelDetails.supportsVision ? 'var(--text-success)' : 'var(--text-muted)' }}>
-                                    {activeModelDetails.supportsVision ? '🖼️ Анализ фото/изображений доступен' : '📝 Только текстовый ввод'}
+                                    {activeModelDetails.supportsVision ? t("visionSupported", language) : t("textOnlyInput", language)}
                                 </div>
                                 {activeModelDetails.contextLength && (
-                                    <div>Контекстное окно: <strong>{activeModelDetails.contextLength.toLocaleString()} токенов</strong></div>
+                                    <div>{t("contextWindow", language)} <strong>{activeModelDetails.contextLength.toLocaleString()} {t("tokens", language)}</strong></div>
                                 )}
                             </div>
                         ) : (
-                            <div style={{ color: 'var(--text-muted)', fontSize: '11px' }}>Нажмите "Проверить API" для получения параметров с OpenRouter</div>
+                            <div style={{ color: 'var(--text-muted)', fontSize: '11px' }}>{t("pressCheckApi", language)}</div>
                         )}
                     </div>
 
                     {/* User Custom Models List */}
                     <div>
-                        <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500' }}>Ваши сохраненные модели:</label>
+                        <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500' }}>{t("yourSavedModels", language)}</label>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '100px', overflowY: 'auto', marginBottom: '6px' }}>
                             {customModels.map(m => (
                                 <div 
@@ -624,7 +644,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                                     </span>
                                     <button
                                         onClick={(e) => handleDeleteModel(e, m)}
-                                        title="Удалить из списка"
+                                        title={t("deleteFromList", language)}
                                         style={{ background: 'transparent', border: 'none', color: m === model ? 'var(--text-on-accent)' : 'var(--text-muted)', cursor: 'pointer' }}
                                     >
                                         🗑️
@@ -638,14 +658,14 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                                 type="text"
                                 value={newModelInput}
                                 onChange={(e) => setNewModelInput(e.target.value)}
-                                placeholder="Например: anthropic/claude-3.5-sonnet"
+                                placeholder={t("addModelPlaceholder", language)}
                                 style={{ flex: 1, padding: '4px 6px', fontSize: '11px', borderRadius: '4px', border: '1px solid var(--background-modifier-border)', background: 'var(--background-primary)', color: 'var(--text-normal)' }}
                             />
                             <button
                                 onClick={handleAddModel}
                                 style={{ padding: '4px 8px', fontSize: '11px', background: 'var(--interactive-accent)', color: 'var(--text-on-accent)', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
                             >
-                                + Добавить
+                                {t("addBtn", language)}
                             </button>
                         </div>
                     </div>
@@ -654,7 +674,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                         onClick={handleSaveConfig}
                         style={{ marginTop: '4px', padding: '6px 12px', background: 'var(--interactive-accent)', color: 'var(--text-on-accent)', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
                     >
-                        Сохранить Настройки
+                        {t("saveSettings", language)}
                     </button>
                 </div>
             )}
@@ -662,21 +682,29 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
             {/* Chat Messages Container */}
             <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '10px' }}>
                 {currentSession.messages.length === 0 && (
-                    <div style={{ textAlign: 'center', color: 'var(--text-muted)', marginTop: '30px', fontSize: '13px' }}>
-                        👋 **NEI Super-Agent** готов к работе!<br/><br/>
-                        • Прямой доступ к заметочкам и папкам (`tasks`, `Projects`)<br/>
-                        • Режимы **Quick Mode** и **Agent Mode** с авто-роутингом<br/>
-                        • Анализ изображений и поддержка Safe/Turbo безопасности<br/>
-                        • Отслеживание токенов (Вход/Выход) для всех ответов
+                    <div style={{ textAlign: 'center', color: 'var(--text-muted)', marginTop: '24px', padding: '0 12px', fontSize: '13px' }}>
+                        <div style={{ fontSize: '15px', fontWeight: 'bold', marginBottom: '8px', color: 'var(--text-normal)' }}>
+                            {t("welcomeGreeting", language)}
+                        </div>
+                        <div style={{ fontSize: '12px', marginBottom: '16px', opacity: 0.85 }}>
+                            {t("welcomeSubText", language)}
+                        </div>
+                        <div style={{ textAlign: 'left', display: 'inline-block', fontSize: '12px', lineHeight: '1.8', background: 'var(--background-secondary)', padding: '12px 16px', borderRadius: '10px', border: '1px solid var(--background-modifier-border)', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                            • {t("featureNotes", language)}<br/>
+                            • {t("featureRouting", language)}<br/>
+                            • {t("featureVision", language)}<br/>
+                            • {t("featureTokens", language)}
+                        </div>
                     </div>
                 )}
 
                 {currentSession.messages.map((msg, idx) => (
                     <div 
                         key={idx} 
+                        className="nei-chat-bubble"
                         style={{
                             alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
-                            maxWidth: '88%',
+                            maxWidth: '92%',
                             padding: '10px 14px',
                             borderRadius: '12px',
                             background: msg.role === 'user' ? 'var(--interactive-accent)' : 'var(--background-secondary)',
@@ -701,14 +729,14 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                                             onClick={() => setEditingMsgIdx(null)}
                                             style={{ padding: '2px 8px', fontSize: '11px', background: 'transparent', border: '1px solid var(--text-on-accent)', color: 'var(--text-on-accent)', borderRadius: '4px', cursor: 'pointer' }}
                                         >
-                                            Отмена
+                                            {t("cancel", language)}
                                         </button>
                                         <button
                                             onClick={() => handleSaveEdit(idx)}
                                             disabled={loading}
                                             style={{ padding: '2px 8px', fontSize: '11px', background: 'var(--background-primary)', color: 'var(--text-normal)', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
                                         >
-                                            💾 Отправить
+                                            {t("saveSend", language)}
                                         </button>
                                     </div>
                                 </div>
@@ -723,62 +751,62 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                                         </div>
                                     )}
                                     <div style={{ whiteSpace: 'pre-wrap' }}>{msg.content}</div>
-                                    <div style={{ display: 'flex', gap: '8px', marginTop: '6px', justifyContent: 'flex-end', fontSize: '11px', opacity: 0.85 }}>
+                                    <div style={{ display: 'flex', gap: '6px', marginTop: '6px', justifyContent: 'flex-end', fontSize: '11px', flexWrap: 'wrap', maxWidth: '100%', opacity: 0.9 }}>
                                         <button
                                             onClick={() => handleCopyText(msg.content || "")}
-                                            title="Скопировать текст"
-                                            style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', padding: 0 }}
+                                            title={t("copyText", language)}
+                                            style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', padding: '2px 4px', borderRadius: '4px', fontSize: '11px', whiteSpace: 'nowrap' }}
                                         >
-                                            📋 Копировать
+                                            {t("copyText", language)}
                                         </button>
                                         <button
                                             onClick={() => handleStartEdit(idx, msg.content || "")}
-                                            title="Редактировать запрос"
-                                            style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', padding: 0 }}
+                                            title={t("editText", language)}
+                                            style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', padding: '2px 4px', borderRadius: '4px', fontSize: '11px', whiteSpace: 'nowrap' }}
                                         >
-                                            ✏️ Изменить
+                                            {t("editText", language)}
                                         </button>
                                         <button
                                             onClick={() => handleRetryUserMessage(idx)}
-                                            title="Повторить отправку"
+                                            title={t("retry", language)}
                                             disabled={loading}
-                                            style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', padding: 0 }}
+                                            style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', padding: '2px 4px', borderRadius: '4px', fontSize: '11px', whiteSpace: 'nowrap' }}
                                         >
-                                            🔄 Повторить
+                                            {t("retry", language)}
                                         </button>
                                     </div>
                                 </div>
                             )
                         ) : (
                             /* Assistant Message Display */
-                            <div>
+                            <div style={{ minWidth: 0 }}>
                                 <ObsidianMarkdown markdown={msg.content || ""} app={app} />
                                 
                                 {/* Per-message Input/Output Token Counters */}
                                 {(msg.promptTokens !== undefined || msg.completionTokens !== undefined) && (
-                                    <div style={{ display: 'flex', gap: '6px', marginTop: '6px', fontSize: '10px', color: 'var(--text-muted)', borderTop: '1px solid var(--background-modifier-border)', paddingTop: '4px' }}>
+                                    <div style={{ display: 'flex', gap: '6px', marginTop: '6px', fontSize: '10px', color: 'var(--text-muted)', borderTop: '1px solid var(--background-modifier-border)', paddingTop: '4px', flexWrap: 'wrap', maxWidth: '100%' }}>
                                         <span style={{ background: 'var(--background-primary)', padding: '2px 6px', borderRadius: '4px' }}>
-                                            📥 Вход: {msg.promptTokens || 0} ток.
+                                            {t("inputTokens", language)} {msg.promptTokens || 0} {t("tokens", language)}
                                         </span>
                                         <span style={{ background: 'var(--background-primary)', padding: '2px 6px', borderRadius: '4px' }}>
-                                            📤 Выход: {msg.completionTokens || 0} ток.
+                                            {t("outputTokens", language)} {msg.completionTokens || 0} {t("tokens", language)}
                                         </span>
                                     </div>
                                 )}
 
-                                <div style={{ display: 'flex', gap: '10px', marginTop: '8px', alignItems: 'center', fontSize: '11px' }}>
+                                <div style={{ display: 'flex', gap: '6px', marginTop: '8px', alignItems: 'center', flexWrap: 'wrap', fontSize: '11px', maxWidth: '100%' }}>
                                     <button 
                                         onClick={() => handleCopyText(msg.content || "")}
-                                        style={{ background: 'var(--background-primary)', border: '1px solid var(--background-modifier-border)', borderRadius: '4px', cursor: 'pointer', padding: '3px 8px', color: 'var(--text-muted)' }}
+                                        style={{ background: 'var(--background-primary)', border: '1px solid var(--background-modifier-border)', borderRadius: '4px', cursor: 'pointer', padding: '3px 8px', color: 'var(--text-muted)', fontSize: '11px', whiteSpace: 'nowrap', maxWidth: '100%' }}
                                     >
-                                        📋 Скопировать
+                                        {t("copyText", language)}
                                     </button>
                                     {msg.content && msg.content.length > 50 && (
                                         <button 
                                             onClick={() => handleSaveResponseAsNote(msg.content || "")}
-                                            style={{ background: 'var(--background-primary)', border: '1px solid var(--background-modifier-border)', borderRadius: '4px', cursor: 'pointer', padding: '3px 8px', color: 'var(--text-muted)' }}
+                                            style={{ background: 'var(--background-primary)', border: '1px solid var(--background-modifier-border)', borderRadius: '4px', cursor: 'pointer', padding: '3px 8px', color: 'var(--text-muted)', fontSize: '11px', whiteSpace: 'nowrap', maxWidth: '100%' }}
                                         >
-                                            📄 Сохранить как заметку
+                                            {t("saveNote", language)}
                                         </button>
                                     )}
                                 </div>
@@ -791,9 +819,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                 {pendingConfirmation && (
                     <div style={{ background: 'var(--background-secondary-alt)', border: '2px solid var(--interactive-accent)', borderRadius: '8px', padding: '10px', fontSize: '12px' }}>
                         <div style={{ fontWeight: 'bold', color: 'var(--text-warning, #ffaa00)', marginBottom: '4px' }}>
-                            ⚠️ Подтверждение действия (Safe Mode)
+                            {t("confirmTitle", language)}
                         </div>
-                        <div>Агент запрашивает выполнение потенциально опасного инструмента:</div>
+                        <div>{t("confirmDetail", language)}</div>
                         <div style={{ fontFamily: 'monospace', background: 'var(--background-primary)', padding: '4px 6px', borderRadius: '4px', margin: '6px 0', wordBreak: 'break-all' }}>
                             {pendingConfirmation.toolName}({pendingConfirmation.argsStr})
                         </div>
@@ -802,13 +830,13 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                                 onClick={() => pendingConfirmation.resolve(false)}
                                 style={{ padding: '4px 10px', fontSize: '11px', background: 'var(--background-primary)', border: '1px solid var(--background-modifier-border)', borderRadius: '4px', cursor: 'pointer' }}
                             >
-                                ❌ Отклонить
+                                {t("deny", language)}
                             </button>
                             <button
                                 onClick={() => pendingConfirmation.resolve(true)}
                                 style={{ padding: '4px 10px', fontSize: '11px', background: 'var(--interactive-accent)', color: 'var(--text-on-accent)', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
                             >
-                                ✅ Разрешить
+                                {t("allow", language)}
                             </button>
                         </div>
                     </div>
@@ -819,7 +847,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                     <div style={{ background: 'var(--background-secondary)', padding: '10px', borderRadius: '8px', fontSize: '12px', borderLeft: '3px solid var(--interactive-accent)' }}>
                         <div style={{ fontWeight: 'bold', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <span>⚡</span>
-                            <span>Агент выполняет задачу...</span>
+                            <span>{t("agentRunning", language)}</span>
                         </div>
                         {activeSteps.map(step => (
                             <div key={step.id} style={{ marginTop: '4px', color: step.status === 'failed' ? 'var(--text-error)' : 'var(--text-muted)' }}>
@@ -850,10 +878,10 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                     </div>
                 )}
 
-                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: '6px', alignItems: 'flex-end' }}>
                     <label 
-                        title="Прикрепить фото или текстовый файл"
-                        style={{ padding: '6px 8px', background: 'var(--background-secondary)', border: '1px solid var(--background-modifier-border)', borderRadius: '6px', cursor: 'pointer', fontSize: '14px' }}
+                        title={t("attachTooltip", language)}
+                        style={{ padding: '8px 10px', background: 'var(--background-secondary)', border: '1px solid var(--background-modifier-border)', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', marginBottom: '2px' }}
                     >
                         📎
                         <input 
@@ -867,24 +895,41 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
 
                     <textarea
                         value={input}
-                        onChange={(e) => setInput(e.target.value)}
+                        onChange={(e) => {
+                            setInput(e.target.value);
+                            e.target.style.height = 'auto';
+                            e.target.style.height = `${Math.min(e.target.scrollHeight, 280)}px`;
+                        }}
                         onKeyDown={(e) => {
                             if (e.key === 'Enter' && !e.shiftKey) {
                                 e.preventDefault();
                                 handleSendMessage();
                             }
                         }}
-                        placeholder="Задайте задачу агенту... (Enter для отправки)"
+                        placeholder={t("inputPlaceholder", language)}
                         disabled={loading}
-                        rows={2}
-                        style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid var(--background-modifier-border)', background: 'var(--background-primary)', color: 'var(--text-normal)', resize: 'none', fontSize: '13px' }}
+                        rows={3}
+                        style={{
+                            flex: 1,
+                            minHeight: '60px',
+                            maxHeight: '280px',
+                            padding: '8px 10px',
+                            borderRadius: '6px',
+                            border: '1px solid var(--background-modifier-border)',
+                            background: 'var(--background-primary)',
+                            color: 'var(--text-normal)',
+                            resize: 'vertical',
+                            fontSize: '13px',
+                            lineHeight: '1.4',
+                            fontFamily: 'inherit'
+                        }}
                     />
                     <button
                         onClick={handleSendMessage}
                         disabled={loading || (!input.trim() && attachedImages.length === 0)}
-                        style={{ padding: '0 14px', height: '44px', background: 'var(--interactive-accent)', color: 'var(--text-on-accent)', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}
+                        style={{ padding: '0 14px', height: '60px', background: 'var(--interactive-accent)', color: 'var(--text-on-accent)', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', marginBottom: '2px' }}
                     >
-                        {loading ? '...' : 'Отправить'}
+                        {loading ? '...' : '➤'}
                     </button>
                 </div>
             </div>

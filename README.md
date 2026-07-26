@@ -1,56 +1,87 @@
 # NEI AI Assistant — Super-Agentic AI Plugin for Obsidian 🤖🧠
 
-**NEI AI Assistant** is an autonomous, super-agentic AI executive assistant plugin for Obsidian. It transforms your vault into an interactive intelligence hub with deep vault control, function calling, OpenRouter models integration, Model Context Protocol (MCP) support, custom skills, web browsing, and local terminal execution.
+[![Obsidian Plugin](https://img.shields.io/badge/Obsidian-Plugin-purple.svg)](https://obsidian.md)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![OpenRouter](https://img.shields.io/badge/OpenRouter-Compatible-blue.svg)](https://openrouter.ai)
+[![i18n](https://img.shields.io/badge/i18n-9%20Languages-brightgreen.svg)](#-internationalization-i18n)
+
+**NEI AI Assistant** is an autonomous, super-agentic AI executive assistant plugin for Obsidian. It transforms your vault into an interactive intelligence hub with deep vault control, function calling, OpenRouter models integration, Model Context Protocol (MCP) support, custom skills, and web browsing.
 
 ---
 
-## ✨ Features
+## ✨ Key Features / Ключевые Возможности
 
-- **🤖 Autonomous Agentic Execution Loop**: Multi-step reasoning and tool execution loop (`(Prompt) -> (Tool Call) -> (Execute) -> (Feed Result) -> (Repeat)`).
-- **📂 Deep Vault Operations**:
-  - `get_folder_notes`: Batch read and analyze all notes in any folder (`tasks`, `Projects`, etc.).
-  - `create_note` / `edit_note` / `rename_note` / `delete_note`: Complete file lifecycle management.
-  - `search_notes` / `search_by_tag` / `get_all_tags`: Full-text, tag-based, and wikilink graph analysis.
-- **🌐 Web Browsing & Search**: Search DuckDuckGo and fetch/convert web pages to clean Markdown on demand.
-- **⚡ Local Terminal Execution**: Run CLI/PowerShell commands on your PC directly from Obsidian (with desktop Node.js bridge).
-- **🧠 Memory & Skills System**:
-  - Long-term memory stored in `.nei/memory.json`.
-  - Custom rules in `.nei/AGENTS.md`.
-  - User-defined skills in `.nei/skills/<skill_name>/SKILL.md` (AI can learn and write new skills for itself!).
-- **🔌 Model Context Protocol (MCP)**: Connect external MCP servers (GitHub, Postgres, Slack, HTTP SSE/Stdio) dynamically.
-- **💬 Chat Sessions & History**: Full conversation history saved in `.nei/chats/` with thread switching, new chats, and deletion.
-- **🎯 OpenRouter Models Integration**:
-  - Dynamically add and remove any model ID from OpenRouter.
-  - Live capability verification (Tool calling support, context window size, pricing) via OpenRouter API.
+### 🌐 Internationalization (i18n) / Многоязычность
+- **9 Supported Languages**: English, Russian (Русский), Spanish (Español), German (Deutsch), French (Français), Chinese (中文), Japanese (日本語), Portuguese (Português), Korean (한국어).
+- **Auto-Detection**: Automatically adapts to your Obsidian interface language or can be set manually in settings.
 
----
+### 🤖 Autonomous Agentic Loop
+- Multi-step reasoning and tool execution loop (`(Prompt) ➔ (Tool Call) ➔ (Execute) ➔ (Feed Result) ➔ (Repeat)`).
+- Automatic routing between **Quick Mode** (single-pass responses) and **Agent Mode** (deep multi-step tasks).
 
-## 🛠️ Installation
+### 📂 Deep Vault Operations
+- **Folder Analysis**: `get_folder_notes` to inspect and summarize entire folders (`tasks`, `Projects`, etc.).
+- **File Lifecycle**: `create_note`, `edit_note`, `rename_note`, `delete_note`.
+- **Search & Graph**: `search_notes`, `search_by_tag`, `get_all_tags` with full-text and tag graph analysis.
 
-### Manual Installation
-1. Download the latest release (`main.js`, `manifest.json`, `styles.css`).
-2. Create a folder in your vault: `<your-vault>/.obsidian/plugins/nei-ai-chat/`.
-3. Move `main.js`, `manifest.json`, and `styles.css` into that folder.
-4. Reload Obsidian, go to **Settings -> Community Plugins**, and enable **NEI AI Chat**.
+### 🔌 Model Context Protocol (MCP) & Custom Skills
+- **MCP Integration**: Connect external MCP servers (GitHub, Postgres, Slack, HTTP SSE/Stdio) dynamically.
+- **Persistent Memory**: Long-term memory saved in `.nei/memory.json`.
+- **Custom Skills**: User-defined skills in `.nei/skills/<skill_name>/SKILL.md` (the AI can learn and create new skills for itself).
 
----
+### 🌐 Web Browsing & Search
+- DuckDuckGo live search integration.
+- Direct web page scraping and raw GitHub README optimization.
 
-## ⚙️ Configuration
-
-1. Click the **⚙️ Settings** icon in the NEI AI Chat sidebar panel.
-2. Enter your **OpenRouter API Key** (`sk-or-v1-...`).
-3. Add or select your desired model (e.g. `anthropic/claude-3.5-sonnet`, `google/gemini-2.5-pro`, `openai/gpt-4o`).
-4. Click **🔄 Check API** to verify model capabilities live.
+### 📐 Resizable & Ergonomic UI
+- Vertical resizable prompt textarea with auto-height adjustment.
+- Multimodal support: Attach images, `.txt`, `.md`, `.js`, `.ts`, `.json` files.
+- Thread management: Multiple chat sessions with index saved in `.nei/chats/`.
 
 ---
 
-## 🔒 Privacy & Security
+## 🛠️ Installation / Установка
 
-- All chat histories, memory, skills, and settings are saved locally inside your vault under the `.nei/` folder.
-- API keys are stored securely in local plugin data (`data.json`) and never transmitted anywhere except directly to OpenRouter API over HTTPS.
+### Manual Installation (Текущая установка)
+1. Download the latest release files (`main.js`, `manifest.json`, `styles.css`).
+2. Navigate to your Obsidian vault directory: `<your-vault>/.obsidian/plugins/`.
+3. Create a folder named `nei-ai-chat`.
+4. Copy `main.js`, `manifest.json`, and `styles.css` into `<your-vault>/.obsidian/plugins/nei-ai-chat/`.
+5. Reload Obsidian (**Settings ➔ Community Plugins ➔ Installed Plugins**), and enable **NEI AI Chat**.
+
+### Obsidian Community Plugins (Soon / Скоро)
+1. Open Obsidian **Settings ➔ Community Plugins ➔ Turn on Community Plugins**.
+2. Click **Browse** and search for `NEI AI Chat`.
+3. Click **Install**, then **Enable**.
+
+---
+
+## ⚙️ Configuration / Настройка
+
+1. Click the **⚙️ Settings** icon in the top header of the NEI AI Chat panel.
+2. Select your preferred **Interface Language** (or leave on *Auto-detect*).
+3. Enter your **OpenRouter API Key** (`sk-or-v1-...`).
+4. Select your desired primary model (e.g. `google/gemini-2.5-flash`, `anthropic/claude-3.5-sonnet`, `openai/gpt-4o`, `deepseek/deepseek-chat`).
+5. Click **🔄 Check API & Models** to verify model capabilities live.
+
+---
+
+## 🔒 Safety & Privacy / Безопасность и Приватность
+
+- **Local Vault Storage**: All chat histories, memory, skills, and settings are saved locally inside your vault under the `.nei/` folder.
+- **Secure Credentials**: API keys are stored strictly in local plugin data (`data.json`) and never transmitted anywhere except directly to OpenRouter API over encrypted HTTPS.
+- **No Unsafe Execution**: Arbitrary system CLI command execution is disabled.
+
+---
+
+## 💡 Support, Feedback & Feature Requests / Поддержка и Предложения
+
+We welcome feedback, suggestions, and feature requests!
+- 🐛 **Issue Tracker**: [GitHub Issues](https://github.com/GhelgenWhy/nei-ai-chat/issues)
+- 💬 **Discussions & Ideas**: Feel free to submit feature ideas or pull requests directly to the repository.
 
 ---
 
 ## 📄 License
 
-[MIT License](LICENSE) — free for personal and commercial use.
+Distributed under the [MIT License](LICENSE). Free for personal and commercial use.

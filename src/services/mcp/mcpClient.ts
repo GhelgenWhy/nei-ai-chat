@@ -63,7 +63,7 @@ export class McpService {
                     }
                 }
             } catch (e: any) {
-                console.log(`[McpService] Failed to discover tools from MCP server '${server.name}':`, e?.message || e);
+                console.error(`[McpService] Failed to discover tools from MCP server '${server.name}':`, e?.message || e);
             }
         }
 

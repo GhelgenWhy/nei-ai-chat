@@ -1,18 +1,25 @@
 # Dependencies
 node_modules/
 
-# Production output
+# Build and Production outputs
 main.js.map
 *.log
 
 # Obsidian local plugin settings & runtime data
 data.json
+.obsidian/
+
+# NEI Runtime Data (chats, memories, user skills, index)
+.nei/
 
 # System files
 .DS_Store
 Thumbs.db
+desktop.ini
 
 # Environment & Local Secrets
 .env
-.env.local
+.env.*
 *.secret
+*.pem
+*.key

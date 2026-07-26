@@ -6,8 +6,12 @@ export interface NeiAiChatSettings {
     endpointUrl: string;
     apiKey: string;
     model: string;
+    visionModel: string;
+    quickModel: string;
+    executionMode: 'auto' | 'quick' | 'agent';
     customModels: string[];
     useRag: boolean;
+    language: 'auto' | 'ru' | 'en' | 'es' | 'de' | 'fr' | 'zh' | 'ja' | 'pt' | 'ko';
 }
 
 const DEFAULT_SETTINGS: NeiAiChatSettings = {
@@ -15,6 +19,9 @@ const DEFAULT_SETTINGS: NeiAiChatSettings = {
     endpointUrl: "https://openrouter.ai/api/v1",
     apiKey: "",
     model: "google/gemini-2.5-flash",
+    visionModel: "google/gemini-2.5-flash",
+    quickModel: "google/gemini-2.5-flash",
+    executionMode: "auto",
     customModels: [
         "google/gemini-2.5-flash",
         "anthropic/claude-3.5-sonnet",
@@ -22,14 +29,14 @@ const DEFAULT_SETTINGS: NeiAiChatSettings = {
         "openai/gpt-4o",
         "deepseek/deepseek-chat"
     ],
-    useRag: true
+    useRag: true,
+    language: "auto"
 };
 
 export default class NeiAiChatPlugin extends Plugin {
     settings: NeiAiChatSettings = DEFAULT_SETTINGS;
 
     async onload() {
-        console.log("Загрузка NEI AI Chat (Assistant) плагина...");
         await this.loadSettings();
 
         // Register custom view
@@ -39,13 +46,13 @@ export default class NeiAiChatPlugin extends Plugin {
         );
 
         // Add Ribbon Icon for Chat
-        this.addRibbonIcon("bot", "NEI ИИ Чат", () => {
+        this.addRibbonIcon("bot", "NEI AI Chat", () => {
             this.activateView();
         });
     }
 
     async onunload() {
-        this.app.workspace.detachLeavesOfType(VIEW_TYPE_NEI_CHAT);
+        // Resources are cleaned up by Obsidian automatically
     }
 
     async activateView() {

@@ -57,7 +57,7 @@ export class ToolRegistry {
         }
 
         try {
-            console.log(`[NEI Agent Engine] Вызов инструмента '${name}' с аргументами:`, parsedArgs);
+
             const execResult = await executor(app, parsedArgs);
 
             if (typeof execResult === "object" && execResult !== null && "result" in execResult) {
