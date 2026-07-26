@@ -23,14 +23,15 @@ export const ObsidianMarkdown: React.FC<{ markdown: string; app: App }> = ({ mar
             containerRef.current.empty();
             const component = new Component();
             component.load();
-            void MarkdownRenderer.renderMarkdown(
+            void MarkdownRenderer.render(
+                app,
                 markdown,
                 containerRef.current,
                 "",
                 component
             );
         }
-    }, [markdown]);
+    }, [markdown, app]);
 
     return <div ref={containerRef} className="markdown-preview-view markdown-rendered" style={{ background: 'transparent', padding: 0 }} />;
 };
@@ -61,8 +62,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                     viewLeaf.detach();
                 }
             }
-        } catch (e: any) {
-            new Notice(`${t("modeSwitchError", language)} ${e?.message || e}`);
+        } catch (e: unknown) {
+            const err = e as { message?: string };
+            new Notice(`${t("modeSwitchError", language)} ${err?.message || String(e)}`);
         }
     };
     // Active Session State
@@ -119,7 +121,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
         try {
             const details = await OpenRouterService.getModelDetails(targetModel, key);
             setActiveModelDetails(details);
-        } catch (e) {
+        } catch (_e: unknown) {
             setActiveModelDetails(null);
         } finally {
             setVerifyingModel(false);
@@ -127,7 +129,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
     };
 
     const formatSessionTitle = (tTitle: string) => {
-        if (!tTitle || tTitle === "Новый диалог" || tTitle === "Новый чат" || tTitle === "New Chat") {
+        if (!tTitle || tTitle === "Новый диалог" || tTitle === "New Chat") {
             return t("newChatSession", language);
         }
         return tTitle;
@@ -179,10 +181,10 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
         const loaded = await ChatStore.loadSession(app, sessionId);
         if (loaded) {
             setCurrentSession(loaded);
-            setActiveSteps([]);
+            setActiveSteps(loaded.steps || []);
+            setShowSessionsDrawer(false);
             setEditingMsgIdx(null);
         }
-        setShowSessionsDrawer(false);
     };
 
     const handleDeleteSession = async (e: React.MouseEvent, sessionId: string) => {
@@ -199,7 +201,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
     const handleClearAllSessions = async () => {
         if (!confirmingClear) {
             setConfirmingClear(true);
-            setTimeout(() => setConfirmingClear(false), 3000);
+            window.setTimeout(() => setConfirmingClear(false), 3000);
             return;
         }
         setConfirmingClear(false);
@@ -233,7 +235,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
         try {
             await navigator.clipboard.writeText(text);
             new Notice(t("copied", language));
-        } catch (e) {
+        } catch (_e: unknown) {
             new Notice(t("copyError", language));
         }
     };
@@ -243,8 +245,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
         try {
             await app.vault.create(notePath, content);
             new Notice(`${t("noteCreatedSuccess", language)} '${notePath}'!`);
-        } catch (e: any) {
-            new Notice(`${t("noteCreateError", language)} ${e?.message || e}`);
+        } catch (e: unknown) {
+            const err = e as { message?: string };
+            new Notice(`${t("noteCreateError", language)} ${err?.message || String(e)}`);
         }
     };
 
@@ -260,38 +263,32 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
             content: queryText,
             ...(currentImages.length > 0 ? { images: currentImages } : {})
         };
+
         const updatedMessages = [...historySlice, userMsg];
-        
         const updatedSession: ChatSession = {
             ...currentSession,
-            title: currentSession.messages.length === 0 
-                ? (queryText.length > 25 ? queryText.substring(0, 25) + "..." : queryText)
-                : currentSession.title,
+            title: currentSession.messages.length === 0 ? (queryText.substring(0, 30) + (queryText.length > 30 ? "..." : "")) : currentSession.title,
             messages: updatedMessages
         };
 
         setCurrentSession(updatedSession);
-        setAttachedImages([]); // Reset input image attachments
+        setAttachedImages([]);
 
         try {
-            // Select active model based on attachments / category
-            let targetModel = model || "google/gemini-2.5-flash";
-            if (currentImages.length > 0 && visionModel) {
-                targetModel = visionModel;
-            } else if (executionMode === "quick" && quickModel) {
-                targetModel = quickModel;
-            }
 
-            const llmConfig = {
-                provider: "openrouter" as const,
-                endpointUrl: endpointUrl || "https://openrouter.ai/api/v1",
-                apiKey,
-                model: targetModel
-            };
+            const isVisionRequired = currentImages.length > 0;
+            const activeModelToUse = isVisionRequired 
+                ? visionModel 
+                : (executionMode === "quick" ? quickModel : model);
 
             const result = await AgentLoop.run({
                 app,
-                config: llmConfig,
+                config: {
+                    provider: "openrouter",
+                    endpointUrl,
+                    apiKey,
+                    model: activeModelToUse
+                },
                 userQuery: queryText,
                 chatHistory: historySlice,
                 images: currentImages,
@@ -299,8 +296,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                 onStepUpdate: (steps) => {
                     setActiveSteps(steps);
                 },
-                onConfirmationRequired: (toolName, argsStr) => {
-                    return new Promise<boolean>((resolve) => {
+                onConfirmationRequired: async (toolName, argsStr) => {
+                    return new Promise((resolve) => {
                         setPendingConfirmation({ toolName, argsStr, resolve });
                     });
                 }
@@ -312,11 +309,12 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                 promptTokens: result.promptTokens,
                 completionTokens: result.completionTokens
             };
+            const finalMessages = [...updatedMessages, assistantMsg];
 
-            const finalMessages: ChatMessage[] = [...updatedMessages, assistantMsg];
             const finalSession: ChatSession = {
                 ...updatedSession,
-                messages: finalMessages
+                messages: finalMessages,
+                steps: activeSteps
             };
 
             setCurrentSession(finalSession);
@@ -327,9 +325,10 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
             if (apiKey) {
                 void OpenRouterService.getKeyInfo(apiKey).then(setKeyInfo);
             }
-        } catch (e: any) {
+        } catch (e: unknown) {
             console.error("[NEI Agent Error]", e);
-            const errMessages: ChatMessage[] = [...updatedMessages, { role: "assistant", content: `${t("agentError", language)} ${e?.message || e}` }];
+            const err = e as { message?: string };
+            const errMessages: ChatMessage[] = [...updatedMessages, { role: "assistant", content: `${t("agentError", language)} ${err?.message || String(e)}` }];
             const errSession: ChatSession = {
                 ...updatedSession,
                 messages: errMessages
@@ -379,23 +378,14 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
 
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
-            if (file.type.startsWith("image/")) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    if (event.target?.result) {
-                        setAttachedImages(prev => [...prev, String(event.target?.result)]);
-                    }
-                };
-                reader.readAsDataURL(file);
-            } else {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    if (event.target?.result) {
-                        setInput(prev => prev + `\n\n=== FILE: ${file.name} ===\n` + String(event.target?.result));
-                    }
-                };
-                reader.readAsText(file);
-            }
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const res = event.target?.result as string;
+                if (res) {
+                    setAttachedImages(prev => [...prev, res]);
+                }
+            };
+            reader.readAsDataURL(file);
         }
     };
 
@@ -407,15 +397,15 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                     <button 
                         onClick={() => setShowSessionsDrawer(!showSessionsDrawer)}
                         title={t("historyTooltip", language)}
-                        style={{ background: 'var(--background-secondary)', border: '1px solid var(--background-modifier-border)', borderRadius: '4px', cursor: 'pointer', padding: '4px 8px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}
+                        style={{ background: 'var(--background-secondary)', border: '1px solid var(--background-modifier-border)', borderRadius: '4px', cursor: 'pointer', padding: '4px 8px', fontSize: '11px', fontWeight: '500' }}
                     >
-                        <span>💬</span>
-                        <span style={{ maxWidth: '90px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: '500' }}>
-                            {formatSessionTitle(currentSession.title)}
+                        📂 {formatSessionTitle(currentSession.title)} 
+                        <span style={{ fontSize: '10px', opacity: 0.7, marginLeft: '4px' }}>
+                            ({currentSession.messages.length})
                         </span>
                     </button>
                     <button 
-                        onClick={handleNewChat}
+                        onClick={() => { handleNewChat(); }}
                         title={t("newChatTooltip", language)}
                         style={{ background: 'var(--interactive-accent)', color: 'var(--text-on-accent)', border: 'none', borderRadius: '4px', cursor: 'pointer', padding: '4px 8px', fontSize: '11px', fontWeight: 'bold' }}
                     >
@@ -520,6 +510,17 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                         />
                     </div>
 
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500' }}>API Endpoint URL:</label>
+                        <input 
+                            type="text" 
+                            value={endpointUrl} 
+                            onChange={(e) => setEndpointUrl(e.target.value)} 
+                            placeholder="https://openrouter.ai/api/v1"
+                            style={{ width: '100%', padding: '6px', borderRadius: '4px', border: '1px solid var(--background-modifier-border)', background: 'var(--background-primary)', color: 'var(--text-normal)' }}
+                        />
+                    </div>
+
                     {keyInfo && (
                         <div style={{ background: 'var(--background-primary)', padding: '6px 10px', borderRadius: '6px', fontSize: '11px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <span>💰 {t("keyUsage", language)} <strong>${keyInfo.usage.toFixed(4)}</strong></span>
@@ -607,54 +608,32 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                             </button>
                         </div>
 
-                        {verifyingModel ? (
-                            <div style={{ color: 'var(--text-muted)', fontSize: '11px' }}>{t("requestingCapabilities", language)}</div>
-                        ) : activeModelDetails ? (
-                            <div style={{ fontSize: '11px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                <div style={{ color: activeModelDetails.supportsTools ? 'var(--text-success)' : 'var(--text-warning)', fontWeight: 'bold' }}>
-                                    {activeModelDetails.supportsTools ? t("nativeToolCalling", language) : t("textToolCalling", language)}
-                                </div>
-                                <div style={{ color: activeModelDetails.supportsVision ? 'var(--text-success)' : 'var(--text-muted)' }}>
-                                    {activeModelDetails.supportsVision ? t("visionSupported", language) : t("textOnlyInput", language)}
-                                </div>
-                                {activeModelDetails.contextLength && (
-                                    <div>{t("contextWindow", language)} <strong>{activeModelDetails.contextLength.toLocaleString()} {t("tokens", language)}</strong></div>
-                                )}
+                        {activeModelDetails ? (
+                            <div style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                <div>• {t("contextLength", language)} <strong>{activeModelDetails.contextLength ? activeModelDetails.contextLength.toLocaleString() : 'N/A'} {t("tokens", language)}</strong></div>
+                                <div>• {t("toolCallingSupport", language)} {activeModelDetails.supportsTools ? '✅' : '❌'}</div>
+                                <div>• {t("visionSupport", language)} {activeModelDetails.supportsVision ? '✅' : '❌'}</div>
                             </div>
                         ) : (
-                            <div style={{ color: 'var(--text-muted)', fontSize: '11px' }}>{t("pressCheckApi", language)}</div>
+                            <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                                {verifyingModel ? t("checkingApi", language) : t("infoUnavailable", language)}
+                            </div>
                         )}
                     </div>
 
-                    {/* User Custom Models List */}
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500' }}>{t("yourSavedModels", language)}</label>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '100px', overflowY: 'auto', marginBottom: '6px' }}>
+                    {/* Custom Models List Manager */}
+                    <div style={{ background: 'var(--background-primary)', padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--background-modifier-border)' }}>
+                        <label style={{ display: 'block', marginBottom: '6px', fontWeight: 'bold', fontSize: '11px' }}>{t("modelsList", language)}:</label>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '8px', maxHeight: '120px', overflowY: 'auto' }}>
                             {customModels.map(m => (
-                                <div 
-                                    key={m}
-                                    onClick={() => handleSelectModel(m)}
-                                    style={{
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center',
-                                        padding: '4px 8px',
-                                        borderRadius: '4px',
-                                        background: m === model ? 'var(--interactive-accent)' : 'var(--background-primary)',
-                                        color: m === model ? 'var(--text-on-accent)' : 'var(--text-normal)',
-                                        cursor: 'pointer',
-                                        fontSize: '11px'
-                                    }}
-                                >
-                                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                        {m === model ? `✓ ${m}` : m}
-                                    </span>
-                                    <button
+                                <div key={m} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '3px 6px', background: 'var(--background-secondary)', borderRadius: '4px', fontSize: '11px' }}>
+                                    <span style={{ fontFamily: 'monospace', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{m}</span>
+                                    <button 
                                         onClick={(e) => handleDeleteModel(e, m)}
-                                        title={t("deleteFromList", language)}
-                                        style={{ background: 'transparent', border: 'none', color: m === model ? 'var(--text-on-accent)' : 'var(--text-muted)', cursor: 'pointer' }}
+                                        title={t("deleteModelTooltip", language)}
+                                        style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-error, #ff5555)', fontSize: '11px' }}
                                     >
-                                        🗑️
+                                        ✕
                                     </button>
                                 </div>
                             ))}
@@ -725,25 +704,23 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                             editingMsgIdx === idx ? (
                                 /* Inline Edit Form for User Message */
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', minWidth: '220px' }}>
-                                    <textarea
-                                        value={editingText}
+                                    <textarea 
+                                        value={editingText} 
                                         onChange={(e) => setEditingText(e.target.value)}
-                                        rows={3}
-                                        style={{ width: '100%', padding: '6px', borderRadius: '4px', border: '1px solid var(--background-modifier-border)', background: 'var(--background-primary)', color: 'var(--text-normal)', fontSize: '12px', resize: 'vertical' }}
+                                        style={{ width: '100%', minHeight: '60px', padding: '6px', borderRadius: '4px', border: '1px solid var(--background-modifier-border)', background: 'var(--background-primary)', color: 'var(--text-normal)', fontSize: '12px' }}
                                     />
                                     <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
-                                        <button
+                                        <button 
                                             onClick={() => setEditingMsgIdx(null)}
-                                            style={{ padding: '2px 8px', fontSize: '11px', background: 'transparent', border: '1px solid var(--text-on-accent)', color: 'var(--text-on-accent)', borderRadius: '4px', cursor: 'pointer' }}
+                                            style={{ padding: '3px 8px', fontSize: '11px', background: 'transparent', border: '1px solid var(--background-modifier-border)', color: 'inherit', borderRadius: '4px', cursor: 'pointer' }}
                                         >
-                                            {t("cancel", language)}
+                                            {t("cancelBtn", language)}
                                         </button>
-                                        <button
+                                        <button 
                                             onClick={() => handleSaveEdit(idx)}
-                                            disabled={loading}
-                                            style={{ padding: '2px 8px', fontSize: '11px', background: 'var(--background-primary)', color: 'var(--text-normal)', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+                                            style={{ padding: '3px 8px', fontSize: '11px', background: 'var(--background-primary)', color: 'var(--interactive-accent)', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
                                         >
-                                            {t("saveSend", language)}
+                                            {t("saveResendBtn", language)}
                                         </button>
                                     </div>
                                 </div>
@@ -760,7 +737,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                                     <div style={{ whiteSpace: 'pre-wrap' }}>{msg.content}</div>
                                     <div style={{ display: 'flex', gap: '6px', marginTop: '6px', justifyContent: 'flex-end', fontSize: '11px', flexWrap: 'wrap', maxWidth: '100%', opacity: 0.9 }}>
                                         <button
-                                            onClick={() => handleCopyText(msg.content || "")}
+                                            onClick={() => { void handleCopyText(msg.content || ""); }}
                                             title={t("copyText", language)}
                                             style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', padding: '2px 4px', borderRadius: '4px', fontSize: '11px', whiteSpace: 'nowrap' }}
                                         >
@@ -803,14 +780,14 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
 
                                 <div style={{ display: 'flex', gap: '6px', marginTop: '8px', alignItems: 'center', flexWrap: 'wrap', fontSize: '11px', maxWidth: '100%' }}>
                                     <button 
-                                        onClick={() => handleCopyText(msg.content || "")}
+                                        onClick={() => { void handleCopyText(msg.content || ""); }}
                                         style={{ background: 'var(--background-primary)', border: '1px solid var(--background-modifier-border)', borderRadius: '4px', cursor: 'pointer', padding: '3px 8px', color: 'var(--text-muted)', fontSize: '11px', whiteSpace: 'nowrap', maxWidth: '100%' }}
                                     >
                                         {t("copyText", language)}
                                     </button>
                                     {msg.content && msg.content.length > 50 && (
                                         <button 
-                                            onClick={() => handleSaveResponseAsNote(msg.content || "")}
+                                            onClick={() => { void handleSaveResponseAsNote(msg.content || ""); }}
                                             style={{ background: 'var(--background-primary)', border: '1px solid var(--background-modifier-border)', borderRadius: '4px', cursor: 'pointer', padding: '3px 8px', color: 'var(--text-muted)', fontSize: '11px', whiteSpace: 'nowrap', maxWidth: '100%' }}
                                         >
                                             {t("saveNote", language)}
@@ -822,69 +799,83 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                     </div>
                 ))}
 
-                {/* Safe Mode Confirmation Prompt */}
-                {pendingConfirmation && (
-                    <div style={{ background: 'var(--background-secondary-alt)', border: '2px solid var(--interactive-accent)', borderRadius: '8px', padding: '10px', fontSize: '12px' }}>
-                        <div style={{ fontWeight: 'bold', color: 'var(--text-warning, #ffaa00)', marginBottom: '4px' }}>
-                            {t("confirmTitle", language)}
+                {/* Active Execution Steps Log Component */}
+                {activeSteps.length > 0 && (
+                    <div style={{ background: 'var(--background-secondary-alt)', border: '1px solid var(--background-modifier-border)', borderRadius: '8px', padding: '8px 12px', fontSize: '11px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <div style={{ fontWeight: 'bold', color: 'var(--text-muted)', marginBottom: '2px' }}>
+                            ⚡ {t("agentReasoningLog", language)}
                         </div>
-                        <div>{t("confirmDetail", language)}</div>
-                        <div style={{ fontFamily: 'monospace', background: 'var(--background-primary)', padding: '4px 6px', borderRadius: '4px', margin: '6px 0', wordBreak: 'break-all' }}>
-                            {pendingConfirmation.toolName}({pendingConfirmation.argsStr})
-                        </div>
-                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '8px' }}>
-                            <button
-                                onClick={() => pendingConfirmation.resolve(false)}
-                                style={{ padding: '4px 10px', fontSize: '11px', background: 'var(--background-primary)', border: '1px solid var(--background-modifier-border)', borderRadius: '4px', cursor: 'pointer' }}
-                            >
-                                {t("deny", language)}
-                            </button>
-                            <button
-                                onClick={() => pendingConfirmation.resolve(true)}
-                                style={{ padding: '4px 10px', fontSize: '11px', background: 'var(--interactive-accent)', color: 'var(--text-on-accent)', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
-                            >
-                                {t("allow", language)}
-                            </button>
-                        </div>
+                        {activeSteps.map((step) => (
+                            <div key={step.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', opacity: step.status === 'running' ? 1 : 0.8 }}>
+                                <span>{step.status === 'running' ? '⏳' : step.status === 'completed' ? '✅' : '❌'}</span>
+                                <div style={{ flex: 1 }}>
+                                    <strong style={{ color: 'var(--text-normal)' }}>{step.title}</strong>
+                                    {step.detail && (
+                                        <div style={{ color: 'var(--text-muted)', fontSize: '10px', marginTop: '2px', fontFamily: 'monospace', whiteSpace: 'pre-wrap', maxHeight: '80px', overflowY: 'auto' }}>
+                                            {step.detail}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 )}
 
-                {/* Active Agent Steps Execution Badges */}
-                {loading && (
-                    <div style={{ background: 'var(--background-secondary)', padding: '10px', borderRadius: '8px', fontSize: '12px', borderLeft: '3px solid var(--interactive-accent)' }}>
-                        <div style={{ fontWeight: 'bold', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <span>⚡</span>
-                            <span>{t("agentRunning", language)}</span>
+                {/* Pending Tool Action Approval Modal */}
+                {pendingConfirmation && (
+                    <div style={{ background: 'var(--background-secondary)', border: '2px solid var(--interactive-accent)', borderRadius: '8px', padding: '12px', marginTop: '6px', fontSize: '12px' }}>
+                        <div style={{ fontWeight: 'bold', marginBottom: '6px', color: 'var(--text-normal)' }}>
+                            ⚠️ {t("actionConfirmation", language)}
                         </div>
-                        {activeSteps.map(step => (
-                            <div key={step.id} style={{ marginTop: '4px', color: step.status === 'failed' ? 'var(--text-error)' : 'var(--text-muted)' }}>
-                                <span>{step.status === 'running' ? '⏳' : step.status === 'completed' ? '✅' : '❌'} </span>
-                                <strong>{step.title}</strong>
-                                {step.detail && <div style={{ fontSize: '11px', opacity: 0.8, marginLeft: '16px', whiteSpace: 'pre-wrap' }}>{step.detail.substring(0, 300)}</div>}
-                            </div>
-                        ))}
+                        <div style={{ marginBottom: '4px' }}>
+                            {t("agentWantsExecute", language)}: <code>{pendingConfirmation.toolName}</code>
+                        </div>
+                        <div style={{ background: 'var(--background-primary)', padding: '6px', borderRadius: '4px', fontFamily: 'monospace', fontSize: '11px', marginBottom: '10px', whiteSpace: 'pre-wrap', maxHeight: '100px', overflowY: 'auto' }}>
+                            {pendingConfirmation.argsStr}
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                            <button
+                                onClick={() => {
+                                    pendingConfirmation.resolve(false);
+                                    setPendingConfirmation(null);
+                                }}
+                                style={{ padding: '4px 12px', background: 'transparent', border: '1px solid var(--background-modifier-border)', borderRadius: '4px', cursor: 'pointer' }}
+                            >
+                                {t("cancelBtn", language)}
+                            </button>
+                            <button
+                                onClick={() => {
+                                    pendingConfirmation.resolve(true);
+                                    setPendingConfirmation(null);
+                                }}
+                                style={{ padding: '4px 12px', background: 'var(--interactive-accent)', color: 'var(--text-on-accent)', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+                            >
+                                {t("allowBtn", language)}
+                            </button>
+                        </div>
                     </div>
                 )}
             </div>
 
-            {/* Input Form with Attachment Preview */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                {attachedImages.length > 0 && (
-                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                        {attachedImages.map((img, i) => (
-                            <div key={i} style={{ position: 'relative', width: '44px', height: '44px', borderRadius: '4px', overflow: 'hidden', border: '1px solid var(--background-modifier-border)' }}>
-                                <img src={img} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                <button
-                                    onClick={() => setAttachedImages(prev => prev.filter((_, idx) => idx !== i))}
-                                    style={{ position: 'absolute', top: 0, right: 0, background: 'rgba(0,0,0,0.6)', color: '#fff', border: 'none', cursor: 'pointer', fontSize: '9px', padding: '1px 3px' }}
-                                >
-                                    ✕
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                )}
+            {/* Attached Image Previews Bar */}
+            {attachedImages.length > 0 && (
+                <div style={{ display: 'flex', gap: '6px', padding: '6px', background: 'var(--background-secondary)', borderRadius: '6px', marginBottom: '6px', flexWrap: 'wrap' }}>
+                    {attachedImages.map((img, idx) => (
+                        <div key={idx} style={{ position: 'relative' }}>
+                            <img src={img} style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '4px' }} />
+                            <button 
+                                onClick={() => setAttachedImages(prev => prev.filter((_, i) => i !== idx))}
+                                style={{ position: 'absolute', top: '-4px', right: '-4px', background: 'var(--text-error, #ff5555)', color: '#fff', border: 'none', borderRadius: '50%', width: '16px', height: '16px', fontSize: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                            >
+                                ✕
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            )}
 
+            {/* Bottom Query Input Box */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <div style={{ display: 'flex', gap: '6px', alignItems: 'flex-end' }}>
                     <label 
                         title={t("attachTooltip", language)}

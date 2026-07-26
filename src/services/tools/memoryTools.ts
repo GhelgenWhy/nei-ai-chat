@@ -48,16 +48,19 @@ export const memoryToolDefinitions: ToolDefinition[] = [
 ];
 
 export const memoryExecutors: Record<string, ToolExecutor> = {
-    save_to_memory: async (app: App, args: { fact: string }) => {
+    save_to_memory: async (app: App, rawArgs: Record<string, unknown>) => {
+        const args = rawArgs as { fact: string };
         try {
             await MemoryStore.addFact(app, args.fact);
             return `Успех: Факт '${args.fact}' сохранен в долгосрочную память агента (.nei/memory.json).`;
-        } catch (e: any) {
-            return `Ошибка сохранения в память: ${e?.message || e}`;
+        } catch (e: unknown) {
+            const err = e as { message?: string };
+            return `Ошибка сохранения в память: ${err?.message || String(e)}`;
         }
     },
 
-    create_agent_skill: async (app: App, args: { skillName: string; description: string; instructions: string }) => {
+    create_agent_skill: async (app: App, rawArgs: Record<string, unknown>) => {
+        const args = rawArgs as { skillName: string; description: string; instructions: string };
         const cleanName = args.skillName.toLowerCase().replace(/[^a-z0-9_-]/g, "_");
         const skillPath = `.nei/skills/${cleanName}/SKILL.md`;
 
@@ -84,8 +87,9 @@ ${args.instructions}
 
             await app.vault.create(skillPath, content);
             return `Успех: Создан новый скилл ИИ '${cleanName}' по пути '${skillPath}'.`;
-        } catch (e: any) {
-            return `Ошибка создания скилла: ${e?.message || e}`;
+        } catch (e: unknown) {
+            const err = e as { message?: string };
+            return `Ошибка создания скилла: ${err?.message || String(e)}`;
         }
     }
 };

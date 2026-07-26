@@ -1,18 +1,18 @@
 import { App, TFile, TFolder, normalizePath } from "obsidian";
-import { ToolDefinition, ToolExecutor } from "./types";
+import { ToolDefinition, ToolExecutor, ToolExecutionResult } from "./types";
 
 export const vaultToolDefinitions: ToolDefinition[] = [
     {
         type: "function",
         function: {
             name: "read_note",
-            description: "Прочитать содержимое одной заметки из Obsidian по пути или названию файла.",
+            description: "Прочитать содержимое заметки Markdown по её относительному пути или имени.",
             parameters: {
                 type: "object",
                 properties: {
                     path: {
                         type: "string",
-                        description: "Путь к файлу или имя заметки (например, 'Tasks/Task1.md' или 'Task1')"
+                        description: "Путь к файлу или имя заметки (например, 'tasks/task1.md' или 'task1')"
                     }
                 },
                 required: ["path"]
@@ -23,14 +23,13 @@ export const vaultToolDefinitions: ToolDefinition[] = [
         type: "function",
         function: {
             name: "read_notes_batch",
-            description: "Пакетное чтение нескольких заметок за один вызов.",
+            description: "Пакетное чтение сразу нескольких заметок Ваулта за один вызов.",
             parameters: {
                 type: "object",
                 properties: {
                     paths: {
-                        type: "array",
-                        items: { type: "string" },
-                        description: "Массив путей или названий файлов для чтения"
+                        type: "string",
+                        description: "Массив путей к заметкам"
                     }
                 },
                 required: ["paths"]
@@ -41,17 +40,17 @@ export const vaultToolDefinitions: ToolDefinition[] = [
         type: "function",
         function: {
             name: "get_folder_notes",
-            description: "Получить список и содержимое всех заметок в указанной папке (например, 'tasks' или 'Projects'). Регистронезависимо.",
+            description: "Пакетно прочитать и проанализировать ВСЕ заметки в указанной папке (например, 'tasks' или 'Projects'). Отличный инструмент для выжимок и обзора проектов.",
             parameters: {
                 type: "object",
                 properties: {
                     folderPath: {
                         type: "string",
-                        description: "Название или путь к папке (например, 'tasks' или 'Tasks')"
+                        description: "Относительный путь к папке в ваулте (например, 'tasks' или 'Notes/Study')"
                     },
                     includeContent: {
-                        type: "boolean",
-                        description: "Включать ли полный текст каждой заметки (по умолчанию true)"
+                        type: "string",
+                        description: "Включать ли полное содержимое каждой заметки (по умолчанию true)"
                     }
                 },
                 required: ["folderPath"]
@@ -62,17 +61,17 @@ export const vaultToolDefinitions: ToolDefinition[] = [
         type: "function",
         function: {
             name: "create_note",
-            description: "Создать новую заметку в Ваулте Obsidian.",
+            description: "Создать новую заметку Markdown в ваулте с содержимым.",
             parameters: {
                 type: "object",
                 properties: {
                     path: {
                         type: "string",
-                        description: "Путь к файлу (например, 'Tasks/Summary.md')"
+                        description: "Путь к создаваемой заметке (например, 'Folder/NewNote.md')"
                     },
                     content: {
                         type: "string",
-                        description: "Содержимое заметки в формате Markdown"
+                        description: "Текст заметки в формате Markdown"
                     }
                 },
                 required: ["path", "content"]
@@ -83,21 +82,21 @@ export const vaultToolDefinitions: ToolDefinition[] = [
         type: "function",
         function: {
             name: "edit_note",
-            description: "Редактировать существующую заметку в Ваулте Obsidian.",
+            description: "Редактировать существующую заметку (заменить всё содержимое или конкретную фрагментную строку).",
             parameters: {
                 type: "object",
                 properties: {
                     path: {
                         type: "string",
-                        description: "Путь к редактируемой заметке"
+                        description: "Путь к заметке для редактирования"
                     },
                     newContent: {
                         type: "string",
-                        description: "Новое содержимое заметки"
+                        description: "Новый текст для вставки"
                     },
                     targetText: {
                         type: "string",
-                        description: "Опционально: фрагмент текста для заменяемого блока"
+                        description: "Необязательно. Если указано, будет заменен только этот точный фрагмент текста в заметке."
                     }
                 },
                 required: ["path", "newContent"]
@@ -108,7 +107,7 @@ export const vaultToolDefinitions: ToolDefinition[] = [
         type: "function",
         function: {
             name: "rename_note",
-            description: "Переименовать или переместить заметку в Ваулте.",
+            description: "Переименовать или переместить заметку в новую папку.",
             parameters: {
                 type: "object",
                 properties: {
@@ -118,7 +117,7 @@ export const vaultToolDefinitions: ToolDefinition[] = [
                     },
                     newPath: {
                         type: "string",
-                        description: "Новый путь к заметке"
+                        description: "Новый путь/имя для заметки"
                     }
                 },
                 required: ["oldPath", "newPath"]
@@ -129,13 +128,13 @@ export const vaultToolDefinitions: ToolDefinition[] = [
         type: "function",
         function: {
             name: "delete_note",
-            description: "Удалить заметку из Ваулта Obsidian.",
+            description: "Поместить заметку в корзину (trash).",
             parameters: {
                 type: "object",
                 properties: {
                     path: {
                         type: "string",
-                        description: "Путь к удаляемой заметке"
+                        description: "Путь к заметке"
                     }
                 },
                 required: ["path"]
@@ -146,17 +145,17 @@ export const vaultToolDefinitions: ToolDefinition[] = [
         type: "function",
         function: {
             name: "list_notes",
-            description: "Получить список файлов и папок в директории Ваулта (регистронезависимо).",
+            description: "Получить список файлов и подпапок в конкретной папке ваулта.",
             parameters: {
                 type: "object",
                 properties: {
                     folderPath: {
                         type: "string",
-                        description: "Путь к папке (оставьте пустым для корня ваулта '')"
+                        description: "Путь к папке (пустое значение для корня Ваулта)"
                     },
                     recursive: {
-                        type: "boolean",
-                        description: "Искать ли вложенные папки рекурсивно"
+                        type: "string",
+                        description: "Рекурсивный обход подпапок"
                     }
                 }
             }
@@ -166,7 +165,7 @@ export const vaultToolDefinitions: ToolDefinition[] = [
         type: "function",
         function: {
             name: "search_notes",
-            description: "Поиск заметок по текстам, ключевым словам или именам.",
+            description: "Поиск по ключевым словам/тексту во всех заметках Ваулта.",
             parameters: {
                 type: "object",
                 properties: {
@@ -175,8 +174,8 @@ export const vaultToolDefinitions: ToolDefinition[] = [
                         description: "Поисковый запрос"
                     },
                     maxResults: {
-                        type: "number",
-                        description: "Максимальное число заметок"
+                        type: "string",
+                        description: "Максимальное количество результатов (по умолчанию 10)"
                     }
                 },
                 required: ["query"]
@@ -187,13 +186,13 @@ export const vaultToolDefinitions: ToolDefinition[] = [
         type: "function",
         function: {
             name: "search_by_tag",
-            description: "Найти все заметки, содержащие определенный тег (например, '#task' или 'task').",
+            description: "Найти все заметки, содержащие конкретный тег.",
             parameters: {
                 type: "object",
                 properties: {
                     tag: {
                         type: "string",
-                        description: "Название тега с символом # или без"
+                        description: "Тег для поиска (например, '#project' или 'study')"
                     }
                 },
                 required: ["tag"]
@@ -204,7 +203,7 @@ export const vaultToolDefinitions: ToolDefinition[] = [
         type: "function",
         function: {
             name: "get_all_tags",
-            description: "Получить список всех тегов, используемых в Ваулте Obsidian.",
+            description: "Получить список всех тегов ваулта с подсчетом заметок.",
             parameters: {
                 type: "object",
                 properties: {}
@@ -214,14 +213,35 @@ export const vaultToolDefinitions: ToolDefinition[] = [
     {
         type: "function",
         function: {
+            name: "diff_note",
+            description: "Предложить безопасное изменение заметки с интерактивным просмотром Diff перед применением.",
+            parameters: {
+                type: "object",
+                properties: {
+                    path: {
+                        type: "string",
+                        description: "Путь к заметке"
+                    },
+                    newContent: {
+                        type: "string",
+                        description: "Предлагаемое новое содержимое заметки"
+                    }
+                },
+                required: ["path", "newContent"]
+            }
+        }
+    },
+    {
+        type: "function",
+        function: {
             name: "execute_obsidian_command",
-            description: "Выполнить внутреннюю команду Obsidian по ID (например, 'app:open-vault-settings' или команды других плагинов).",
+            description: "Выполнить любую внутреннюю команду Obsidian по её ID (например, 'theme:toggle-dark' или 'canvas:new-file').",
             parameters: {
                 type: "object",
                 properties: {
                     commandId: {
                         type: "string",
-                        description: "Идентификатор команды Obsidian"
+                        description: "ID команды Obsidian"
                     }
                 },
                 required: ["commandId"]
@@ -232,13 +252,13 @@ export const vaultToolDefinitions: ToolDefinition[] = [
         type: "function",
         function: {
             name: "analyze_vault_graph",
-            description: "Анализ связей графа заметок ([[wikilinks]]) и поиск изолированных заметок.",
+            description: "Проанализировать граф связей Ваулта: найти изолированные заметки (без входящих/исходящих ссылок), наименее и наиболее связанные заметки.",
             parameters: {
                 type: "object",
                 properties: {
                     folderPath: {
                         type: "string",
-                        description: "Область анализа"
+                        description: "Необязательно. Ограничить анализ конкретной папкой."
                     }
                 }
             }
@@ -246,65 +266,48 @@ export const vaultToolDefinitions: ToolDefinition[] = [
     }
 ];
 
-function findFile(app: App, pathStr: string): TFile | null {
-    if (!pathStr) return null;
-    let cleanPath = normalizePath(pathStr);
+function findFile(app: App, rawPath: string): TFile | null {
+    let cleanPath = normalizePath(rawPath.trim());
     if (!cleanPath.endsWith(".md")) {
-        cleanPath += ".md";
+        const fileWithMd = app.vault.getFileByPath(cleanPath + ".md");
+        if (fileWithMd) return fileWithMd;
     }
-    
-    const file = app.vault.getAbstractFileByPath(cleanPath);
-    if (file instanceof TFile) return file;
+    const exact = app.vault.getFileByPath(cleanPath);
+    if (exact) return exact;
 
-    // Fallback 1: Exact case-insensitive match
-    const allFiles = app.vault.getMarkdownFiles();
-    const matchedExactCase = allFiles.find(f => f.path.toLowerCase() === cleanPath.toLowerCase());
-    if (matchedExactCase) return matchedExactCase;
+    const files = app.vault.getMarkdownFiles();
+    const cleanLower = cleanPath.toLowerCase();
 
-    // Fallback 2: Search by basename
-    const baseName = pathStr.replace(/\.md$/, "").split("/").pop()?.toLowerCase();
-    if (baseName) {
-        const matched = allFiles.find(f => f.basename.toLowerCase() === baseName);
-        if (matched) return matched;
-    }
-    
-    return null;
+    const matched = files.find(f => 
+        f.basename.toLowerCase() === cleanLower || 
+        f.path.toLowerCase() === cleanLower ||
+        f.path.toLowerCase().endsWith("/" + cleanLower)
+    );
+
+    return matched || null;
 }
 
-function findFolder(app: App, folderPathStr: string): TFolder | null {
-    if (!folderPathStr || folderPathStr.trim() === "" || folderPathStr === "/") {
+function findFolder(app: App, rawPath: string): TFolder | null {
+    let cleanPath = normalizePath(rawPath.trim());
+    if (!cleanPath || cleanPath === "/" || cleanPath === ".") {
         return app.vault.getRoot();
     }
-    const cleanPath = normalizePath(folderPathStr).toLowerCase();
-    
-    const root = app.vault.getRoot();
-    if (root.path.toLowerCase() === cleanPath) return root;
+    const folder = app.vault.getFolderByPath(cleanPath);
+    if (folder) return folder;
 
-    // Direct check
-    const direct = app.vault.getAbstractFileByPath(normalizePath(folderPathStr));
-    if (direct instanceof TFolder) return direct;
-
-    // Case-insensitive search across all vault folders
-    const allFolders: TFolder[] = [];
-    const collectFolders = (folder: TFolder) => {
-        allFolders.push(folder);
-        for (const child of folder.children) {
-            if (child instanceof TFolder) collectFolders(child);
-        }
-    };
-    collectFolders(root);
-
+    const allFolders = app.vault.getAllLoadedFiles().filter((f): f is TFolder => f instanceof TFolder);
     const matched = allFolders.find(f => 
-        f.path.toLowerCase() === cleanPath || 
-        f.name.toLowerCase() === cleanPath ||
-        f.path.toLowerCase().endsWith("/" + cleanPath)
+        f.name.toLowerCase() === cleanPath.toLowerCase() ||
+        f.path.toLowerCase() === cleanPath.toLowerCase() ||
+        f.path.toLowerCase().endsWith("/" + cleanPath.toLowerCase())
     );
 
     return matched || null;
 }
 
 export const vaultExecutors: Record<string, ToolExecutor> = {
-    read_note: async (app: App, args: { path: string }) => {
+    read_note: async (app: App, rawArgs: Record<string, unknown>) => {
+        const args = rawArgs as { path: string };
         const file = findFile(app, args.path);
         if (!file) {
             return `Ошибка: Заметка '${args.path}' не найдена в Ваулте.`;
@@ -312,12 +315,14 @@ export const vaultExecutors: Record<string, ToolExecutor> = {
         try {
             const content = await app.vault.read(file);
             return `--- Заметка: ${file.path} ---\n${content}`;
-        } catch (e: any) {
-            return `Ошибка чтения заметки '${args.path}': ${e?.message || e}`;
+        } catch (e: unknown) {
+            const err = e as { message?: string };
+            return `Ошибка чтения заметки '${args.path}': ${err?.message || String(e)}`;
         }
     },
 
-    read_notes_batch: async (app: App, args: { paths: string[] }) => {
+    read_notes_batch: async (app: App, rawArgs: Record<string, unknown>) => {
+        const args = rawArgs as { paths: string[] };
         if (!args.paths || args.paths.length === 0) {
             return "Ошибка: Не переданы пути для чтения.";
         }
@@ -328,8 +333,9 @@ export const vaultExecutors: Record<string, ToolExecutor> = {
                 try {
                     const content = await app.vault.read(file);
                     results.push(`=== ФАЙЛ: ${file.path} ===\n${content}`);
-                } catch (e: any) {
-                    results.push(`=== ФАЙЛ: ${p} === (Ошибка чтения: ${e?.message})`);
+                } catch (e: unknown) {
+                    const err = e as { message?: string };
+                    results.push(`=== ФАЙЛ: ${p} === (Ошибка чтения: ${err?.message || String(e)})`);
                 }
             } else {
                 results.push(`=== ФАЙЛ: ${p} === (Файл не найден)`);
@@ -338,7 +344,8 @@ export const vaultExecutors: Record<string, ToolExecutor> = {
         return results.join("\n\n");
     },
 
-    get_folder_notes: async (app: App, args: { folderPath: string; includeContent?: boolean }) => {
+    get_folder_notes: async (app: App, rawArgs: Record<string, unknown>) => {
+        const args = rawArgs as { folderPath: string; includeContent?: boolean };
         const folder = findFolder(app, args.folderPath);
         if (!folder) {
             return `Ошибка: Папка '${args.folderPath}' не найдена в Ваулте.`;
@@ -369,7 +376,7 @@ export const vaultExecutors: Record<string, ToolExecutor> = {
                 try {
                     const content = await app.vault.read(file);
                     output.push(`--- ЗАМЕТКА: ${file.path} ---\n${content}\n`);
-                } catch (e: any) {
+                } catch (e: unknown) {
                     output.push(`--- ЗАМЕТКА: ${file.path} (Ошибка чтения) ---\n`);
                 }
             } else {
@@ -380,7 +387,8 @@ export const vaultExecutors: Record<string, ToolExecutor> = {
         return output.join("\n");
     },
 
-    create_note: async (app: App, args: { path: string; content: string }) => {
+    create_note: async (app: App, rawArgs: Record<string, unknown>) => {
+        const args = rawArgs as { path: string; content: string };
         let path = normalizePath(args.path);
         if (!path.endsWith(".md")) path += ".md";
 
@@ -402,12 +410,14 @@ export const vaultExecutors: Record<string, ToolExecutor> = {
         try {
             const created = await app.vault.create(path, args.content);
             return `Успех: Создана новая заметка '${created.path}'.`;
-        } catch (e: any) {
-            return `Ошибка создания заметки: ${e?.message || e}`;
+        } catch (e: unknown) {
+            const err = e as { message?: string };
+            return `Ошибка создания заметки: ${err?.message || String(e)}`;
         }
     },
 
-    edit_note: async (app: App, args: { path: string; newContent: string; targetText?: string }) => {
+    edit_note: async (app: App, rawArgs: Record<string, unknown>) => {
+        const args = rawArgs as { path: string; newContent: string; targetText?: string };
         const file = findFile(app, args.path);
         if (!file) {
             return `Ошибка: Файл '${args.path}' не найден.`;
@@ -423,12 +433,14 @@ export const vaultExecutors: Record<string, ToolExecutor> = {
 
             await app.vault.modify(file, finalContent);
             return `Успешно обновлена заметка '${file.path}'.`;
-        } catch (e: any) {
-            return `Ошибка редактирования заметки '${args.path}': ${e?.message || e}`;
+        } catch (e: unknown) {
+            const err = e as { message?: string };
+            return `Ошибка редактирования заметки '${args.path}': ${err?.message || String(e)}`;
         }
     },
 
-    rename_note: async (app: App, args: { oldPath: string; newPath: string }) => {
+    rename_note: async (app: App, rawArgs: Record<string, unknown>) => {
+        const args = rawArgs as { oldPath: string; newPath: string };
         const file = findFile(app, args.oldPath);
         if (!file) return `Ошибка: Файл '${args.oldPath}' не найден.`;
 
@@ -438,24 +450,28 @@ export const vaultExecutors: Record<string, ToolExecutor> = {
         try {
             await app.fileManager.renameFile(file, targetPath);
             return `Успешно переименован файл '${file.path}' -> '${targetPath}'.`;
-        } catch (e: any) {
-            return `Ошибка переименования: ${e?.message || e}`;
+        } catch (e: unknown) {
+            const err = e as { message?: string };
+            return `Ошибка переименования: ${err?.message || String(e)}`;
         }
     },
 
-    delete_note: async (app: App, args: { path: string }) => {
+    delete_note: async (app: App, rawArgs: Record<string, unknown>) => {
+        const args = rawArgs as { path: string };
         const file = findFile(app, args.path);
         if (!file) return `Ошибка: Файл '${args.path}' не найден.`;
 
         try {
             await app.fileManager.trashFile(file);
             return `Успешно помещен в корзину файл '${file.path}'.`;
-        } catch (e: any) {
-            return `Ошибка удаления: ${e?.message || e}`;
+        } catch (e: unknown) {
+            const err = e as { message?: string };
+            return `Ошибка удаления: ${err?.message || String(e)}`;
         }
     },
 
-    list_notes: async (app: App, args: { folderPath?: string; recursive?: boolean }) => {
+    list_notes: async (app: App, rawArgs: Record<string, unknown>) => {
+        const args = rawArgs as { folderPath?: string; recursive?: boolean };
         const folder = findFolder(app, args.folderPath || "");
         if (!folder) {
             return `Ошибка: Папка '${args.folderPath}' не найдена.`;
@@ -476,7 +492,8 @@ export const vaultExecutors: Record<string, ToolExecutor> = {
         return `Содержимое папки '${folder.path}':\n` + items.join("\n");
     },
 
-    search_notes: async (app: App, args: { query: string; maxResults?: number }) => {
+    search_notes: async (app: App, rawArgs: Record<string, unknown>) => {
+        const args = rawArgs as { query: string; maxResults?: number };
         const limit = args.maxResults || 10;
         const queryLower = args.query.toLowerCase();
         const files = app.vault.getMarkdownFiles();
@@ -511,7 +528,8 @@ export const vaultExecutors: Record<string, ToolExecutor> = {
             results.map(r => `- **${r.path}**: ${r.snippet}`).join("\n");
     },
 
-    search_by_tag: async (app: App, args: { tag: string }) => {
+    search_by_tag: async (app: App, rawArgs: Record<string, unknown>) => {
+        const args = rawArgs as { tag: string };
         const cleanTag = args.tag.startsWith("#") ? args.tag.toLowerCase() : "#" + args.tag.toLowerCase();
         const files = app.vault.getMarkdownFiles();
         const matched: string[] = [];
@@ -519,10 +537,10 @@ export const vaultExecutors: Record<string, ToolExecutor> = {
         for (const file of files) {
             const cache = app.metadataCache.getFileCache(file);
             const tagsInFile = (cache?.tags || []).map(t => t.tag.toLowerCase());
-            const frontmatterTags = (cache?.frontmatter?.tags || []);
+            const frontmatterTags = (cache?.frontmatter?.tags || []) as string[] | string;
             const normalizedFmTags = Array.isArray(frontmatterTags) 
-                ? frontmatterTags.map((t: string) => t.startsWith("#") ? t.toLowerCase() : "#" + t.toLowerCase())
-                : [];
+                ? frontmatterTags.map(t => t.startsWith("#") ? t.toLowerCase() : "#" + t.toLowerCase())
+                : (typeof frontmatterTags === "string" ? [frontmatterTags.startsWith("#") ? frontmatterTags.toLowerCase() : "#" + frontmatterTags.toLowerCase()] : []);
 
             if (tagsInFile.includes(cleanTag) || normalizedFmTags.includes(cleanTag)) {
                 matched.push(file.path);
@@ -554,20 +572,49 @@ export const vaultExecutors: Record<string, ToolExecutor> = {
         return "Список тегов в Ваулте:\n" + entries.map(([tag, count]) => `- ${tag} (${count} заметок)`).join("\n");
     },
 
-    execute_obsidian_command: async (app: App, args: { commandId: string }) => {
+    diff_note: async (app: App, rawArgs: Record<string, unknown>): Promise<ToolExecutionResult> => {
+        const args = rawArgs as { path: string; newContent: string };
+        const file = findFile(app, args.path);
+        let oldContent = "";
+        if (file) {
+            try {
+                oldContent = await app.vault.read(file);
+            } catch (e: unknown) {
+                /* ignore read error */
+            }
+        }
+
+        return {
+            toolCallId: "diff-" + Date.now(),
+            name: "diff_note",
+            result: `Запрошено подтверждение изменений для заметки '${args.path}'.`,
+            requiresApproval: true,
+            diffPreview: {
+                filePath: file ? file.path : args.path,
+                oldContent,
+                newContent: args.newContent
+            }
+        };
+    },
+
+    execute_obsidian_command: async (app: App, rawArgs: Record<string, unknown>) => {
+        const args = rawArgs as { commandId: string };
         try {
-            const result = (app as any).commands?.executeCommandById(args.commandId);
+            const appCommands = app as unknown as { commands?: { executeCommandById: (id: string) => boolean } };
+            const result = appCommands.commands?.executeCommandById(args.commandId);
             if (result !== false) {
                 return `Успешно выполнена команда Obsidian '${args.commandId}'.`;
             } else {
                 return `Команда '${args.commandId}' не вернула положительный результат (возможно не активна в данном контексте).`;
             }
-        } catch (e: any) {
-            return `Ошибка выполнения команды '${args.commandId}': ${e?.message || e}`;
+        } catch (e: unknown) {
+            const err = e as { message?: string };
+            return `Ошибка выполнения команды '${args.commandId}': ${err?.message || String(e)}`;
         }
     },
 
-    analyze_vault_graph: async (app: App, args: { folderPath?: string }) => {
+    analyze_vault_graph: async (app: App, rawArgs: Record<string, unknown>) => {
+        const args = rawArgs as { folderPath?: string };
         const files = app.vault.getMarkdownFiles();
         let orphanCount = 0;
         const totalFiles = files.length;
@@ -576,25 +623,39 @@ export const vaultExecutors: Record<string, ToolExecutor> = {
         const resolvedLinks = app.metadataCache.resolvedLinks;
 
         for (const file of files) {
+            if (args.folderPath && !file.path.startsWith(args.folderPath)) continue;
+
             const outgoing = Object.keys(resolvedLinks[file.path] || {});
             let incomingCount = 0;
-            for (const otherPath in resolvedLinks) {
-                if (resolvedLinks[otherPath][file.path]) {
+
+            for (const otherFile of files) {
+                if (otherFile.path === file.path) continue;
+                const links = resolvedLinks[otherFile.path] || {};
+                if (links[file.path]) {
                     incomingCount++;
                 }
             }
 
             if (outgoing.length === 0 && incomingCount === 0) {
                 orphanCount++;
-                if (orphanFiles.length < 15) {
-                    orphanFiles.push(file.path);
-                }
+                orphanFiles.push(file.path);
             }
         }
 
-        return `Анализ графа Ваулта:
-- Всего заметок: ${totalFiles}
-- Изолированных заметок (без входящих и исходящих связей): ${orphanCount}
-${orphanFiles.length > 0 ? `- Примеры изолированных заметок:\n  ${orphanFiles.join("\n  ")}` : ""}`;
+        let report = `=== АНАЛИЗ ГРАФА СВЯЗЕЙ ВАУЛТА ===\n`;
+        report += `Всего проанализировано заметок: ${totalFiles}\n`;
+        report += `Изолированных заметок (Orphans, без входящих и исходящих ссылок): ${orphanCount}\n\n`;
+
+        if (orphanFiles.length > 0) {
+            report += `Список изолированных заметок (первые 15):\n`;
+            report += orphanFiles.slice(0, 15).map(p => `- 📄 ${p}`).join("\n");
+            if (orphanFiles.length > 15) {
+                report += `\n...и ещё ${orphanFiles.length - 15} заметок.`;
+            }
+        } else {
+            report += `Все заметки в Ваулте связаны ссылками! Отличная структура базы знаний.`;
+        }
+
+        return report;
     }
 };

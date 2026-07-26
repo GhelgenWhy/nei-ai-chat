@@ -24581,13 +24581,13 @@ var vaultToolDefinitions = [
     type: "function",
     function: {
       name: "read_note",
-      description: "\u041F\u0440\u043E\u0447\u0438\u0442\u0430\u0442\u044C \u0441\u043E\u0434\u0435\u0440\u0436\u0438\u043C\u043E\u0435 \u043E\u0434\u043D\u043E\u0439 \u0437\u0430\u043C\u0435\u0442\u043A\u0438 \u0438\u0437 Obsidian \u043F\u043E \u043F\u0443\u0442\u0438 \u0438\u043B\u0438 \u043D\u0430\u0437\u0432\u0430\u043D\u0438\u044E \u0444\u0430\u0439\u043B\u0430.",
+      description: "\u041F\u0440\u043E\u0447\u0438\u0442\u0430\u0442\u044C \u0441\u043E\u0434\u0435\u0440\u0436\u0438\u043C\u043E\u0435 \u0437\u0430\u043C\u0435\u0442\u043A\u0438 Markdown \u043F\u043E \u0435\u0451 \u043E\u0442\u043D\u043E\u0441\u0438\u0442\u0435\u043B\u044C\u043D\u043E\u043C\u0443 \u043F\u0443\u0442\u0438 \u0438\u043B\u0438 \u0438\u043C\u0435\u043D\u0438.",
       parameters: {
         type: "object",
         properties: {
           path: {
             type: "string",
-            description: "\u041F\u0443\u0442\u044C \u043A \u0444\u0430\u0439\u043B\u0443 \u0438\u043B\u0438 \u0438\u043C\u044F \u0437\u0430\u043C\u0435\u0442\u043A\u0438 (\u043D\u0430\u043F\u0440\u0438\u043C\u0435\u0440, 'Tasks/Task1.md' \u0438\u043B\u0438 'Task1')"
+            description: "\u041F\u0443\u0442\u044C \u043A \u0444\u0430\u0439\u043B\u0443 \u0438\u043B\u0438 \u0438\u043C\u044F \u0437\u0430\u043C\u0435\u0442\u043A\u0438 (\u043D\u0430\u043F\u0440\u0438\u043C\u0435\u0440, 'tasks/task1.md' \u0438\u043B\u0438 'task1')"
           }
         },
         required: ["path"]
@@ -24598,14 +24598,13 @@ var vaultToolDefinitions = [
     type: "function",
     function: {
       name: "read_notes_batch",
-      description: "\u041F\u0430\u043A\u0435\u0442\u043D\u043E\u0435 \u0447\u0442\u0435\u043D\u0438\u0435 \u043D\u0435\u0441\u043A\u043E\u043B\u044C\u043A\u0438\u0445 \u0437\u0430\u043C\u0435\u0442\u043E\u043A \u0437\u0430 \u043E\u0434\u0438\u043D \u0432\u044B\u0437\u043E\u0432.",
+      description: "\u041F\u0430\u043A\u0435\u0442\u043D\u043E\u0435 \u0447\u0442\u0435\u043D\u0438\u0435 \u0441\u0440\u0430\u0437\u0443 \u043D\u0435\u0441\u043A\u043E\u043B\u044C\u043A\u0438\u0445 \u0437\u0430\u043C\u0435\u0442\u043E\u043A \u0412\u0430\u0443\u043B\u0442\u0430 \u0437\u0430 \u043E\u0434\u0438\u043D \u0432\u044B\u0437\u043E\u0432.",
       parameters: {
         type: "object",
         properties: {
           paths: {
-            type: "array",
-            items: { type: "string" },
-            description: "\u041C\u0430\u0441\u0441\u0438\u0432 \u043F\u0443\u0442\u0435\u0439 \u0438\u043B\u0438 \u043D\u0430\u0437\u0432\u0430\u043D\u0438\u0439 \u0444\u0430\u0439\u043B\u043E\u0432 \u0434\u043B\u044F \u0447\u0442\u0435\u043D\u0438\u044F"
+            type: "string",
+            description: "\u041C\u0430\u0441\u0441\u0438\u0432 \u043F\u0443\u0442\u0435\u0439 \u043A \u0437\u0430\u043C\u0435\u0442\u043A\u0430\u043C"
           }
         },
         required: ["paths"]
@@ -24616,17 +24615,17 @@ var vaultToolDefinitions = [
     type: "function",
     function: {
       name: "get_folder_notes",
-      description: "\u041F\u043E\u043B\u0443\u0447\u0438\u0442\u044C \u0441\u043F\u0438\u0441\u043E\u043A \u0438 \u0441\u043E\u0434\u0435\u0440\u0436\u0438\u043C\u043E\u0435 \u0432\u0441\u0435\u0445 \u0437\u0430\u043C\u0435\u0442\u043E\u043A \u0432 \u0443\u043A\u0430\u0437\u0430\u043D\u043D\u043E\u0439 \u043F\u0430\u043F\u043A\u0435 (\u043D\u0430\u043F\u0440\u0438\u043C\u0435\u0440, 'tasks' \u0438\u043B\u0438 'Projects'). \u0420\u0435\u0433\u0438\u0441\u0442\u0440\u043E\u043D\u0435\u0437\u0430\u0432\u0438\u0441\u0438\u043C\u043E.",
+      description: "\u041F\u0430\u043A\u0435\u0442\u043D\u043E \u043F\u0440\u043E\u0447\u0438\u0442\u0430\u0442\u044C \u0438 \u043F\u0440\u043E\u0430\u043D\u0430\u043B\u0438\u0437\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u0412\u0421\u0415 \u0437\u0430\u043C\u0435\u0442\u043A\u0438 \u0432 \u0443\u043A\u0430\u0437\u0430\u043D\u043D\u043E\u0439 \u043F\u0430\u043F\u043A\u0435 (\u043D\u0430\u043F\u0440\u0438\u043C\u0435\u0440, 'tasks' \u0438\u043B\u0438 'Projects'). \u041E\u0442\u043B\u0438\u0447\u043D\u044B\u0439 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442 \u0434\u043B\u044F \u0432\u044B\u0436\u0438\u043C\u043E\u043A \u0438 \u043E\u0431\u0437\u043E\u0440\u0430 \u043F\u0440\u043E\u0435\u043A\u0442\u043E\u0432.",
       parameters: {
         type: "object",
         properties: {
           folderPath: {
             type: "string",
-            description: "\u041D\u0430\u0437\u0432\u0430\u043D\u0438\u0435 \u0438\u043B\u0438 \u043F\u0443\u0442\u044C \u043A \u043F\u0430\u043F\u043A\u0435 (\u043D\u0430\u043F\u0440\u0438\u043C\u0435\u0440, 'tasks' \u0438\u043B\u0438 'Tasks')"
+            description: "\u041E\u0442\u043D\u043E\u0441\u0438\u0442\u0435\u043B\u044C\u043D\u044B\u0439 \u043F\u0443\u0442\u044C \u043A \u043F\u0430\u043F\u043A\u0435 \u0432 \u0432\u0430\u0443\u043B\u0442\u0435 (\u043D\u0430\u043F\u0440\u0438\u043C\u0435\u0440, 'tasks' \u0438\u043B\u0438 'Notes/Study')"
           },
           includeContent: {
-            type: "boolean",
-            description: "\u0412\u043A\u043B\u044E\u0447\u0430\u0442\u044C \u043B\u0438 \u043F\u043E\u043B\u043D\u044B\u0439 \u0442\u0435\u043A\u0441\u0442 \u043A\u0430\u0436\u0434\u043E\u0439 \u0437\u0430\u043C\u0435\u0442\u043A\u0438 (\u043F\u043E \u0443\u043C\u043E\u043B\u0447\u0430\u043D\u0438\u044E true)"
+            type: "string",
+            description: "\u0412\u043A\u043B\u044E\u0447\u0430\u0442\u044C \u043B\u0438 \u043F\u043E\u043B\u043D\u043E\u0435 \u0441\u043E\u0434\u0435\u0440\u0436\u0438\u043C\u043E\u0435 \u043A\u0430\u0436\u0434\u043E\u0439 \u0437\u0430\u043C\u0435\u0442\u043A\u0438 (\u043F\u043E \u0443\u043C\u043E\u043B\u0447\u0430\u043D\u0438\u044E true)"
           }
         },
         required: ["folderPath"]
@@ -24637,17 +24636,17 @@ var vaultToolDefinitions = [
     type: "function",
     function: {
       name: "create_note",
-      description: "\u0421\u043E\u0437\u0434\u0430\u0442\u044C \u043D\u043E\u0432\u0443\u044E \u0437\u0430\u043C\u0435\u0442\u043A\u0443 \u0432 \u0412\u0430\u0443\u043B\u0442\u0435 Obsidian.",
+      description: "\u0421\u043E\u0437\u0434\u0430\u0442\u044C \u043D\u043E\u0432\u0443\u044E \u0437\u0430\u043C\u0435\u0442\u043A\u0443 Markdown \u0432 \u0432\u0430\u0443\u043B\u0442\u0435 \u0441 \u0441\u043E\u0434\u0435\u0440\u0436\u0438\u043C\u044B\u043C.",
       parameters: {
         type: "object",
         properties: {
           path: {
             type: "string",
-            description: "\u041F\u0443\u0442\u044C \u043A \u0444\u0430\u0439\u043B\u0443 (\u043D\u0430\u043F\u0440\u0438\u043C\u0435\u0440, 'Tasks/Summary.md')"
+            description: "\u041F\u0443\u0442\u044C \u043A \u0441\u043E\u0437\u0434\u0430\u0432\u0430\u0435\u043C\u043E\u0439 \u0437\u0430\u043C\u0435\u0442\u043A\u0435 (\u043D\u0430\u043F\u0440\u0438\u043C\u0435\u0440, 'Folder/NewNote.md')"
           },
           content: {
             type: "string",
-            description: "\u0421\u043E\u0434\u0435\u0440\u0436\u0438\u043C\u043E\u0435 \u0437\u0430\u043C\u0435\u0442\u043A\u0438 \u0432 \u0444\u043E\u0440\u043C\u0430\u0442\u0435 Markdown"
+            description: "\u0422\u0435\u043A\u0441\u0442 \u0437\u0430\u043C\u0435\u0442\u043A\u0438 \u0432 \u0444\u043E\u0440\u043C\u0430\u0442\u0435 Markdown"
           }
         },
         required: ["path", "content"]
@@ -24658,21 +24657,21 @@ var vaultToolDefinitions = [
     type: "function",
     function: {
       name: "edit_note",
-      description: "\u0420\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044E\u0449\u0443\u044E \u0437\u0430\u043C\u0435\u0442\u043A\u0443 \u0432 \u0412\u0430\u0443\u043B\u0442\u0435 Obsidian.",
+      description: "\u0420\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044E\u0449\u0443\u044E \u0437\u0430\u043C\u0435\u0442\u043A\u0443 (\u0437\u0430\u043C\u0435\u043D\u0438\u0442\u044C \u0432\u0441\u0451 \u0441\u043E\u0434\u0435\u0440\u0436\u0438\u043C\u043E\u0435 \u0438\u043B\u0438 \u043A\u043E\u043D\u043A\u0440\u0435\u0442\u043D\u0443\u044E \u0444\u0440\u0430\u0433\u043C\u0435\u043D\u0442\u043D\u0443\u044E \u0441\u0442\u0440\u043E\u043A\u0443).",
       parameters: {
         type: "object",
         properties: {
           path: {
             type: "string",
-            description: "\u041F\u0443\u0442\u044C \u043A \u0440\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u0443\u0435\u043C\u043E\u0439 \u0437\u0430\u043C\u0435\u0442\u043A\u0435"
+            description: "\u041F\u0443\u0442\u044C \u043A \u0437\u0430\u043C\u0435\u0442\u043A\u0435 \u0434\u043B\u044F \u0440\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u044F"
           },
           newContent: {
             type: "string",
-            description: "\u041D\u043E\u0432\u043E\u0435 \u0441\u043E\u0434\u0435\u0440\u0436\u0438\u043C\u043E\u0435 \u0437\u0430\u043C\u0435\u0442\u043A\u0438"
+            description: "\u041D\u043E\u0432\u044B\u0439 \u0442\u0435\u043A\u0441\u0442 \u0434\u043B\u044F \u0432\u0441\u0442\u0430\u0432\u043A\u0438"
           },
           targetText: {
             type: "string",
-            description: "\u041E\u043F\u0446\u0438\u043E\u043D\u0430\u043B\u044C\u043D\u043E: \u0444\u0440\u0430\u0433\u043C\u0435\u043D\u0442 \u0442\u0435\u043A\u0441\u0442\u0430 \u0434\u043B\u044F \u0437\u0430\u043C\u0435\u043D\u044F\u0435\u043C\u043E\u0433\u043E \u0431\u043B\u043E\u043A\u0430"
+            description: "\u041D\u0435\u043E\u0431\u044F\u0437\u0430\u0442\u0435\u043B\u044C\u043D\u043E. \u0415\u0441\u043B\u0438 \u0443\u043A\u0430\u0437\u0430\u043D\u043E, \u0431\u0443\u0434\u0435\u0442 \u0437\u0430\u043C\u0435\u043D\u0435\u043D \u0442\u043E\u043B\u044C\u043A\u043E \u044D\u0442\u043E\u0442 \u0442\u043E\u0447\u043D\u044B\u0439 \u0444\u0440\u0430\u0433\u043C\u0435\u043D\u0442 \u0442\u0435\u043A\u0441\u0442\u0430 \u0432 \u0437\u0430\u043C\u0435\u0442\u043A\u0435."
           }
         },
         required: ["path", "newContent"]
@@ -24683,7 +24682,7 @@ var vaultToolDefinitions = [
     type: "function",
     function: {
       name: "rename_note",
-      description: "\u041F\u0435\u0440\u0435\u0438\u043C\u0435\u043D\u043E\u0432\u0430\u0442\u044C \u0438\u043B\u0438 \u043F\u0435\u0440\u0435\u043C\u0435\u0441\u0442\u0438\u0442\u044C \u0437\u0430\u043C\u0435\u0442\u043A\u0443 \u0432 \u0412\u0430\u0443\u043B\u0442\u0435.",
+      description: "\u041F\u0435\u0440\u0435\u0438\u043C\u0435\u043D\u043E\u0432\u0430\u0442\u044C \u0438\u043B\u0438 \u043F\u0435\u0440\u0435\u043C\u0435\u0441\u0442\u0438\u0442\u044C \u0437\u0430\u043C\u0435\u0442\u043A\u0443 \u0432 \u043D\u043E\u0432\u0443\u044E \u043F\u0430\u043F\u043A\u0443.",
       parameters: {
         type: "object",
         properties: {
@@ -24693,7 +24692,7 @@ var vaultToolDefinitions = [
           },
           newPath: {
             type: "string",
-            description: "\u041D\u043E\u0432\u044B\u0439 \u043F\u0443\u0442\u044C \u043A \u0437\u0430\u043C\u0435\u0442\u043A\u0435"
+            description: "\u041D\u043E\u0432\u044B\u0439 \u043F\u0443\u0442\u044C/\u0438\u043C\u044F \u0434\u043B\u044F \u0437\u0430\u043C\u0435\u0442\u043A\u0438"
           }
         },
         required: ["oldPath", "newPath"]
@@ -24704,13 +24703,13 @@ var vaultToolDefinitions = [
     type: "function",
     function: {
       name: "delete_note",
-      description: "\u0423\u0434\u0430\u043B\u0438\u0442\u044C \u0437\u0430\u043C\u0435\u0442\u043A\u0443 \u0438\u0437 \u0412\u0430\u0443\u043B\u0442\u0430 Obsidian.",
+      description: "\u041F\u043E\u043C\u0435\u0441\u0442\u0438\u0442\u044C \u0437\u0430\u043C\u0435\u0442\u043A\u0443 \u0432 \u043A\u043E\u0440\u0437\u0438\u043D\u0443 (trash).",
       parameters: {
         type: "object",
         properties: {
           path: {
             type: "string",
-            description: "\u041F\u0443\u0442\u044C \u043A \u0443\u0434\u0430\u043B\u044F\u0435\u043C\u043E\u0439 \u0437\u0430\u043C\u0435\u0442\u043A\u0435"
+            description: "\u041F\u0443\u0442\u044C \u043A \u0437\u0430\u043C\u0435\u0442\u043A\u0435"
           }
         },
         required: ["path"]
@@ -24721,17 +24720,17 @@ var vaultToolDefinitions = [
     type: "function",
     function: {
       name: "list_notes",
-      description: "\u041F\u043E\u043B\u0443\u0447\u0438\u0442\u044C \u0441\u043F\u0438\u0441\u043E\u043A \u0444\u0430\u0439\u043B\u043E\u0432 \u0438 \u043F\u0430\u043F\u043E\u043A \u0432 \u0434\u0438\u0440\u0435\u043A\u0442\u043E\u0440\u0438\u0438 \u0412\u0430\u0443\u043B\u0442\u0430 (\u0440\u0435\u0433\u0438\u0441\u0442\u0440\u043E\u043D\u0435\u0437\u0430\u0432\u0438\u0441\u0438\u043C\u043E).",
+      description: "\u041F\u043E\u043B\u0443\u0447\u0438\u0442\u044C \u0441\u043F\u0438\u0441\u043E\u043A \u0444\u0430\u0439\u043B\u043E\u0432 \u0438 \u043F\u043E\u0434\u043F\u0430\u043F\u043E\u043A \u0432 \u043A\u043E\u043D\u043A\u0440\u0435\u0442\u043D\u043E\u0439 \u043F\u0430\u043F\u043A\u0435 \u0432\u0430\u0443\u043B\u0442\u0430.",
       parameters: {
         type: "object",
         properties: {
           folderPath: {
             type: "string",
-            description: "\u041F\u0443\u0442\u044C \u043A \u043F\u0430\u043F\u043A\u0435 (\u043E\u0441\u0442\u0430\u0432\u044C\u0442\u0435 \u043F\u0443\u0441\u0442\u044B\u043C \u0434\u043B\u044F \u043A\u043E\u0440\u043D\u044F \u0432\u0430\u0443\u043B\u0442\u0430 '')"
+            description: "\u041F\u0443\u0442\u044C \u043A \u043F\u0430\u043F\u043A\u0435 (\u043F\u0443\u0441\u0442\u043E\u0435 \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435 \u0434\u043B\u044F \u043A\u043E\u0440\u043D\u044F \u0412\u0430\u0443\u043B\u0442\u0430)"
           },
           recursive: {
-            type: "boolean",
-            description: "\u0418\u0441\u043A\u0430\u0442\u044C \u043B\u0438 \u0432\u043B\u043E\u0436\u0435\u043D\u043D\u044B\u0435 \u043F\u0430\u043F\u043A\u0438 \u0440\u0435\u043A\u0443\u0440\u0441\u0438\u0432\u043D\u043E"
+            type: "string",
+            description: "\u0420\u0435\u043A\u0443\u0440\u0441\u0438\u0432\u043D\u044B\u0439 \u043E\u0431\u0445\u043E\u0434 \u043F\u043E\u0434\u043F\u0430\u043F\u043E\u043A"
           }
         }
       }
@@ -24741,7 +24740,7 @@ var vaultToolDefinitions = [
     type: "function",
     function: {
       name: "search_notes",
-      description: "\u041F\u043E\u0438\u0441\u043A \u0437\u0430\u043C\u0435\u0442\u043E\u043A \u043F\u043E \u0442\u0435\u043A\u0441\u0442\u0430\u043C, \u043A\u043B\u044E\u0447\u0435\u0432\u044B\u043C \u0441\u043B\u043E\u0432\u0430\u043C \u0438\u043B\u0438 \u0438\u043C\u0435\u043D\u0430\u043C.",
+      description: "\u041F\u043E\u0438\u0441\u043A \u043F\u043E \u043A\u043B\u044E\u0447\u0435\u0432\u044B\u043C \u0441\u043B\u043E\u0432\u0430\u043C/\u0442\u0435\u043A\u0441\u0442\u0443 \u0432\u043E \u0432\u0441\u0435\u0445 \u0437\u0430\u043C\u0435\u0442\u043A\u0430\u0445 \u0412\u0430\u0443\u043B\u0442\u0430.",
       parameters: {
         type: "object",
         properties: {
@@ -24750,8 +24749,8 @@ var vaultToolDefinitions = [
             description: "\u041F\u043E\u0438\u0441\u043A\u043E\u0432\u044B\u0439 \u0437\u0430\u043F\u0440\u043E\u0441"
           },
           maxResults: {
-            type: "number",
-            description: "\u041C\u0430\u043A\u0441\u0438\u043C\u0430\u043B\u044C\u043D\u043E\u0435 \u0447\u0438\u0441\u043B\u043E \u0437\u0430\u043C\u0435\u0442\u043E\u043A"
+            type: "string",
+            description: "\u041C\u0430\u043A\u0441\u0438\u043C\u0430\u043B\u044C\u043D\u043E\u0435 \u043A\u043E\u043B\u0438\u0447\u0435\u0441\u0442\u0432\u043E \u0440\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442\u043E\u0432 (\u043F\u043E \u0443\u043C\u043E\u043B\u0447\u0430\u043D\u0438\u044E 10)"
           }
         },
         required: ["query"]
@@ -24762,13 +24761,13 @@ var vaultToolDefinitions = [
     type: "function",
     function: {
       name: "search_by_tag",
-      description: "\u041D\u0430\u0439\u0442\u0438 \u0432\u0441\u0435 \u0437\u0430\u043C\u0435\u0442\u043A\u0438, \u0441\u043E\u0434\u0435\u0440\u0436\u0430\u0449\u0438\u0435 \u043E\u043F\u0440\u0435\u0434\u0435\u043B\u0435\u043D\u043D\u044B\u0439 \u0442\u0435\u0433 (\u043D\u0430\u043F\u0440\u0438\u043C\u0435\u0440, '#task' \u0438\u043B\u0438 'task').",
+      description: "\u041D\u0430\u0439\u0442\u0438 \u0432\u0441\u0435 \u0437\u0430\u043C\u0435\u0442\u043A\u0438, \u0441\u043E\u0434\u0435\u0440\u0436\u0430\u0449\u0438\u0435 \u043A\u043E\u043D\u043A\u0440\u0435\u0442\u043D\u044B\u0439 \u0442\u0435\u0433.",
       parameters: {
         type: "object",
         properties: {
           tag: {
             type: "string",
-            description: "\u041D\u0430\u0437\u0432\u0430\u043D\u0438\u0435 \u0442\u0435\u0433\u0430 \u0441 \u0441\u0438\u043C\u0432\u043E\u043B\u043E\u043C # \u0438\u043B\u0438 \u0431\u0435\u0437"
+            description: "\u0422\u0435\u0433 \u0434\u043B\u044F \u043F\u043E\u0438\u0441\u043A\u0430 (\u043D\u0430\u043F\u0440\u0438\u043C\u0435\u0440, '#project' \u0438\u043B\u0438 'study')"
           }
         },
         required: ["tag"]
@@ -24779,7 +24778,7 @@ var vaultToolDefinitions = [
     type: "function",
     function: {
       name: "get_all_tags",
-      description: "\u041F\u043E\u043B\u0443\u0447\u0438\u0442\u044C \u0441\u043F\u0438\u0441\u043E\u043A \u0432\u0441\u0435\u0445 \u0442\u0435\u0433\u043E\u0432, \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u0443\u0435\u043C\u044B\u0445 \u0432 \u0412\u0430\u0443\u043B\u0442\u0435 Obsidian.",
+      description: "\u041F\u043E\u043B\u0443\u0447\u0438\u0442\u044C \u0441\u043F\u0438\u0441\u043E\u043A \u0432\u0441\u0435\u0445 \u0442\u0435\u0433\u043E\u0432 \u0432\u0430\u0443\u043B\u0442\u0430 \u0441 \u043F\u043E\u0434\u0441\u0447\u0435\u0442\u043E\u043C \u0437\u0430\u043C\u0435\u0442\u043E\u043A.",
       parameters: {
         type: "object",
         properties: {}
@@ -24789,14 +24788,35 @@ var vaultToolDefinitions = [
   {
     type: "function",
     function: {
+      name: "diff_note",
+      description: "\u041F\u0440\u0435\u0434\u043B\u043E\u0436\u0438\u0442\u044C \u0431\u0435\u0437\u043E\u043F\u0430\u0441\u043D\u043E\u0435 \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u0435 \u0437\u0430\u043C\u0435\u0442\u043A\u0438 \u0441 \u0438\u043D\u0442\u0435\u0440\u0430\u043A\u0442\u0438\u0432\u043D\u044B\u043C \u043F\u0440\u043E\u0441\u043C\u043E\u0442\u0440\u043E\u043C Diff \u043F\u0435\u0440\u0435\u0434 \u043F\u0440\u0438\u043C\u0435\u043D\u0435\u043D\u0438\u0435\u043C.",
+      parameters: {
+        type: "object",
+        properties: {
+          path: {
+            type: "string",
+            description: "\u041F\u0443\u0442\u044C \u043A \u0437\u0430\u043C\u0435\u0442\u043A\u0435"
+          },
+          newContent: {
+            type: "string",
+            description: "\u041F\u0440\u0435\u0434\u043B\u0430\u0433\u0430\u0435\u043C\u043E\u0435 \u043D\u043E\u0432\u043E\u0435 \u0441\u043E\u0434\u0435\u0440\u0436\u0438\u043C\u043E\u0435 \u0437\u0430\u043C\u0435\u0442\u043A\u0438"
+          }
+        },
+        required: ["path", "newContent"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
       name: "execute_obsidian_command",
-      description: "\u0412\u044B\u043F\u043E\u043B\u043D\u0438\u0442\u044C \u0432\u043D\u0443\u0442\u0440\u0435\u043D\u043D\u044E\u044E \u043A\u043E\u043C\u0430\u043D\u0434\u0443 Obsidian \u043F\u043E ID (\u043D\u0430\u043F\u0440\u0438\u043C\u0435\u0440, 'app:open-vault-settings' \u0438\u043B\u0438 \u043A\u043E\u043C\u0430\u043D\u0434\u044B \u0434\u0440\u0443\u0433\u0438\u0445 \u043F\u043B\u0430\u0433\u0438\u043D\u043E\u0432).",
+      description: "\u0412\u044B\u043F\u043E\u043B\u043D\u0438\u0442\u044C \u043B\u044E\u0431\u0443\u044E \u0432\u043D\u0443\u0442\u0440\u0435\u043D\u043D\u044E\u044E \u043A\u043E\u043C\u0430\u043D\u0434\u0443 Obsidian \u043F\u043E \u0435\u0451 ID (\u043D\u0430\u043F\u0440\u0438\u043C\u0435\u0440, 'theme:toggle-dark' \u0438\u043B\u0438 'canvas:new-file').",
       parameters: {
         type: "object",
         properties: {
           commandId: {
             type: "string",
-            description: "\u0418\u0434\u0435\u043D\u0442\u0438\u0444\u0438\u043A\u0430\u0442\u043E\u0440 \u043A\u043E\u043C\u0430\u043D\u0434\u044B Obsidian"
+            description: "ID \u043A\u043E\u043C\u0430\u043D\u0434\u044B Obsidian"
           }
         },
         required: ["commandId"]
@@ -24807,68 +24827,53 @@ var vaultToolDefinitions = [
     type: "function",
     function: {
       name: "analyze_vault_graph",
-      description: "\u0410\u043D\u0430\u043B\u0438\u0437 \u0441\u0432\u044F\u0437\u0435\u0439 \u0433\u0440\u0430\u0444\u0430 \u0437\u0430\u043C\u0435\u0442\u043E\u043A ([[wikilinks]]) \u0438 \u043F\u043E\u0438\u0441\u043A \u0438\u0437\u043E\u043B\u0438\u0440\u043E\u0432\u0430\u043D\u043D\u044B\u0445 \u0437\u0430\u043C\u0435\u0442\u043E\u043A.",
+      description: "\u041F\u0440\u043E\u0430\u043D\u0430\u043B\u0438\u0437\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u0433\u0440\u0430\u0444 \u0441\u0432\u044F\u0437\u0435\u0439 \u0412\u0430\u0443\u043B\u0442\u0430: \u043D\u0430\u0439\u0442\u0438 \u0438\u0437\u043E\u043B\u0438\u0440\u043E\u0432\u0430\u043D\u043D\u044B\u0435 \u0437\u0430\u043C\u0435\u0442\u043A\u0438 (\u0431\u0435\u0437 \u0432\u0445\u043E\u0434\u044F\u0449\u0438\u0445/\u0438\u0441\u0445\u043E\u0434\u044F\u0449\u0438\u0445 \u0441\u0441\u044B\u043B\u043E\u043A), \u043D\u0430\u0438\u043C\u0435\u043D\u0435\u0435 \u0438 \u043D\u0430\u0438\u0431\u043E\u043B\u0435\u0435 \u0441\u0432\u044F\u0437\u0430\u043D\u043D\u044B\u0435 \u0437\u0430\u043C\u0435\u0442\u043A\u0438.",
       parameters: {
         type: "object",
         properties: {
           folderPath: {
             type: "string",
-            description: "\u041E\u0431\u043B\u0430\u0441\u0442\u044C \u0430\u043D\u0430\u043B\u0438\u0437\u0430"
+            description: "\u041D\u0435\u043E\u0431\u044F\u0437\u0430\u0442\u0435\u043B\u044C\u043D\u043E. \u041E\u0433\u0440\u0430\u043D\u0438\u0447\u0438\u0442\u044C \u0430\u043D\u0430\u043B\u0438\u0437 \u043A\u043E\u043D\u043A\u0440\u0435\u0442\u043D\u043E\u0439 \u043F\u0430\u043F\u043A\u043E\u0439."
           }
         }
       }
     }
   }
 ];
-function findFile(app, pathStr) {
-  if (!pathStr)
-    return null;
-  let cleanPath = (0, import_obsidian2.normalizePath)(pathStr);
+function findFile(app, rawPath) {
+  let cleanPath = (0, import_obsidian2.normalizePath)(rawPath.trim());
   if (!cleanPath.endsWith(".md")) {
-    cleanPath += ".md";
+    const fileWithMd = app.vault.getFileByPath(cleanPath + ".md");
+    if (fileWithMd)
+      return fileWithMd;
   }
-  const file = app.vault.getAbstractFileByPath(cleanPath);
-  if (file instanceof import_obsidian2.TFile)
-    return file;
-  const allFiles = app.vault.getMarkdownFiles();
-  const matchedExactCase = allFiles.find((f) => f.path.toLowerCase() === cleanPath.toLowerCase());
-  if (matchedExactCase)
-    return matchedExactCase;
-  const baseName = pathStr.replace(/\.md$/, "").split("/").pop()?.toLowerCase();
-  if (baseName) {
-    const matched = allFiles.find((f) => f.basename.toLowerCase() === baseName);
-    if (matched)
-      return matched;
-  }
-  return null;
+  const exact = app.vault.getFileByPath(cleanPath);
+  if (exact)
+    return exact;
+  const files = app.vault.getMarkdownFiles();
+  const cleanLower = cleanPath.toLowerCase();
+  const matched = files.find(
+    (f) => f.basename.toLowerCase() === cleanLower || f.path.toLowerCase() === cleanLower || f.path.toLowerCase().endsWith("/" + cleanLower)
+  );
+  return matched || null;
 }
-function findFolder(app, folderPathStr) {
-  if (!folderPathStr || folderPathStr.trim() === "" || folderPathStr === "/") {
+function findFolder(app, rawPath) {
+  let cleanPath = (0, import_obsidian2.normalizePath)(rawPath.trim());
+  if (!cleanPath || cleanPath === "/" || cleanPath === ".") {
     return app.vault.getRoot();
   }
-  const cleanPath = (0, import_obsidian2.normalizePath)(folderPathStr).toLowerCase();
-  const root = app.vault.getRoot();
-  if (root.path.toLowerCase() === cleanPath)
-    return root;
-  const direct = app.vault.getAbstractFileByPath((0, import_obsidian2.normalizePath)(folderPathStr));
-  if (direct instanceof import_obsidian2.TFolder)
-    return direct;
-  const allFolders = [];
-  const collectFolders = (folder) => {
-    allFolders.push(folder);
-    for (const child of folder.children) {
-      if (child instanceof import_obsidian2.TFolder)
-        collectFolders(child);
-    }
-  };
-  collectFolders(root);
+  const folder = app.vault.getFolderByPath(cleanPath);
+  if (folder)
+    return folder;
+  const allFolders = app.vault.getAllLoadedFiles().filter((f) => f instanceof import_obsidian2.TFolder);
   const matched = allFolders.find(
-    (f) => f.path.toLowerCase() === cleanPath || f.name.toLowerCase() === cleanPath || f.path.toLowerCase().endsWith("/" + cleanPath)
+    (f) => f.name.toLowerCase() === cleanPath.toLowerCase() || f.path.toLowerCase() === cleanPath.toLowerCase() || f.path.toLowerCase().endsWith("/" + cleanPath.toLowerCase())
   );
   return matched || null;
 }
 var vaultExecutors = {
-  read_note: async (app, args) => {
+  read_note: async (app, rawArgs) => {
+    const args = rawArgs;
     const file = findFile(app, args.path);
     if (!file) {
       return `\u041E\u0448\u0438\u0431\u043A\u0430: \u0417\u0430\u043C\u0435\u0442\u043A\u0430 '${args.path}' \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430 \u0432 \u0412\u0430\u0443\u043B\u0442\u0435.`;
@@ -24878,10 +24883,12 @@ var vaultExecutors = {
       return `--- \u0417\u0430\u043C\u0435\u0442\u043A\u0430: ${file.path} ---
 ${content}`;
     } catch (e) {
-      return `\u041E\u0448\u0438\u0431\u043A\u0430 \u0447\u0442\u0435\u043D\u0438\u044F \u0437\u0430\u043C\u0435\u0442\u043A\u0438 '${args.path}': ${e?.message || e}`;
+      const err = e;
+      return `\u041E\u0448\u0438\u0431\u043A\u0430 \u0447\u0442\u0435\u043D\u0438\u044F \u0437\u0430\u043C\u0435\u0442\u043A\u0438 '${args.path}': ${err?.message || String(e)}`;
     }
   },
-  read_notes_batch: async (app, args) => {
+  read_notes_batch: async (app, rawArgs) => {
+    const args = rawArgs;
     if (!args.paths || args.paths.length === 0) {
       return "\u041E\u0448\u0438\u0431\u043A\u0430: \u041D\u0435 \u043F\u0435\u0440\u0435\u0434\u0430\u043D\u044B \u043F\u0443\u0442\u0438 \u0434\u043B\u044F \u0447\u0442\u0435\u043D\u0438\u044F.";
     }
@@ -24894,7 +24901,8 @@ ${content}`;
           results.push(`=== \u0424\u0410\u0419\u041B: ${file.path} ===
 ${content}`);
         } catch (e) {
-          results.push(`=== \u0424\u0410\u0419\u041B: ${p} === (\u041E\u0448\u0438\u0431\u043A\u0430 \u0447\u0442\u0435\u043D\u0438\u044F: ${e?.message})`);
+          const err = e;
+          results.push(`=== \u0424\u0410\u0419\u041B: ${p} === (\u041E\u0448\u0438\u0431\u043A\u0430 \u0447\u0442\u0435\u043D\u0438\u044F: ${err?.message || String(e)})`);
         }
       } else {
         results.push(`=== \u0424\u0410\u0419\u041B: ${p} === (\u0424\u0430\u0439\u043B \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D)`);
@@ -24902,7 +24910,8 @@ ${content}`);
     }
     return results.join("\n\n");
   },
-  get_folder_notes: async (app, args) => {
+  get_folder_notes: async (app, rawArgs) => {
+    const args = rawArgs;
     const folder = findFolder(app, args.folderPath);
     if (!folder) {
       return `\u041E\u0448\u0438\u0431\u043A\u0430: \u041F\u0430\u043F\u043A\u0430 '${args.folderPath}' \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430 \u0432 \u0412\u0430\u0443\u043B\u0442\u0435.`;
@@ -24941,7 +24950,8 @@ ${content}
     }
     return output.join("\n");
   },
-  create_note: async (app, args) => {
+  create_note: async (app, rawArgs) => {
+    const args = rawArgs;
     let path = (0, import_obsidian2.normalizePath)(args.path);
     if (!path.endsWith(".md"))
       path += ".md";
@@ -24962,10 +24972,12 @@ ${content}
       const created = await app.vault.create(path, args.content);
       return `\u0423\u0441\u043F\u0435\u0445: \u0421\u043E\u0437\u0434\u0430\u043D\u0430 \u043D\u043E\u0432\u0430\u044F \u0437\u0430\u043C\u0435\u0442\u043A\u0430 '${created.path}'.`;
     } catch (e) {
-      return `\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u044F \u0437\u0430\u043C\u0435\u0442\u043A\u0438: ${e?.message || e}`;
+      const err = e;
+      return `\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u044F \u0437\u0430\u043C\u0435\u0442\u043A\u0438: ${err?.message || String(e)}`;
     }
   },
-  edit_note: async (app, args) => {
+  edit_note: async (app, rawArgs) => {
+    const args = rawArgs;
     const file = findFile(app, args.path);
     if (!file) {
       return `\u041E\u0448\u0438\u0431\u043A\u0430: \u0424\u0430\u0439\u043B '${args.path}' \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D.`;
@@ -24979,10 +24991,12 @@ ${content}
       await app.vault.modify(file, finalContent);
       return `\u0423\u0441\u043F\u0435\u0448\u043D\u043E \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0430 \u0437\u0430\u043C\u0435\u0442\u043A\u0430 '${file.path}'.`;
     } catch (e) {
-      return `\u041E\u0448\u0438\u0431\u043A\u0430 \u0440\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u044F \u0437\u0430\u043C\u0435\u0442\u043A\u0438 '${args.path}': ${e?.message || e}`;
+      const err = e;
+      return `\u041E\u0448\u0438\u0431\u043A\u0430 \u0440\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u044F \u0437\u0430\u043C\u0435\u0442\u043A\u0438 '${args.path}': ${err?.message || String(e)}`;
     }
   },
-  rename_note: async (app, args) => {
+  rename_note: async (app, rawArgs) => {
+    const args = rawArgs;
     const file = findFile(app, args.oldPath);
     if (!file)
       return `\u041E\u0448\u0438\u0431\u043A\u0430: \u0424\u0430\u0439\u043B '${args.oldPath}' \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D.`;
@@ -24993,10 +25007,12 @@ ${content}
       await app.fileManager.renameFile(file, targetPath);
       return `\u0423\u0441\u043F\u0435\u0448\u043D\u043E \u043F\u0435\u0440\u0435\u0438\u043C\u0435\u043D\u043E\u0432\u0430\u043D \u0444\u0430\u0439\u043B '${file.path}' -> '${targetPath}'.`;
     } catch (e) {
-      return `\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0435\u0440\u0435\u0438\u043C\u0435\u043D\u043E\u0432\u0430\u043D\u0438\u044F: ${e?.message || e}`;
+      const err = e;
+      return `\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0435\u0440\u0435\u0438\u043C\u0435\u043D\u043E\u0432\u0430\u043D\u0438\u044F: ${err?.message || String(e)}`;
     }
   },
-  delete_note: async (app, args) => {
+  delete_note: async (app, rawArgs) => {
+    const args = rawArgs;
     const file = findFile(app, args.path);
     if (!file)
       return `\u041E\u0448\u0438\u0431\u043A\u0430: \u0424\u0430\u0439\u043B '${args.path}' \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D.`;
@@ -25004,10 +25020,12 @@ ${content}
       await app.fileManager.trashFile(file);
       return `\u0423\u0441\u043F\u0435\u0448\u043D\u043E \u043F\u043E\u043C\u0435\u0449\u0435\u043D \u0432 \u043A\u043E\u0440\u0437\u0438\u043D\u0443 \u0444\u0430\u0439\u043B '${file.path}'.`;
     } catch (e) {
-      return `\u041E\u0448\u0438\u0431\u043A\u0430 \u0443\u0434\u0430\u043B\u0435\u043D\u0438\u044F: ${e?.message || e}`;
+      const err = e;
+      return `\u041E\u0448\u0438\u0431\u043A\u0430 \u0443\u0434\u0430\u043B\u0435\u043D\u0438\u044F: ${err?.message || String(e)}`;
     }
   },
-  list_notes: async (app, args) => {
+  list_notes: async (app, rawArgs) => {
+    const args = rawArgs;
     const folder = findFolder(app, args.folderPath || "");
     if (!folder) {
       return `\u041E\u0448\u0438\u0431\u043A\u0430: \u041F\u0430\u043F\u043A\u0430 '${args.folderPath}' \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430.`;
@@ -25026,7 +25044,8 @@ ${content}
     return `\u0421\u043E\u0434\u0435\u0440\u0436\u0438\u043C\u043E\u0435 \u043F\u0430\u043F\u043A\u0438 '${folder.path}':
 ` + items.join("\n");
   },
-  search_notes: async (app, args) => {
+  search_notes: async (app, rawArgs) => {
+    const args = rawArgs;
     const limit = args.maxResults || 10;
     const queryLower = args.query.toLowerCase();
     const files = app.vault.getMarkdownFiles();
@@ -25056,7 +25075,8 @@ ${content}
     return `\u0420\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442\u044B \u043F\u043E\u0438\u0441\u043A\u0430 \u043F\u043E '${args.query}':
 ` + results.map((r) => `- **${r.path}**: ${r.snippet}`).join("\n");
   },
-  search_by_tag: async (app, args) => {
+  search_by_tag: async (app, rawArgs) => {
+    const args = rawArgs;
     const cleanTag = args.tag.startsWith("#") ? args.tag.toLowerCase() : "#" + args.tag.toLowerCase();
     const files = app.vault.getMarkdownFiles();
     const matched = [];
@@ -25064,7 +25084,7 @@ ${content}
       const cache = app.metadataCache.getFileCache(file);
       const tagsInFile = (cache?.tags || []).map((t2) => t2.tag.toLowerCase());
       const frontmatterTags = cache?.frontmatter?.tags || [];
-      const normalizedFmTags = Array.isArray(frontmatterTags) ? frontmatterTags.map((t2) => t2.startsWith("#") ? t2.toLowerCase() : "#" + t2.toLowerCase()) : [];
+      const normalizedFmTags = Array.isArray(frontmatterTags) ? frontmatterTags.map((t2) => t2.startsWith("#") ? t2.toLowerCase() : "#" + t2.toLowerCase()) : typeof frontmatterTags === "string" ? [frontmatterTags.startsWith("#") ? frontmatterTags.toLowerCase() : "#" + frontmatterTags.toLowerCase()] : [];
       if (tagsInFile.includes(cleanTag) || normalizedFmTags.includes(cleanTag)) {
         matched.push(file.path);
       }
@@ -25090,44 +25110,87 @@ ${content}
       return "\u0412 \u0412\u0430\u0443\u043B\u0442\u0435 \u043F\u043E\u043A\u0430 \u043D\u0435\u0442 \u0442\u0435\u0433\u043E\u0432.";
     return "\u0421\u043F\u0438\u0441\u043E\u043A \u0442\u0435\u0433\u043E\u0432 \u0432 \u0412\u0430\u0443\u043B\u0442\u0435:\n" + entries.map(([tag, count]) => `- ${tag} (${count} \u0437\u0430\u043C\u0435\u0442\u043E\u043A)`).join("\n");
   },
-  execute_obsidian_command: async (app, args) => {
+  diff_note: async (app, rawArgs) => {
+    const args = rawArgs;
+    const file = findFile(app, args.path);
+    let oldContent = "";
+    if (file) {
+      try {
+        oldContent = await app.vault.read(file);
+      } catch (e) {
+      }
+    }
+    return {
+      toolCallId: "diff-" + Date.now(),
+      name: "diff_note",
+      result: `\u0417\u0430\u043F\u0440\u043E\u0448\u0435\u043D\u043E \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043D\u0438\u0435 \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u0439 \u0434\u043B\u044F \u0437\u0430\u043C\u0435\u0442\u043A\u0438 '${args.path}'.`,
+      requiresApproval: true,
+      diffPreview: {
+        filePath: file ? file.path : args.path,
+        oldContent,
+        newContent: args.newContent
+      }
+    };
+  },
+  execute_obsidian_command: async (app, rawArgs) => {
+    const args = rawArgs;
     try {
-      const result = app.commands?.executeCommandById(args.commandId);
+      const appCommands = app;
+      const result = appCommands.commands?.executeCommandById(args.commandId);
       if (result !== false) {
         return `\u0423\u0441\u043F\u0435\u0448\u043D\u043E \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u0430 \u043A\u043E\u043C\u0430\u043D\u0434\u0430 Obsidian '${args.commandId}'.`;
       } else {
         return `\u041A\u043E\u043C\u0430\u043D\u0434\u0430 '${args.commandId}' \u043D\u0435 \u0432\u0435\u0440\u043D\u0443\u043B\u0430 \u043F\u043E\u043B\u043E\u0436\u0438\u0442\u0435\u043B\u044C\u043D\u044B\u0439 \u0440\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442 (\u0432\u043E\u0437\u043C\u043E\u0436\u043D\u043E \u043D\u0435 \u0430\u043A\u0442\u0438\u0432\u043D\u0430 \u0432 \u0434\u0430\u043D\u043D\u043E\u043C \u043A\u043E\u043D\u0442\u0435\u043A\u0441\u0442\u0435).`;
       }
     } catch (e) {
-      return `\u041E\u0448\u0438\u0431\u043A\u0430 \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u0438\u044F \u043A\u043E\u043C\u0430\u043D\u0434\u044B '${args.commandId}': ${e?.message || e}`;
+      const err = e;
+      return `\u041E\u0448\u0438\u0431\u043A\u0430 \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u0438\u044F \u043A\u043E\u043C\u0430\u043D\u0434\u044B '${args.commandId}': ${err?.message || String(e)}`;
     }
   },
-  analyze_vault_graph: async (app, args) => {
+  analyze_vault_graph: async (app, rawArgs) => {
+    const args = rawArgs;
     const files = app.vault.getMarkdownFiles();
     let orphanCount = 0;
     const totalFiles = files.length;
     const orphanFiles = [];
     const resolvedLinks = app.metadataCache.resolvedLinks;
     for (const file of files) {
+      if (args.folderPath && !file.path.startsWith(args.folderPath))
+        continue;
       const outgoing = Object.keys(resolvedLinks[file.path] || {});
       let incomingCount = 0;
-      for (const otherPath in resolvedLinks) {
-        if (resolvedLinks[otherPath][file.path]) {
+      for (const otherFile of files) {
+        if (otherFile.path === file.path)
+          continue;
+        const links = resolvedLinks[otherFile.path] || {};
+        if (links[file.path]) {
           incomingCount++;
         }
       }
       if (outgoing.length === 0 && incomingCount === 0) {
         orphanCount++;
-        if (orphanFiles.length < 15) {
-          orphanFiles.push(file.path);
-        }
+        orphanFiles.push(file.path);
       }
     }
-    return `\u0410\u043D\u0430\u043B\u0438\u0437 \u0433\u0440\u0430\u0444\u0430 \u0412\u0430\u0443\u043B\u0442\u0430:
-- \u0412\u0441\u0435\u0433\u043E \u0437\u0430\u043C\u0435\u0442\u043E\u043A: ${totalFiles}
-- \u0418\u0437\u043E\u043B\u0438\u0440\u043E\u0432\u0430\u043D\u043D\u044B\u0445 \u0437\u0430\u043C\u0435\u0442\u043E\u043A (\u0431\u0435\u0437 \u0432\u0445\u043E\u0434\u044F\u0449\u0438\u0445 \u0438 \u0438\u0441\u0445\u043E\u0434\u044F\u0449\u0438\u0445 \u0441\u0432\u044F\u0437\u0435\u0439): ${orphanCount}
-${orphanFiles.length > 0 ? `- \u041F\u0440\u0438\u043C\u0435\u0440\u044B \u0438\u0437\u043E\u043B\u0438\u0440\u043E\u0432\u0430\u043D\u043D\u044B\u0445 \u0437\u0430\u043C\u0435\u0442\u043E\u043A:
-  ${orphanFiles.join("\n  ")}` : ""}`;
+    let report = `=== \u0410\u041D\u0410\u041B\u0418\u0417 \u0413\u0420\u0410\u0424\u0410 \u0421\u0412\u042F\u0417\u0415\u0419 \u0412\u0410\u0423\u041B\u0422\u0410 ===
+`;
+    report += `\u0412\u0441\u0435\u0433\u043E \u043F\u0440\u043E\u0430\u043D\u0430\u043B\u0438\u0437\u0438\u0440\u043E\u0432\u0430\u043D\u043E \u0437\u0430\u043C\u0435\u0442\u043E\u043A: ${totalFiles}
+`;
+    report += `\u0418\u0437\u043E\u043B\u0438\u0440\u043E\u0432\u0430\u043D\u043D\u044B\u0445 \u0437\u0430\u043C\u0435\u0442\u043E\u043A (Orphans, \u0431\u0435\u0437 \u0432\u0445\u043E\u0434\u044F\u0449\u0438\u0445 \u0438 \u0438\u0441\u0445\u043E\u0434\u044F\u0449\u0438\u0445 \u0441\u0441\u044B\u043B\u043E\u043A): ${orphanCount}
+
+`;
+    if (orphanFiles.length > 0) {
+      report += `\u0421\u043F\u0438\u0441\u043E\u043A \u0438\u0437\u043E\u043B\u0438\u0440\u043E\u0432\u0430\u043D\u043D\u044B\u0445 \u0437\u0430\u043C\u0435\u0442\u043E\u043A (\u043F\u0435\u0440\u0432\u044B\u0435 15):
+`;
+      report += orphanFiles.slice(0, 15).map((p) => `- \u{1F4C4} ${p}`).join("\n");
+      if (orphanFiles.length > 15) {
+        report += `
+...\u0438 \u0435\u0449\u0451 ${orphanFiles.length - 15} \u0437\u0430\u043C\u0435\u0442\u043E\u043A.`;
+      }
+    } else {
+      report += `\u0412\u0441\u0435 \u0437\u0430\u043C\u0435\u0442\u043A\u0438 \u0432 \u0412\u0430\u0443\u043B\u0442\u0435 \u0441\u0432\u044F\u0437\u0430\u043D\u044B \u0441\u0441\u044B\u043B\u043A\u0430\u043C\u0438! \u041E\u0442\u043B\u0438\u0447\u043D\u0430\u044F \u0441\u0442\u0440\u0443\u043A\u0442\u0443\u0440\u0430 \u0431\u0430\u0437\u044B \u0437\u043D\u0430\u043D\u0438\u0439.`;
+    }
+    return report;
   }
 };
 
@@ -25430,15 +25493,18 @@ var memoryToolDefinitions = [
   }
 ];
 var memoryExecutors = {
-  save_to_memory: async (app, args) => {
+  save_to_memory: async (app, rawArgs) => {
+    const args = rawArgs;
     try {
       await MemoryStore.addFact(app, args.fact);
       return `\u0423\u0441\u043F\u0435\u0445: \u0424\u0430\u043A\u0442 '${args.fact}' \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D \u0432 \u0434\u043E\u043B\u0433\u043E\u0441\u0440\u043E\u0447\u043D\u0443\u044E \u043F\u0430\u043C\u044F\u0442\u044C \u0430\u0433\u0435\u043D\u0442\u0430 (.nei/memory.json).`;
     } catch (e) {
-      return `\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u0438\u044F \u0432 \u043F\u0430\u043C\u044F\u0442\u044C: ${e?.message || e}`;
+      const err = e;
+      return `\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u0438\u044F \u0432 \u043F\u0430\u043C\u044F\u0442\u044C: ${err?.message || String(e)}`;
     }
   },
-  create_agent_skill: async (app, args) => {
+  create_agent_skill: async (app, rawArgs) => {
+    const args = rawArgs;
     const cleanName = args.skillName.toLowerCase().replace(/[^a-z0-9_-]/g, "_");
     const skillPath = `.nei/skills/${cleanName}/SKILL.md`;
     const content = `---
@@ -25461,7 +25527,8 @@ ${args.instructions}
       await app.vault.create(skillPath, content);
       return `\u0423\u0441\u043F\u0435\u0445: \u0421\u043E\u0437\u0434\u0430\u043D \u043D\u043E\u0432\u044B\u0439 \u0441\u043A\u0438\u043B\u043B \u0418\u0418 '${cleanName}' \u043F\u043E \u043F\u0443\u0442\u0438 '${skillPath}'.`;
     } catch (e) {
-      return `\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u044F \u0441\u043A\u0438\u043B\u043B\u0430: ${e?.message || e}`;
+      const err = e;
+      return `\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u044F \u0441\u043A\u0438\u043B\u043B\u0430: ${err?.message || String(e)}`;
     }
   }
 };
@@ -25501,10 +25568,11 @@ var ToolRegistry = class {
     try {
       parsedArgs = JSON.parse(argsJson || "{}");
     } catch (e) {
+      const err = e;
       return {
         toolCallId,
         name,
-        result: `\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0430\u0440\u0441\u0438\u043D\u0433\u0430 \u0430\u0440\u0433\u0443\u043C\u0435\u043D\u0442\u043E\u0432 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u0430 '${name}': ${e?.message || e}`,
+        result: `\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0430\u0440\u0441\u0438\u043D\u0433\u0430 \u0430\u0440\u0433\u0443\u043C\u0435\u043D\u0442\u043E\u0432 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u0430 '${name}': ${err?.message || String(e)}`,
         isError: true
       };
     }
@@ -25519,10 +25587,11 @@ var ToolRegistry = class {
         result: String(execResult)
       };
     } catch (e) {
+      const err = e;
       return {
         toolCallId,
         name,
-        result: `\u0418\u0441\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u0435 \u043F\u0440\u0438 \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u0438\u0438 '${name}': ${e?.message || e}`,
+        result: `\u0418\u0441\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u0435 \u043F\u0440\u0438 \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u0438\u0438 '${name}': ${err?.message || String(e)}`,
         isError: true
       };
     }
@@ -25846,7 +25915,7 @@ var AgentLoop = class {
             const snippet = cleanText.length > 400 ? cleanText.substring(0, 400) + "... [\u043E\u0431\u0440\u0435\u0437\u0430\u043D\u043E]" : cleanText;
             prefetchedBlocks.push(`--- \u0417\u0410\u041C\u0415\u0422\u041A\u0410: [[${file.basename}]] (${file.path}) ---
 ${snippet}`);
-          } catch (e) {
+          } catch (_e) {
           }
         }
       }
@@ -25878,6 +25947,12 @@ ${prefetchedBlocks.join("\n\n")}
 \u0424\u041E\u0420\u041C\u0410\u0422\u0418\u0420\u041E\u0412\u0410\u041D\u0418\u0415 \u041E\u0422\u0412\u0415\u0422\u0410:
 - \u0427\u0438\u0441\u0442\u044B\u0439 GitHub Flavored Markdown \u0441 \u0442\u0430\u0431\u043B\u0438\u0446\u0430\u043C\u0438, \u0441\u043F\u0438\u0441\u043A\u0430\u043C\u0438, \u0446\u0438\u0442\u0430\u0442\u0430\u043C\u0438 \u0438 \u043F\u043E\u043D\u044F\u0442\u043D\u043E\u0439 \u0441\u0442\u0440\u0443\u043A\u0442\u0443\u0440\u043E\u0439.
 `;
+    if (vaultContext.ragContext) {
+      systemPrompt += `
+--- \u0421\u041F\u0420\u0410\u0412\u041E\u0427\u041D\u042B\u0419 \u041A\u041E\u041D\u0422\u0415\u041A\u0421\u0422 \u0412\u0410\u0423\u041B\u0422\u0410 (RAG) ---
+${vaultContext.ragContext}
+`;
+    }
     if (agentsRules.trim()) {
       systemPrompt += `
 --- \u041F\u0420\u0410\u0412\u0418\u041B\u0410 \u041F\u041E\u041B\u042C\u0417\u041E\u0412\u0410\u0422\u0415\u041B\u042F (.nei/AGENTS.md) ---
@@ -25907,25 +25982,26 @@ ${s.description}`).join("\n")}
       userMsg
     ];
     if (actualMode === "quick") {
-      steps.push({
-        id: "quick-exec-step",
-        type: "thought",
-        title: "\u041F\u0440\u044F\u043C\u043E\u0439 \u043E\u0442\u043A\u043B\u0438\u043A (Quick Mode)",
-        status: "completed"
-      });
-      notifySteps();
-      const response = await sendChatRequest(config, messages, void 0);
-      if (response.usage) {
-        totalPromptTokens += response.usage.promptTokens;
-        totalCompletionTokens += response.usage.completionTokens;
+      try {
+        const response = await sendChatRequest(config, messages);
+        if (response.usage) {
+          totalPromptTokens += response.usage.promptTokens;
+          totalCompletionTokens += response.usage.completionTokens;
+        }
+        let responseText = response.content || "";
+        if (this.shouldAutoCreateNote(userQuery, responseText)) {
+          await this.attemptAutoCreateNote(app, userQuery, responseText, steps, notifySteps);
+        }
+        return {
+          responseText,
+          promptTokens: totalPromptTokens,
+          completionTokens: totalCompletionTokens,
+          executionModeUsed: "quick"
+        };
+      } catch (e) {
+        const err = e;
+        throw new Error(`\u041E\u0448\u0438\u0431\u043A\u0430 \u0432\u044B\u0437\u043E\u0432\u0430 Quick LLM: ${err?.message || String(e)}`);
       }
-      const responseText = response.content || "\u0418\u0418 \u043D\u0435 \u0432\u0435\u0440\u043D\u0443\u043B \u0442\u0435\u043A\u0441\u0442 \u043E\u0442\u0432\u0435\u0442\u0430.";
-      return {
-        responseText,
-        promptTokens: totalPromptTokens,
-        completionTokens: totalCompletionTokens,
-        executionModeUsed: "quick"
-      };
     }
     const tools = defaultToolRegistry.getToolDefinitions();
     let iteration = 0;
@@ -25945,7 +26021,7 @@ ${s.description}`).join("\n")}
         steps.push({
           id: `reasoning-${iteration}`,
           type: "reasoning",
-          title: "\u0420\u0430\u0441\u0441\u0443\u0436\u0434\u0435\u043D\u0438\u0435 \u0418\u0418",
+          title: `\u0420\u0430\u0441\u0441\u0443\u0436\u0434\u0435\u043D\u0438\u044F (\u0428\u0430\u0433 ${iteration})`,
           detail: response.reasoning,
           status: "completed"
         });
@@ -26010,16 +26086,11 @@ ${s.description}`).join("\n")}
           const callId = "text_call_" + Date.now();
           const callKey = `${parsedTool.name}:${JSON.stringify(parsedTool.args)}`;
           executedCallsMap[callKey] = (executedCallsMap[callKey] || 0) + 1;
-          messages.push({
-            role: "assistant",
-            content: response.content
-          });
-          const stepId = `tool-${callId}`;
           steps.push({
-            id: stepId,
+            id: callId,
             type: "tool_call",
-            title: `\u0418\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442 (\u0422\u0435\u043A\u0441\u0442): ${parsedTool.name}`,
-            detail: `\u0410\u0440\u0433\u0443\u043C\u0435\u043D\u0442\u044B: ${JSON.stringify(parsedTool.args)}`,
+            title: `\u0418\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442 (Fallback JSON): ${parsedTool.name}`,
+            detail: JSON.stringify(parsedTool.args),
             status: "running"
           });
           notifySteps();
@@ -26029,58 +26100,43 @@ ${s.description}`).join("\n")}
             parsedTool.name,
             JSON.stringify(parsedTool.args)
           );
-          const rawRes = typeof execResult.result === "string" ? execResult.result : JSON.stringify(execResult.result);
-          const trimmedResult = ContextManager.compactText(rawRes, 12e3);
-          const currentStep = steps.find((s) => s.id === stepId);
+          const currentStep = steps.find((s) => s.id === callId);
           if (currentStep) {
             currentStep.status = execResult.isError ? "failed" : "completed";
-            currentStep.detail = trimmedResult.substring(0, 300);
+            currentStep.detail = String(execResult.result).substring(0, 300);
           }
           notifySteps();
           messages.push({
-            role: "user",
-            content: `[\u0420\u0415\u0417\u0423\u041B\u042C\u0422\u0410\u0422 \u0412\u042B\u0417\u041E\u0412\u0410 \u0418\u041D\u0421\u0422\u0420\u0423\u041C\u0415\u041D\u0422\u0410 ${parsedTool.name}]:
-${trimmedResult}`
+            role: "assistant",
+            content: response.content
           });
+          messages.push({
+            role: "tool",
+            name: parsedTool.name,
+            tool_call_id: callId,
+            content: String(execResult.result)
+          });
+        } else {
+          finalResponseText = response.content;
+          break;
         }
       } else {
-        const rawContent = response.content || "";
-        if (!rawContent && iteration < maxIterations - 1) {
-          messages.push({
-            role: "user",
-            content: "\u041F\u0440\u0435\u0434\u043E\u0441\u0442\u0430\u0432\u044C \u043F\u043E\u0434\u0440\u043E\u0431\u043D\u044B\u0439, \u0441\u0442\u0440\u0443\u043A\u0442\u0443\u0440\u0438\u0440\u043E\u0432\u0430\u043D\u043D\u044B\u0439 \u0438\u0442\u043E\u0433\u043E\u0432\u044B\u0439 \u043E\u0442\u0432\u0435\u0442 \u0441 \u0432\u044B\u0432\u043E\u0434\u0430\u043C\u0438 \u0438 \u0440\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0430\u0446\u0438\u044F\u043C\u0438 \u043D\u0430 \u043E\u0441\u043D\u043E\u0432\u0435 \u043F\u043E\u043B\u0443\u0447\u0435\u043D\u043D\u044B\u0445 \u0434\u0430\u043D\u043D\u044B\u0445."
-          });
-          continue;
-        }
-        finalResponseText = rawContent;
-        if (!finalResponseText && prefetchedContext) {
-          finalResponseText = `### \u0410\u043D\u0430\u043B\u0438\u0437 \u0434\u0430\u043D\u043D\u044B\u0445:
-${prefetchedContext}`;
-        } else if (!finalResponseText) {
-          finalResponseText = "\u0410\u0433\u0435\u043D\u0442 \u0437\u0430\u0432\u0435\u0440\u0448\u0438\u043B \u043E\u0431\u0440\u0430\u0431\u043E\u0442\u043A\u0443 \u0432\u0430\u0448\u0435\u0439 \u0437\u0430\u0434\u0430\u0447\u0438.";
-        }
-        if (toolCalledCount === 0 && this.shouldAutoCreateNote(userQuery, finalResponseText)) {
-          await this.attemptAutoCreateNote(app, userQuery, finalResponseText, steps, notifySteps);
-        }
-        messages.push({
-          role: "assistant",
-          content: finalResponseText
-        });
+        finalResponseText = response.content || "";
         break;
       }
     }
-    if (!finalResponseText) {
-      finalResponseText = "\u0410\u0433\u0435\u043D\u0442 \u0437\u0430\u0432\u0435\u0440\u0448\u0438\u043B \u0430\u043D\u0430\u043B\u0438\u0437 \u0437\u0430\u043F\u0440\u043E\u0441\u0430.";
+    if (toolCalledCount > 0 && this.shouldAutoCreateNote(userQuery, finalResponseText)) {
+      await this.attemptAutoCreateNote(app, userQuery, finalResponseText, steps, notifySteps);
     }
     return {
-      responseText: finalResponseText,
+      responseText: finalResponseText || "\u0410\u0433\u0435\u043D\u0442 \u0437\u0430\u0432\u0435\u0440\u0448\u0438\u043B \u0440\u0430\u0431\u043E\u0442\u0443 \u0431\u0435\u0437 \u0442\u0435\u043A\u0441\u0442\u043E\u0432\u043E\u0433\u043E \u0432\u044B\u0432\u043E\u0434\u0430.",
       promptTokens: totalPromptTokens,
       completionTokens: totalCompletionTokens,
       executionModeUsed: "agent"
     };
   }
   static containsJsonToolCall(text) {
-    return /\{\s*["'](?:tool|name|function|action)["']\s*:\s*["'][^"']+["']/i.test(text) || /<tool_call>/i.test(text);
+    return /```(?:json)?\s*\{[\s\S]*?"(?:tool|name|function|action)"\s*:/i.test(text) || /<tool_call>/i.test(text);
   }
   static extractJsonToolCall(text) {
     try {
@@ -26089,15 +26145,16 @@ ${prefetchedContext}`;
       const jsonMatch = rawJson.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/i) || rawJson.match(/(\{[\s\S]*?\})/i);
       if (jsonMatch) {
         const parsed = JSON.parse(jsonMatch[1]);
-        const toolName = parsed.tool || parsed.name || parsed.function || parsed.action;
+        const toolName = typeof parsed.tool === "string" ? parsed.tool : typeof parsed.name === "string" ? parsed.name : typeof parsed.function === "string" ? parsed.function : typeof parsed.action === "string" ? parsed.action : void 0;
         if (toolName) {
+          const args = parsed.arguments || parsed.args || parsed.action_input || {};
           return {
             name: toolName,
-            args: parsed.arguments || parsed.args || parsed.action_input || {}
+            args
           };
         }
       }
-    } catch (e) {
+    } catch (_e) {
     }
     return null;
   }
@@ -26136,7 +26193,7 @@ ${prefetchedContext}`;
         status: execResult.isError ? "failed" : "completed"
       });
       notifySteps();
-    } catch (e) {
+    } catch (_e) {
     }
   }
 };
@@ -26430,7 +26487,19 @@ var translations = {
     inputTokens: "\u{1F4E5} \u0412\u0445\u043E\u0434:",
     outputTokens: "\u{1F4E4} \u0412\u044B\u0445\u043E\u0434:",
     confirmTitle: "\u26A0\uFE0F \u041F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043D\u0438\u0435 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u044F",
-    confirmDetail: "\u0410\u0433\u0435\u043D\u0442 \u0437\u0430\u043F\u0440\u0430\u0448\u0438\u0432\u0430\u0435\u0442 \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u0438\u0435 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u0430:"
+    confirmDetail: "\u0410\u0433\u0435\u043D\u0442 \u0437\u0430\u043F\u0440\u0430\u0448\u0438\u0432\u0430\u0435\u0442 \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u0438\u0435 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u0430:",
+    contextLength: "\u041A\u043E\u043D\u0442\u0435\u043A\u0441\u0442\u043D\u043E\u0435 \u043E\u043A\u043D\u043E:",
+    toolCallingSupport: "\u041F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0430 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u043E\u0432 (Tools):",
+    visionSupport: "\u041F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0430 \u0438\u0437\u043E\u0431\u0440\u0430\u0436\u0435\u043D\u0438\u0439 (Vision):",
+    infoUnavailable: "\u041D\u0430\u0436\u043C\u0438\u0442\u0435 '\u041F\u0440\u043E\u0432\u0435\u0440\u0438\u0442\u044C API' \u0434\u043B\u044F \u043F\u043E\u043B\u0443\u0447\u0435\u043D\u0438\u044F \u0434\u0430\u043D\u043D\u044B\u0445",
+    modelsList: "\u0421\u043F\u0438\u0441\u043E\u043A \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u043D\u044B\u0445 \u043C\u043E\u0434\u0435\u043B\u0435\u0439",
+    deleteModelTooltip: "\u0423\u0434\u0430\u043B\u0438\u0442\u044C \u043C\u043E\u0434\u0435\u043B\u044C \u0438\u0437 \u0441\u043F\u0438\u0441\u043A\u0430",
+    cancelBtn: "\u041E\u0442\u043C\u0435\u043D\u0430",
+    saveResendBtn: "\u0421\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C \u0438 \u043E\u0442\u043F\u0440\u0430\u0432\u0438\u0442\u044C",
+    agentReasoningLog: "\u0425\u043E\u0434 \u0440\u0430\u0441\u0441\u0443\u0436\u0434\u0435\u043D\u0438\u0439 \u0430\u0433\u0435\u043D\u0442\u0430",
+    actionConfirmation: "\u0422\u0440\u0435\u0431\u0443\u0435\u0442\u0441\u044F \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043D\u0438\u0435 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u044F",
+    agentWantsExecute: "\u0410\u0433\u0435\u043D\u0442 \u0445\u043E\u0447\u0435\u0442 \u0432\u044B\u043F\u043E\u043B\u043D\u0438\u0442\u044C \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442",
+    allowBtn: "\u0420\u0430\u0437\u0440\u0435\u0448\u0438\u0442\u044C"
   },
   en: {
     welcomeGreeting: "\u{1F44B} NEI Assistant greets you. Awaiting instructions",
@@ -26516,7 +26585,19 @@ var translations = {
     inputTokens: "\u{1F4E5} In:",
     outputTokens: "\u{1F4E4} Out:",
     confirmTitle: "\u26A0\uFE0F Action Confirmation Required",
-    confirmDetail: "Agent requests tool execution:"
+    confirmDetail: "Agent requests tool execution:",
+    contextLength: "Context Window:",
+    toolCallingSupport: "Tool Calling Support:",
+    visionSupport: "Vision Support:",
+    infoUnavailable: "Click 'Check API' to retrieve details",
+    modelsList: "Custom Models List",
+    deleteModelTooltip: "Delete model from list",
+    cancelBtn: "Cancel",
+    saveResendBtn: "Save & Resend",
+    agentReasoningLog: "Agent Reasoning Log",
+    actionConfirmation: "Action Confirmation Required",
+    agentWantsExecute: "Agent requests tool execution",
+    allowBtn: "Allow"
   },
   es: {
     welcomeGreeting: "\u{1F44B} El Asistente NEI le da la bienvenida. Esperando instrucciones",
@@ -26602,7 +26683,19 @@ var translations = {
     inputTokens: "\u{1F4E5} Ent:",
     outputTokens: "\u{1F4E4} Sal:",
     confirmTitle: "\u26A0\uFE0F Confirmaci\xF3n de acci\xF3n requerida",
-    confirmDetail: "El agente solicita la ejecuci\xF3n de la herramienta:"
+    confirmDetail: "El agente solicita la ejecuci\xF3n de la herramienta:",
+    contextLength: "Ventana de contexto:",
+    toolCallingSupport: "Soporte de herramientas:",
+    visionSupport: "Soporte de visi\xF3n:",
+    infoUnavailable: "Haga clic en 'Verificar API' para obtener detalles",
+    modelsList: "Lista de modelos personalizados",
+    deleteModelTooltip: "Eliminar modelo de la lista",
+    cancelBtn: "Cancelar",
+    saveResendBtn: "Guardar y reenviar",
+    agentReasoningLog: "Registro de razonamiento del agente",
+    actionConfirmation: "Confirmaci\xF3n de acci\xF3n requerida",
+    agentWantsExecute: "El agente solicita ejecutar la herramienta",
+    allowBtn: "Permitir"
   },
   de: {
     welcomeGreeting: "\u{1F44B} NEI Assistent begr\xFC\xDFt Sie. Warten auf Anweisungen",
@@ -26688,7 +26781,19 @@ var translations = {
     inputTokens: "\u{1F4E5} In:",
     outputTokens: "\u{1F4E4} Out:",
     confirmTitle: "\u26A0\uFE0F Aktionsbest\xE4tigung erforderlich",
-    confirmDetail: "Agent fordert Werkzeugausf\xFChrung an:"
+    confirmDetail: "Agent fordert Werkzeugausf\xFChrung an:",
+    contextLength: "Kontextfenster:",
+    toolCallingSupport: "Werkzeug-Unterst\xFCtzung:",
+    visionSupport: "Bild-Unterst\xFCtzung:",
+    infoUnavailable: "Klicken Sie auf 'API pr\xFCfen' f\xFCr Details",
+    modelsList: "Liste benutzerdefinierter Modelle",
+    deleteModelTooltip: "Modell aus Liste l\xF6schen",
+    cancelBtn: "Abbrechen",
+    saveResendBtn: "Speichern & erneut senden",
+    agentReasoningLog: "Agenten-Denkprotokoll",
+    actionConfirmation: "Aktionsbest\xE4tigung erforderlich",
+    agentWantsExecute: "Agent m\xF6chte Werkzeug ausf\xFChren",
+    allowBtn: "Erlauben"
   },
   fr: {
     welcomeGreeting: "\u{1F44B} L'assistant NEI vous souhaite la bienvenue. En attente d'instructions",
@@ -26774,7 +26879,19 @@ var translations = {
     inputTokens: "\u{1F4E5} Ent :",
     outputTokens: "\u{1F4E4} Sort :",
     confirmTitle: "\u26A0\uFE0F Confirmation d'action requise",
-    confirmDetail: "L'agent demande l'ex\xE9cution de l'outil :"
+    confirmDetail: "L'agent demande l'ex\xE9cution de l'outil :",
+    contextLength: "Fen\xEAtre de contexte :",
+    toolCallingSupport: "Support d'outils :",
+    visionSupport: "Support d'images :",
+    infoUnavailable: "Cliquez sur 'V\xE9rifier l'API' pour les d\xE9tails",
+    modelsList: "Liste des mod\xE8les personnalis\xE9s",
+    deleteModelTooltip: "Supprimer le mod\xE8le de la liste",
+    cancelBtn: "Annuler",
+    saveResendBtn: "Enregistrer & renvoyer",
+    agentReasoningLog: "Journal de raisonnement de l'agent",
+    actionConfirmation: "Confirmation d'action requise",
+    agentWantsExecute: "L'agent demande l'ex\xE9cution de l'outil",
+    allowBtn: "Autoriser"
   },
   zh: {
     welcomeGreeting: "\u{1F44B} NEI \u52A9\u624B\u5411\u60A8\u81F4\u610F\u3002\u7B49\u5F85\u6307\u4EE4\u4E2D",
@@ -26860,7 +26977,19 @@ var translations = {
     inputTokens: "\u{1F4E5} \u8F93\u5165\uFF1A",
     outputTokens: "\u{1F4E4} \u8F93\u51FA\uFF1A",
     confirmTitle: "\u26A0\uFE0F \u9700\u8981\u786E\u8BA4\u64CD\u4F5C",
-    confirmDetail: "\u4EE3\u7406\u8BF7\u6C42\u6267\u884C\u5DE5\u5177\uFF1A"
+    confirmDetail: "\u4EE3\u7406\u8BF7\u6C42\u6267\u884C\u5DE5\u5177\uFF1A",
+    contextLength: "\u4E0A\u4E0B\u6587\u7A97\u53E3\uFF1A",
+    toolCallingSupport: "\u5DE5\u5177\u8C03\u7528\u652F\u6301\uFF1A",
+    visionSupport: "\u56FE\u50CF/\u89C6\u89C9\u652F\u6301\uFF1A",
+    infoUnavailable: "\u70B9\u51FB\u201C\u68C0\u67E5 API\u201D\u83B7\u53D6\u8BE6\u7EC6\u4FE1\u606F",
+    modelsList: "\u81EA\u5B9A\u4E49\u6A21\u578B\u5217\u8868",
+    deleteModelTooltip: "\u4ECE\u5217\u8868\u4E2D\u5220\u9664\u6A21\u578B",
+    cancelBtn: "\u53D6\u6D88",
+    saveResendBtn: "\u4FDD\u5B58\u5E76\u91CD\u53D1",
+    agentReasoningLog: "\u4EE3\u7406\u63A8\u7406\u65E5\u5FD7",
+    actionConfirmation: "\u9700\u8981\u786E\u8BA4\u64CD\u4F5C",
+    agentWantsExecute: "\u4EE3\u7406\u8BF7\u6C42\u6267\u884C\u5DE5\u5177",
+    allowBtn: "\u5141\u8BB8"
   },
   ja: {
     welcomeGreeting: "\u{1F44B} NEI \u30A2\u30B7\u30B9\u30BF\u30F3\u30C8\u3078\u3088\u3046\u3053\u305D\u3002\u6307\u793A\u3092\u5F85\u3063\u3066\u3044\u307E\u3059",
@@ -26946,7 +27075,19 @@ var translations = {
     inputTokens: "\u{1F4E5} \u5165\u529B:",
     outputTokens: "\u{1F4E4} \u51FA\u529B:",
     confirmTitle: "\u26A0\uFE0F \u30A2\u30AF\u30B7\u30E7\u30F3\u306E\u78BA\u8A8D\u304C\u5FC5\u8981\u3067\u3059",
-    confirmDetail: "\u30A8\u30FC\u30B8\u30A7\u30F3\u30C8\u304C\u30C4\u30FC\u30EB\u306E\u5B9F\u884C\u3092\u8981\u6C42\u3057\u3066\u3044\u307E\u3059:"
+    confirmDetail: "\u30A8\u30FC\u30B8\u30A7\u30F3\u30C8\u304C\u30C4\u30FC\u30EB\u306E\u5B9F\u884C\u3092\u8981\u6C42\u3057\u3066\u3044\u307E\u3059:",
+    contextLength: "\u30B3\u30F3\u30C6\u30AD\u30B9\u30C8\u30A6\u30A3\u30F3\u30C9\u30A6:",
+    toolCallingSupport: "\u30C4\u30FC\u30EB\u547C\u3073\u51FA\u3057\u5BFE\u5FDC:",
+    visionSupport: "\u753B\u50CF\u89E3\u6790\u5BFE\u5FDC:",
+    infoUnavailable: "\u8A73\u7D30\u3092\u53D6\u5F97\u3059\u308B\u306B\u306F\u300CAPI\u3092\u78BA\u8A8D\u300D\u3092\u30AF\u30EA\u30C3\u30AF\u3057\u3066\u304F\u3060\u3055\u3044",
+    modelsList: "\u30AB\u30B9\u30BF\u30E0\u30E2\u30C7\u30EB\u30EA\u30B9\u30C8",
+    deleteModelTooltip: "\u30EA\u30B9\u30C8\u304B\u3089\u30E2\u30C7\u30EB\u3092\u524A\u9664",
+    cancelBtn: "\u30AD\u30E3\u30F3\u30BB\u30EB",
+    saveResendBtn: "\u4FDD\u5B58\u3057\u3066\u518D\u9001\u4FE1",
+    agentReasoningLog: "\u30A8\u30FC\u30B8\u30A7\u30F3\u30C8\u63A8\u8AD6\u30ED\u30B0",
+    actionConfirmation: "\u30A2\u30AF\u30B7\u30E7\u30F3\u306E\u78BA\u8A8D\u304C\u5FC5\u8981\u3067\u3059",
+    agentWantsExecute: "\u30A8\u30FC\u30B8\u30A7\u30F3\u30C8\u304C\u30C4\u30FC\u30EB\u306E\u5B9F\u884C\u3092\u8981\u6C42\u3057\u3066\u3044\u307E\u3059",
+    allowBtn: "\u8A31\u53EF"
   },
   pt: {
     welcomeGreeting: "\u{1F44B} O Assistente NEI sa\xFAda voc\xEA. Aguardando instru\xE7\xF5es",
@@ -27032,7 +27173,19 @@ var translations = {
     inputTokens: "\u{1F4E5} Ent:",
     outputTokens: "\u{1F4E4} Sa\xED:",
     confirmTitle: "\u26A0\uFE0F Confirma\xE7\xE3o de a\xE7\xE3o necess\xE1ria",
-    confirmDetail: "O agente solicita a execu\xE7\xE3o da ferramenta:"
+    confirmDetail: "O agente solicita a execu\xE7\xE3o da ferramenta:",
+    contextLength: "Janela de contexto:",
+    toolCallingSupport: "Suporte a ferramentas:",
+    visionSupport: "Suporte \xE0 vis\xE3o:",
+    infoUnavailable: "Clique em 'Verificar API' para obter detalhes",
+    modelsList: "Lista de modelos personalizados",
+    deleteModelTooltip: "Excluir modelo da lista",
+    cancelBtn: "Cancelar",
+    saveResendBtn: "Salvar e reenviar",
+    agentReasoningLog: "Log de racioc\xEDnio do agente",
+    actionConfirmation: "Confirma\xE7\xE3o de a\xE7\xE3o necess\xE1ria",
+    agentWantsExecute: "Agente solicita executar a ferramenta",
+    allowBtn: "Permitir"
   },
   ko: {
     welcomeGreeting: "\u{1F44B} NEI \uC5B4\uC2DC\uC2A4\uD134\uD2B8\uAC00 \uC778\uC0AC\uB4DC\uB9BD\uB2C8\uB2E4. \uC9C0\uC2DC\uB97C \uAE30\uB2E4\uB9AC\uB294 \uC911\uC785\uB2C8\uB2E4",
@@ -27118,7 +27271,19 @@ var translations = {
     inputTokens: "\u{1F4E5} \uC785\uB825:",
     outputTokens: "\u{1F4E4} \uCD9C\uB825:",
     confirmTitle: "\u26A0\uFE0F \uC791\uC5C5 \uC2B9\uC778 \uD544\uC694",
-    confirmDetail: "\uC5D0\uC774\uC804\uD2B8\uAC00 \uB3C4\uAD6C \uC2E4\uD589\uC744 \uC694\uCCAD\uD569\uB2C8\uB2E4:"
+    confirmDetail: "\uC5D0\uC774\uC804\uD2B8\uAC00 \uB3C4\uAD6C \uC2E4\uD589\uC744 \uC694\uCCAD\uD569\uB2C8\uB2E4:",
+    contextLength: "\uCEE8\uD14D\uC2A4\uD2B8 \uCC3D:",
+    toolCallingSupport: "\uB3C4\uAD6C \uD638\uCD9C \uC9C0\uC6D0:",
+    visionSupport: "\uBE44\uC804 \uC9C0\uC6D0:",
+    infoUnavailable: "\uC138\uBD80 \uC815\uBCF4\uB97C \uAC00\uC838\uC624\uB824\uBA74 'API \uD655\uC778'\uC744 \uD074\uB9AD\uD558\uC138\uC694",
+    modelsList: "\uC0AC\uC6A9\uC790 \uC9C0\uC815 \uBAA8\uB378 \uBAA9\uB85D",
+    deleteModelTooltip: "\uBAA9\uB85D\uC5D0\uC11C \uBAA8\uB378 \uC0AD\uC81C",
+    cancelBtn: "\uCDE8\uC18C",
+    saveResendBtn: "\uC800\uC7A5 \uBC0F \uB2E4\uC2DC \uBCF4\uB0B4\uAE30",
+    agentReasoningLog: "\uC5D0\uC774\uC804\uD2B8 \uCD94\uB860 \uB85C\uADF8",
+    actionConfirmation: "\uC791\uC5C5 \uC2B9\uC778 \uD544\uC694",
+    agentWantsExecute: "\uC5D0\uC774\uC804\uD2B8\uAC00 \uB3C4\uAD6C \uC2E4\uD589\uC744 \uC694\uCCAD\uD569\uB2C8\uB2E4",
+    allowBtn: "\uD5C8\uC6A9"
   }
 };
 function detectLanguage() {
@@ -27159,14 +27324,15 @@ var ObsidianMarkdown = ({ markdown, app }) => {
       containerRef.current.empty();
       const component = new import_obsidian10.Component();
       component.load();
-      void import_obsidian10.MarkdownRenderer.renderMarkdown(
+      void import_obsidian10.MarkdownRenderer.render(
+        app,
         markdown,
         containerRef.current,
         "",
         component
       );
     }
-  }, [markdown]);
+  }, [markdown, app]);
   return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { ref: containerRef, className: "markdown-preview-view markdown-rendered", style: { background: "transparent", padding: 0 } });
 };
 var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
@@ -27192,7 +27358,8 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
         }
       }
     } catch (e) {
-      new import_obsidian10.Notice(`${t("modeSwitchError", language)} ${e?.message || e}`);
+      const err = e;
+      new import_obsidian10.Notice(`${t("modeSwitchError", language)} ${err?.message || String(e)}`);
     }
   };
   const [currentSession, setCurrentSession] = React.useState(() => ChatStore.createNewSession());
@@ -27239,14 +27406,14 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
     try {
       const details = await OpenRouterService.getModelDetails(targetModel, key);
       setActiveModelDetails(details);
-    } catch (e) {
+    } catch (_e) {
       setActiveModelDetails(null);
     } finally {
       setVerifyingModel(false);
     }
   };
   const formatSessionTitle = (tTitle) => {
-    if (!tTitle || tTitle === "\u041D\u043E\u0432\u044B\u0439 \u0434\u0438\u0430\u043B\u043E\u0433" || tTitle === "\u041D\u043E\u0432\u044B\u0439 \u0447\u0430\u0442" || tTitle === "New Chat") {
+    if (!tTitle || tTitle === "\u041D\u043E\u0432\u044B\u0439 \u0434\u0438\u0430\u043B\u043E\u0433" || tTitle === "New Chat") {
       return t("newChatSession", language);
     }
     return tTitle;
@@ -27294,10 +27461,10 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
     const loaded = await ChatStore.loadSession(app, sessionId);
     if (loaded) {
       setCurrentSession(loaded);
-      setActiveSteps([]);
+      setActiveSteps(loaded.steps || []);
+      setShowSessionsDrawer(false);
       setEditingMsgIdx(null);
     }
-    setShowSessionsDrawer(false);
   };
   const handleDeleteSession = async (e, sessionId) => {
     e.stopPropagation();
@@ -27311,7 +27478,7 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
   const handleClearAllSessions = async () => {
     if (!confirmingClear) {
       setConfirmingClear(true);
-      setTimeout(() => setConfirmingClear(false), 3e3);
+      window.setTimeout(() => setConfirmingClear(false), 3e3);
       return;
     }
     setConfirmingClear(false);
@@ -27342,7 +27509,7 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
     try {
       await navigator.clipboard.writeText(text);
       new import_obsidian10.Notice(t("copied", language));
-    } catch (e) {
+    } catch (_e) {
       new import_obsidian10.Notice(t("copyError", language));
     }
   };
@@ -27352,7 +27519,8 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
       await app.vault.create(notePath, content);
       new import_obsidian10.Notice(`${t("noteCreatedSuccess", language)} '${notePath}'!`);
     } catch (e) {
-      new import_obsidian10.Notice(`${t("noteCreateError", language)} ${e?.message || e}`);
+      const err = e;
+      new import_obsidian10.Notice(`${t("noteCreateError", language)} ${err?.message || String(e)}`);
     }
   };
   const executeQuery = async (queryText, historySlice, imagesPayload) => {
@@ -27368,27 +27536,22 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
     const updatedMessages = [...historySlice, userMsg];
     const updatedSession = {
       ...currentSession,
-      title: currentSession.messages.length === 0 ? queryText.length > 25 ? queryText.substring(0, 25) + "..." : queryText : currentSession.title,
+      title: currentSession.messages.length === 0 ? queryText.substring(0, 30) + (queryText.length > 30 ? "..." : "") : currentSession.title,
       messages: updatedMessages
     };
     setCurrentSession(updatedSession);
     setAttachedImages([]);
     try {
-      let targetModel = model || "google/gemini-2.5-flash";
-      if (currentImages.length > 0 && visionModel) {
-        targetModel = visionModel;
-      } else if (executionMode === "quick" && quickModel) {
-        targetModel = quickModel;
-      }
-      const llmConfig = {
-        provider: "openrouter",
-        endpointUrl: endpointUrl || "https://openrouter.ai/api/v1",
-        apiKey,
-        model: targetModel
-      };
+      const isVisionRequired = currentImages.length > 0;
+      const activeModelToUse = isVisionRequired ? visionModel : executionMode === "quick" ? quickModel : model;
       const result = await AgentLoop.run({
         app,
-        config: llmConfig,
+        config: {
+          provider: "openrouter",
+          endpointUrl,
+          apiKey,
+          model: activeModelToUse
+        },
         userQuery: queryText,
         chatHistory: historySlice,
         images: currentImages,
@@ -27396,7 +27559,7 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
         onStepUpdate: (steps) => {
           setActiveSteps(steps);
         },
-        onConfirmationRequired: (toolName, argsStr) => {
+        onConfirmationRequired: async (toolName, argsStr) => {
           return new Promise((resolve) => {
             setPendingConfirmation({ toolName, argsStr, resolve });
           });
@@ -27411,7 +27574,8 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
       const finalMessages = [...updatedMessages, assistantMsg];
       const finalSession = {
         ...updatedSession,
-        messages: finalMessages
+        messages: finalMessages,
+        steps: activeSteps
       };
       setCurrentSession(finalSession);
       await ChatStore.saveSession(app, finalSession);
@@ -27421,7 +27585,8 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
       }
     } catch (e) {
       console.error("[NEI Agent Error]", e);
-      const errMessages = [...updatedMessages, { role: "assistant", content: `${t("agentError", language)} ${e?.message || e}` }];
+      const err = e;
+      const errMessages = [...updatedMessages, { role: "assistant", content: `${t("agentError", language)} ${err?.message || String(e)}` }];
       const errSession = {
         ...updatedSession,
         messages: errMessages
@@ -27466,26 +27631,14 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
       return;
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      if (file.type.startsWith("image/")) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          if (event.target?.result) {
-            setAttachedImages((prev) => [...prev, String(event.target?.result)]);
-          }
-        };
-        reader.readAsDataURL(file);
-      } else {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          if (event.target?.result) {
-            setInput((prev) => prev + `
-
-=== FILE: ${file.name} ===
-` + String(event.target?.result));
-          }
-        };
-        reader.readAsText(file);
-      }
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const res = event.target?.result;
+        if (res) {
+          setAttachedImages((prev) => [...prev, res]);
+        }
+      };
+      reader.readAsDataURL(file);
     }
   };
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", flexDirection: "column", height: "100%", padding: "10px", boxSizing: "border-box", position: "relative" }, children: [
@@ -27496,17 +27649,24 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
           {
             onClick: () => setShowSessionsDrawer(!showSessionsDrawer),
             title: t("historyTooltip", language),
-            style: { background: "var(--background-secondary)", border: "1px solid var(--background-modifier-border)", borderRadius: "4px", cursor: "pointer", padding: "4px 8px", fontSize: "12px", display: "flex", alignItems: "center", gap: "4px" },
+            style: { background: "var(--background-secondary)", border: "1px solid var(--background-modifier-border)", borderRadius: "4px", cursor: "pointer", padding: "4px 8px", fontSize: "11px", fontWeight: "500" },
             children: [
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "\u{1F4AC}" }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { style: { maxWidth: "90px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: "500" }, children: formatSessionTitle(currentSession.title) })
+              "\u{1F4C2} ",
+              formatSessionTitle(currentSession.title),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { style: { fontSize: "10px", opacity: 0.7, marginLeft: "4px" }, children: [
+                "(",
+                currentSession.messages.length,
+                ")"
+              ] })
             ]
           }
         ),
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
           "button",
           {
-            onClick: handleNewChat,
+            onClick: () => {
+              handleNewChat();
+            },
             title: t("newChatTooltip", language),
             style: { background: "var(--interactive-accent)", color: "var(--text-on-accent)", border: "none", borderRadius: "4px", cursor: "pointer", padding: "4px 8px", fontSize: "11px", fontWeight: "bold" },
             children: t("newChat", language)
@@ -27614,6 +27774,19 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
             value: apiKey,
             onChange: (e) => setApiKey(e.target.value),
             placeholder: "sk-or-v1-...",
+            style: { width: "100%", padding: "6px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-primary)", color: "var(--text-normal)" }
+          }
+        )
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", { style: { display: "block", marginBottom: "4px", fontWeight: "500" }, children: "API Endpoint URL:" }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+          "input",
+          {
+            type: "text",
+            value: endpointUrl,
+            onChange: (e) => setEndpointUrl(e.target.value),
+            placeholder: "https://openrouter.ai/api/v1",
             style: { width: "100%", padding: "6px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-primary)", color: "var(--text-normal)" }
           }
         )
@@ -27726,52 +27899,48 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
             }
           )
         ] }),
-        verifyingModel ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { color: "var(--text-muted)", fontSize: "11px" }, children: t("requestingCapabilities", language) }) : activeModelDetails ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { fontSize: "11px", display: "flex", flexDirection: "column", gap: "2px" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { color: activeModelDetails.supportsTools ? "var(--text-success)" : "var(--text-warning)", fontWeight: "bold" }, children: activeModelDetails.supportsTools ? t("nativeToolCalling", language) : t("textToolCalling", language) }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { color: activeModelDetails.supportsVision ? "var(--text-success)" : "var(--text-muted)" }, children: activeModelDetails.supportsVision ? t("visionSupported", language) : t("textOnlyInput", language) }),
-          activeModelDetails.contextLength && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
-            t("contextWindow", language),
+        activeModelDetails ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { fontSize: "11px", color: "var(--text-muted)", display: "flex", flexDirection: "column", gap: "2px" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
+            "\u2022 ",
+            t("contextLength", language),
             " ",
             /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("strong", { children: [
-              activeModelDetails.contextLength.toLocaleString(),
+              activeModelDetails.contextLength ? activeModelDetails.contextLength.toLocaleString() : "N/A",
               " ",
               t("tokens", language)
             ] })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
+            "\u2022 ",
+            t("toolCallingSupport", language),
+            " ",
+            activeModelDetails.supportsTools ? "\u2705" : "\u274C"
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
+            "\u2022 ",
+            t("visionSupport", language),
+            " ",
+            activeModelDetails.supportsVision ? "\u2705" : "\u274C"
           ] })
-        ] }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { color: "var(--text-muted)", fontSize: "11px" }, children: t("pressCheckApi", language) })
+        ] }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { fontSize: "11px", color: "var(--text-muted)" }, children: verifyingModel ? t("checkingApi", language) : t("infoUnavailable", language) })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", { style: { display: "block", marginBottom: "4px", fontWeight: "500" }, children: t("yourSavedModels", language) }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { display: "flex", flexDirection: "column", gap: "4px", maxHeight: "100px", overflowY: "auto", marginBottom: "6px" }, children: customModels.map((m) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
-          "div",
-          {
-            onClick: () => handleSelectModel(m),
-            style: {
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              padding: "4px 8px",
-              borderRadius: "4px",
-              background: m === model ? "var(--interactive-accent)" : "var(--background-primary)",
-              color: m === model ? "var(--text-on-accent)" : "var(--text-normal)",
-              cursor: "pointer",
-              fontSize: "11px"
-            },
-            children: [
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { style: { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }, children: m === model ? `\u2713 ${m}` : m }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-                "button",
-                {
-                  onClick: (e) => handleDeleteModel(e, m),
-                  title: t("deleteFromList", language),
-                  style: { background: "transparent", border: "none", color: m === model ? "var(--text-on-accent)" : "var(--text-muted)", cursor: "pointer" },
-                  children: "\u{1F5D1}\uFE0F"
-                }
-              )
-            ]
-          },
-          m
-        )) }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { background: "var(--background-primary)", padding: "8px 10px", borderRadius: "6px", border: "1px solid var(--background-modifier-border)" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", { style: { display: "block", marginBottom: "6px", fontWeight: "bold", fontSize: "11px" }, children: [
+          t("modelsList", language),
+          ":"
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { display: "flex", flexDirection: "column", gap: "4px", marginBottom: "8px", maxHeight: "120px", overflowY: "auto" }, children: customModels.map((m) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "3px 6px", background: "var(--background-secondary)", borderRadius: "4px", fontSize: "11px" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { style: { fontFamily: "monospace", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }, children: m }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+            "button",
+            {
+              onClick: (e) => handleDeleteModel(e, m),
+              title: t("deleteModelTooltip", language),
+              style: { background: "transparent", border: "none", cursor: "pointer", color: "var(--text-error, #ff5555)", fontSize: "11px" },
+              children: "\u2715"
+            }
+          )
+        ] }, m)) }),
         /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", gap: "4px" }, children: [
           /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
             "input",
@@ -27845,8 +28014,7 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
                 {
                   value: editingText,
                   onChange: (e) => setEditingText(e.target.value),
-                  rows: 3,
-                  style: { width: "100%", padding: "6px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-primary)", color: "var(--text-normal)", fontSize: "12px", resize: "vertical" }
+                  style: { width: "100%", minHeight: "60px", padding: "6px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-primary)", color: "var(--text-normal)", fontSize: "12px" }
                 }
               ),
               /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", gap: "6px", justifyContent: "flex-end" }, children: [
@@ -27854,17 +28022,16 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
                   "button",
                   {
                     onClick: () => setEditingMsgIdx(null),
-                    style: { padding: "2px 8px", fontSize: "11px", background: "transparent", border: "1px solid var(--text-on-accent)", color: "var(--text-on-accent)", borderRadius: "4px", cursor: "pointer" },
-                    children: t("cancel", language)
+                    style: { padding: "3px 8px", fontSize: "11px", background: "transparent", border: "1px solid var(--background-modifier-border)", color: "inherit", borderRadius: "4px", cursor: "pointer" },
+                    children: t("cancelBtn", language)
                   }
                 ),
                 /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
                   "button",
                   {
                     onClick: () => handleSaveEdit(idx),
-                    disabled: loading,
-                    style: { padding: "2px 8px", fontSize: "11px", background: "var(--background-primary)", color: "var(--text-normal)", border: "none", borderRadius: "4px", cursor: "pointer", fontWeight: "bold" },
-                    children: t("saveSend", language)
+                    style: { padding: "3px 8px", fontSize: "11px", background: "var(--background-primary)", color: "var(--interactive-accent)", border: "none", borderRadius: "4px", cursor: "pointer", fontWeight: "bold" },
+                    children: t("saveResendBtn", language)
                   }
                 )
               ] })
@@ -27878,7 +28045,9 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
                 /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
                   "button",
                   {
-                    onClick: () => handleCopyText(msg.content || ""),
+                    onClick: () => {
+                      void handleCopyText(msg.content || "");
+                    },
                     title: t("copyText", language),
                     style: { background: "transparent", border: "none", color: "inherit", cursor: "pointer", padding: "2px 4px", borderRadius: "4px", fontSize: "11px", whiteSpace: "nowrap" },
                     children: t("copyText", language)
@@ -27929,7 +28098,9 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
                 /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
                   "button",
                   {
-                    onClick: () => handleCopyText(msg.content || ""),
+                    onClick: () => {
+                      void handleCopyText(msg.content || "");
+                    },
                     style: { background: "var(--background-primary)", border: "1px solid var(--background-modifier-border)", borderRadius: "4px", cursor: "pointer", padding: "3px 8px", color: "var(--text-muted)", fontSize: "11px", whiteSpace: "nowrap", maxWidth: "100%" },
                     children: t("copyText", language)
                   }
@@ -27937,7 +28108,9 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
                 msg.content && msg.content.length > 50 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
                   "button",
                   {
-                    onClick: () => handleSaveResponseAsNote(msg.content || ""),
+                    onClick: () => {
+                      void handleSaveResponseAsNote(msg.content || "");
+                    },
                     style: { background: "var(--background-primary)", border: "1px solid var(--background-modifier-border)", borderRadius: "4px", cursor: "pointer", padding: "3px 8px", color: "var(--text-muted)", fontSize: "11px", whiteSpace: "nowrap", maxWidth: "100%" },
                     children: t("saveNote", language)
                   }
@@ -27948,129 +28121,134 @@ var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
         },
         idx
       )),
-      pendingConfirmation && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { background: "var(--background-secondary-alt)", border: "2px solid var(--interactive-accent)", borderRadius: "8px", padding: "10px", fontSize: "12px" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { fontWeight: "bold", color: "var(--text-warning, #ffaa00)", marginBottom: "4px" }, children: t("confirmTitle", language) }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { children: t("confirmDetail", language) }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { fontFamily: "monospace", background: "var(--background-primary)", padding: "4px 6px", borderRadius: "4px", margin: "6px 0", wordBreak: "break-all" }, children: [
-          pendingConfirmation.toolName,
-          "(",
-          pendingConfirmation.argsStr,
-          ")"
+      activeSteps.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { background: "var(--background-secondary-alt)", border: "1px solid var(--background-modifier-border)", borderRadius: "8px", padding: "8px 12px", fontSize: "11px", display: "flex", flexDirection: "column", gap: "4px" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { fontWeight: "bold", color: "var(--text-muted)", marginBottom: "2px" }, children: [
+          "\u26A1 ",
+          t("agentReasoningLog", language)
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", gap: "8px", justifyContent: "flex-end", marginTop: "8px" }, children: [
+        activeSteps.map((step) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", alignItems: "flex-start", gap: "6px", opacity: step.status === "running" ? 1 : 0.8 }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: step.status === "running" ? "\u23F3" : step.status === "completed" ? "\u2705" : "\u274C" }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { flex: 1 }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { style: { color: "var(--text-normal)" }, children: step.title }),
+            step.detail && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { color: "var(--text-muted)", fontSize: "10px", marginTop: "2px", fontFamily: "monospace", whiteSpace: "pre-wrap", maxHeight: "80px", overflowY: "auto" }, children: step.detail })
+          ] })
+        ] }, step.id))
+      ] }),
+      pendingConfirmation && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { background: "var(--background-secondary)", border: "2px solid var(--interactive-accent)", borderRadius: "8px", padding: "12px", marginTop: "6px", fontSize: "12px" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { fontWeight: "bold", marginBottom: "6px", color: "var(--text-normal)" }, children: [
+          "\u26A0\uFE0F ",
+          t("actionConfirmation", language)
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { marginBottom: "4px" }, children: [
+          t("agentWantsExecute", language),
+          ": ",
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("code", { children: pendingConfirmation.toolName })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { background: "var(--background-primary)", padding: "6px", borderRadius: "4px", fontFamily: "monospace", fontSize: "11px", marginBottom: "10px", whiteSpace: "pre-wrap", maxHeight: "100px", overflowY: "auto" }, children: pendingConfirmation.argsStr }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", gap: "8px", justifyContent: "flex-end" }, children: [
           /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
             "button",
             {
-              onClick: () => pendingConfirmation.resolve(false),
-              style: { padding: "4px 10px", fontSize: "11px", background: "var(--background-primary)", border: "1px solid var(--background-modifier-border)", borderRadius: "4px", cursor: "pointer" },
-              children: t("deny", language)
+              onClick: () => {
+                pendingConfirmation.resolve(false);
+                setPendingConfirmation(null);
+              },
+              style: { padding: "4px 12px", background: "transparent", border: "1px solid var(--background-modifier-border)", borderRadius: "4px", cursor: "pointer" },
+              children: t("cancelBtn", language)
             }
           ),
           /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
             "button",
             {
-              onClick: () => pendingConfirmation.resolve(true),
-              style: { padding: "4px 10px", fontSize: "11px", background: "var(--interactive-accent)", color: "var(--text-on-accent)", border: "none", borderRadius: "4px", cursor: "pointer", fontWeight: "bold" },
-              children: t("allow", language)
+              onClick: () => {
+                pendingConfirmation.resolve(true);
+                setPendingConfirmation(null);
+              },
+              style: { padding: "4px 12px", background: "var(--interactive-accent)", color: "var(--text-on-accent)", border: "none", borderRadius: "4px", cursor: "pointer", fontWeight: "bold" },
+              children: t("allowBtn", language)
             }
           )
         ] })
-      ] }),
-      loading && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { background: "var(--background-secondary)", padding: "10px", borderRadius: "8px", fontSize: "12px", borderLeft: "3px solid var(--interactive-accent)" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { fontWeight: "bold", marginBottom: "6px", display: "flex", alignItems: "center", gap: "6px" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "\u26A1" }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: t("agentRunning", language) })
-        ] }),
-        activeSteps.map((step) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { marginTop: "4px", color: step.status === "failed" ? "var(--text-error)" : "var(--text-muted)" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [
-            step.status === "running" ? "\u23F3" : step.status === "completed" ? "\u2705" : "\u274C",
-            " "
-          ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: step.title }),
-          step.detail && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { fontSize: "11px", opacity: 0.8, marginLeft: "16px", whiteSpace: "pre-wrap" }, children: step.detail.substring(0, 300) })
-        ] }, step.id))
       ] })
     ] }),
-    /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", flexDirection: "column", gap: "6px" }, children: [
-      attachedImages.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { display: "flex", gap: "6px", flexWrap: "wrap" }, children: attachedImages.map((img, i) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { position: "relative", width: "44px", height: "44px", borderRadius: "4px", overflow: "hidden", border: "1px solid var(--background-modifier-border)" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", { src: img, style: { width: "100%", height: "100%", objectFit: "cover" } }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-          "button",
-          {
-            onClick: () => setAttachedImages((prev) => prev.filter((_, idx) => idx !== i)),
-            style: { position: "absolute", top: 0, right: 0, background: "rgba(0,0,0,0.6)", color: "#fff", border: "none", cursor: "pointer", fontSize: "9px", padding: "1px 3px" },
-            children: "\u2715"
-          }
-        )
-      ] }, i)) }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", gap: "6px", alignItems: "flex-end" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
-          "label",
-          {
-            title: t("attachTooltip", language),
-            style: { padding: "8px 10px", background: "var(--background-secondary)", border: "1px solid var(--background-modifier-border)", borderRadius: "6px", cursor: "pointer", fontSize: "14px", marginBottom: "2px" },
-            children: [
-              "\u{1F4CE}",
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-                "input",
-                {
-                  type: "file",
-                  accept: "image/*,.txt,.md,.json,.js,.ts",
-                  multiple: true,
-                  onChange: handleFileSelect,
-                  style: { display: "none" }
-                }
-              )
-            ]
-          }
-        ),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-          "textarea",
-          {
-            value: input,
-            onChange: (e) => {
-              setInput(e.target.value);
-              const target = e.target;
-              target.setCssStyles({
-                height: `${Math.min(target.scrollHeight, 280)}px`
-              });
-            },
-            onKeyDown: (e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleSendMessage();
+    attachedImages.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { display: "flex", gap: "6px", padding: "6px", background: "var(--background-secondary)", borderRadius: "6px", marginBottom: "6px", flexWrap: "wrap" }, children: attachedImages.map((img, idx) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { position: "relative" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", { src: img, style: { width: "48px", height: "48px", objectFit: "cover", borderRadius: "4px" } }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+        "button",
+        {
+          onClick: () => setAttachedImages((prev) => prev.filter((_, i) => i !== idx)),
+          style: { position: "absolute", top: "-4px", right: "-4px", background: "var(--text-error, #ff5555)", color: "#fff", border: "none", borderRadius: "50%", width: "16px", height: "16px", fontSize: "10px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" },
+          children: "\u2715"
+        }
+      )
+    ] }, idx)) }),
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { display: "flex", flexDirection: "column", gap: "6px" }, children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", gap: "6px", alignItems: "flex-end" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
+        "label",
+        {
+          title: t("attachTooltip", language),
+          style: { padding: "8px 10px", background: "var(--background-secondary)", border: "1px solid var(--background-modifier-border)", borderRadius: "6px", cursor: "pointer", fontSize: "14px", marginBottom: "2px" },
+          children: [
+            "\u{1F4CE}",
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+              "input",
+              {
+                type: "file",
+                accept: "image/*,.txt,.md,.json,.js,.ts",
+                multiple: true,
+                onChange: handleFileSelect,
+                style: { display: "none" }
               }
-            },
-            placeholder: t("inputPlaceholder", language),
-            disabled: loading,
-            rows: 3,
-            style: {
-              flex: 1,
-              minHeight: "60px",
-              maxHeight: "280px",
-              padding: "8px 10px",
-              borderRadius: "6px",
-              border: "1px solid var(--background-modifier-border)",
-              background: "var(--background-primary)",
-              color: "var(--text-normal)",
-              resize: "vertical",
-              fontSize: "13px",
-              lineHeight: "1.4",
-              fontFamily: "inherit"
+            )
+          ]
+        }
+      ),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+        "textarea",
+        {
+          value: input,
+          onChange: (e) => {
+            setInput(e.target.value);
+            const target = e.target;
+            target.setCssStyles({
+              height: `${Math.min(target.scrollHeight, 280)}px`
+            });
+          },
+          onKeyDown: (e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              handleSendMessage();
             }
+          },
+          placeholder: t("inputPlaceholder", language),
+          disabled: loading,
+          rows: 3,
+          style: {
+            flex: 1,
+            minHeight: "60px",
+            maxHeight: "280px",
+            padding: "8px 10px",
+            borderRadius: "6px",
+            border: "1px solid var(--background-modifier-border)",
+            background: "var(--background-primary)",
+            color: "var(--text-normal)",
+            resize: "vertical",
+            fontSize: "13px",
+            lineHeight: "1.4",
+            fontFamily: "inherit"
           }
-        ),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-          "button",
-          {
-            onClick: handleSendMessage,
-            disabled: loading || !input.trim() && attachedImages.length === 0,
-            style: { padding: "0 14px", height: "60px", background: "var(--interactive-accent)", color: "var(--text-on-accent)", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px", marginBottom: "2px" },
-            children: loading ? "..." : "\u27A4"
-          }
-        )
-      ] })
-    ] })
+        }
+      ),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+        "button",
+        {
+          onClick: handleSendMessage,
+          disabled: loading || !input.trim() && attachedImages.length === 0,
+          style: { padding: "0 14px", height: "60px", background: "var(--interactive-accent)", color: "var(--text-on-accent)", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px", marginBottom: "2px" },
+          children: loading ? "..." : "\u27A4"
+        }
+      )
+    ] }) })
   ] });
 };
 
@@ -28094,7 +28272,7 @@ var NeiChatView = class extends import_obsidian11.ItemView {
   async onOpen() {
     const container = this.contentEl;
     container.empty();
-    const rootEl = container.createEl("div", { cls: "nei-chat-view-root" });
+    const rootEl = container.createDiv({ cls: "nei-chat-view-root" });
     this.root = ReactDOM.createRoot(rootEl);
     this.root.render(
       React2.createElement(ChatPanel, {

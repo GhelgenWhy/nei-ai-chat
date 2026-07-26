@@ -85,6 +85,18 @@ export interface Translations {
     outputTokens: string;
     confirmTitle: string;
     confirmDetail: string;
+    contextLength: string;
+    toolCallingSupport: string;
+    visionSupport: string;
+    infoUnavailable: string;
+    modelsList: string;
+    deleteModelTooltip: string;
+    cancelBtn: string;
+    saveResendBtn: string;
+    agentReasoningLog: string;
+    actionConfirmation: string;
+    agentWantsExecute: string;
+    allowBtn: string;
 }
 
 export const translations: Record<string, Translations> = {
@@ -172,7 +184,19 @@ export const translations: Record<string, Translations> = {
         inputTokens: "📥 Вход:",
         outputTokens: "📤 Выход:",
         confirmTitle: "⚠️ Подтверждение действия",
-        confirmDetail: "Агент запрашивает выполнение инструмента:"
+        confirmDetail: "Агент запрашивает выполнение инструмента:",
+        contextLength: "Контекстное окно:",
+        toolCallingSupport: "Поддержка инструментов (Tools):",
+        visionSupport: "Поддержка изображений (Vision):",
+        infoUnavailable: "Нажмите 'Проверить API' для получения данных",
+        modelsList: "Список сохраненных моделей",
+        deleteModelTooltip: "Удалить модель из списка",
+        cancelBtn: "Отмена",
+        saveResendBtn: "Сохранить и отправить",
+        agentReasoningLog: "Ход рассуждений агента",
+        actionConfirmation: "Требуется подтверждение действия",
+        agentWantsExecute: "Агент хочет выполнить инструмент",
+        allowBtn: "Разрешить"
     },
     en: {
         welcomeGreeting: "👋 NEI Assistant greets you. Awaiting instructions",
@@ -258,7 +282,19 @@ export const translations: Record<string, Translations> = {
         inputTokens: "📥 In:",
         outputTokens: "📤 Out:",
         confirmTitle: "⚠️ Action Confirmation Required",
-        confirmDetail: "Agent requests tool execution:"
+        confirmDetail: "Agent requests tool execution:",
+        contextLength: "Context Window:",
+        toolCallingSupport: "Tool Calling Support:",
+        visionSupport: "Vision Support:",
+        infoUnavailable: "Click 'Check API' to retrieve details",
+        modelsList: "Custom Models List",
+        deleteModelTooltip: "Delete model from list",
+        cancelBtn: "Cancel",
+        saveResendBtn: "Save & Resend",
+        agentReasoningLog: "Agent Reasoning Log",
+        actionConfirmation: "Action Confirmation Required",
+        agentWantsExecute: "Agent requests tool execution",
+        allowBtn: "Allow"
     },
     es: {
         welcomeGreeting: "👋 El Asistente NEI le da la bienvenida. Esperando instrucciones",
@@ -344,7 +380,19 @@ export const translations: Record<string, Translations> = {
         inputTokens: "📥 Ent:",
         outputTokens: "📤 Sal:",
         confirmTitle: "⚠️ Confirmación de acción requerida",
-        confirmDetail: "El agente solicita la ejecución de la herramienta:"
+        confirmDetail: "El agente solicita la ejecución de la herramienta:",
+        contextLength: "Ventana de contexto:",
+        toolCallingSupport: "Soporte de herramientas:",
+        visionSupport: "Soporte de visión:",
+        infoUnavailable: "Haga clic en 'Verificar API' para obtener detalles",
+        modelsList: "Lista de modelos personalizados",
+        deleteModelTooltip: "Eliminar modelo de la lista",
+        cancelBtn: "Cancelar",
+        saveResendBtn: "Guardar y reenviar",
+        agentReasoningLog: "Registro de razonamiento del agente",
+        actionConfirmation: "Confirmación de acción requerida",
+        agentWantsExecute: "El agente solicita ejecutar la herramienta",
+        allowBtn: "Permitir"
     },
     de: {
         welcomeGreeting: "👋 NEI Assistent begrüßt Sie. Warten auf Anweisungen",
@@ -430,7 +478,19 @@ export const translations: Record<string, Translations> = {
         inputTokens: "📥 In:",
         outputTokens: "📤 Out:",
         confirmTitle: "⚠️ Aktionsbestätigung erforderlich",
-        confirmDetail: "Agent fordert Werkzeugausführung an:"
+        confirmDetail: "Agent fordert Werkzeugausführung an:",
+        contextLength: "Kontextfenster:",
+        toolCallingSupport: "Werkzeug-Unterstützung:",
+        visionSupport: "Bild-Unterstützung:",
+        infoUnavailable: "Klicken Sie auf 'API prüfen' für Details",
+        modelsList: "Liste benutzerdefinierter Modelle",
+        deleteModelTooltip: "Modell aus Liste löschen",
+        cancelBtn: "Abbrechen",
+        saveResendBtn: "Speichern & erneut senden",
+        agentReasoningLog: "Agenten-Denkprotokoll",
+        actionConfirmation: "Aktionsbestätigung erforderlich",
+        agentWantsExecute: "Agent möchte Werkzeug ausführen",
+        allowBtn: "Erlauben"
     },
     fr: {
         welcomeGreeting: "👋 L'assistant NEI vous souhaite la bienvenue. En attente d'instructions",
@@ -516,7 +576,19 @@ export const translations: Record<string, Translations> = {
         inputTokens: "📥 Ent :",
         outputTokens: "📤 Sort :",
         confirmTitle: "⚠️ Confirmation d'action requise",
-        confirmDetail: "L'agent demande l'exécution de l'outil :"
+        confirmDetail: "L'agent demande l'exécution de l'outil :",
+        contextLength: "Fenêtre de contexte :",
+        toolCallingSupport: "Support d'outils :",
+        visionSupport: "Support d'images :",
+        infoUnavailable: "Cliquez sur 'Vérifier l'API' pour les détails",
+        modelsList: "Liste des modèles personnalisés",
+        deleteModelTooltip: "Supprimer le modèle de la liste",
+        cancelBtn: "Annuler",
+        saveResendBtn: "Enregistrer & renvoyer",
+        agentReasoningLog: "Journal de raisonnement de l'agent",
+        actionConfirmation: "Confirmation d'action requise",
+        agentWantsExecute: "L'agent demande l'exécution de l'outil",
+        allowBtn: "Autoriser"
     },
     zh: {
         welcomeGreeting: "👋 NEI 助手向您致意。等待指令中",
@@ -602,7 +674,19 @@ export const translations: Record<string, Translations> = {
         inputTokens: "📥 输入：",
         outputTokens: "📤 输出：",
         confirmTitle: "⚠️ 需要确认操作",
-        confirmDetail: "代理请求执行工具："
+        confirmDetail: "代理请求执行工具：",
+        contextLength: "上下文窗口：",
+        toolCallingSupport: "工具调用支持：",
+        visionSupport: "图像/视觉支持：",
+        infoUnavailable: "点击“检查 API”获取详细信息",
+        modelsList: "自定义模型列表",
+        deleteModelTooltip: "从列表中删除模型",
+        cancelBtn: "取消",
+        saveResendBtn: "保存并重发",
+        agentReasoningLog: "代理推理日志",
+        actionConfirmation: "需要确认操作",
+        agentWantsExecute: "代理请求执行工具",
+        allowBtn: "允许"
     },
     ja: {
         welcomeGreeting: "👋 NEI アシスタントへようこそ。指示を待っています",
@@ -688,7 +772,19 @@ export const translations: Record<string, Translations> = {
         inputTokens: "📥 入力:",
         outputTokens: "📤 出力:",
         confirmTitle: "⚠️ アクションの確認が必要です",
-        confirmDetail: "エージェントがツールの実行を要求しています:"
+        confirmDetail: "エージェントがツールの実行を要求しています:",
+        contextLength: "コンテキストウィンドウ:",
+        toolCallingSupport: "ツール呼び出し対応:",
+        visionSupport: "画像解析対応:",
+        infoUnavailable: "詳細を取得するには「APIを確認」をクリックしてください",
+        modelsList: "カスタムモデルリスト",
+        deleteModelTooltip: "リストからモデルを削除",
+        cancelBtn: "キャンセル",
+        saveResendBtn: "保存して再送信",
+        agentReasoningLog: "エージェント推論ログ",
+        actionConfirmation: "アクションの確認が必要です",
+        agentWantsExecute: "エージェントがツールの実行を要求しています",
+        allowBtn: "許可"
     },
     pt: {
         welcomeGreeting: "👋 O Assistente NEI saúda você. Aguardando instruções",
@@ -774,7 +870,19 @@ export const translations: Record<string, Translations> = {
         inputTokens: "📥 Ent:",
         outputTokens: "📤 Saí:",
         confirmTitle: "⚠️ Confirmação de ação necessária",
-        confirmDetail: "O agente solicita a execução da ferramenta:"
+        confirmDetail: "O agente solicita a execução da ferramenta:",
+        contextLength: "Janela de contexto:",
+        toolCallingSupport: "Suporte a ferramentas:",
+        visionSupport: "Suporte à visão:",
+        infoUnavailable: "Clique em 'Verificar API' para obter detalhes",
+        modelsList: "Lista de modelos personalizados",
+        deleteModelTooltip: "Excluir modelo da lista",
+        cancelBtn: "Cancelar",
+        saveResendBtn: "Salvar e reenviar",
+        agentReasoningLog: "Log de raciocínio do agente",
+        actionConfirmation: "Confirmação de ação necessária",
+        agentWantsExecute: "Agente solicita executar a ferramenta",
+        allowBtn: "Permitir"
     },
     ko: {
         welcomeGreeting: "👋 NEI 어시스턴트가 인사드립니다. 지시를 기다리는 중입니다",
@@ -860,8 +968,20 @@ export const translations: Record<string, Translations> = {
         inputTokens: "📥 입력:",
         outputTokens: "📤 출력:",
         confirmTitle: "⚠️ 작업 승인 필요",
-        confirmDetail: "에이전트가 도구 실행을 요청합니다:"
-    }
+        confirmDetail: "에이전트가 도구 실행을 요청합니다:",
+        contextLength: "컨텍스트 창:",
+        toolCallingSupport: "도구 호출 지원:",
+        visionSupport: "비전 지원:",
+        infoUnavailable: "세부 정보를 가져오려면 'API 확인'을 클릭하세요",
+        modelsList: "사용자 지정 모델 목록",
+        deleteModelTooltip: "목록에서 모델 삭제",
+        cancelBtn: "취소",
+        saveResendBtn: "저장 및 다시 보내기",
+        agentReasoningLog: "에이전트 추론 로그",
+        actionConfirmation: "작업 승인 필요",
+        agentWantsExecute: "에이전트가 도구 실행을 요청합니다",
+        allowBtn: "허용"
+    },
 };
 
 export function detectLanguage(): SupportedLanguage {

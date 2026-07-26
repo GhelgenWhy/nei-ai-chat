@@ -44,24 +44,24 @@ export class ToolRegistry {
             };
         }
 
-        let parsedArgs: any = {};
+        let parsedArgs: Record<string, unknown> = {};
         try {
-            parsedArgs = JSON.parse(argsJson || "{}");
-        } catch (e: any) {
+            parsedArgs = JSON.parse(argsJson || "{}") as Record<string, unknown>;
+        } catch (e: unknown) {
+            const err = e as { message?: string };
             return {
                 toolCallId,
                 name,
-                result: `Ошибка парсинга аргументов инструмента '${name}': ${e?.message || e}`,
+                result: `Ошибка парсинга аргументов инструмента '${name}': ${err?.message || String(e)}`,
                 isError: true
             };
         }
 
         try {
-
             const execResult = await executor(app, parsedArgs);
 
             if (typeof execResult === "object" && execResult !== null && "result" in execResult) {
-                return execResult as ToolExecutionResult;
+                return execResult;
             }
 
             return {
@@ -69,11 +69,12 @@ export class ToolRegistry {
                 name,
                 result: String(execResult)
             };
-        } catch (e: any) {
+        } catch (e: unknown) {
+            const err = e as { message?: string };
             return {
                 toolCallId,
                 name,
-                result: `Исключение при выполнении '${name}': ${e?.message || e}`,
+                result: `Исключение при выполнении '${name}': ${err?.message || String(e)}`,
                 isError: true
             };
         }

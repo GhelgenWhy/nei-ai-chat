@@ -30,7 +30,7 @@ export class NeiChatView extends ItemView {
     async onOpen() {
         const container = this.contentEl;
         container.empty();
-        const rootEl = container.createEl("div", { cls: "nei-chat-view-root" });
+        const rootEl = container.createDiv({ cls: "nei-chat-view-root" });
         this.root = ReactDOM.createRoot(rootEl);
         
         this.root.render(

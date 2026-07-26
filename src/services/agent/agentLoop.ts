@@ -1,4 +1,4 @@
-import { App, TFile, TFolder, normalizePath } from "obsidian";
+import { App, TFile } from "obsidian";
 import { ChatMessage, LlmConfig, sendChatRequest } from "../llm";
 import { defaultToolRegistry } from "../tools/toolRegistry";
 import { MemoryStore } from "../memory/memoryStore";
@@ -48,6 +48,7 @@ export class AgentLoop {
             onConfirmationRequired,
             maxIterations = 6 
         } = options;
+        void onConfirmationRequired;
         const steps: AgentStep[] = [];
 
         let totalPromptTokens = 0;
@@ -117,7 +118,7 @@ export class AgentLoop {
                         const cleanText = content.replace(/^---[\s\S]*?---\n?/, "").trim();
                         const snippet = cleanText.length > 400 ? cleanText.substring(0, 400) + "... [обрезано]" : cleanText;
                         prefetchedBlocks.push(`--- ЗАМЕТКА: [[${file.basename}]] (${file.path}) ---\n${snippet}`);
-                    } catch (e: unknown) {
+                    } catch (_e: unknown) {
                         /* ignore file read error */
                     }
                 }
@@ -152,6 +153,10 @@ export class AgentLoop {
 - Чистый GitHub Flavored Markdown с таблицами, списками, цитатами и понятной структурой.
 `;
 
+        if (vaultContext.ragContext) {
+            systemPrompt += `\n--- СПРАВОЧНЫЙ КОНТЕКСТ ВАУЛТА (RAG) ---\n${vaultContext.ragContext}\n`;
+        }
+
         if (agentsRules.trim()) {
             systemPrompt += `\n--- ПРАВИЛА ПОЛЬЗОВАТЕЛЯ (.nei/AGENTS.md) ---\n${agentsRules}\n`;
         }
@@ -178,30 +183,31 @@ export class AgentLoop {
 
         // 5. QUICK MODE (Single Direct Turn)
         if (actualMode === "quick") {
-            steps.push({
-                id: "quick-exec-step",
-                type: "thought",
-                title: "Прямой отклик (Quick Mode)",
-                status: "completed"
-            });
-            notifySteps();
+            try {
+                const response = await sendChatRequest(config, messages);
+                if (response.usage) {
+                    totalPromptTokens += response.usage.promptTokens;
+                    totalCompletionTokens += response.usage.completionTokens;
+                }
+                let responseText = response.content || "";
 
-            const response = await sendChatRequest(config, messages, undefined);
-            if (response.usage) {
-                totalPromptTokens += response.usage.promptTokens;
-                totalCompletionTokens += response.usage.completionTokens;
+                if (this.shouldAutoCreateNote(userQuery, responseText)) {
+                    await this.attemptAutoCreateNote(app, userQuery, responseText, steps, notifySteps);
+                }
+
+                return {
+                    responseText,
+                    promptTokens: totalPromptTokens,
+                    completionTokens: totalCompletionTokens,
+                    executionModeUsed: "quick"
+                };
+            } catch (e: unknown) {
+                const err = e as { message?: string };
+                throw new Error(`Ошибка вызова Quick LLM: ${err?.message || String(e)}`);
             }
-
-            const responseText = response.content || "ИИ не вернул текст ответа.";
-            return {
-                responseText,
-                promptTokens: totalPromptTokens,
-                completionTokens: totalCompletionTokens,
-                executionModeUsed: "quick"
-            };
         }
 
-        // 6. AGENT MODE (Multi-Iteration Loop with Tools)
+        // 6. AGENT MODE (Multi-step Tool Execution Loop)
         const tools = defaultToolRegistry.getToolDefinitions();
         let iteration = 0;
         let finalResponseText = "";
@@ -210,7 +216,6 @@ export class AgentLoop {
 
         while (iteration < maxIterations) {
             iteration++;
-            // Iteration ${iteration}/${maxIterations}
 
             const isLastIteration = (iteration === maxIterations);
             const activeTools = isLastIteration ? undefined : tools;
@@ -225,16 +230,17 @@ export class AgentLoop {
                 steps.push({
                     id: `reasoning-${iteration}`,
                     type: "reasoning",
-                    title: "Рассуждение ИИ",
+                    title: `Рассуждения (Шаг ${iteration})`,
                     detail: response.reasoning,
                     status: "completed"
                 });
                 notifySteps();
             }
 
-            // A) Native Tool Calls
+            // A) Standard OpenAI / OpenRouter Native Tool Calls
             if (response.tool_calls && response.tool_calls.length > 0 && !isLastIteration) {
                 toolCalledCount += response.tool_calls.length;
+
                 messages.push({
                     role: "assistant",
                     content: response.content || "Выполнение вызова инструментов...",
@@ -301,17 +307,11 @@ export class AgentLoop {
                     const callKey = `${parsedTool.name}:${JSON.stringify(parsedTool.args)}`;
                     executedCallsMap[callKey] = (executedCallsMap[callKey] || 0) + 1;
 
-                    messages.push({
-                        role: "assistant",
-                        content: response.content
-                    });
-
-                    const stepId = `tool-${callId}`;
                     steps.push({
-                        id: stepId,
+                        id: callId,
                         type: "tool_call",
-                        title: `Инструмент (Текст): ${parsedTool.name}`,
-                        detail: `Аргументы: ${JSON.stringify(parsedTool.args)}`,
+                        title: `Инструмент (Fallback JSON): ${parsedTool.name}`,
+                        detail: JSON.stringify(parsedTool.args),
                         status: "running"
                     });
                     notifySteps();
@@ -322,60 +322,42 @@ export class AgentLoop {
                         parsedTool.name,
                         JSON.stringify(parsedTool.args)
                     );
-                    const rawRes = typeof execResult.result === "string" ? execResult.result : JSON.stringify(execResult.result);
-                    const trimmedResult = ContextManager.compactText(rawRes, 12000);
 
-                    const currentStep = steps.find(s => s.id === stepId);
+                    const currentStep = steps.find(s => s.id === callId);
                     if (currentStep) {
                         currentStep.status = execResult.isError ? "failed" : "completed";
-                        currentStep.detail = trimmedResult.substring(0, 300);
+                        currentStep.detail = String(execResult.result).substring(0, 300);
                     }
                     notifySteps();
 
                     messages.push({
-                        role: "user",
-                        content: `[РЕЗУЛЬТАТ ВЫЗОВА ИНСТРУМЕНТА ${parsedTool.name}]:\n${trimmedResult}`
+                        role: "assistant",
+                        content: response.content
                     });
+                    messages.push({
+                        role: "tool",
+                        name: parsedTool.name,
+                        tool_call_id: callId,
+                        content: String(execResult.result)
+                    });
+                } else {
+                    finalResponseText = response.content;
+                    break;
                 }
             } 
-            // C) Final Assistant Response Text
+            // C) Final Text Response
             else {
-                const rawContent = response.content || "";
-
-                if (!rawContent && iteration < maxIterations - 1) {
-                    messages.push({
-                        role: "user",
-                        content: "Предоставь подробный, структурированный итоговый ответ с выводами и рекомендациями на основе полученных данных."
-                    });
-                    continue;
-                }
-
-                finalResponseText = rawContent;
-                if (!finalResponseText && prefetchedContext) {
-                    finalResponseText = `### Анализ данных:\n${prefetchedContext}`;
-                } else if (!finalResponseText) {
-                    finalResponseText = "Агент завершил обработку вашей задачи.";
-                }
-
-                // If user requested note creation, but model did not execute any create_note tool call, execute automatic note creation fallback
-                if (toolCalledCount === 0 && this.shouldAutoCreateNote(userQuery, finalResponseText)) {
-                    await this.attemptAutoCreateNote(app, userQuery, finalResponseText, steps, notifySteps);
-                }
-
-                messages.push({
-                    role: "assistant",
-                    content: finalResponseText
-                });
+                finalResponseText = response.content || "";
                 break;
             }
         }
 
-        if (!finalResponseText) {
-            finalResponseText = "Агент завершил анализ запроса.";
+        if (toolCalledCount > 0 && this.shouldAutoCreateNote(userQuery, finalResponseText)) {
+            await this.attemptAutoCreateNote(app, userQuery, finalResponseText, steps, notifySteps);
         }
 
         return {
-            responseText: finalResponseText,
+            responseText: finalResponseText || "Агент завершил работу без текстового вывода.",
             promptTokens: totalPromptTokens,
             completionTokens: totalCompletionTokens,
             executionModeUsed: "agent"
@@ -383,27 +365,31 @@ export class AgentLoop {
     }
 
     private static containsJsonToolCall(text: string): boolean {
-        return /\{\s*["'](?:tool|name|function|action)["']\s*:\s*["'][^"']+["']/i.test(text) ||
+        return /```(?:json)?\s*\{[\s\S]*?"(?:tool|name|function|action)"\s*:/i.test(text) ||
                /<tool_call>/i.test(text);
     }
 
-    private static extractJsonToolCall(text: string): { name: string; args: any } | null {
+    private static extractJsonToolCall(text: string): { name: string; args: Record<string, unknown> } | null {
         try {
             const xmlMatch = text.match(/<tool_call>\s*([\s\S]*?)\s*<\/tool_call>/i);
             const rawJson = xmlMatch ? xmlMatch[1] : text;
 
             const jsonMatch = rawJson.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/i) || rawJson.match(/(\{[\s\S]*?\})/i);
             if (jsonMatch) {
-                const parsed = JSON.parse(jsonMatch[1]);
-                const toolName = parsed.tool || parsed.name || parsed.function || parsed.action;
+                const parsed = JSON.parse(jsonMatch[1]) as Record<string, unknown>;
+                const toolName = typeof parsed.tool === "string" ? parsed.tool :
+                                 typeof parsed.name === "string" ? parsed.name :
+                                 typeof parsed.function === "string" ? parsed.function :
+                                 typeof parsed.action === "string" ? parsed.action : undefined;
                 if (toolName) {
+                    const args = (parsed.arguments || parsed.args || parsed.action_input || {}) as Record<string, unknown>;
                     return {
                         name: toolName,
-                        args: (parsed.arguments || parsed.args || parsed.action_input || {}) as Record<string, unknown>
+                        args
                     };
                 }
             }
-        } catch (e: unknown) {
+        } catch (_e: unknown) {
             /* ignore JSON parse error */
         }
         return null;
@@ -453,7 +439,7 @@ export class AgentLoop {
                 status: execResult.isError ? "failed" : "completed"
             });
             notifySteps();
-        } catch (e: unknown) {
+        } catch (_e: unknown) {
             /* ignore auto create error */
         }
     }
