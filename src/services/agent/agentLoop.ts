@@ -1,9 +1,12 @@
 import { App, TFile } from "obsidian";
-import { ChatMessage, LlmConfig, sendChatRequest } from "../llm";
-import { defaultToolRegistry } from "../tools/toolRegistry";
+import { ChatMessage, LlmConfig, sendChatRequest, getModelTemporalInfo } from "../llm";
 import { MemoryStore } from "../memory/memoryStore";
 import { SkillsLoader } from "../skills/skillsLoader";
 import { resolveContext } from "../context";
+import { ToolRegistry } from "../tools/toolRegistry";
+import { SupportedLanguage, t } from "../../i18n/translations";
+import { NeiAiChatSettings } from "../../../main";
+import { searchVaultLexical } from "../rag";
 
 import { IntentRouter, ExecutionMode } from "./intentRouter";
 import { ContextManager } from "./contextManager";
@@ -26,6 +29,9 @@ export interface AgentLoopOptions {
     onStepUpdate?: (steps: AgentStep[]) => void;
     onConfirmationRequired?: (toolName: string, argsStr: string) => Promise<boolean>;
     maxIterations?: number;
+    toolRegistry: ToolRegistry;
+    language?: SupportedLanguage;
+    settings: NeiAiChatSettings;
 }
 
 export interface AgentLoopResult {
@@ -36,6 +42,75 @@ export interface AgentLoopResult {
 }
 
 export class AgentLoop {
+    private static promptCache: Map<string, { prompt: string; timestamp: number }> = new Map();
+
+    private static getSystemPrompt(
+        language: SupportedLanguage,
+        userQuery: string,
+        vaultContext: { ragContext?: string },
+        agentsRules: string,
+        memory: { learnedFacts: string[] },
+        skills: Array<{ name: string; description: string }>,
+        prefetchedContext: string,
+        settings: NeiAiChatSettings,
+        modelId: string
+    ): string {
+        const cacheKey = `${language}|${vaultContext.ragContext?.length || 0}|${agentsRules.length}|${memory.learnedFacts.length}|${skills.length}|${prefetchedContext.length}|${settings.memoryFile}|${modelId}`;
+        const cached = this.promptCache.get(cacheKey);
+        if (cached && Date.now() - cached.timestamp < 30000) {
+            return cached.prompt;
+        }
+
+        const isRu = language === "ru" || (language === "auto" && /[а-яА-ЯёЁ]{3,}/.test(userQuery));
+        let systemPrompt = isRu ? t("systemPromptRu", language) : t("systemPromptEn", language);
+
+        if (settings.enableTemporalAwareness) {
+            const temporalInfo = getModelTemporalInfo(modelId);
+            const cutoffDate = temporalInfo.knowledgeCutoff;
+            const today = new Date().toISOString().split('T')[0];
+
+            let freshnessDirective = `\n--- TEMPORAL AWARENESS ---\n`;
+            freshnessDirective += `Current Date: ${today}\n`;
+            freshnessDirective += `Your Knowledge Cutoff: ${cutoffDate}\n`;
+            freshnessDirective += `Days Since Cutoff: ${Math.floor((Date.now() - new Date(cutoffDate).getTime()) / (1000 * 60 * 60 * 24))}\n`;
+
+            if (temporalInfo.supportsWebSearch) {
+                freshnessDirective += `⚠️ CRITICAL: For questions about events, prices, data, or facts after ${cutoffDate}, `;
+                freshnessDirective += `you MUST use available tools (web_search, read_web_page) to get current information.\n`;
+                freshnessDirective += `Do NOT rely on training data for time-sensitive queries.\n`;
+            } else {
+                freshnessDirective += `⚠️ WARNING: This model cannot access live data. For time-sensitive queries, `;
+                freshnessDirective += `explicitly state your knowledge cutoff and recommend user to verify externally.\n`;
+            }
+            freshnessDirective += `------------------------\n`;
+
+            systemPrompt += freshnessDirective;
+        }
+
+        if (vaultContext.ragContext) {
+            systemPrompt += `\n--- VAULT CONTEXT (RAG) ---\n${vaultContext.ragContext}\n`;
+        }
+
+        if (agentsRules.trim()) {
+            systemPrompt += `\n--- USER RULES (${settings.memoryFile}) ---\n${agentsRules}\n`;
+        }
+
+        if (memory.learnedFacts.length > 0) {
+            systemPrompt += `\n--- LONG-TERM MEMORY (${settings.memoryFile}) ---\n${memory.learnedFacts.map(f => `- ${f}`).join("\n")}\n`;
+        }
+
+        if (skills.length > 0) {
+            systemPrompt += `\n--- AGENT SKILLS (${settings.skillsFolder}/) ---\n${skills.map(s => `[Skill: ${s.name}]\n${s.description}`).join("\n")}\n`;
+        }
+
+        if (prefetchedContext) {
+            systemPrompt += prefetchedContext;
+        }
+
+        this.promptCache.set(cacheKey, { prompt: systemPrompt, timestamp: Date.now() });
+        return systemPrompt;
+    }
+
     public static async run(options: AgentLoopOptions): Promise<AgentLoopResult> {
         const { 
             app, 
@@ -46,9 +121,11 @@ export class AgentLoop {
             executionMode = "auto", 
             onStepUpdate, 
             onConfirmationRequired,
-            maxIterations = 6 
+            maxIterations,
+            toolRegistry,
+            language = "auto",
+            settings
         } = options;
-        void onConfirmationRequired;
         const steps: AgentStep[] = [];
 
         let totalPromptTokens = 0;
@@ -58,6 +135,9 @@ export class AgentLoop {
             if (onStepUpdate) onStepUpdate([...steps]);
         };
 
+        const features = IntentRouter.extractFeatures(userQuery, Boolean(images && images.length > 0), chatHistory, config.model);
+        const toolNeeds = IntentRouter.classifyToolNeeds(userQuery, features, config.model);
+
         // Determine actual execution mode using IntentRouter if set to 'auto'
         let actualMode: "quick" | "agent" = "agent";
         if (executionMode === "quick") {
@@ -65,12 +145,12 @@ export class AgentLoop {
         } else if (executionMode === "agent") {
             actualMode = "agent";
         } else {
-            const decision = IntentRouter.classifyIntent(userQuery, Boolean(images && images.length > 0));
+            const decision = IntentRouter.classifyIntent(userQuery, Boolean(images && images.length > 0), language, chatHistory, settings);
             actualMode = decision.mode;
             steps.push({
                 id: "intent-routing-step",
                 type: "thought",
-                title: `Маршрутизация режима: ${actualMode === "quick" ? "Быстрый ответ (Quick)" : "Агентный анализ (Agent)"}`,
+                title: `Mode: ${actualMode === "quick" ? "Quick" : "Agent"}`,
                 detail: decision.reason,
                 status: "completed"
             });
@@ -79,59 +159,44 @@ export class AgentLoop {
 
         // 1. Resolve Context & Memory
         const vaultContext = await resolveContext(app, userQuery, true);
-        const memory = await MemoryStore.loadMemory(app);
-        const agentsRules = await MemoryStore.loadAgentsRules(app);
-        const skills = await SkillsLoader.loadSkills(app);
+        const memory = await MemoryStore.loadMemory(app, settings);
+        const agentsRules = await MemoryStore.loadAgentsRules(app, settings);
+        const skills = await SkillsLoader.loadSkills(app, settings);
 
-        // 2. CONDITIONAL PRE-FETCHING & TOKEN OPTIMIZATION
+        // 2. Semantic Folder & Vault Prefetching via RAG (Adaptive)
         let prefetchedContext = "";
-        const queryLower = userQuery.toLowerCase();
+        const shouldPrefetchVault = settings.enableAdaptivePrefetch
+            ? (toolNeeds.needsVaultSearch && actualMode === "agent")
+            : (actualMode === "agent");
 
-        // A) Vault Folder Detection (Optimized for tokens: snippet 400 chars max per note)
-        const allFiles = app.vault.getMarkdownFiles();
-        const folderMap: Record<string, TFile[]> = {};
-        for (const file of allFiles) {
-            const parts = file.path.split("/");
-            if (parts.length > 1) {
-                const folderName = parts[0];
-                if (!folderMap[folderName]) folderMap[folderName] = [];
-                folderMap[folderName].push(file);
-            }
-        }
+        if (shouldPrefetchVault) {
+            const searchResults = await searchVaultLexical(app, userQuery, settings.maxPrefetchedNotes, settings.prefetchSnippetLength);
+            if (searchResults.length > 0) {
+                const prefetchedBlocks: string[] = [];
+                const matchedFoldersSet = new Set<string>();
 
-        const matchedFolderNames: string[] = [];
-        for (const folderName of Object.keys(folderMap)) {
-            if (queryLower.includes(folderName.toLowerCase()) || queryLower.includes(folderName.toLowerCase().replace(/s$/, ""))) {
-                matchedFolderNames.push(folderName);
-            }
-        }
-
-        if (matchedFolderNames.length > 0) {
-            const prefetchedBlocks: string[] = [];
-            for (const folderName of matchedFolderNames) {
-                const filesInFolder = (folderMap[folderName] || []).slice(0, 12); // Limit to top 12 notes max
-                prefetchedBlocks.push(`=== ПАПКА '${folderName}' (Заметок: ${filesInFolder.length}) ===`);
-                for (const file of filesInFolder) {
-                    try {
-                        const content = await app.vault.read(file);
-                        // Clean frontmatter and truncate to save tokens
-                        const cleanText = content.replace(/^---[\s\S]*?---\n?/, "").trim();
-                        const snippet = cleanText.length > 400 ? cleanText.substring(0, 400) + "... [обрезано]" : cleanText;
-                        prefetchedBlocks.push(`--- ЗАМЕТКА: [[${file.basename}]] (${file.path}) ---\n${snippet}`);
-                    } catch {
-                        /* ignore file read error */
+                for (const res of searchResults) {
+                    const abstractFile = res.file;
+                    const folderName = abstractFile.parent?.name || "Vault";
+                    if (folderName) {
+                        matchedFoldersSet.add(folderName);
                     }
+                    const cleanContent = res.content.replace(/^---[\s\S]*?---\n?/, "").trim();
+                    const snippet = cleanContent.length > settings.prefetchSnippetLength ? cleanContent.substring(0, settings.prefetchSnippetLength) + "... [обрезано]" : cleanContent;
+                    prefetchedBlocks.push(`--- NOTE: [[${abstractFile.basename}]] (${abstractFile.path}) ---\n${snippet}`);
                 }
+
+                const matchedFoldersArr = Array.from(matchedFoldersSet);
+                prefetchedContext += `\n${t("autoIndexedVaultNotes", language)}\n${prefetchedBlocks.join("\n\n")}\n`;
+                steps.push({
+                    id: "folder-prefetch-step",
+                    type: "tool_result",
+                    title: t("folderPrefetchTitle", language, { folders: matchedFoldersArr.join(", ") || "Vault" }),
+                    detail: t("folderPrefetchDetail", language, { count: matchedFoldersArr.length.toString() }),
+                    status: "completed"
+                });
+                notifySteps();
             }
-            prefetchedContext += `\n--- АВТОМАТИЧЕСКИ ИНДЕКСИРОВАННЫЕ ЗАМЕТКИ ВАУЛТА ---\n${prefetchedBlocks.join("\n\n")}\n`;
-            steps.push({
-                id: "folder-prefetch-step",
-                type: "tool_result",
-                title: `Инъецированы заметки папок: ${matchedFolderNames.join(", ")}`,
-                detail: `Папок: ${matchedFolderNames.length}`,
-                status: "completed"
-            });
-            notifySteps();
         }
 
         // 3. Build User Message (with optional images)
@@ -141,37 +206,7 @@ export class AgentLoop {
         }
 
         // 4. Build System Prompt & Prune History (ContextManager)
-        let systemPrompt = `Ты — сверхагентный ИИ-помощник NEI в Obsidian.
-Твоя цель: помогать пользователю работать с хранилищем заметок Vault и отвечать на его вопросы.
-
-ОБЯЗАТЕЛЬНЫЕ ПРАВИЛА ИСПОЛЬЗОВАНИЯ ИНСТРУМЕНТОВ:
-1. Если пользователь просит "создай заметку", "создай папку", "создай файл" или "сохрани": ТЫ ОБЯЗАН ВЫЗВАТЬ ИНСТРУМЕНТ \`create_note(path, content)\`. Не ограничивайся обычным текстовым ответом в чат!
-2. Для чтения заметок используй \`read_note\` или \`get_folder_notes\`.
-3. При необходимости создать структуру папок (например \`Projects/Subfolder/Note.md\`), инструмент \`create_note\` сам создаст все нужные папки автоматически.
-
-ФОРМАТИРОВАНИЕ ОТВЕТА:
-- Чистый GitHub Flavored Markdown с таблицами, списками, цитатами и понятной структурой.
-`;
-
-        if (vaultContext.ragContext) {
-            systemPrompt += `\n--- СПРАВОЧНЫЙ КОНТЕКСТ ВАУЛТА (RAG) ---\n${vaultContext.ragContext}\n`;
-        }
-
-        if (agentsRules.trim()) {
-            systemPrompt += `\n--- ПРАВИЛА ПОЛЬЗОВАТЕЛЯ (.nei/AGENTS.md) ---\n${agentsRules}\n`;
-        }
-
-        if (memory.learnedFacts.length > 0) {
-            systemPrompt += `\n--- ДОЛГОСРОЧНАЯ ПАМЯТЬ (.nei/memory.json) ---\n${memory.learnedFacts.map(f => `- ${f}`).join("\n")}\n`;
-        }
-
-        if (skills.length > 0) {
-            systemPrompt += `\n--- СКИЛЛЫ (.nei/skills/) ---\n${skills.map(s => `[Скилл: ${s.name}]\n${s.description}`).join("\n")}\n`;
-        }
-
-        if (prefetchedContext) {
-            systemPrompt += prefetchedContext;
-        }
+        const systemPrompt = this.getSystemPrompt(language, userQuery, vaultContext, agentsRules, memory, skills, prefetchedContext, settings, config.model);
 
         const prunedHistory = ContextManager.pruneHistory(chatHistory, 6);
 
@@ -189,10 +224,10 @@ export class AgentLoop {
                     totalPromptTokens += response.usage.promptTokens;
                     totalCompletionTokens += response.usage.completionTokens;
                 }
-                let responseText = response.content || "";
+                const responseText = response.content || "";
 
                 if (this.shouldAutoCreateNote(userQuery, responseText)) {
-                    await this.attemptAutoCreateNote(app, userQuery, responseText, steps, notifySteps);
+                    await this.attemptAutoCreateNote(app, userQuery, responseText, steps, notifySteps, toolRegistry, language);
                 }
 
                 return {
@@ -203,22 +238,45 @@ export class AgentLoop {
                 };
             } catch (e: unknown) {
                 const err = e as { message?: string };
-                throw new Error(`Ошибка вызова Quick LLM: ${err?.message || String(e)}`);
+                throw new Error(t("quickLlmError", language, { error: err?.message || String(e) }));
             }
         }
 
         // 6. AGENT MODE (Multi-step Tool Execution Loop)
-        const tools = defaultToolRegistry.getToolDefinitions();
+        const allTools = toolRegistry.getToolDefinitions();
+        let filteredTools = allTools;
+
+        if (settings.enableSmartToolFiltering) {
+            if (toolNeeds.needsWebSearch && !toolNeeds.needsVaultSearch && !toolNeeds.needsVaultWrite) {
+                filteredTools = allTools.filter(t =>
+                    ["web_search", "read_web_page", "analyze_github_repo"].includes(t.function.name)
+                );
+            } else if (!toolNeeds.needsWebSearch && (toolNeeds.needsVaultSearch || toolNeeds.needsVaultWrite)) {
+                filteredTools = allTools.filter(t =>
+                    t.function.name.startsWith("read_") ||
+                    t.function.name.startsWith("get_") ||
+                    t.function.name.startsWith("search_") ||
+                    t.function.name.startsWith("create_") ||
+                    t.function.name.startsWith("edit_") ||
+                    t.function.name.startsWith("rename_") ||
+                    t.function.name.startsWith("delete_") ||
+                    t.function.name.startsWith("list_") ||
+                    t.function.name.startsWith("diff_")
+                );
+            }
+        }
+
         let iteration = 0;
         let finalResponseText = "";
         let toolCalledCount = 0;
         const executedCallsMap: Record<string, number> = {};
+        const effectiveMaxIterations = maxIterations ?? settings.maxAgentIterations;
 
-        while (iteration < maxIterations) {
+        while (iteration < effectiveMaxIterations) {
             iteration++;
 
-            const isLastIteration = (iteration === maxIterations);
-            const activeTools = isLastIteration ? undefined : tools;
+            const isLastIteration = (iteration === effectiveMaxIterations);
+            const activeTools = isLastIteration ? undefined : filteredTools;
 
             const response = await sendChatRequest(config, messages, activeTools);
             if (response.usage) {
@@ -230,7 +288,7 @@ export class AgentLoop {
                 steps.push({
                     id: `reasoning-${iteration}`,
                     type: "reasoning",
-                    title: `Рассуждения (Шаг ${iteration})`,
+                    title: `${t("agentReasoningLog", language)} (${iteration})`,
                     detail: response.reasoning,
                     status: "completed"
                 });
@@ -243,7 +301,7 @@ export class AgentLoop {
 
                 messages.push({
                     role: "assistant",
-                    content: response.content || "Выполнение вызова инструментов...",
+                    content: response.content || "Executing tool calls...",
                     tool_calls: response.tool_calls
                 });
 
@@ -257,8 +315,8 @@ export class AgentLoop {
                     steps.push({
                         id: stepId,
                         type: "tool_call",
-                        title: `Инструмент: ${toolName}`,
-                        detail: `Аргументы: ${toolArgsStr}`,
+                        title: `Tool: ${toolName}`,
+                        detail: `Args: ${toolArgsStr}`,
                         status: "running"
                     });
                     notifySteps();
@@ -266,12 +324,21 @@ export class AgentLoop {
                     let trimmedResult = "";
                     let isError = false;
 
+                    // Safety check for dangerous Obsidian commands
+                    if (toolName === "execute_obsidian_command" && settings.confirmObsidianCommands && onConfirmationRequired) {
+                        const confirmed = await onConfirmationRequired(toolName, toolArgsStr);
+                        if (!confirmed) {
+                            trimmedResult = "Obsidian command execution denied by user.";
+                            isError = true;
+                        }
+                    }
+
                     if (!trimmedResult) {
                         if (executedCallsMap[callKey] > 2) {
-                            trimmedResult = `[ВНИМАНИЕ СИСТЕМЫ NEI]: Этот инструмент (${toolName}) с такими аргументами уже вызывался ${executedCallsMap[callKey] - 1} раза. Повторный вызов отменен. Сформируйте окончательный ответ пользователю на основе уже имеющихся сведений.`;
+                            trimmedResult = `[NEI SYSTEM WARNING]: Tool (${toolName}) with these args was called ${executedCallsMap[callKey] - 1} times. Loop prevented.`;
                             isError = true;
                         } else {
-                            const execResult = await defaultToolRegistry.executeTool(
+                            const execResult = await toolRegistry.executeTool(
                                 app,
                                 toolCall.id,
                                 toolName,
@@ -304,29 +371,45 @@ export class AgentLoop {
                 if (parsedTool) {
                     toolCalledCount++;
                     const callId = "text_call_" + Date.now();
-                    const callKey = `${parsedTool.name}:${JSON.stringify(parsedTool.args)}`;
+                    const callArgsStr = JSON.stringify(parsedTool.args);
+                    const callKey = `${parsedTool.name}:${callArgsStr}`;
                     executedCallsMap[callKey] = (executedCallsMap[callKey] || 0) + 1;
 
                     steps.push({
                         id: callId,
                         type: "tool_call",
-                        title: `Инструмент (Fallback JSON): ${parsedTool.name}`,
-                        detail: JSON.stringify(parsedTool.args),
+                        title: `Tool (Fallback JSON): ${parsedTool.name}`,
+                        detail: callArgsStr,
                         status: "running"
                     });
                     notifySteps();
 
-                    const execResult = await defaultToolRegistry.executeTool(
-                        app,
-                        callId,
-                        parsedTool.name,
-                        JSON.stringify(parsedTool.args)
-                    );
+                    let execResultText = "";
+                    let isError = false;
+
+                    if (parsedTool.name === "execute_obsidian_command" && settings.confirmObsidianCommands && onConfirmationRequired) {
+                        const confirmed = await onConfirmationRequired(parsedTool.name, callArgsStr);
+                        if (!confirmed) {
+                            execResultText = "Obsidian command execution denied by user.";
+                            isError = true;
+                        }
+                    }
+
+                    if (!execResultText) {
+                        const execResult = await toolRegistry.executeTool(
+                            app,
+                            callId,
+                            parsedTool.name,
+                            callArgsStr
+                        );
+                        execResultText = String(execResult.result);
+                        isError = execResult.isError || false;
+                    }
 
                     const currentStep = steps.find(s => s.id === callId);
                     if (currentStep) {
-                        currentStep.status = execResult.isError ? "failed" : "completed";
-                        currentStep.detail = String(execResult.result).substring(0, 300);
+                        currentStep.status = isError ? "failed" : "completed";
+                        currentStep.detail = execResultText.substring(0, 300);
                     }
                     notifySteps();
 
@@ -338,7 +421,7 @@ export class AgentLoop {
                         role: "tool",
                         name: parsedTool.name,
                         tool_call_id: callId,
-                        content: String(execResult.result)
+                        content: execResultText
                     });
                 } else {
                     finalResponseText = response.content;
@@ -353,11 +436,11 @@ export class AgentLoop {
         }
 
         if (toolCalledCount > 0 && this.shouldAutoCreateNote(userQuery, finalResponseText)) {
-            await this.attemptAutoCreateNote(app, userQuery, finalResponseText, steps, notifySteps);
+            await this.attemptAutoCreateNote(app, userQuery, finalResponseText, steps, notifySteps, toolRegistry, language);
         }
 
         return {
-            responseText: finalResponseText || "Агент завершил работу без текстового вывода.",
+            responseText: finalResponseText || t("agentNoOutput", language),
             promptTokens: totalPromptTokens,
             completionTokens: totalCompletionTokens,
             executionModeUsed: "agent"
@@ -406,7 +489,7 @@ export class AgentLoop {
         return isCreateRequest && responseText.length > 30;
     }
 
-    private static async attemptAutoCreateNote(app: App, query: string, responseText: string, steps: AgentStep[], notifySteps: () => void): Promise<void> {
+    private static async attemptAutoCreateNote(app: App, query: string, responseText: string, steps: AgentStep[], notifySteps: () => void, toolRegistry: ToolRegistry, language: SupportedLanguage): Promise<void> {
         let notePath = "";
 
         const folderMatch = query.match(/(?:папке|папку|folder|directory)\s+["']?([a-zA-Z0-9_\-/А-Яа-яЁё ]+?)["']?(?:\s|$)/i);
@@ -415,16 +498,16 @@ export class AgentLoop {
         if (fileMatch && fileMatch[1]) {
             notePath = fileMatch[1].trim();
         } else {
-            const folder = folderMatch && folderMatch[1] ? folderMatch[1].trim() : "Notes";
+            const folder = folderMatch && folderMatch[1] ? folderMatch[1].trim() : "";
             const dateStr = new Date().toISOString().slice(0, 10);
             const titleMatch = query.match(/(?:создай|создать|create|write)\s+(?:заметку|файл|название|note)?\s*["']?([^"'\n,]{3,30})["']?/i);
             let slug = titleMatch && titleMatch[1] ? titleMatch[1].trim().replace(/[^\w\sА-Яа-яЁё-]/g, "") : "New_Note";
             if (slug.length < 3) slug = "New_Note";
-            notePath = `${folder}/${slug}_${dateStr}.md`;
+            notePath = folder ? `${folder}/${slug}_${dateStr}.md` : `${slug}_${dateStr}.md`;
         }
 
         try {
-            const execResult = await defaultToolRegistry.executeTool(
+            const execResult = await toolRegistry.executeTool(
                 app,
                 "auto-create-fallback",
                 "create_note",
@@ -434,7 +517,7 @@ export class AgentLoop {
             steps.push({
                 id: "auto-create-step",
                 type: "tool_result",
-                title: `Автоматически создана заметка: ${notePath}`,
+                title: t("autoCreatedNote", language, { path: notePath }),
                 detail: String(execResult.result),
                 status: execResult.isError ? "failed" : "completed"
             });

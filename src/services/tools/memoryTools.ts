@@ -1,6 +1,8 @@
 import { App } from "obsidian";
 import { ToolDefinition, ToolExecutor } from "./types";
 import { MemoryStore } from "../memory/memoryStore";
+import { ensureFolderExists } from "./vaultTools";
+import { NeiAiChatPlugin } from "../../../main";
 
 export const memoryToolDefinitions: ToolDefinition[] = [
     {
@@ -48,21 +50,22 @@ export const memoryToolDefinitions: ToolDefinition[] = [
 ];
 
 export const memoryExecutors: Record<string, ToolExecutor> = {
-    save_to_memory: async (app: App, rawArgs: Record<string, unknown>) => {
+    save_to_memory: async (app: App, rawArgs: Record<string, unknown>, plugin?: NeiAiChatPlugin) => {
         const args = rawArgs as { fact: string };
         try {
-            await MemoryStore.addFact(app, args.fact);
-            return `Успех: Факт '${args.fact}' сохранен в долгосрочную память агента (.nei/memory.json).`;
+            await MemoryStore.addFact(app, plugin ? plugin.settings : undefined, args.fact);
+            return `Успех: Факт '${args.fact}' сохранен в долгосрочную память агента.`;
         } catch (e: unknown) {
             const err = e as { message?: string };
             return `Ошибка сохранения в память: ${err?.message || String(e)}`;
         }
     },
 
-    create_agent_skill: async (app: App, rawArgs: Record<string, unknown>) => {
+    create_agent_skill: async (app: App, rawArgs: Record<string, unknown>, plugin?: NeiAiChatPlugin) => {
         const args = rawArgs as { skillName: string; description: string; instructions: string };
         const cleanName = args.skillName.toLowerCase().replace(/[^a-z0-9_-]/g, "_");
-        const skillPath = `.nei/skills/${cleanName}/SKILL.md`;
+        const skillsRoot = plugin ? plugin.settings.skillsFolder || ".nei/skills" : ".nei/skills";
+        const skillPath = `${skillsRoot}/${cleanName}/SKILL.md`;
 
         const content = `---
 name: "${cleanName}"
@@ -73,12 +76,8 @@ ${args.instructions}
 `;
 
         try {
-            // Ensure folder exists
-            const folderPath = `.nei/skills/${cleanName}`;
-            const folder = app.vault.getAbstractFileByPath(folderPath);
-            if (!folder) {
-                await app.vault.createFolder(folderPath);
-            }
+            // Recursively ensure all parent folders exist
+            await ensureFolderExists(app, `${skillsRoot}/${cleanName}`);
 
             const existingFile = app.vault.getAbstractFileByPath(skillPath);
             if (existingFile) {
@@ -93,3 +92,4 @@ ${args.instructions}
         }
     }
 };
+

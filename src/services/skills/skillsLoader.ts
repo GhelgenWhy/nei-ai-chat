@@ -1,4 +1,5 @@
 import { App, TFile, TFolder } from "obsidian";
+import { NeiAiChatSettings } from "../../../main";
 
 export interface NeiSkill {
     name: string;
@@ -8,11 +9,14 @@ export interface NeiSkill {
 }
 
 export class SkillsLoader {
-    private static SKILLS_ROOT = ".nei/skills";
+    private static getSkillsRoot(settings: NeiAiChatSettings): string {
+        return settings.skillsFolder || ".nei/skills";
+    }
 
-    public static async loadSkills(app: App): Promise<NeiSkill[]> {
+    public static async loadSkills(app: App, settings: NeiAiChatSettings): Promise<NeiSkill[]> {
         const skills: NeiSkill[] = [];
-        const root = app.vault.getAbstractFileByPath(this.SKILLS_ROOT);
+        const rootPath = this.getSkillsRoot(settings);
+        const root = app.vault.getAbstractFileByPath(rootPath);
         
         if (!(root instanceof TFolder)) {
             return skills;
@@ -27,7 +31,7 @@ export class SkillsLoader {
                         const parsed = this.parseSkillMarkdown(content, child.name, skillFile.path);
                         if (parsed) skills.push(parsed);
                     } catch (e) {
-                        console.error(`[NEI Skills] Ошибка загрузки скилла ${child.name}:`, e);
+                        console.error(`[NEI Skills] Error loading skill ${child.name}:`, e);
                     }
                 }
             }
@@ -56,7 +60,7 @@ export class SkillsLoader {
 
         return {
             name,
-            description: description || `Пользовательский скилл из ${folderName}`,
+            description: description || `Custom skill from ${folderName}`,
             instructions,
             path
         };

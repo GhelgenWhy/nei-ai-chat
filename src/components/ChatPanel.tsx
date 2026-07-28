@@ -1,18 +1,22 @@
 import * as React from "react";
 import { App, Component, MarkdownRenderer, Notice, WorkspaceLeaf } from "obsidian";
-import { ChatMessage } from "../services/llm";
+import { ChatMessage, getModelTemporalInfo } from "../services/llm";
 import { AgentLoop, AgentStep } from "../services/agent/agentLoop";
 import { ChatStore, ChatSession } from "../services/chat/chatStore";
 import { OpenRouterService, OpenRouterModelInfo, OpenRouterKeyInfo } from "../services/openrouter";
-import { ExecutionMode } from "../services/agent/intentRouter";
+import { ExecutionMode, IntentRouter } from "../services/agent/intentRouter";
 import { t, SupportedLanguage } from "../i18n/translations";
 import { NeiAiChatSettings } from "../../main";
+import { ToolRegistry } from "../services/tools/toolRegistry";
+import { ensureFolderExists } from "../services/tools/vaultTools";
+import { ErrorBoundary } from "./ErrorBoundary";
 
 interface ChatPanelProps {
     app: App;
     viewLeaf?: WorkspaceLeaf;
     settings: NeiAiChatSettings;
     saveSettings: (settings: NeiAiChatSettings) => Promise<void>;
+    toolRegistry: ToolRegistry;
 }
 
 export const ObsidianMarkdown: React.FC<{ markdown: string; app: App }> = ({ markdown, app }) => {
@@ -36,7 +40,7 @@ export const ObsidianMarkdown: React.FC<{ markdown: string; app: App }> = ({ mar
     return <div ref={containerRef} className="markdown-preview-view markdown-rendered" style={{ background: 'transparent', padding: 0 }} />;
 };
 
-export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, saveSettings }) => {
+const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) => {
 
     const isMainTab = viewLeaf ? (viewLeaf.getRoot() === app.workspace.rootSplit) : false;
 
@@ -79,7 +83,13 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
     const [activeSteps, setActiveSteps] = React.useState<AgentStep[]>([]);
     const [showSessionsDrawer, setShowSessionsDrawer] = React.useState(false);
     const [showConfig, setShowConfig] = React.useState(false);
+    const [showIntentDebug, setShowIntentDebug] = React.useState(false);
     const [pendingConfirmation, setPendingConfirmation] = React.useState<{ toolName: string; argsStr: string; resolve: (approved: boolean) => void } | null>(null);
+    const [showFreshnessSuggestion, setShowFreshnessSuggestion] = React.useState<{
+        message: string;
+        onEnableWeb: () => void;
+        onDismiss: () => void;
+    } | null>(null);
 
     // Edit message inline state
     const [editingMsgIdx, setEditingMsgIdx] = React.useState<number | null>(null);
@@ -103,6 +113,25 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
     const [keyInfo, setKeyInfo] = React.useState<OpenRouterKeyInfo | null>(null);
     const [verifyingModel, setVerifyingModel] = React.useState(false);
 
+    const [modelFreshness, setModelFreshness] = React.useState<{
+        cutoff: string;
+        daysSince: number;
+        supportsWeb: boolean;
+        isStale: boolean;
+    } | null>(null);
+
+    React.useEffect(() => {
+        const info = getModelTemporalInfo(model);
+        const cutoff = new Date(info.knowledgeCutoff);
+        const daysSince = Math.floor((Date.now() - cutoff.getTime()) / (1000 * 60 * 60 * 24));
+        setModelFreshness({
+            cutoff: info.knowledgeCutoff,
+            daysSince,
+            supportsWeb: info.supportsWebSearch,
+            isStale: daysSince > 30
+        });
+    }, [model]);
+
     React.useEffect(() => {
         void refreshSessionsList();
         void verifyActiveModel(model, apiKey);
@@ -112,7 +141,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
     }, []);
 
     const refreshSessionsList = async () => {
-        const list = await ChatStore.listSessions(app);
+        const list = await ChatStore.listSessions(app, settings);
         setSessionsList(list);
     };
 
@@ -175,21 +204,23 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
         setActiveSteps([]);
         setShowSessionsDrawer(false);
         setEditingMsgIdx(null);
+        setShowFreshnessSuggestion(null);
     };
 
     const handleSelectSession = async (sessionId: string) => {
-        const loaded = await ChatStore.loadSession(app, sessionId);
+        const loaded = await ChatStore.loadSession(app, settings, sessionId);
         if (loaded) {
             setCurrentSession(loaded);
             setActiveSteps(loaded.steps || []);
             setShowSessionsDrawer(false);
             setEditingMsgIdx(null);
+            setShowFreshnessSuggestion(null);
         }
     };
 
     const handleDeleteSession = async (e: React.MouseEvent, sessionId: string) => {
         e.stopPropagation();
-        await ChatStore.deleteSession(app, sessionId);
+        await ChatStore.deleteSession(app, settings, sessionId);
         await refreshSessionsList();
         if (currentSession.id === sessionId) {
             handleNewChat();
@@ -197,21 +228,70 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
     };
 
     const [confirmingClear, setConfirmingClear] = React.useState(false);
+    const clearTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    React.useEffect(() => {
+        return () => {
+            if (clearTimerRef.current) clearTimeout(clearTimerRef.current);
+            if (settingsSaveTimerRef.current) clearTimeout(settingsSaveTimerRef.current);
+        };
+    }, []);
 
     const handleClearAllSessions = async () => {
         if (!confirmingClear) {
             setConfirmingClear(true);
-            window.setTimeout(() => setConfirmingClear(false), 3000);
+            clearTimerRef.current = setTimeout(() => setConfirmingClear(false), 4000);
             return;
         }
         setConfirmingClear(false);
-        await ChatStore.clearAllSessions(app);
+        if (clearTimerRef.current) clearTimeout(clearTimerRef.current);
+        await ChatStore.clearAllSessions(app, settings);
         await refreshSessionsList();
         handleNewChat();
         new Notice(t("historyClearedNotice", language));
     };
 
+    const handleBranchFromMessage = async (msgIndex: number) => {
+        if (!currentSession) return;
+        const historyBefore = currentSession.messages.slice(0, msgIndex + 1);
+        const newSession = ChatStore.createNewSession();
+        newSession.title = `Branch: ${currentSession.title || "Chat"}`;
+        newSession.messages = [...historyBefore];
+        setCurrentSession(newSession);
+        await ChatStore.saveSession(app, settings, newSession);
+        await refreshSessionsList();
+        new Notice("🌿 Conversation branched!");
+    };
+
     const [language, setLanguage] = React.useState<SupportedLanguage>(settings.language || "auto");
+    const [defaultNoteFolder, setDefaultNoteFolder] = React.useState<string>(settings.defaultNoteFolder || "");
+    const [chatsFolder, setChatsFolder] = React.useState<string>(settings.chatsFolder || ".nei/chats");
+    const [memoryFile, setMemoryFile] = React.useState<string>(settings.memoryFile || ".nei/memory.json");
+    const [skillsFolder, setSkillsFolder] = React.useState<string>(settings.skillsFolder || ".nei/skills");
+    const [maxAgentIterations, setMaxAgentIterations] = React.useState<number>(settings.maxAgentIterations || 10);
+    const [maxPrefetchedNotes, setMaxPrefetchedNotes] = React.useState<number>(settings.maxPrefetchedNotes || 5);
+    const [prefetchSnippetLength, setPrefetchSnippetLength] = React.useState<number>(settings.prefetchSnippetLength || 400);
+    const [ragResultLimit, setRagResultLimit] = React.useState<number>(settings.ragResultLimit || 5);
+    const [ragSnippetLength, setRagSnippetLength] = React.useState<number>(settings.ragSnippetLength || 1000);
+    const [confirmObsidianCommands, setConfirmObsidianCommands] = React.useState<boolean>(settings.confirmObsidianCommands ?? true);
+
+    const [enableTemporalAwareness, setEnableTemporalAwareness] = React.useState<boolean>(settings.enableTemporalAwareness ?? true);
+    const [enableAdaptivePrefetch, setEnableAdaptivePrefetch] = React.useState<boolean>(settings.enableAdaptivePrefetch ?? true);
+    const [enableFreshnessSuggestions, setEnableFreshnessSuggestions] = React.useState<boolean>(settings.enableFreshnessSuggestions ?? true);
+    const [enableSmartToolFiltering, setEnableSmartToolFiltering] = React.useState<boolean>(settings.enableSmartToolFiltering ?? true);
+
+    const [intentRoutingThreshold, setIntentRoutingThreshold] = React.useState<number>(settings.intentRoutingThreshold ?? 2.5);
+    const [intentVaultKeywordWeight, setIntentVaultKeywordWeight] = React.useState<number>(settings.intentVaultKeywordWeight ?? 2.0);
+    const [intentCreationWeight, setIntentCreationWeight] = React.useState<number>(settings.intentCreationWeight ?? 3.0);
+    const [intentDeletionWeight, setIntentDeletionWeight] = React.useState<number>(settings.intentDeletionWeight ?? 4.0);
+    const [intentAnalysisWeight, setIntentAnalysisWeight] = React.useState<number>(settings.intentAnalysisWeight ?? 2.5);
+    const [intentQuestionWeight, setIntentQuestionWeight] = React.useState<number>(settings.intentQuestionWeight ?? -1.5);
+    const [intentLengthWeight, setIntentLengthWeight] = React.useState<number>(settings.intentLengthWeight ?? 0.005);
+    const [intentHistoryWeight, setIntentHistoryWeight] = React.useState<number>(settings.intentHistoryWeight ?? 0.3);
+    const [intentStaleQueryWeight, setIntentStaleQueryWeight] = React.useState<number>(settings.intentStaleQueryWeight ?? 3.0);
+    const [intentFreshnessWeight, setIntentFreshnessWeight] = React.useState<number>(settings.intentFreshnessWeight ?? 2.0);
+
+    const settingsSaveTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const handleSaveConfig = async () => {
         const newSettings: NeiAiChatSettings = {
@@ -224,7 +304,31 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
             quickModel,
             executionMode,
             customModels,
-            language
+            language,
+            defaultNoteFolder,
+            chatsFolder,
+            memoryFile,
+            skillsFolder,
+            maxAgentIterations,
+            maxPrefetchedNotes,
+            prefetchSnippetLength,
+            ragResultLimit,
+            ragSnippetLength,
+            confirmObsidianCommands,
+            enableTemporalAwareness,
+            enableAdaptivePrefetch,
+            enableFreshnessSuggestions,
+            enableSmartToolFiltering,
+            intentRoutingThreshold,
+            intentVaultKeywordWeight,
+            intentCreationWeight,
+            intentDeletionWeight,
+            intentAnalysisWeight,
+            intentQuestionWeight,
+            intentLengthWeight,
+            intentHistoryWeight,
+            intentStaleQueryWeight,
+            intentFreshnessWeight
         };
         await saveSettings(newSettings);
         setShowConfig(false);
@@ -241,10 +345,26 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
     };
 
     const handleSaveResponseAsNote = async (content: string) => {
-        const notePath = `Tasks/Summary_${Date.now()}.md`;
+        const now = new Date();
+        const timestamp = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}-${String(now.getMinutes()).padStart(2, '0')}`;
+        const fileName = `AI_Note_${timestamp}.md`;
+
         try {
-            await app.vault.create(notePath, content);
-            new Notice(`${t("noteCreatedSuccess", language)} '${notePath}'!`);
+            const execResult = await toolRegistry.executeTool(
+                app,
+                "save-response-note",
+                "create_note",
+                JSON.stringify({ path: fileName, content: content })
+            );
+
+            if (execResult.isError) {
+                new Notice(`${t("noteCreateError", language)} ${execResult.result}`);
+            } else {
+                // Extract actual path from result like "Успех: Создана новая заметка 'folder/file.md'."
+                const pathMatch = execResult.result.match(/'([^']+)'/);
+                const savedPath = pathMatch ? pathMatch[1] : fileName;
+                new Notice(`${t("noteCreatedSuccess", language)} '${savedPath}'`);
+            }
         } catch (e: unknown) {
             const err = e as { message?: string };
             new Notice(`${t("noteCreateError", language)} ${err?.message || String(e)}`);
@@ -300,7 +420,10 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                     return new Promise((resolve) => {
                         setPendingConfirmation({ toolName, argsStr, resolve });
                     });
-                }
+                },
+                toolRegistry,
+                language,
+                settings
             });
 
             const assistantMsg: ChatMessage = { 
@@ -318,7 +441,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
             };
 
             setCurrentSession(finalSession);
-            await ChatStore.saveSession(app, finalSession);
+            await ChatStore.saveSession(app, settings, finalSession);
             await refreshSessionsList();
 
             // Refresh key info balance after request
@@ -334,7 +457,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                 messages: errMessages
             };
             setCurrentSession(errSession);
-            await ChatStore.saveSession(app, errSession);
+            await ChatStore.saveSession(app, settings, errSession);
         } finally {
             setLoading(false);
             setActiveSteps([]);
@@ -390,9 +513,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
     };
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '10px', boxSizing: 'border-box', position: 'relative' }}>
+        <div className="nei-chat-panel-container">
             {/* Header / Session & Mode Controls Bar */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', paddingBottom: '8px', borderBottom: '1px solid var(--background-modifier-border)', flexWrap: 'wrap', gap: '6px' }}>
+            <div className="nei-chat-header">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <button 
                         onClick={() => setShowSessionsDrawer(!showSessionsDrawer)}
@@ -421,6 +544,21 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    {modelFreshness && enableTemporalAwareness && (
+                        <div 
+                            className="nei-freshness-indicator" 
+                            title={`Cutoff: ${modelFreshness.cutoff} (${modelFreshness.daysSince}d ago)`}
+                            style={{
+                                display: 'inline-flex', alignItems: 'center', gap: '3px',
+                                padding: '2px 6px', borderRadius: '4px',
+                                background: modelFreshness.isStale ? 'var(--background-modifier-error-hover, #ff444433)' : 'var(--background-modifier-success, #44ff4433)',
+                                fontSize: '10px', fontWeight: 600, color: 'var(--text-normal)'
+                            }}
+                        >
+                            {modelFreshness.supportsWeb ? '🌐' : '🔒'}
+                            <span>{modelFreshness.cutoff}</span>
+                        </div>
+                    )}
                     <select
                         value={executionMode}
                         onChange={(e) => {
@@ -448,7 +586,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
 
             {/* Sessions History Drawer */}
             {showSessionsDrawer && (
-                <div style={{ position: 'absolute', top: '45px', left: '10px', right: '10px', zIndex: 10, background: 'var(--background-primary)', border: '1px solid var(--background-modifier-border)', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', maxHeight: '280px', overflowY: 'auto', padding: '8px' }}>
+                <div style={{ position: 'absolute', top: '45px', left: '10px', right: '10px', zIndex: 100, background: 'var(--background-primary)', border: '1px solid var(--background-modifier-border)', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.25)', maxHeight: '280px', overflowY: 'auto', padding: '8px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', paddingBottom: '4px', borderBottom: '1px solid var(--background-modifier-border)' }}>
                         <span style={{ fontWeight: 'bold', fontSize: '12px', color: 'var(--text-muted)' }}>{t("historyTitle", language)}</span>
                         {sessionsList.length > 0 && (
@@ -498,7 +636,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
 
             {/* Config & Model Manager Modal */}
             {showConfig && (
-                <div style={{ background: 'var(--background-secondary)', padding: '12px', borderRadius: '8px', marginBottom: '12px', fontSize: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ flexShrink: 0, maxHeight: '55vh', overflowY: 'auto', background: 'var(--background-secondary)', padding: '12px', borderRadius: '8px', marginBottom: '12px', fontSize: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     <div>
                         <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500' }}>OpenRouter API Key:</label>
                         <input 
@@ -594,6 +732,24 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                                 <option value="ko">🌐 KO — 한국어</option>
                             </select>
                         </div>
+
+                        <div>
+                            <label style={{ fontSize: '11px', display: 'block', color: 'var(--text-muted)', fontWeight: 'bold', marginTop: '4px' }}>📁 {t("defaultNoteFolderLabel", language)}</label>
+                            <input 
+                                type="text"
+                                value={defaultNoteFolder}
+                                onChange={(e) => {
+                                    const folderVal = e.target.value;
+                                    setDefaultNoteFolder(folderVal);
+                                    if (settingsSaveTimerRef.current) clearTimeout(settingsSaveTimerRef.current);
+                                    settingsSaveTimerRef.current = setTimeout(() => {
+                                        void saveSettings({ ...settings, defaultNoteFolder: folderVal });
+                                    }, 300);
+                                }}
+                                placeholder={t("defaultNoteFolderPlaceholder", language)}
+                                style={{ width: '100%', padding: '4px 6px', fontSize: '11px', borderRadius: '4px', border: '1px solid var(--background-modifier-border)', background: 'var(--background-secondary)', color: 'var(--text-normal)' }}
+                            />
+                        </div>
                     </div>
 
                     {/* Active Model Capabilities Card */}
@@ -656,6 +812,116 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                         </div>
                     </div>
 
+                    {/* Advanced Storage & Execution Limits Card */}
+                    <div style={{ background: 'var(--background-primary)', padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--background-modifier-border)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <div style={{ fontWeight: 'bold', fontSize: '11px' }}>📂 Storage Paths & Limits</div>
+
+                        <div>
+                            <label style={{ fontSize: '11px', display: 'block', color: 'var(--text-muted)' }}>{t("chatsFolderLabel", language)}</label>
+                            <input type="text" value={chatsFolder} onChange={(e) => setChatsFolder(e.target.value)} style={{ width: '100%', padding: '4px 6px', fontSize: '11px', borderRadius: '4px', border: '1px solid var(--background-modifier-border)', background: 'var(--background-secondary)', color: 'var(--text-normal)' }} />
+                        </div>
+
+                        <div>
+                            <label style={{ fontSize: '11px', display: 'block', color: 'var(--text-muted)' }}>{t("memoryFileLabel", language)}</label>
+                            <input type="text" value={memoryFile} onChange={(e) => setMemoryFile(e.target.value)} style={{ width: '100%', padding: '4px 6px', fontSize: '11px', borderRadius: '4px', border: '1px solid var(--background-modifier-border)', background: 'var(--background-secondary)', color: 'var(--text-normal)' }} />
+                        </div>
+
+                        <div>
+                            <label style={{ fontSize: '11px', display: 'block', color: 'var(--text-muted)' }}>{t("skillsFolderLabel", language)}</label>
+                            <input type="text" value={skillsFolder} onChange={(e) => setSkillsFolder(e.target.value)} style={{ width: '100%', padding: '4px 6px', fontSize: '11px', borderRadius: '4px', border: '1px solid var(--background-modifier-border)', background: 'var(--background-secondary)', color: 'var(--text-normal)' }} />
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                            <div style={{ flex: 1 }}>
+                                <label style={{ fontSize: '11px', display: 'block', color: 'var(--text-muted)' }}>{t("maxAgentIterationsLabel", language)}</label>
+                                <input type="number" value={maxAgentIterations} onChange={(e) => setMaxAgentIterations(Number(e.target.value))} style={{ width: '100%', padding: '4px 6px', fontSize: '11px', borderRadius: '4px', border: '1px solid var(--background-modifier-border)', background: 'var(--background-secondary)', color: 'var(--text-normal)' }} />
+                            </div>
+                            <div style={{ flex: 1 }}>
+                                <label style={{ fontSize: '11px', display: 'block', color: 'var(--text-muted)' }}>{t("maxPrefetchedNotesLabel", language)}</label>
+                                <input type="number" value={maxPrefetchedNotes} onChange={(e) => setMaxPrefetchedNotes(Number(e.target.value))} style={{ width: '100%', padding: '4px 6px', fontSize: '11px', borderRadius: '4px', border: '1px solid var(--background-modifier-border)', background: 'var(--background-secondary)', color: 'var(--text-normal)' }} />
+                            </div>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                            <div style={{ flex: 1 }}>
+                                <label style={{ fontSize: '11px', display: 'block', color: 'var(--text-muted)' }}>{t("prefetchSnippetLengthLabel", language)}</label>
+                                <input type="number" value={prefetchSnippetLength} onChange={(e) => setPrefetchSnippetLength(Number(e.target.value))} style={{ width: '100%', padding: '4px 6px', fontSize: '11px', borderRadius: '4px', border: '1px solid var(--background-modifier-border)', background: 'var(--background-secondary)', color: 'var(--text-normal)' }} />
+                            </div>
+                            <div style={{ flex: 1 }}>
+                                <label style={{ fontSize: '11px', display: 'block', color: 'var(--text-muted)' }}>{t("ragResultLimitLabel", language)}</label>
+                                <input type="number" value={ragResultLimit} onChange={(e) => setRagResultLimit(Number(e.target.value))} style={{ width: '100%', padding: '4px 6px', fontSize: '11px', borderRadius: '4px', border: '1px solid var(--background-modifier-border)', background: 'var(--background-secondary)', color: 'var(--text-normal)' }} />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label style={{ fontSize: '11px', display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-normal)', cursor: 'pointer', marginTop: '4px' }}>
+                                <input type="checkbox" checked={confirmObsidianCommands} onChange={(e) => setConfirmObsidianCommands(e.target.checked)} />
+                                <span>{t("confirmObsidianCommandsLabel", language)}</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    {/* Temporal Intelligence Card */}
+                    <div style={{ background: 'var(--background-primary)', padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--background-modifier-border)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <div style={{ fontWeight: 'bold', fontSize: '11px' }}>🧠 Temporal Intelligence & Smart Routing</div>
+
+                        <label style={{ fontSize: '11px', display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-normal)', cursor: 'pointer' }}>
+                            <input type="checkbox" checked={enableTemporalAwareness} onChange={(e) => setEnableTemporalAwareness(e.target.checked)} />
+                            <span>{t("enableTemporalAwarenessLabel", language)}</span>
+                        </label>
+
+                        <label style={{ fontSize: '11px', display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-normal)', cursor: 'pointer' }}>
+                            <input type="checkbox" checked={enableAdaptivePrefetch} onChange={(e) => setEnableAdaptivePrefetch(e.target.checked)} />
+                            <span>{t("enableAdaptivePrefetchLabel", language)}</span>
+                        </label>
+
+                        <label style={{ fontSize: '11px', display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-normal)', cursor: 'pointer' }}>
+                            <input type="checkbox" checked={enableFreshnessSuggestions} onChange={(e) => setEnableFreshnessSuggestions(e.target.checked)} />
+                            <span>{t("enableFreshnessSuggestionsLabel", language)}</span>
+                        </label>
+
+                        <label style={{ fontSize: '11px', display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-normal)', cursor: 'pointer' }}>
+                            <input type="checkbox" checked={enableSmartToolFiltering} onChange={(e) => setEnableSmartToolFiltering(e.target.checked)} />
+                            <span>{t("enableSmartToolFilteringLabel", language)}</span>
+                        </label>
+
+                        <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                            <div style={{ flex: 1 }}>
+                                <label style={{ fontSize: '11px', display: 'block', color: 'var(--text-muted)' }}>{t("intentStaleQueryWeightLabel", language)} ({intentStaleQueryWeight})</label>
+                                <input type="number" step="0.1" value={intentStaleQueryWeight} onChange={(e) => setIntentStaleQueryWeight(Number(e.target.value))} style={{ width: '100%', padding: '4px 6px', fontSize: '11px', borderRadius: '4px', border: '1px solid var(--background-modifier-border)', background: 'var(--background-secondary)', color: 'var(--text-normal)' }} />
+                            </div>
+                            <div style={{ flex: 1 }}>
+                                <label style={{ fontSize: '11px', display: 'block', color: 'var(--text-muted)' }}>{t("intentFreshnessWeightLabel", language)} ({intentFreshnessWeight})</label>
+                                <input type="number" step="0.1" value={intentFreshnessWeight} onChange={(e) => setIntentFreshnessWeight(Number(e.target.value))} style={{ width: '100%', padding: '4px 6px', fontSize: '11px', borderRadius: '4px', border: '1px solid var(--background-modifier-border)', background: 'var(--background-secondary)', color: 'var(--text-normal)' }} />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Intent Router Weights Card */}
+                    <div style={{ background: 'var(--background-primary)', padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--background-modifier-border)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <div style={{ fontWeight: 'bold', fontSize: '11px' }}>🎯 Intent Router Scoring Weights</div>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                            <div style={{ flex: 1 }}>
+                                <label style={{ fontSize: '11px', display: 'block', color: 'var(--text-muted)' }}>Threshold ({intentRoutingThreshold})</label>
+                                <input type="number" step="0.1" value={intentRoutingThreshold} onChange={(e) => setIntentRoutingThreshold(Number(e.target.value))} style={{ width: '100%', padding: '4px 6px', fontSize: '11px', borderRadius: '4px', border: '1px solid var(--background-modifier-border)', background: 'var(--background-secondary)', color: 'var(--text-normal)' }} />
+                            </div>
+                            <div style={{ flex: 1 }}>
+                                <label style={{ fontSize: '11px', display: 'block', color: 'var(--text-muted)' }}>Creation Wt ({intentCreationWeight})</label>
+                                <input type="number" step="0.1" value={intentCreationWeight} onChange={(e) => setIntentCreationWeight(Number(e.target.value))} style={{ width: '100%', padding: '4px 6px', fontSize: '11px', borderRadius: '4px', border: '1px solid var(--background-modifier-border)', background: 'var(--background-secondary)', color: 'var(--text-normal)' }} />
+                            </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                            <div style={{ flex: 1 }}>
+                                <label style={{ fontSize: '11px', display: 'block', color: 'var(--text-muted)' }}>Deletion Wt ({intentDeletionWeight})</label>
+                                <input type="number" step="0.1" value={intentDeletionWeight} onChange={(e) => setIntentDeletionWeight(Number(e.target.value))} style={{ width: '100%', padding: '4px 6px', fontSize: '11px', borderRadius: '4px', border: '1px solid var(--background-modifier-border)', background: 'var(--background-secondary)', color: 'var(--text-normal)' }} />
+                            </div>
+                            <div style={{ flex: 1 }}>
+                                <label style={{ fontSize: '11px', display: 'block', color: 'var(--text-muted)' }}>Question Wt ({intentQuestionWeight})</label>
+                                <input type="number" step="0.1" value={intentQuestionWeight} onChange={(e) => setIntentQuestionWeight(Number(e.target.value))} style={{ width: '100%', padding: '4px 6px', fontSize: '11px', borderRadius: '4px', border: '1px solid var(--background-modifier-border)', background: 'var(--background-secondary)', color: 'var(--text-normal)' }} />
+                            </div>
+                        </div>
+                    </div>
+
                     <button 
                         onClick={() => { void handleSaveConfig(); }}
                         style={{ marginTop: '4px', padding: '6px 12px', background: 'var(--interactive-accent)', color: 'var(--text-on-accent)', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
@@ -665,8 +931,27 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                 </div>
             )}
 
+            {/* Proactive Freshness Suggestion Banner */}
+            {showFreshnessSuggestion && (
+                <div className="nei-suggestion-banner" style={{
+                    background: 'var(--background-secondary-alt)', border: '1px solid var(--interactive-accent)',
+                    borderRadius: '6px', padding: '8px 12px', margin: '0 10px 8px 10px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px'
+                }}>
+                    <span style={{ fontSize: '11px' }}>⚡ {showFreshnessSuggestion.message}</span>
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                        <button onClick={showFreshnessSuggestion.onEnableWeb} style={{ fontSize: '11px', padding: '3px 8px', background: 'var(--interactive-accent)', color: 'var(--text-on-accent)', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>
+                            🌐 {t("agentMode", language)}
+                        </button>
+                        <button onClick={showFreshnessSuggestion.onDismiss} style={{ fontSize: '11px', padding: '3px 8px', background: 'transparent', border: '1px solid var(--background-modifier-border)', color: 'var(--text-muted)', borderRadius: '4px', cursor: 'pointer' }}>
+                            ✕
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {/* Chat Messages Container */}
-            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '10px' }}>
+            <div className="nei-chat-messages-container">
                 {currentSession.messages.length === 0 && (
                     <div style={{ textAlign: 'center', color: 'var(--text-muted)', marginTop: '24px', padding: '0 12px', fontSize: '13px' }}>
                         <div style={{ fontSize: '15px', fontWeight: 'bold', marginBottom: '8px', color: 'var(--text-normal)' }}>
@@ -785,6 +1070,13 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
                                     >
                                         {t("copyText", language)}
                                     </button>
+                                    <button 
+                                        onClick={() => { void handleBranchFromMessage(idx); }}
+                                        style={{ background: 'var(--background-primary)', border: '1px solid var(--background-modifier-border)', borderRadius: '4px', cursor: 'pointer', padding: '3px 8px', color: 'var(--text-muted)', fontSize: '11px', whiteSpace: 'nowrap', maxWidth: '100%' }}
+                                        title="Fork conversation from this message"
+                                    >
+                                        🌿 Branch
+                                    </button>
                                     {msg.content && msg.content.length > 50 && (
                                         <button 
                                             onClick={() => { void handleSaveResponseAsNote(msg.content || ""); }}
@@ -859,7 +1151,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
 
             {/* Attached Image Previews Bar */}
             {attachedImages.length > 0 && (
-                <div style={{ display: 'flex', gap: '6px', padding: '6px', background: 'var(--background-secondary)', borderRadius: '6px', marginBottom: '6px', flexWrap: 'wrap' }}>
+                <div style={{ flexShrink: 0, display: 'flex', gap: '6px', padding: '6px', background: 'var(--background-secondary)', borderRadius: '6px', marginBottom: '6px', flexWrap: 'wrap' }}>
                     {attachedImages.map((img, idx) => (
                         <div key={idx} style={{ position: 'relative' }}>
                             <img src={img} style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '4px' }} />
@@ -875,7 +1167,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
             )}
 
             {/* Bottom Query Input Box */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <div className="nei-chat-input-container">
                 <div style={{ display: 'flex', gap: '6px', alignItems: 'flex-end' }}>
                     <label 
                         title={t("attachTooltip", language)}
@@ -936,3 +1228,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, s
         </div>
     );
 };
+
+export const ChatPanel: React.FC<ChatPanelProps> = (props) => (
+    <ErrorBoundary>
+        <ChatPanelInner {...props} />
+    </ErrorBoundary>
+);

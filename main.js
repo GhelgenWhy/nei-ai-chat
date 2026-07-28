@@ -247,20 +247,20 @@ var require_react_development = __commonJS({
         {
           Object.freeze(emptyObject);
         }
-        function Component2(props, context, updater) {
+        function Component3(props, context, updater) {
           this.props = props;
           this.context = context;
           this.refs = emptyObject;
           this.updater = updater || ReactNoopUpdateQueue;
         }
-        Component2.prototype.isReactComponent = {};
-        Component2.prototype.setState = function(partialState, callback) {
+        Component3.prototype.isReactComponent = {};
+        Component3.prototype.setState = function(partialState, callback) {
           if (typeof partialState !== "object" && typeof partialState !== "function" && partialState != null) {
             throw new Error("setState(...): takes an object of state variables to update or a function which returns an object of state variables.");
           }
           this.updater.enqueueSetState(this, partialState, callback, "setState");
         };
-        Component2.prototype.forceUpdate = function(callback) {
+        Component3.prototype.forceUpdate = function(callback) {
           this.updater.enqueueForceUpdate(this, callback, "forceUpdate");
         };
         {
@@ -269,7 +269,7 @@ var require_react_development = __commonJS({
             replaceState: ["replaceState", "Refactor your code to use setState instead (see https://github.com/facebook/react/issues/3236)."]
           };
           var defineDeprecationWarning = function(methodName, info) {
-            Object.defineProperty(Component2.prototype, methodName, {
+            Object.defineProperty(Component3.prototype, methodName, {
               get: function() {
                 warn("%s(...) is deprecated in plain JavaScript React classes. %s", info[0], info[1]);
                 return void 0;
@@ -284,7 +284,7 @@ var require_react_development = __commonJS({
         }
         function ComponentDummy() {
         }
-        ComponentDummy.prototype = Component2.prototype;
+        ComponentDummy.prototype = Component3.prototype;
         function PureComponent(props, context, updater) {
           this.props = props;
           this.context = context;
@@ -293,7 +293,7 @@ var require_react_development = __commonJS({
         }
         var pureComponentPrototype = PureComponent.prototype = new ComponentDummy();
         pureComponentPrototype.constructor = PureComponent;
-        assign(pureComponentPrototype, Component2.prototype);
+        assign(pureComponentPrototype, Component3.prototype);
         pureComponentPrototype.isPureReactComponent = true;
         function createRef() {
           var refObject = {
@@ -1358,8 +1358,8 @@ var require_react_development = __commonJS({
             return describeNativeComponentFrame(fn, false);
           }
         }
-        function shouldConstruct(Component3) {
-          var prototype = Component3.prototype;
+        function shouldConstruct(Component4) {
+          var prototype = Component4.prototype;
           return !!(prototype && prototype.isReactComponent);
         }
         function describeUnknownElementTypeFrameInDEV(type, source, ownerFn) {
@@ -1865,7 +1865,7 @@ var require_react_development = __commonJS({
           only: onlyChild
         };
         exports.Children = Children;
-        exports.Component = Component2;
+        exports.Component = Component3;
         exports.Fragment = REACT_FRAGMENT_TYPE;
         exports.Profiler = REACT_PROFILER_TYPE;
         exports.PureComponent = PureComponent;
@@ -2392,9 +2392,9 @@ var require_react_dom_development = __commonJS({
         if (typeof __REACT_DEVTOOLS_GLOBAL_HOOK__ !== "undefined" && typeof __REACT_DEVTOOLS_GLOBAL_HOOK__.registerInternalModuleStart === "function") {
           __REACT_DEVTOOLS_GLOBAL_HOOK__.registerInternalModuleStart(new Error());
         }
-        var React3 = require_react();
+        var React4 = require_react();
         var Scheduler = require_scheduler();
-        var ReactSharedInternals = React3.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
+        var ReactSharedInternals = React4.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
         var suppressWarning = false;
         function setSuppressWarning(newSuppressWarning) {
           {
@@ -3429,8 +3429,8 @@ var require_react_dom_development = __commonJS({
             return describeNativeComponentFrame(fn, false);
           }
         }
-        function shouldConstruct(Component2) {
-          var prototype = Component2.prototype;
+        function shouldConstruct(Component3) {
+          var prototype = Component3.prototype;
           return !!(prototype && prototype.isReactComponent);
         }
         function describeUnknownElementTypeFrameInDEV(type, source, ownerFn) {
@@ -3999,7 +3999,7 @@ var require_react_dom_development = __commonJS({
           {
             if (props.value == null) {
               if (typeof props.children === "object" && props.children !== null) {
-                React3.Children.forEach(props.children, function(child) {
+                React4.Children.forEach(props.children, function(child) {
                   if (child == null) {
                     return;
                   }
@@ -10863,9 +10863,9 @@ var require_react_dom_development = __commonJS({
         var contextStackCursor = createCursor(emptyContextObject);
         var didPerformWorkStackCursor = createCursor(false);
         var previousContext = emptyContextObject;
-        function getUnmaskedContext(workInProgress2, Component2, didPushOwnContextIfProvider) {
+        function getUnmaskedContext(workInProgress2, Component3, didPushOwnContextIfProvider) {
           {
-            if (didPushOwnContextIfProvider && isContextProvider(Component2)) {
+            if (didPushOwnContextIfProvider && isContextProvider(Component3)) {
               return previousContext;
             }
             return contextStackCursor.current;
@@ -11002,8 +11002,8 @@ var require_react_dom_development = __commonJS({
                 case HostRoot:
                   return node.stateNode.context;
                 case ClassComponent: {
-                  var Component2 = node.type;
-                  if (isContextProvider(Component2)) {
+                  var Component3 = node.type;
+                  if (isContextProvider(Component3)) {
                     return node.stateNode.__reactInternalMemoizedMergedChildContext;
                   }
                   break;
@@ -13460,7 +13460,7 @@ var require_react_dom_development = __commonJS({
           }
           return true;
         }
-        function renderWithHooks(current2, workInProgress2, Component2, props, secondArg, nextRenderLanes) {
+        function renderWithHooks(current2, workInProgress2, Component3, props, secondArg, nextRenderLanes) {
           renderLanes = nextRenderLanes;
           currentlyRenderingFiber$1 = workInProgress2;
           {
@@ -13480,7 +13480,7 @@ var require_react_dom_development = __commonJS({
               ReactCurrentDispatcher$1.current = HooksDispatcherOnMountInDEV;
             }
           }
-          var children = Component2(props, secondArg);
+          var children = Component3(props, secondArg);
           if (didScheduleRenderPhaseUpdateDuringThisPass) {
             var numberOfReRenders = 0;
             do {
@@ -13500,7 +13500,7 @@ var require_react_dom_development = __commonJS({
                 hookTypesUpdateIndexDev = -1;
               }
               ReactCurrentDispatcher$1.current = HooksDispatcherOnRerenderInDEV;
-              children = Component2(props, secondArg);
+              children = Component3(props, secondArg);
             } while (didScheduleRenderPhaseUpdateDuringThisPass);
           }
           ReactCurrentDispatcher$1.current = ContextOnlyDispatcher;
@@ -15299,10 +15299,10 @@ var require_react_dom_development = __commonJS({
             child = child.sibling;
           }
         }
-        function resolveDefaultProps(Component2, baseProps) {
-          if (Component2 && Component2.defaultProps) {
+        function resolveDefaultProps(Component3, baseProps) {
+          if (Component3 && Component3.defaultProps) {
             var props = assign({}, baseProps);
-            var defaultProps = Component2.defaultProps;
+            var defaultProps = Component3.defaultProps;
             for (var propName in defaultProps) {
               if (props[propName] === void 0) {
                 props[propName] = defaultProps[propName];
@@ -16231,22 +16231,22 @@ var require_react_dom_development = __commonJS({
           workInProgress2.child = reconcileChildFibers(workInProgress2, current2.child, null, renderLanes2);
           workInProgress2.child = reconcileChildFibers(workInProgress2, null, nextChildren, renderLanes2);
         }
-        function updateForwardRef(current2, workInProgress2, Component2, nextProps, renderLanes2) {
+        function updateForwardRef(current2, workInProgress2, Component3, nextProps, renderLanes2) {
           {
             if (workInProgress2.type !== workInProgress2.elementType) {
-              var innerPropTypes = Component2.propTypes;
+              var innerPropTypes = Component3.propTypes;
               if (innerPropTypes) {
                 checkPropTypes(
                   innerPropTypes,
                   nextProps,
                   // Resolved props
                   "prop",
-                  getComponentNameFromType(Component2)
+                  getComponentNameFromType(Component3)
                 );
               }
             }
           }
-          var render2 = Component2.render;
+          var render2 = Component3.render;
           var ref = workInProgress2.ref;
           var nextChildren;
           var hasId;
@@ -16284,11 +16284,11 @@ var require_react_dom_development = __commonJS({
           reconcileChildren(current2, workInProgress2, nextChildren, renderLanes2);
           return workInProgress2.child;
         }
-        function updateMemoComponent(current2, workInProgress2, Component2, nextProps, renderLanes2) {
+        function updateMemoComponent(current2, workInProgress2, Component3, nextProps, renderLanes2) {
           if (current2 === null) {
-            var type = Component2.type;
-            if (isSimpleFunctionComponent(type) && Component2.compare === null && // SimpleMemoComponent codepath doesn't resolve outer props either.
-            Component2.defaultProps === void 0) {
+            var type = Component3.type;
+            if (isSimpleFunctionComponent(type) && Component3.compare === null && // SimpleMemoComponent codepath doesn't resolve outer props either.
+            Component3.defaultProps === void 0) {
               var resolvedType = type;
               {
                 resolvedType = resolveFunctionForHotReloading(type);
@@ -16311,7 +16311,7 @@ var require_react_dom_development = __commonJS({
                   getComponentNameFromType(type)
                 );
               }
-              if (Component2.defaultProps !== void 0) {
+              if (Component3.defaultProps !== void 0) {
                 var componentName = getComponentNameFromType(type) || "Unknown";
                 if (!didWarnAboutDefaultPropsOnFunctionComponent[componentName]) {
                   error("%s: Support for defaultProps will be removed from memo components in a future major release. Use JavaScript default parameters instead.", componentName);
@@ -16319,14 +16319,14 @@ var require_react_dom_development = __commonJS({
                 }
               }
             }
-            var child = createFiberFromTypeAndProps(Component2.type, null, nextProps, workInProgress2, workInProgress2.mode, renderLanes2);
+            var child = createFiberFromTypeAndProps(Component3.type, null, nextProps, workInProgress2, workInProgress2.mode, renderLanes2);
             child.ref = workInProgress2.ref;
             child.return = workInProgress2;
             workInProgress2.child = child;
             return child;
           }
           {
-            var _type = Component2.type;
+            var _type = Component3.type;
             var _innerPropTypes = _type.propTypes;
             if (_innerPropTypes) {
               checkPropTypes(
@@ -16342,7 +16342,7 @@ var require_react_dom_development = __commonJS({
           var hasScheduledUpdateOrContext = checkScheduledUpdateOrContext(current2, renderLanes2);
           if (!hasScheduledUpdateOrContext) {
             var prevProps = currentChild.memoizedProps;
-            var compare = Component2.compare;
+            var compare = Component3.compare;
             compare = compare !== null ? compare : shallowEqual;
             if (compare(prevProps, nextProps) && current2.ref === workInProgress2.ref) {
               return bailoutOnAlreadyFinishedWork(current2, workInProgress2, renderLanes2);
@@ -16355,7 +16355,7 @@ var require_react_dom_development = __commonJS({
           workInProgress2.child = newChild;
           return newChild;
         }
-        function updateSimpleMemoComponent(current2, workInProgress2, Component2, nextProps, renderLanes2) {
+        function updateSimpleMemoComponent(current2, workInProgress2, Component3, nextProps, renderLanes2) {
           {
             if (workInProgress2.type !== workInProgress2.elementType) {
               var outerMemoType = workInProgress2.elementType;
@@ -16395,7 +16395,7 @@ var require_react_dom_development = __commonJS({
               }
             }
           }
-          return updateFunctionComponent(current2, workInProgress2, Component2, nextProps, renderLanes2);
+          return updateFunctionComponent(current2, workInProgress2, Component3, nextProps, renderLanes2);
         }
         function updateOffscreenComponent(current2, workInProgress2, renderLanes2) {
           var nextProps = workInProgress2.pendingProps;
@@ -16485,24 +16485,24 @@ var require_react_dom_development = __commonJS({
             }
           }
         }
-        function updateFunctionComponent(current2, workInProgress2, Component2, nextProps, renderLanes2) {
+        function updateFunctionComponent(current2, workInProgress2, Component3, nextProps, renderLanes2) {
           {
             if (workInProgress2.type !== workInProgress2.elementType) {
-              var innerPropTypes = Component2.propTypes;
+              var innerPropTypes = Component3.propTypes;
               if (innerPropTypes) {
                 checkPropTypes(
                   innerPropTypes,
                   nextProps,
                   // Resolved props
                   "prop",
-                  getComponentNameFromType(Component2)
+                  getComponentNameFromType(Component3)
                 );
               }
             }
           }
           var context;
           {
-            var unmaskedContext = getUnmaskedContext(workInProgress2, Component2, true);
+            var unmaskedContext = getUnmaskedContext(workInProgress2, Component3, true);
             context = getMaskedContext(workInProgress2, unmaskedContext);
           }
           var nextChildren;
@@ -16514,12 +16514,12 @@ var require_react_dom_development = __commonJS({
           {
             ReactCurrentOwner$1.current = workInProgress2;
             setIsRendering(true);
-            nextChildren = renderWithHooks(current2, workInProgress2, Component2, nextProps, context, renderLanes2);
+            nextChildren = renderWithHooks(current2, workInProgress2, Component3, nextProps, context, renderLanes2);
             hasId = checkDidRenderIdHook();
             if (workInProgress2.mode & StrictLegacyMode) {
               setIsStrictModeForDevtools(true);
               try {
-                nextChildren = renderWithHooks(current2, workInProgress2, Component2, nextProps, context, renderLanes2);
+                nextChildren = renderWithHooks(current2, workInProgress2, Component3, nextProps, context, renderLanes2);
                 hasId = checkDidRenderIdHook();
               } finally {
                 setIsStrictModeForDevtools(false);
@@ -16541,7 +16541,7 @@ var require_react_dom_development = __commonJS({
           reconcileChildren(current2, workInProgress2, nextChildren, renderLanes2);
           return workInProgress2.child;
         }
-        function updateClassComponent(current2, workInProgress2, Component2, nextProps, renderLanes2) {
+        function updateClassComponent(current2, workInProgress2, Component3, nextProps, renderLanes2) {
           {
             switch (shouldError(workInProgress2)) {
               case false: {
@@ -16564,20 +16564,20 @@ var require_react_dom_development = __commonJS({
               }
             }
             if (workInProgress2.type !== workInProgress2.elementType) {
-              var innerPropTypes = Component2.propTypes;
+              var innerPropTypes = Component3.propTypes;
               if (innerPropTypes) {
                 checkPropTypes(
                   innerPropTypes,
                   nextProps,
                   // Resolved props
                   "prop",
-                  getComponentNameFromType(Component2)
+                  getComponentNameFromType(Component3)
                 );
               }
             }
           }
           var hasContext;
-          if (isContextProvider(Component2)) {
+          if (isContextProvider(Component3)) {
             hasContext = true;
             pushContextProvider(workInProgress2);
           } else {
@@ -16588,15 +16588,15 @@ var require_react_dom_development = __commonJS({
           var shouldUpdate;
           if (instance === null) {
             resetSuspendedCurrentOnMountInLegacyMode(current2, workInProgress2);
-            constructClassInstance(workInProgress2, Component2, nextProps);
-            mountClassInstance(workInProgress2, Component2, nextProps, renderLanes2);
+            constructClassInstance(workInProgress2, Component3, nextProps);
+            mountClassInstance(workInProgress2, Component3, nextProps, renderLanes2);
             shouldUpdate = true;
           } else if (current2 === null) {
-            shouldUpdate = resumeMountClassInstance(workInProgress2, Component2, nextProps, renderLanes2);
+            shouldUpdate = resumeMountClassInstance(workInProgress2, Component3, nextProps, renderLanes2);
           } else {
-            shouldUpdate = updateClassInstance(current2, workInProgress2, Component2, nextProps, renderLanes2);
+            shouldUpdate = updateClassInstance(current2, workInProgress2, Component3, nextProps, renderLanes2);
           }
-          var nextUnitOfWork = finishClassComponent(current2, workInProgress2, Component2, shouldUpdate, hasContext, renderLanes2);
+          var nextUnitOfWork = finishClassComponent(current2, workInProgress2, Component3, shouldUpdate, hasContext, renderLanes2);
           {
             var inst = workInProgress2.stateNode;
             if (shouldUpdate && inst.props !== nextProps) {
@@ -16608,19 +16608,19 @@ var require_react_dom_development = __commonJS({
           }
           return nextUnitOfWork;
         }
-        function finishClassComponent(current2, workInProgress2, Component2, shouldUpdate, hasContext, renderLanes2) {
+        function finishClassComponent(current2, workInProgress2, Component3, shouldUpdate, hasContext, renderLanes2) {
           markRef(current2, workInProgress2);
           var didCaptureError = (workInProgress2.flags & DidCapture) !== NoFlags;
           if (!shouldUpdate && !didCaptureError) {
             if (hasContext) {
-              invalidateContextProvider(workInProgress2, Component2, false);
+              invalidateContextProvider(workInProgress2, Component3, false);
             }
             return bailoutOnAlreadyFinishedWork(current2, workInProgress2, renderLanes2);
           }
           var instance = workInProgress2.stateNode;
           ReactCurrentOwner$1.current = workInProgress2;
           var nextChildren;
-          if (didCaptureError && typeof Component2.getDerivedStateFromError !== "function") {
+          if (didCaptureError && typeof Component3.getDerivedStateFromError !== "function") {
             nextChildren = null;
             {
               stopProfilerTimerIfRunning();
@@ -16654,7 +16654,7 @@ var require_react_dom_development = __commonJS({
           }
           workInProgress2.memoizedState = instance.state;
           if (hasContext) {
-            invalidateContextProvider(workInProgress2, Component2, true);
+            invalidateContextProvider(workInProgress2, Component3, true);
           }
           return workInProgress2.child;
         }
@@ -16754,45 +16754,45 @@ var require_react_dom_development = __commonJS({
           var lazyComponent = elementType;
           var payload = lazyComponent._payload;
           var init = lazyComponent._init;
-          var Component2 = init(payload);
-          workInProgress2.type = Component2;
-          var resolvedTag = workInProgress2.tag = resolveLazyComponentTag(Component2);
-          var resolvedProps = resolveDefaultProps(Component2, props);
+          var Component3 = init(payload);
+          workInProgress2.type = Component3;
+          var resolvedTag = workInProgress2.tag = resolveLazyComponentTag(Component3);
+          var resolvedProps = resolveDefaultProps(Component3, props);
           var child;
           switch (resolvedTag) {
             case FunctionComponent: {
               {
-                validateFunctionComponentInDev(workInProgress2, Component2);
-                workInProgress2.type = Component2 = resolveFunctionForHotReloading(Component2);
+                validateFunctionComponentInDev(workInProgress2, Component3);
+                workInProgress2.type = Component3 = resolveFunctionForHotReloading(Component3);
               }
-              child = updateFunctionComponent(null, workInProgress2, Component2, resolvedProps, renderLanes2);
+              child = updateFunctionComponent(null, workInProgress2, Component3, resolvedProps, renderLanes2);
               return child;
             }
             case ClassComponent: {
               {
-                workInProgress2.type = Component2 = resolveClassForHotReloading(Component2);
+                workInProgress2.type = Component3 = resolveClassForHotReloading(Component3);
               }
-              child = updateClassComponent(null, workInProgress2, Component2, resolvedProps, renderLanes2);
+              child = updateClassComponent(null, workInProgress2, Component3, resolvedProps, renderLanes2);
               return child;
             }
             case ForwardRef: {
               {
-                workInProgress2.type = Component2 = resolveForwardRefForHotReloading(Component2);
+                workInProgress2.type = Component3 = resolveForwardRefForHotReloading(Component3);
               }
-              child = updateForwardRef(null, workInProgress2, Component2, resolvedProps, renderLanes2);
+              child = updateForwardRef(null, workInProgress2, Component3, resolvedProps, renderLanes2);
               return child;
             }
             case MemoComponent: {
               {
                 if (workInProgress2.type !== workInProgress2.elementType) {
-                  var outerPropTypes = Component2.propTypes;
+                  var outerPropTypes = Component3.propTypes;
                   if (outerPropTypes) {
                     checkPropTypes(
                       outerPropTypes,
                       resolvedProps,
                       // Resolved for outer only
                       "prop",
-                      getComponentNameFromType(Component2)
+                      getComponentNameFromType(Component3)
                     );
                   }
                 }
@@ -16800,8 +16800,8 @@ var require_react_dom_development = __commonJS({
               child = updateMemoComponent(
                 null,
                 workInProgress2,
-                Component2,
-                resolveDefaultProps(Component2.type, resolvedProps),
+                Component3,
+                resolveDefaultProps(Component3.type, resolvedProps),
                 // The inner type can have defaults too
                 renderLanes2
               );
@@ -16810,33 +16810,33 @@ var require_react_dom_development = __commonJS({
           }
           var hint = "";
           {
-            if (Component2 !== null && typeof Component2 === "object" && Component2.$$typeof === REACT_LAZY_TYPE) {
+            if (Component3 !== null && typeof Component3 === "object" && Component3.$$typeof === REACT_LAZY_TYPE) {
               hint = " Did you wrap a component in React.lazy() more than once?";
             }
           }
-          throw new Error("Element type is invalid. Received a promise that resolves to: " + Component2 + ". " + ("Lazy element type must resolve to a class or function." + hint));
+          throw new Error("Element type is invalid. Received a promise that resolves to: " + Component3 + ". " + ("Lazy element type must resolve to a class or function." + hint));
         }
-        function mountIncompleteClassComponent(_current, workInProgress2, Component2, nextProps, renderLanes2) {
+        function mountIncompleteClassComponent(_current, workInProgress2, Component3, nextProps, renderLanes2) {
           resetSuspendedCurrentOnMountInLegacyMode(_current, workInProgress2);
           workInProgress2.tag = ClassComponent;
           var hasContext;
-          if (isContextProvider(Component2)) {
+          if (isContextProvider(Component3)) {
             hasContext = true;
             pushContextProvider(workInProgress2);
           } else {
             hasContext = false;
           }
           prepareToReadContext(workInProgress2, renderLanes2);
-          constructClassInstance(workInProgress2, Component2, nextProps);
-          mountClassInstance(workInProgress2, Component2, nextProps, renderLanes2);
-          return finishClassComponent(null, workInProgress2, Component2, true, hasContext, renderLanes2);
+          constructClassInstance(workInProgress2, Component3, nextProps);
+          mountClassInstance(workInProgress2, Component3, nextProps, renderLanes2);
+          return finishClassComponent(null, workInProgress2, Component3, true, hasContext, renderLanes2);
         }
-        function mountIndeterminateComponent(_current, workInProgress2, Component2, renderLanes2) {
+        function mountIndeterminateComponent(_current, workInProgress2, Component3, renderLanes2) {
           resetSuspendedCurrentOnMountInLegacyMode(_current, workInProgress2);
           var props = workInProgress2.pendingProps;
           var context;
           {
-            var unmaskedContext = getUnmaskedContext(workInProgress2, Component2, false);
+            var unmaskedContext = getUnmaskedContext(workInProgress2, Component3, false);
             context = getMaskedContext(workInProgress2, unmaskedContext);
           }
           prepareToReadContext(workInProgress2, renderLanes2);
@@ -16846,8 +16846,8 @@ var require_react_dom_development = __commonJS({
             markComponentRenderStarted(workInProgress2);
           }
           {
-            if (Component2.prototype && typeof Component2.prototype.render === "function") {
-              var componentName = getComponentNameFromType(Component2) || "Unknown";
+            if (Component3.prototype && typeof Component3.prototype.render === "function") {
+              var componentName = getComponentNameFromType(Component3) || "Unknown";
               if (!didWarnAboutBadClass[componentName]) {
                 error("The <%s /> component appears to have a render method, but doesn't extend React.Component. This is likely to cause errors. Change %s to extend React.Component instead.", componentName, componentName);
                 didWarnAboutBadClass[componentName] = true;
@@ -16858,7 +16858,7 @@ var require_react_dom_development = __commonJS({
             }
             setIsRendering(true);
             ReactCurrentOwner$1.current = workInProgress2;
-            value = renderWithHooks(null, workInProgress2, Component2, props, context, renderLanes2);
+            value = renderWithHooks(null, workInProgress2, Component3, props, context, renderLanes2);
             hasId = checkDidRenderIdHook();
             setIsRendering(false);
           }
@@ -16868,7 +16868,7 @@ var require_react_dom_development = __commonJS({
           workInProgress2.flags |= PerformedWork;
           {
             if (typeof value === "object" && value !== null && typeof value.render === "function" && value.$$typeof === void 0) {
-              var _componentName = getComponentNameFromType(Component2) || "Unknown";
+              var _componentName = getComponentNameFromType(Component3) || "Unknown";
               if (!didWarnAboutModulePatternComponent[_componentName]) {
                 error("The <%s /> component appears to be a function component that returns a class instance. Change %s to a class that extends React.Component instead. If you can't use a class try assigning the prototype on the function as a workaround. `%s.prototype = React.Component.prototype`. Don't use an arrow function since it cannot be called with `new` by React.", _componentName, _componentName, _componentName);
                 didWarnAboutModulePatternComponent[_componentName] = true;
@@ -16881,7 +16881,7 @@ var require_react_dom_development = __commonJS({
             typeof value === "object" && value !== null && typeof value.render === "function" && value.$$typeof === void 0
           ) {
             {
-              var _componentName2 = getComponentNameFromType(Component2) || "Unknown";
+              var _componentName2 = getComponentNameFromType(Component3) || "Unknown";
               if (!didWarnAboutModulePatternComponent[_componentName2]) {
                 error("The <%s /> component appears to be a function component that returns a class instance. Change %s to a class that extends React.Component instead. If you can't use a class try assigning the prototype on the function as a workaround. `%s.prototype = React.Component.prototype`. Don't use an arrow function since it cannot be called with `new` by React.", _componentName2, _componentName2, _componentName2);
                 didWarnAboutModulePatternComponent[_componentName2] = true;
@@ -16891,7 +16891,7 @@ var require_react_dom_development = __commonJS({
             workInProgress2.memoizedState = null;
             workInProgress2.updateQueue = null;
             var hasContext = false;
-            if (isContextProvider(Component2)) {
+            if (isContextProvider(Component3)) {
               hasContext = true;
               pushContextProvider(workInProgress2);
             } else {
@@ -16900,15 +16900,15 @@ var require_react_dom_development = __commonJS({
             workInProgress2.memoizedState = value.state !== null && value.state !== void 0 ? value.state : null;
             initializeUpdateQueue(workInProgress2);
             adoptClassInstance(workInProgress2, value);
-            mountClassInstance(workInProgress2, Component2, props, renderLanes2);
-            return finishClassComponent(null, workInProgress2, Component2, true, hasContext, renderLanes2);
+            mountClassInstance(workInProgress2, Component3, props, renderLanes2);
+            return finishClassComponent(null, workInProgress2, Component3, true, hasContext, renderLanes2);
           } else {
             workInProgress2.tag = FunctionComponent;
             {
               if (workInProgress2.mode & StrictLegacyMode) {
                 setIsStrictModeForDevtools(true);
                 try {
-                  value = renderWithHooks(null, workInProgress2, Component2, props, context, renderLanes2);
+                  value = renderWithHooks(null, workInProgress2, Component3, props, context, renderLanes2);
                   hasId = checkDidRenderIdHook();
                 } finally {
                   setIsStrictModeForDevtools(false);
@@ -16920,16 +16920,16 @@ var require_react_dom_development = __commonJS({
             }
             reconcileChildren(null, workInProgress2, value, renderLanes2);
             {
-              validateFunctionComponentInDev(workInProgress2, Component2);
+              validateFunctionComponentInDev(workInProgress2, Component3);
             }
             return workInProgress2.child;
           }
         }
-        function validateFunctionComponentInDev(workInProgress2, Component2) {
+        function validateFunctionComponentInDev(workInProgress2, Component3) {
           {
-            if (Component2) {
-              if (Component2.childContextTypes) {
-                error("%s(...): childContextTypes cannot be defined on a function component.", Component2.displayName || Component2.name || "Component");
+            if (Component3) {
+              if (Component3.childContextTypes) {
+                error("%s(...): childContextTypes cannot be defined on a function component.", Component3.displayName || Component3.name || "Component");
               }
             }
             if (workInProgress2.ref !== null) {
@@ -16948,22 +16948,22 @@ var require_react_dom_development = __commonJS({
                 error("Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s", info);
               }
             }
-            if (Component2.defaultProps !== void 0) {
-              var componentName = getComponentNameFromType(Component2) || "Unknown";
+            if (Component3.defaultProps !== void 0) {
+              var componentName = getComponentNameFromType(Component3) || "Unknown";
               if (!didWarnAboutDefaultPropsOnFunctionComponent[componentName]) {
                 error("%s: Support for defaultProps will be removed from function components in a future major release. Use JavaScript default parameters instead.", componentName);
                 didWarnAboutDefaultPropsOnFunctionComponent[componentName] = true;
               }
             }
-            if (typeof Component2.getDerivedStateFromProps === "function") {
-              var _componentName3 = getComponentNameFromType(Component2) || "Unknown";
+            if (typeof Component3.getDerivedStateFromProps === "function") {
+              var _componentName3 = getComponentNameFromType(Component3) || "Unknown";
               if (!didWarnAboutGetDerivedStateOnFunctionComponent[_componentName3]) {
                 error("%s: Function components do not support getDerivedStateFromProps.", _componentName3);
                 didWarnAboutGetDerivedStateOnFunctionComponent[_componentName3] = true;
               }
             }
-            if (typeof Component2.contextType === "object" && Component2.contextType !== null) {
-              var _componentName4 = getComponentNameFromType(Component2) || "Unknown";
+            if (typeof Component3.contextType === "object" && Component3.contextType !== null) {
+              var _componentName4 = getComponentNameFromType(Component3) || "Unknown";
               if (!didWarnAboutContextTypeOnFunctionComponent[_componentName4]) {
                 error("%s: Function components do not support contextType.", _componentName4);
                 didWarnAboutContextTypeOnFunctionComponent[_componentName4] = true;
@@ -17725,8 +17725,8 @@ var require_react_dom_development = __commonJS({
               pushHostContext(workInProgress2);
               break;
             case ClassComponent: {
-              var Component2 = workInProgress2.type;
-              if (isContextProvider(Component2)) {
+              var Component3 = workInProgress2.type;
+              if (isContextProvider(Component3)) {
                 pushContextProvider(workInProgress2);
               }
               break;
@@ -17853,10 +17853,10 @@ var require_react_dom_development = __commonJS({
               return mountLazyComponent(current2, workInProgress2, elementType, renderLanes2);
             }
             case FunctionComponent: {
-              var Component2 = workInProgress2.type;
+              var Component3 = workInProgress2.type;
               var unresolvedProps = workInProgress2.pendingProps;
-              var resolvedProps = workInProgress2.elementType === Component2 ? unresolvedProps : resolveDefaultProps(Component2, unresolvedProps);
-              return updateFunctionComponent(current2, workInProgress2, Component2, resolvedProps, renderLanes2);
+              var resolvedProps = workInProgress2.elementType === Component3 ? unresolvedProps : resolveDefaultProps(Component3, unresolvedProps);
+              return updateFunctionComponent(current2, workInProgress2, Component3, resolvedProps, renderLanes2);
             }
             case ClassComponent: {
               var _Component = workInProgress2.type;
@@ -18161,8 +18161,8 @@ var require_react_dom_development = __commonJS({
               bubbleProperties(workInProgress2);
               return null;
             case ClassComponent: {
-              var Component2 = workInProgress2.type;
-              if (isContextProvider(Component2)) {
+              var Component3 = workInProgress2.type;
+              if (isContextProvider(Component3)) {
                 popContext(workInProgress2);
               }
               bubbleProperties(workInProgress2);
@@ -18480,8 +18480,8 @@ var require_react_dom_development = __commonJS({
           popTreeContext(workInProgress2);
           switch (workInProgress2.tag) {
             case ClassComponent: {
-              var Component2 = workInProgress2.type;
-              if (isContextProvider(Component2)) {
+              var Component3 = workInProgress2.type;
+              if (isContextProvider(Component3)) {
                 popContext(workInProgress2);
               }
               var flags = workInProgress2.flags;
@@ -22168,18 +22168,18 @@ var require_react_dom_development = __commonJS({
         var createFiber = function(tag, pendingProps, key, mode) {
           return new FiberNode(tag, pendingProps, key, mode);
         };
-        function shouldConstruct$1(Component2) {
-          var prototype = Component2.prototype;
+        function shouldConstruct$1(Component3) {
+          var prototype = Component3.prototype;
           return !!(prototype && prototype.isReactComponent);
         }
         function isSimpleFunctionComponent(type) {
           return typeof type === "function" && !shouldConstruct$1(type) && type.defaultProps === void 0;
         }
-        function resolveLazyComponentTag(Component2) {
-          if (typeof Component2 === "function") {
-            return shouldConstruct$1(Component2) ? ClassComponent : FunctionComponent;
-          } else if (Component2 !== void 0 && Component2 !== null) {
-            var $$typeof = Component2.$$typeof;
+        function resolveLazyComponentTag(Component3) {
+          if (typeof Component3 === "function") {
+            return shouldConstruct$1(Component3) ? ClassComponent : FunctionComponent;
+          } else if (Component3 !== void 0 && Component3 !== null) {
+            var $$typeof = Component3.$$typeof;
             if ($$typeof === REACT_FORWARD_REF_TYPE) {
               return ForwardRef;
             }
@@ -22616,9 +22616,9 @@ var require_react_dom_development = __commonJS({
           var fiber = get(parentComponent);
           var parentContext = findCurrentUnmaskedContext(fiber);
           if (fiber.tag === ClassComponent) {
-            var Component2 = fiber.type;
-            if (isContextProvider(Component2)) {
-              return processChildContext(fiber, Component2, parentContext);
+            var Component3 = fiber.type;
+            if (isContextProvider(Component3)) {
+              return processChildContext(fiber, Component3, parentContext);
             }
           }
           return parentContext;
@@ -23568,7 +23568,7 @@ var require_react_jsx_runtime_development = __commonJS({
     if (true) {
       (function() {
         "use strict";
-        var React3 = require_react();
+        var React4 = require_react();
         var REACT_ELEMENT_TYPE = Symbol.for("react.element");
         var REACT_PORTAL_TYPE = Symbol.for("react.portal");
         var REACT_FRAGMENT_TYPE = Symbol.for("react.fragment");
@@ -23594,7 +23594,7 @@ var require_react_jsx_runtime_development = __commonJS({
           }
           return null;
         }
-        var ReactSharedInternals = React3.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
+        var ReactSharedInternals = React4.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
         function error(format) {
           {
             {
@@ -23925,8 +23925,8 @@ var require_react_jsx_runtime_development = __commonJS({
             return describeNativeComponentFrame(fn, false);
           }
         }
-        function shouldConstruct(Component2) {
-          var prototype = Component2.prototype;
+        function shouldConstruct(Component3) {
+          var prototype = Component3.prototype;
           return !!(prototype && prototype.isReactComponent);
         }
         function describeUnknownElementTypeFrameInDEV(type, source, ownerFn) {
@@ -24444,11 +24444,11 @@ var require_react_jsx_runtime_development = __commonJS({
             return jsxWithValidation(type, props, key, false);
           }
         }
-        var jsx2 = jsxWithValidationDynamic;
-        var jsxs2 = jsxWithValidationStatic;
+        var jsx3 = jsxWithValidationDynamic;
+        var jsxs3 = jsxWithValidationStatic;
         exports.Fragment = REACT_FRAGMENT_TYPE;
-        exports.jsx = jsx2;
-        exports.jsxs = jsxs2;
+        exports.jsx = jsx3;
+        exports.jsxs = jsxs3;
       })();
     }
   }
@@ -24469,22 +24469,82 @@ var require_jsx_runtime = __commonJS({
 // main.ts
 var main_exports = {};
 __export(main_exports, {
+  NeiAiChatPlugin: () => NeiAiChatPlugin,
   default: () => NeiAiChatPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian12 = require("obsidian");
+var import_obsidian15 = require("obsidian");
 
 // src/views/ChatView.ts
-var import_obsidian11 = require("obsidian");
-var React2 = __toESM(require_react());
+var import_obsidian10 = require("obsidian");
+var React3 = __toESM(require_react());
 var ReactDOM = __toESM(require_client());
 
 // src/components/ChatPanel.tsx
-var React = __toESM(require_react());
-var import_obsidian10 = require("obsidian");
+var React2 = __toESM(require_react());
+var import_obsidian9 = require("obsidian");
 
 // src/services/llm.ts
 var import_obsidian = require("obsidian");
+
+// src/services/modelRegistry.ts
+var MODEL_TEMPORAL_REGISTRY = {
+  "google/gemini-2.5-flash": { modelId: "google/gemini-2.5-flash", knowledgeCutoff: "2024-12-01", supportsWebSearch: true, defaultFreshnessPolicy: "auto" },
+  "anthropic/claude-3.5-sonnet": { modelId: "anthropic/claude-3.5-sonnet", knowledgeCutoff: "2024-04-01", supportsWebSearch: true, defaultFreshnessPolicy: "auto" },
+  "google/gemini-2.5-pro": { modelId: "google/gemini-2.5-pro", knowledgeCutoff: "2024-11-01", supportsWebSearch: true, defaultFreshnessPolicy: "auto" },
+  "openai/gpt-4o": { modelId: "openai/gpt-4o", knowledgeCutoff: "2023-10-01", supportsWebSearch: true, defaultFreshnessPolicy: "auto" },
+  "deepseek/deepseek-chat": { modelId: "deepseek/deepseek-chat", knowledgeCutoff: "2024-07-01", supportsWebSearch: true, defaultFreshnessPolicy: "auto" },
+  "default": { modelId: "default", knowledgeCutoff: "2024-01-01", supportsWebSearch: false, defaultFreshnessPolicy: "strict" }
+};
+function getModelTemporalInfo(modelId) {
+  if (!modelId)
+    return MODEL_TEMPORAL_REGISTRY["default"];
+  if (MODEL_TEMPORAL_REGISTRY[modelId])
+    return MODEL_TEMPORAL_REGISTRY[modelId];
+  const lower = modelId.toLowerCase();
+  if (lower.includes("gemini")) {
+    return { modelId, knowledgeCutoff: "2024-12-01", supportsWebSearch: true, defaultFreshnessPolicy: "auto" };
+  }
+  if (lower.includes("claude")) {
+    return { modelId, knowledgeCutoff: "2024-04-01", supportsWebSearch: true, defaultFreshnessPolicy: "auto" };
+  }
+  if (lower.includes("gpt-4") || lower.includes("gpt-3")) {
+    return { modelId, knowledgeCutoff: "2023-10-01", supportsWebSearch: true, defaultFreshnessPolicy: "auto" };
+  }
+  return MODEL_TEMPORAL_REGISTRY["default"];
+}
+function getKnowledgeCutoff(modelId) {
+  return new Date(getModelTemporalInfo(modelId).knowledgeCutoff);
+}
+function isQueryLikelyStale(query, modelId) {
+  const freshnessMarkers = [
+    "\u0441\u0435\u0439\u0447\u0430\u0441",
+    "\u0441\u0435\u0433\u043E\u0434\u043D\u044F",
+    "\u043D\u0430 \u0442\u0435\u043A\u0443\u0449\u0438\u0439 \u043C\u043E\u043C\u0435\u043D\u0442",
+    "\u0430\u043A\u0442\u0443\u0430\u043B\u044C\u043D",
+    "\u043F\u043E\u0441\u043B\u0435\u0434\u043D",
+    "\u043D\u043E\u0432\u044B\u0439",
+    "\u0442\u0435\u043A\u0443\u0449",
+    "now",
+    "today",
+    "current",
+    "latest",
+    "recent",
+    "as of",
+    "up to date",
+    "this week",
+    "this month"
+  ];
+  const lower = query.toLowerCase();
+  const hasFreshnessMarker = freshnessMarkers.some((m) => lower.includes(m));
+  if (!hasFreshnessMarker)
+    return false;
+  const cutoff = getKnowledgeCutoff(modelId);
+  const daysSinceCutoff = (Date.now() - cutoff.getTime()) / (1e3 * 60 * 60 * 24);
+  return daysSinceCutoff > 30;
+}
+
+// src/services/llm.ts
 async function sendChatRequest(config, messages, tools) {
   const url = config.endpointUrl.endsWith("/") ? `${config.endpointUrl}chat/completions` : `${config.endpointUrl}/chat/completions`;
   const headers = {
@@ -24574,8 +24634,2970 @@ async function sendChatRequest(config, messages, tools) {
   };
 }
 
-// src/services/tools/vaultTools.ts
+// src/services/memory/memoryStore.ts
 var import_obsidian2 = require("obsidian");
+var DEFAULT_MEMORY = {
+  userPreferences: {},
+  projectContexts: {},
+  learnedFacts: [],
+  lastUpdated: (/* @__PURE__ */ new Date()).toISOString()
+};
+var MemoryStore = class {
+  static getMemoryPath(settings) {
+    return settings?.memoryFile || ".nei/memory.json";
+  }
+  static getAgentsRulesPath(settings) {
+    const memoryPath = this.getMemoryPath(settings);
+    const parts = memoryPath.split("/");
+    if (parts.length > 1) {
+      parts.pop();
+      return `${parts.join("/")}/AGENTS.md`;
+    }
+    return ".nei/AGENTS.md";
+  }
+  static async loadMemory(app, settings) {
+    try {
+      const memoryPath = this.getMemoryPath(settings);
+      const file = app.vault.getAbstractFileByPath(memoryPath);
+      if (file instanceof import_obsidian2.TFile) {
+        const content = await app.vault.read(file);
+        const parsed = JSON.parse(content);
+        return Object.assign({}, DEFAULT_MEMORY, parsed);
+      }
+    } catch (e) {
+      console.error("[NEI Memory] Error reading memory.json:", e);
+    }
+    return DEFAULT_MEMORY;
+  }
+  static async saveMemory(app, settings, memory) {
+    try {
+      memory.lastUpdated = (/* @__PURE__ */ new Date()).toISOString();
+      const content = JSON.stringify(memory, null, 2);
+      const memoryPath = this.getMemoryPath(settings);
+      const parts = memoryPath.split("/");
+      if (parts.length > 1) {
+        parts.pop();
+        await this.ensureFolder(app, parts.join("/"));
+      }
+      const file = app.vault.getAbstractFileByPath(memoryPath);
+      if (file instanceof import_obsidian2.TFile) {
+        await app.vault.modify(file, content);
+      } else {
+        await app.vault.create(memoryPath, content);
+      }
+    } catch (e) {
+      console.error("[NEI Memory] Error saving memory.json:", e);
+    }
+  }
+  static async addFact(app, settings, fact) {
+    const memory = await this.loadMemory(app, settings);
+    if (!memory.learnedFacts.includes(fact)) {
+      memory.learnedFacts.push(fact);
+      await this.saveMemory(app, settings, memory);
+    }
+  }
+  static async loadAgentsRules(app, settings) {
+    try {
+      const rulesPath = this.getAgentsRulesPath(settings);
+      const file = app.vault.getAbstractFileByPath(rulesPath);
+      if (file instanceof import_obsidian2.TFile) {
+        return await app.vault.read(file);
+      }
+    } catch {
+    }
+    return "";
+  }
+  static async ensureFolder(app, path) {
+    const normalized = (0, import_obsidian2.normalizePath)(path);
+    const folder = app.vault.getAbstractFileByPath(normalized);
+    if (!folder) {
+      await app.vault.createFolder(normalized);
+    }
+  }
+};
+
+// src/services/skills/skillsLoader.ts
+var import_obsidian3 = require("obsidian");
+var SkillsLoader = class {
+  static getSkillsRoot(settings) {
+    return settings.skillsFolder || ".nei/skills";
+  }
+  static async loadSkills(app, settings) {
+    const skills = [];
+    const rootPath = this.getSkillsRoot(settings);
+    const root = app.vault.getAbstractFileByPath(rootPath);
+    if (!(root instanceof import_obsidian3.TFolder)) {
+      return skills;
+    }
+    for (const child of root.children) {
+      if (child instanceof import_obsidian3.TFolder) {
+        const skillFile = app.vault.getAbstractFileByPath(`${child.path}/SKILL.md`);
+        if (skillFile instanceof import_obsidian3.TFile) {
+          try {
+            const content = await app.vault.read(skillFile);
+            const parsed = this.parseSkillMarkdown(content, child.name, skillFile.path);
+            if (parsed)
+              skills.push(parsed);
+          } catch (e) {
+            console.error(`[NEI Skills] Error loading skill ${child.name}:`, e);
+          }
+        }
+      }
+    }
+    return skills;
+  }
+  static parseSkillMarkdown(content, folderName, path) {
+    let name = folderName;
+    let description = "";
+    let instructions = content;
+    const frontmatterMatch = content.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
+    if (frontmatterMatch) {
+      const yaml = frontmatterMatch[1];
+      instructions = frontmatterMatch[2].trim();
+      const nameMatch = yaml.match(/^name:\s*(.+)$/m);
+      if (nameMatch)
+        name = nameMatch[1].trim().replace(/^['"]|['"]$/g, "");
+      const descMatch = yaml.match(/^description:\s*(.+)$/m);
+      if (descMatch)
+        description = descMatch[1].trim().replace(/^['"]|['"]$/g, "");
+    }
+    return {
+      name,
+      description: description || `Custom skill from ${folderName}`,
+      instructions,
+      path
+    };
+  }
+};
+
+// src/services/context.ts
+var import_obsidian5 = require("obsidian");
+
+// src/services/rag.ts
+var import_obsidian4 = require("obsidian");
+var STOP_WORDS = /* @__PURE__ */ new Set([
+  // Russian
+  "\u0438",
+  "\u0432",
+  "\u043D\u0430",
+  "\u043D\u0435",
+  "\u0447\u0442\u043E",
+  "\u044D\u0442\u043E",
+  "\u043A\u0430\u043A",
+  "\u043E\u043D",
+  "\u043E\u043D\u0430",
+  "\u043E\u043D\u0438",
+  "\u043C\u044B",
+  "\u0432\u044B",
+  "\u0432\u0441\u0435",
+  "\u0442\u0430\u043A",
+  "\u0435\u0433\u043E",
+  "\u043D\u043E",
+  "\u0434\u0430",
+  "\u0442\u044B",
+  "\u043F\u043E",
+  "\u043E\u0442",
+  "\u0437\u0430",
+  "\u0434\u043B\u044F",
+  "\u0438\u0437",
+  "\u0436\u0435",
+  "\u0442\u043E",
+  "\u0431\u044B",
+  "\u0435\u0435",
+  "\u043F\u0440\u0438",
+  "\u0438\u043B\u0438",
+  "\u0443\u0436\u0435",
+  "\u0434\u043E",
+  "\u043D\u0435\u0442",
+  "\u0435\u0441\u043B\u0438",
+  "\u043D\u0438\u0445",
+  "\u0431\u044B\u043B",
+  "\u0431\u0435\u0437",
+  "\u0435\u0449\u0451",
+  "\u0431\u044B\u0442\u044C",
+  "\u043C\u043E\u0439",
+  "\u0447\u0435\u043C",
+  "\u044D\u0442\u0438",
+  "\u0433\u0434\u0435",
+  "\u043C\u043D\u0435",
+  "\u043D\u0438\u0445",
+  "\u0442\u0443\u0442",
+  // English
+  "the",
+  "and",
+  "for",
+  "are",
+  "but",
+  "not",
+  "you",
+  "all",
+  "can",
+  "had",
+  "her",
+  "was",
+  "one",
+  "our",
+  "out",
+  "has",
+  "have",
+  "been",
+  "from",
+  "this",
+  "that",
+  "with",
+  "they",
+  "will",
+  "each",
+  "make",
+  "like",
+  "just",
+  "than",
+  "them",
+  "very",
+  "when",
+  "what",
+  "your",
+  "about",
+  "would",
+  "there",
+  "their",
+  "which",
+  "could",
+  "other",
+  "into",
+  "more",
+  "some",
+  "time",
+  "also",
+  "its",
+  "only",
+  "over"
+]);
+function tokenize(text) {
+  return text.toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~()?"']/g, " ").split(/\s+/).filter((word) => word.length > 2 && !STOP_WORDS.has(word));
+}
+async function searchVaultLexical(app, query, limit = 5, snippetLength = 1e3) {
+  const files = app.vault.getMarkdownFiles();
+  const queryTokens = tokenize(query);
+  if (queryTokens.length === 0)
+    return [];
+  const docFreq = {};
+  const fileContents = /* @__PURE__ */ new Map();
+  const readResults = await Promise.all(
+    files.map(async (file) => {
+      try {
+        const content = await app.vault.cachedRead(file);
+        return { file, content };
+      } catch {
+        return { file, content: "" };
+      }
+    })
+  );
+  for (const { file, content } of readResults) {
+    if (!content)
+      continue;
+    fileContents.set(file, content);
+    const contentLower = content.toLowerCase();
+    for (const qToken of queryTokens) {
+      if (contentLower.includes(qToken)) {
+        docFreq[qToken] = (docFreq[qToken] || 0) + 1;
+      }
+    }
+  }
+  const totalDocs = fileContents.size || 1;
+  const results = [];
+  for (const [file, content] of fileContents) {
+    const fileTokens = tokenize(content);
+    if (fileTokens.length === 0)
+      continue;
+    let score = 0;
+    for (const qToken of queryTokens) {
+      const tf = fileTokens.filter((t2) => t2.includes(qToken)).length;
+      if (tf === 0)
+        continue;
+      const df = docFreq[qToken] || 1;
+      const idf = Math.log(totalDocs / df) + 1;
+      score += tf * idf;
+    }
+    if (score > 0) {
+      const normalizedScore = score / Math.sqrt(fileTokens.length);
+      results.push({
+        file,
+        content: content.slice(0, snippetLength),
+        score: normalizedScore
+      });
+    }
+  }
+  results.sort((a, b) => b.score - a.score);
+  return results.slice(0, limit);
+}
+
+// src/services/context.ts
+async function resolveContext(app, query, useRag, limitRag = 3) {
+  const activeFile = app.workspace.getActiveFile();
+  let activeNoteTitle = "";
+  let activeNoteContent = "";
+  if (activeFile instanceof import_obsidian5.TFile) {
+    activeNoteTitle = activeFile.basename;
+    try {
+      activeNoteContent = await app.vault.cachedRead(activeFile);
+    } catch {
+    }
+  }
+  const appPluginContainer = app;
+  const internalSet = appPluginContainer.internalPlugins?.enabledPlugins;
+  const communitySet = appPluginContainer.plugins?.enabledPlugins;
+  const manifests = appPluginContainer.plugins?.manifests;
+  const enabledInternal = Array.from(internalSet || []);
+  const enabledCommunity = Object.keys(manifests || {}).filter((id) => communitySet?.has(id));
+  const activePlugins = [...enabledInternal, ...enabledCommunity];
+  let characterStats = void 0;
+  let activeQuests = [];
+  const corePlugin = appPluginContainer.plugins?.getPlugin?.("nei-core-plugin");
+  if (corePlugin && corePlugin.enabled && corePlugin.api) {
+    try {
+      characterStats = await corePlugin.api.loadCharacterProfile();
+      activeQuests = await corePlugin.api.getAllQuests();
+    } catch (e) {
+      console.error("[NEI AI Chat] Error pulling RPG stats from Core plugin:", e);
+    }
+  }
+  let ragContext = "";
+  if (useRag && query.trim().length > 3) {
+    try {
+      const searchResults = await searchVaultLexical(app, query, limitRag);
+      if (searchResults.length > 0) {
+        ragContext = searchResults.map((res) => `---
+\u0424\u0430\u0439\u043B: ${res.file.path}
+\u0421\u043E\u0434\u0435\u0440\u0436\u0438\u043C\u043E\u0435:
+${res.content.substring(0, 1500)}${res.content.length > 1500 ? "..." : ""}
+---`).join("\n\n");
+      }
+    } catch (e) {
+      console.error("[NEI AI Chat] RAG search error:", e);
+    }
+  }
+  return {
+    activeNoteTitle,
+    activeNoteContent,
+    activePlugins,
+    characterStats,
+    activeQuests,
+    ragContext
+  };
+}
+
+// src/i18n/translations.ts
+var baseEn = {
+  welcomeGreeting: "\u{1F44B} NEI Assistant greets you. Awaiting instructions",
+  welcomeSubText: "Your intelligent super-agent ready to assist with your knowledge base:",
+  featureNotes: "Direct access to notes, folders, and vault linkages",
+  featureRouting: "Quick and Agent modes with automatic tool routing",
+  featureVision: "Analysis of images, documents, and web pages",
+  featureTokens: "Full support for RAG, memory, and external MCP servers",
+  inputPlaceholder: "Ask a question or describe a task... (Enter to send, Shift+Enter for newline)",
+  attachTooltip: "Attach image or text file (.txt, .md, .js, .ts, .json)",
+  quickMode: "\u26A1 Quick",
+  agentMode: "\u{1F916} Agent",
+  ragToggle: "\u{1F9E0} RAG Knowledge Vault",
+  settingsTitle: "\u2699\uFE0F NEI AI Chat Settings",
+  providerLabel: "AI Provider:",
+  endpointLabel: "Endpoint URL:",
+  apiKeyLabel: "API Key:",
+  modelLabel: "Model:",
+  customModelsLabel: "Custom Models List (one per line):",
+  languageLabel: "Interface Language:",
+  defaultNoteFolderLabel: "Default folder for saved chat notes:",
+  defaultNoteFolderPlaceholder: "e.g., AI-Notes (leave blank for Vault root)",
+  saveSettings: "Save Settings",
+  checkApi: "\u{1F504} Check API & Models",
+  checkingApi: "\u23F3 Checking connection...",
+  apiCheckSuccess: "\u2705 API connected successfully!",
+  apiCheckFailed: "\u274C API Connection Failed",
+  newChat: "\u2795 New",
+  newChatSession: "New Chat",
+  clearChats: "\u{1F5D1}\uFE0F Clear All Chats",
+  confirmClearChats: "Are you sure you want to delete all chat history?",
+  saveNote: "\u{1F4C4} Save as Note",
+  copyText: "\u{1F4CB} Copy",
+  copied: "\u2705 Copied to clipboard!",
+  agentRunning: "\u26A1 Agent executing task...",
+  confirmAction: "Action Confirmation Required:",
+  allow: "\u2705 Allow",
+  deny: "\u274C Deny",
+  autoDetect: "Auto-detect (Obsidian)",
+  historyTitle: "Chat History",
+  clearAll: "\u{1F5D1}\uFE0F Clear All",
+  noSavedChats: "No saved chats",
+  moveSidebar: "\u2199\uFE0F To Sidebar",
+  moveTab: "\u2197\uFE0F To Tab",
+  moveSidebarTitle: "Move chat to right sidebar",
+  moveTabTitle: "Move chat to main editor tab",
+  modelCategories: "Model Categories (Multimodality):",
+  primaryModel: "1. Text & Tools (Primary):",
+  visionModel: "2. Files & Vision:",
+  quickModel: "3. Quick Mode Router:",
+  parameters: "Parameters",
+  requestingCapabilities: "Fetching capabilities via OpenRouter API...",
+  nativeToolCalling: "\u{1F7E2} Native Tool Calling supported",
+  textToolCalling: "\u{1F7E1} Text fallback tool calling mode",
+  visionSupported: "\u{1F5BC}\uFE0F Image/vision analysis supported",
+  textOnlyInput: "\u{1F4DD} Text input only",
+  contextWindow: "Context window:",
+  tokens: "tokens",
+  pressCheckApi: 'Click "Check API" to retrieve parameters from OpenRouter',
+  yourSavedModels: "Your saved models:",
+  addModelPlaceholder: "e.g., anthropic/claude-3.5-sonnet",
+  addBtn: "+ Add",
+  deleteFromList: "Delete from list",
+  keyUsage: "Used on API key:",
+  modeAutoTitle: "AI Mode: Auto (smart routing), Quick (direct chat), Agent (multi-step reasoning)",
+  modeAuto: "\u26A1 Auto (Smart)",
+  modeQuick: "\u{1F680} Quick (Direct)",
+  modeAgent: "\u{1F9E0} Agent (Multi-step)",
+  settingsTooltip: "Model & API Settings",
+  newChatTooltip: "New Chat",
+  historyTooltip: "Chat History",
+  deleteChatTooltip: "Delete Chat",
+  noteCreatedSuccess: "Success: Created note",
+  noteCreateError: "Error creating note:",
+  copyError: "Failed to copy text.",
+  modelAddedNotice: "Added model:",
+  cannotDeleteLastModel: "Cannot delete the last model!",
+  historyClearedNotice: "Chat history cleared!",
+  modeSwitchError: "Mode switch error:",
+  agentError: "\u274C Agent execution error:",
+  cancel: "Cancel",
+  saveSend: "\u{1F4BE} Send",
+  editText: "\u270F\uFE0F Edit",
+  retry: "\u{1F504} Retry",
+  inputTokens: "\u{1F4E5} In:",
+  outputTokens: "\u{1F4E4} Out:",
+  confirmTitle: "\u26A0\uFE0F Action Confirmation Required",
+  confirmDetail: "Agent requests tool execution:",
+  contextLength: "Context Window:",
+  toolCallingSupport: "Tool Calling Support:",
+  visionSupport: "Vision Support:",
+  infoUnavailable: "Click 'Check API' to retrieve details",
+  modelsList: "Custom Models List",
+  deleteModelTooltip: "Delete model from list",
+  cancelBtn: "Cancel",
+  saveResendBtn: "Save & Resend",
+  agentReasoningLog: "Agent Reasoning Log",
+  actionConfirmation: "Action Confirmation Required",
+  agentWantsExecute: "Agent requests tool execution",
+  allowBtn: "Allow",
+  folderPrefetchTitle: "Injected folder notes: {folders}",
+  folderPrefetchDetail: "Folders: {count}",
+  autoIndexedVaultNotes: "--- AUTOMATISCH INDEXED VAULT NOTES ---",
+  autoCreatedNote: "Automatically created note: {path}",
+  quickLlmError: "Quick LLM call error: {error}",
+  agentNoOutput: "Agent completed without text output.",
+  systemPromptRu: '\u0422\u044B \u2014 \u0430\u0433\u0435\u043D\u0442\u043D\u044B\u0439 \u0418\u0418-\u043F\u043E\u043C\u043E\u0449\u043D\u0438\u043A NEI \u0432 Obsidian.\n\u0422\u0432\u043E\u044F \u0446\u0435\u043B\u044C: \u043F\u043E\u043C\u043E\u0433\u0430\u0442\u044C \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044E \u0440\u0430\u0431\u043E\u0442\u0430\u0442\u044C \u0441 \u0445\u0440\u0430\u043D\u0438\u043B\u0438\u0449\u0435\u043C \u0437\u0430\u043C\u0435\u0442\u043E\u043A Vault \u0438 \u043E\u0442\u0432\u0435\u0447\u0430\u0442\u044C \u043D\u0430 \u0435\u0433\u043E \u0432\u043E\u043F\u0440\u043E\u0441\u044B.\n\n\u041F\u0420\u0410\u0412\u0418\u041B\u0410 \u0418\u0421\u041F\u041E\u041B\u042C\u0417\u041E\u0412\u0410\u041D\u0418\u042F \u0418\u041D\u0421\u0422\u0420\u0423\u041C\u0415\u041D\u0422\u041E\u0412:\n1. \u0415\u0441\u043B\u0438 \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C \u043F\u0440\u043E\u0441\u0438\u0442 "\u0441\u043E\u0437\u0434\u0430\u0439 \u0437\u0430\u043C\u0435\u0442\u043A\u0443", "\u0441\u043E\u0437\u0434\u0430\u0439 \u043F\u0430\u043F\u043A\u0443" \u0438\u043B\u0438 "\u0441\u043E\u0445\u0440\u0430\u043D\u0438" \u2014 \u041E\u0411\u042F\u0417\u0410\u0422\u0415\u041B\u042C\u041D\u041E \u0432\u044B\u0437\u043E\u0432\u0438 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442 `create_note(path, content)`.\n2. \u0414\u043B\u044F \u0447\u0442\u0435\u043D\u0438\u044F \u0437\u0430\u043C\u0435\u0442\u043E\u043A \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u0443\u0439 `read_note` \u0438\u043B\u0438 `get_folder_notes`.\n3. \u0418\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442 `create_note` \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438 \u0441\u043E\u0437\u0434\u0430\u0451\u0442 \u0432\u0441\u0435 \u0432\u043B\u043E\u0436\u0435\u043D\u043D\u044B\u0435 \u043F\u0430\u043F\u043A\u0438.\n\n\u041E\u0422\u0412\u0415\u0422: GitHub Flavored Markdown.',
+  systemPromptEn: 'You are NEI \u2014 an agentic AI assistant integrated into Obsidian.\nYour goal: help the user work with their Vault (notes, folders) and answer questions.\n\nTOOL USAGE RULES:\n1. If the user asks to "create a note", "create a folder", or "save" \u2014 you MUST call the `create_note(path, content)` tool.\n2. To read notes, use `read_note` or `get_folder_notes`.\n3. The `create_note` tool automatically creates nested folders.\n\nRESPONSE FORMAT: GitHub Flavored Markdown.',
+  intentAttachmentsReason: "Attached files/images for analysis",
+  intentVaultActionReason: "Detected vault/notes action request ({keyword})",
+  intentQuickReason: "Direct Q&A (no vault interaction)",
+  intentLongQueryReason: "Extended query requires agent mode",
+  intentDefaultQuickReason: "Simple chat without vault reference",
+  intentDeletionReason: "Deletion request detected",
+  intentCreationReason: "Note/folder creation pattern detected",
+  intentAnalysisReason: "Vault analysis/comparison pattern detected",
+  intentSearchReason: "Search/lookup pattern detected",
+  intentModifyReason: "Vault modification pattern detected",
+  intentHistoryReason: "Continued agent workflow from chat history",
+  intentStaleReason: "Time-sensitive query (web search required)",
+  intentConfidenceHigh: "High confidence decision",
+  intentConfidenceLow: "Low confidence decision",
+  freshnessSuggestion: "This query may require up-to-date information (model knowledge cutoff: {cutoff}). Enable web search?",
+  ragPrefetchTitle: "Indexed notes via RAG: {count}",
+  ragPrefetchDetail: "Relevant notes found: {count}",
+  chatsFolderLabel: "Chats folder path:",
+  memoryFileLabel: "Memory file path:",
+  skillsFolderLabel: "Agent skills folder path:",
+  maxAgentIterationsLabel: "Max agent iterations:",
+  maxPrefetchedNotesLabel: "Max prefetched notes:",
+  prefetchSnippetLengthLabel: "Prefetch snippet length:",
+  ragResultLimitLabel: "RAG result limit:",
+  ragSnippetLengthLabel: "RAG snippet length:",
+  confirmObsidianCommandsLabel: "Require confirmation for Obsidian commands:",
+  enableTemporalAwarenessLabel: "Enable temporal awareness (cutoff dates, freshness directives):",
+  enableAdaptivePrefetchLabel: "Adaptive prefetch (RAG vault notes only when vault is needed):",
+  enableFreshnessSuggestionsLabel: "Suggest web search for time-sensitive queries in Quick mode:",
+  enableSmartToolFilteringLabel: "Smart tool filtering (pass only relevant category tools):",
+  intentStaleQueryWeightLabel: "Stale query routing weight:",
+  intentFreshnessWeightLabel: "Freshness marker routing weight:"
+};
+var baseRu = {
+  ...baseEn,
+  welcomeGreeting: "\u{1F44B} \u041F\u043E\u043C\u043E\u0449\u043D\u0438\u043A NEI \u0432\u0430\u0441 \u043F\u0440\u0438\u0432\u0435\u0442\u0441\u0442\u0432\u0443\u0435\u0442. \u041E\u0436\u0438\u0434\u0430\u044E \u0443\u043A\u0430\u0437\u0430\u043D\u0438\u0439",
+  welcomeSubText: "\u0418\u043D\u0442\u0435\u043B\u043B\u0435\u043A\u0442\u0443\u0430\u043B\u044C\u043D\u044B\u0439 \u0441\u0443\u043F\u0435\u0440\u0430\u0433\u0435\u043D\u0442 \u0433\u043E\u0442\u043E\u0432\u0438\u0442 \u043F\u0435\u0440\u0441\u043E\u043D\u0430\u043B\u044C\u043D\u044B\u0435 \u0440\u0435\u0448\u0435\u043D\u0438\u044F \u0434\u043B\u044F \u0432\u0430\u0448\u0435\u0439 \u0431\u0430\u0437\u044B \u0437\u043D\u0430\u043D\u0438\u0439:",
+  featureNotes: "\u041F\u0440\u044F\u043C\u043E\u0439 \u0434\u043E\u0441\u0442\u0443\u043F \u043A \u0437\u0430\u043C\u0435\u0442\u043A\u0430\u043C, \u043F\u0430\u043F\u043A\u0430\u043C \u0438 \u0441\u0432\u044F\u0437\u044F\u043C Vault",
+  featureRouting: "\u0420\u0435\u0436\u0438\u043C\u044B Quick \u0438 Agent \u0441 \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438\u043C \u043F\u043E\u0434\u0431\u043E\u0440\u043E\u043C \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u043E\u0432",
+  featureVision: "\u0410\u043D\u0430\u043B\u0438\u0437 \u0438\u0437\u043E\u0431\u0440\u0430\u0436\u0435\u043D\u0438\u0439, \u0434\u043E\u043A\u0443\u043C\u0435\u043D\u0442\u043E\u0432 \u0438 \u0432\u0435\u0431-\u0441\u0442\u0440\u0430\u043D\u0438\u0446",
+  featureTokens: "\u041F\u043E\u043B\u043D\u0430\u044F \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0430 RAG, \u043F\u0430\u043C\u044F\u0442\u0438 \u0438 \u0432\u043D\u0435\u0448\u043D\u0438\u0445 MCP \u0441\u0435\u0440\u0432\u0435\u0440\u043E\u0432",
+  inputPlaceholder: "\u0417\u0430\u0434\u0430\u0439\u0442\u0435 \u0432\u043E\u043F\u0440\u043E\u0441 \u0438\u043B\u0438 \u043E\u043F\u0438\u0448\u0438\u0442\u0435 \u0437\u0430\u0434\u0430\u0447\u0443... (Enter \u2014 \u043E\u0442\u043F\u0440\u0430\u0432\u0438\u0442\u044C, Shift+Enter \u2014 \u043F\u0435\u0440\u0435\u043D\u043E\u0441)",
+  attachTooltip: "\u041F\u0440\u0438\u043A\u0440\u0435\u043F\u0438\u0442\u044C \u0438\u0437\u043E\u0431\u0440\u0430\u0436\u0435\u043D\u0438\u0435 \u0438\u043B\u0438 \u0444\u0430\u0439\u043B (.txt, .md, .js, .ts, .json)",
+  quickMode: "\u26A1 \u0411\u044B\u0441\u0442\u0440\u044B\u0439",
+  agentMode: "\u{1F916} \u0410\u0433\u0435\u043D\u0442",
+  ragToggle: "\u{1F9E0} RAG \u0411\u0430\u0437\u0430 \u0437\u043D\u0430\u043D\u0438\u0439",
+  settingsTitle: "\u2699\uFE0F \u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438 NEI AI Chat",
+  providerLabel: "\u041F\u0440\u043E\u0432\u0430\u0439\u0434\u0435\u0440 \u0418\u0418:",
+  endpointLabel: "URL \u044D\u043D\u0434\u043F\u043E\u0438\u043D\u0442\u0430:",
+  apiKeyLabel: "API \u041A\u043B\u044E\u0447:",
+  modelLabel: "\u041C\u043E\u0434\u0435\u043B\u044C:",
+  customModelsLabel: "\u0421\u043F\u0438\u0441\u043E\u043A \u043C\u043E\u0434\u0435\u043B\u0435\u0439 (\u043F\u043E \u043E\u0434\u043D\u043E\u0439 \u043D\u0430 \u0441\u0442\u0440\u043E\u043A\u0443):",
+  languageLabel: "\u042F\u0437\u044B\u043A \u0438\u043D\u0442\u0435\u0440\u0444\u0435\u0439\u0441\u0430:",
+  defaultNoteFolderLabel: "\u041F\u0430\u043F\u043A\u0430 \u0434\u043B\u044F \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u0438\u044F \u0437\u0430\u043C\u0435\u0442\u043E\u043A \u0438\u0437 \u0447\u0430\u0442\u0430:",
+  defaultNoteFolderPlaceholder: "\u041D\u0430\u043F\u0440\u0438\u043C\u0435\u0440: AI-Notes (\u043E\u0441\u0442\u0430\u0432\u044C\u0442\u0435 \u043F\u0443\u0441\u0442\u044B\u043C \u0434\u043B\u044F \u043A\u043E\u0440\u043D\u044F \u0412\u0430\u0443\u043B\u0442\u0430)",
+  saveSettings: "\u0421\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C \u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438",
+  checkApi: "\u{1F504} \u041F\u0440\u043E\u0432\u0435\u0440\u0438\u0442\u044C API \u0438 \u041C\u043E\u0434\u0435\u043B\u0438",
+  checkingApi: "\u23F3 \u041F\u0440\u043E\u0432\u0435\u0440\u043A\u0430 \u0441\u0432\u044F\u0437\u0438...",
+  apiCheckSuccess: "\u2705 API \u043F\u043E\u0434\u043A\u043B\u044E\u0447\u0435\u043D \u0443\u0441\u043F\u0435\u0448\u043D\u043E!",
+  apiCheckFailed: "\u274C \u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u043E\u0434\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u044F \u043A API",
+  newChat: "\u2795 \u041D\u043E\u0432\u044B\u0439",
+  newChatSession: "\u041D\u043E\u0432\u044B\u0439 \u0434\u0438\u0430\u043B\u043E\u0433",
+  clearChats: "\u{1F5D1}\uFE0F \u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u0432\u0441\u0435 \u0434\u0438\u0430\u043B\u043E\u0433\u0438",
+  confirmClearChats: "\u0412\u044B \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u0442\u0435\u043B\u044C\u043D\u043E \u0445\u043E\u0442\u0438\u0442\u0435 \u0443\u0434\u0430\u043B\u0438\u0442\u044C \u0432\u0441\u044E \u0438\u0441\u0442\u043E\u0440\u0438\u044E \u0447\u0430\u0442\u043E\u0432?",
+  saveNote: "\u{1F4C4} \u0421\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C \u043A\u0430\u043A \u0437\u0430\u043C\u0435\u0442\u043A\u0443",
+  copyText: "\u{1F4CB} \u041A\u043E\u043F\u0438\u0440\u043E\u0432\u0430\u0442\u044C",
+  copied: "\u2705 \u0421\u043A\u043E\u043F\u0438\u0440\u043E\u0432\u0430\u043D\u043E \u0432 \u0431\u0443\u0444\u0435\u0440 \u043E\u0431\u043C\u0435\u043D\u0430!",
+  agentRunning: "\u26A1 \u0410\u0433\u0435\u043D\u0442 \u0432\u044B\u043F\u043E\u043B\u043D\u044F\u0435\u0442 \u0437\u0430\u0434\u0430\u0447\u0443...",
+  confirmAction: "\u0417\u0430\u043F\u0440\u043E\u0441 \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043D\u0438\u044F:",
+  allow: "\u2705 \u0420\u0430\u0437\u0440\u0435\u0448\u0438\u0442\u044C",
+  deny: "\u274C \u041E\u0442\u043A\u043B\u043E\u043D\u0438\u0442\u044C",
+  autoDetect: "\u0410\u0432\u0442\u043E-\u043E\u043F\u0440\u0435\u0434\u0435\u043B\u0435\u043D\u0438\u0435 (Obsidian)",
+  historyTitle: "\u0418\u0441\u0442\u043E\u0440\u0438\u044F \u0434\u0438\u0430\u043B\u043E\u0433\u043E\u0432",
+  clearAll: "\u{1F5D1}\uFE0F \u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u0432\u0441\u0435",
+  noSavedChats: "\u041D\u0435\u0442 \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u043D\u044B\u0445 \u0447\u0430\u0442\u043E\u0432",
+  moveSidebar: "\u2199\uFE0F \u0412 \u043F\u0430\u043D\u0435\u043B\u044C",
+  moveTab: "\u2197\uFE0F \u0412\u043A\u043B\u0430\u0434\u043A\u0430",
+  moveSidebarTitle: "\u041F\u0435\u0440\u0435\u043C\u0435\u0441\u0442\u0438\u0442\u044C \u0447\u0430\u0442 \u0432 \u0431\u043E\u043A\u043E\u0432\u0443\u044E \u043F\u0430\u043D\u0435\u043B\u044C",
+  moveTabTitle: "\u041F\u0435\u0440\u0435\u043C\u0435\u0441\u0442\u0438\u0442\u044C \u0447\u0430\u0442 \u043D\u0430 \u0433\u043B\u0430\u0432\u043D\u0443\u044E \u0432\u043A\u043B\u0430\u0434\u043A\u0443",
+  modelCategories: "\u041A\u0430\u0442\u0435\u0433\u043E\u0440\u0438\u0438 \u043C\u043E\u0434\u0435\u043B\u0435\u0439 (\u041C\u0443\u043B\u044C\u0442\u0438\u043C\u043E\u0434\u0430\u043B\u044C\u043D\u043E\u0441\u0442\u044C):",
+  primaryModel: "1. \u0422\u0435\u043A\u0441\u0442 \u0438 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u044B (Primary):",
+  visionModel: "2. \u0424\u0430\u0439\u043B\u044B \u0438 \u0444\u043E\u0442\u043E (Vision):",
+  quickModel: "3. \u0411\u044B\u0441\u0442\u0440\u044B\u0439 \u0440\u0435\u0436\u0438\u043C (Quick Mode Router):",
+  parameters: "\u041F\u0430\u0440\u0430\u043C\u0435\u0442\u0440\u044B",
+  requestingCapabilities: "\u0417\u0430\u043F\u0440\u043E\u0441 \u0432\u043E\u0437\u043C\u043E\u0436\u043D\u043E\u0441\u0442\u0435\u0439 \u0447\u0435\u0440\u0435\u0437 OpenRouter API...",
+  nativeToolCalling: "\u{1F7E2} \u041D\u0430\u0442\u0438\u0432\u043D\u044B\u0439 Tool Calling \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u0438\u0432\u0430\u0435\u0442\u0441\u044F",
+  textToolCalling: "\u{1F7E1} \u0422\u0435\u043A\u0441\u0442\u043E\u0432\u044B\u0439 \u0440\u0435\u0436\u0438\u043C \u0432\u044B\u0437\u043E\u0432\u0430 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u043E\u0432",
+  visionSupported: "\u{1F5BC}\uFE0F \u0410\u043D\u0430\u043B\u0438\u0437 \u0444\u043E\u0442\u043E/\u0438\u0437\u043E\u0431\u0440\u0430\u0436\u0435\u043D\u0438\u0439 \u0434\u043E\u0441\u0442\u0443\u043F\u0435\u043D",
+  textOnlyInput: "\u{1F4DD} \u0422\u043E\u043B\u044C\u043A\u043E \u0442\u0435\u043A\u0441\u0442\u043E\u0432\u044B\u0439 \u0432\u0432\u043E\u0434",
+  contextWindow: "\u041A\u043E\u043D\u0442\u0435\u043A\u0441\u0442\u043D\u043E\u0435 \u043E\u043A\u043D\u043E:",
+  tokens: "\u0442\u043E\u043A\u0435\u043D\u043E\u0432",
+  pressCheckApi: '\u041D\u0430\u0436\u043C\u0438\u0442\u0435 "\u041F\u0440\u043E\u0432\u0435\u0440\u0438\u0442\u044C API" \u0434\u043B\u044F \u043F\u043E\u043B\u0443\u0447\u0435\u043D\u0438\u044F \u043F\u0430\u0440\u0430\u043C\u0435\u0442\u0440\u043E\u0432 \u0441 OpenRouter',
+  yourSavedModels: "\u0412\u0430\u0448\u0438 \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u043D\u044B\u0435 \u043C\u043E\u0434\u0435\u043B\u0438:",
+  addModelPlaceholder: "\u041D\u0430\u043F\u0440\u0438\u043C\u0435\u0440: anthropic/claude-3.5-sonnet",
+  addBtn: "+ \u0414\u043E\u0431\u0430\u0432\u0438\u0442\u044C",
+  deleteFromList: "\u0423\u0434\u0430\u043B\u0438\u0442\u044C \u0438\u0437 \u0441\u043F\u0438\u0441\u043A\u0430",
+  keyUsage: "\u0418\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u043D\u043E \u043D\u0430 \u043A\u043B\u044E\u0447\u0435:",
+  modeAutoTitle: "\u0420\u0435\u0436\u0438\u043C \u0418\u0418: \u0410\u0432\u0442\u043E (\u0443\u043C\u043D\u044B\u0439 \u0440\u043E\u0443\u0442\u0438\u043D\u0433), \u0411\u044B\u0441\u0442\u0440\u044B\u0439 (\u0431\u0435\u0437 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u043E\u0432), \u0410\u0433\u0435\u043D\u0442 (\u043C\u043D\u043E\u0433\u043E\u0448\u0430\u0433\u043E\u0432\u044B\u0439)",
+  modeAuto: "\u26A1 \u0410\u0432\u0442\u043E (\u0423\u043C\u043D\u044B\u0439)",
+  modeQuick: "\u{1F680} \u0411\u044B\u0441\u0442\u0440\u044B\u0439 (\u041F\u0440\u044F\u043C\u043E\u0439)",
+  modeAgent: "\u{1F9E0} \u0410\u0433\u0435\u043D\u0442 (\u041C\u043D\u043E\u0433\u043E\u0448\u0430\u0433\u043E\u0432\u044B\u0439)",
+  settingsTooltip: "\u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438 \u043C\u043E\u0434\u0435\u043B\u0435\u0439 \u0438 API",
+  newChatTooltip: "\u041D\u043E\u0432\u044B\u0439 \u0447\u0430\u0442",
+  historyTooltip: "\u0418\u0441\u0442\u043E\u0440\u0438\u044F \u0434\u0438\u0430\u043B\u043E\u0433\u043E\u0432",
+  deleteChatTooltip: "\u0423\u0434\u0430\u043B\u0438\u0442\u044C \u0447\u0430\u0442",
+  noteCreatedSuccess: "\u0423\u0441\u043F\u0435\u0445: \u0421\u043E\u0437\u0434\u0430\u043D\u0430 \u0437\u0430\u043C\u0435\u0442\u043A\u0430",
+  noteCreateError: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u044F \u0437\u0430\u043C\u0435\u0442\u043A\u0438:",
+  copyError: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0441\u043A\u043E\u043F\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u0442\u0435\u043A\u0441\u0442.",
+  modelAddedNotice: "\u0414\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u0430 \u043C\u043E\u0434\u0435\u043B\u044C:",
+  cannotDeleteLastModel: "\u041D\u0435\u043B\u044C\u0437\u044F \u0443\u0434\u0430\u043B\u0438\u0442\u044C \u043F\u043E\u0441\u043B\u0435\u0434\u043D\u044E\u044E \u043C\u043E\u0434\u0435\u043B\u044C \u0438\u0437 \u0441\u043F\u0438\u0441\u043A\u0430!",
+  historyClearedNotice: "\u0412\u0441\u044F \u0438\u0441\u0442\u043E\u0440\u0438\u044F \u0447\u0430\u0442\u043E\u0432 \u043E\u0447\u0438\u0449\u0435\u043D\u0430!",
+  modeSwitchError: "\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0435\u0440\u0435\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u044F \u0440\u0435\u0436\u0438\u043C\u0430:",
+  agentError: "\u274C \u041E\u0448\u0438\u0431\u043A\u0430 \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u0438\u044F \u0430\u0433\u0435\u043D\u0442\u0430:",
+  cancel: "\u041E\u0442\u043C\u0435\u043D\u0430",
+  saveSend: "\u{1F4BE} \u041E\u0442\u043F\u0440\u0430\u0432\u0438\u0442\u044C",
+  editText: "\u270F\uFE0F \u0418\u0437\u043C\u0435\u043D\u0438\u0442\u044C",
+  retry: "\u{1F504} \u041F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u044C",
+  inputTokens: "\u{1F4E5} \u0412\u0445\u043E\u0434:",
+  outputTokens: "\u{1F4E4} \u0412\u044B\u0445\u043E\u0434:",
+  confirmTitle: "\u26A0\uFE0F \u041F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043D\u0438\u0435 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u044F",
+  confirmDetail: "\u0410\u0433\u0435\u043D\u0442 \u0437\u0430\u043F\u0440\u0430\u0448\u0438\u0432\u0430\u0435\u0442 \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u0438\u0435 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u0430:",
+  contextLength: "\u041A\u043E\u043D\u0442\u0435\u043A\u0441\u0442\u043D\u043E\u0435 \u043E\u043A\u043D\u043E:",
+  toolCallingSupport: "\u041F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0430 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u043E\u0432 (Tools):",
+  visionSupport: "\u041F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0430 \u0438\u0437\u043E\u0431\u0440\u0430\u0436\u0435\u043D\u0438\u0439 (Vision):",
+  infoUnavailable: "\u041D\u0430\u0436\u043C\u0438\u0442\u0435 '\u041F\u0440\u043E\u0432\u0435\u0440\u0438\u0442\u044C API' \u0434\u043B\u044F \u043F\u043E\u043B\u0443\u0447\u0435\u043D\u0438\u044F \u0434\u0430\u043D\u043D\u044B\u0445",
+  modelsList: "\u0421\u043F\u0438\u0441\u043E\u043A \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u043D\u044B\u0445 \u043C\u043E\u0434\u0435\u043B\u0435\u0439",
+  deleteModelTooltip: "\u0423\u0434\u0430\u043B\u0438\u0442\u044C \u043C\u043E\u0434\u0435\u043B\u044C \u0438\u0437 \u0441\u043F\u0438\u0441\u043A\u0430",
+  cancelBtn: "\u041E\u0442\u043C\u0435\u043D\u0430",
+  saveResendBtn: "\u0421\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C \u0438 \u043E\u0442\u043F\u0440\u0430\u0432\u0438\u0442\u044C",
+  agentReasoningLog: "\u0425\u043E\u0434 \u0440\u0430\u0441\u0441\u0443\u0436\u0434\u0435\u043D\u0438\u0439 \u0430\u0433\u0435\u043D\u0442\u0430",
+  actionConfirmation: "\u0422\u0440\u0435\u0431\u0443\u0435\u0442\u0441\u044F \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043D\u0438\u0435 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u044F",
+  agentWantsExecute: "\u0410\u0433\u0435\u043D\u0442 \u0445\u043E\u0447\u0435\u0442 \u0432\u044B\u043F\u043E\u043B\u043D\u0438\u0442\u044C \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442",
+  allowBtn: "\u0420\u0430\u0437\u0440\u0435\u0448\u0438\u0442\u044C",
+  folderPrefetchTitle: "\u0418\u043D\u044A\u0435\u0446\u0438\u0440\u043E\u0432\u0430\u043D\u044B \u0437\u0430\u043C\u0435\u0442\u043A\u0438 \u043F\u0430\u043F\u043E\u043A: {folders}",
+  folderPrefetchDetail: "\u041F\u0430\u043F\u043E\u043A: {count}",
+  autoIndexedVaultNotes: "--- \u0410\u0412\u0422\u041E\u041C\u0410\u0422\u0418\u0427\u0415\u0421\u041A\u0418 \u0418\u041D\u0414\u0415\u041A\u0421\u0418\u0420\u041E\u0412\u0410\u041D\u041D\u042B\u0415 \u0417\u0410\u041C\u0415\u0422\u041A\u0418 \u0412\u0410\u0423\u041B\u0422\u0410 ---",
+  autoCreatedNote: "\u0410\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438 \u0441\u043E\u0437\u0434\u0430\u043D\u0430 \u0437\u0430\u043C\u0435\u0442\u043A\u0430: {path}",
+  quickLlmError: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0432\u044B\u0437\u043E\u0432\u0430 Quick LLM: {error}",
+  agentNoOutput: "\u0410\u0433\u0435\u043D\u0442 \u0437\u0430\u0432\u0435\u0440\u0448\u0438\u043B \u0440\u0430\u0431\u043E\u0442\u0443 \u0431\u0435\u0437 \u0442\u0435\u043A\u0441\u0442\u043E\u0432\u043E\u0433\u043E \u0432\u044B\u0432\u043E\u0434\u0430.",
+  intentAttachmentsReason: "\u041F\u0440\u0438\u043A\u0440\u0435\u043F\u043B\u0435\u043D\u044B \u0444\u0430\u0439\u043B\u044B/\u0438\u0437\u043E\u0431\u0440\u0430\u0436\u0435\u043D\u0438\u044F \u0434\u043B\u044F \u0430\u043D\u0430\u043B\u0438\u0437\u0430",
+  intentVaultActionReason: "\u041E\u0431\u043D\u0430\u0440\u0443\u0436\u0435\u043D \u0437\u0430\u043F\u0440\u043E\u0441 \u0440\u0430\u0431\u043E\u0442\u044B \u0441 \u0437\u0430\u043C\u0435\u0442\u043A\u0430\u043C\u0438/\u0432\u0430\u0443\u043B\u0442\u043E\u043C ({keyword})",
+  intentQuickReason: "\u041F\u0440\u044F\u043C\u043E\u0439 \u0432\u043E\u043F\u0440\u043E\u0441/\u043E\u0442\u0432\u0435\u0442 (\u0431\u0435\u0437 \u0432\u0437\u0430\u0438\u043C\u043E\u0434\u0435\u0439\u0441\u0442\u0432\u0438\u044F \u0441 \u0445\u0440\u0430\u043D\u0438\u043B\u0438\u0449\u0435\u043C)",
+  intentLongQueryReason: "\u0420\u0430\u0437\u0432\u0435\u0440\u043D\u0443\u0442\u044B\u0439 \u0437\u0430\u043F\u0440\u043E\u0441 \u0442\u0440\u0435\u0431\u0443\u0435\u0442 \u0430\u0433\u0435\u043D\u0442\u043D\u043E\u0433\u043E \u0440\u0435\u0436\u0438\u043C\u0430",
+  intentDefaultQuickReason: "\u041F\u0440\u043E\u0441\u0442\u0430\u044F \u0431\u0435\u0441\u0435\u0434\u0430 \u0431\u0435\u0437 \u043E\u0431\u0440\u0430\u0449\u0435\u043D\u0438\u044F \u043A \u0432\u0430\u0443\u043B\u0442\u0443",
+  intentDeletionReason: "\u041E\u0431\u043D\u0430\u0440\u0443\u0436\u0435\u043D \u0437\u0430\u043F\u0440\u043E\u0441 \u043D\u0430 \u0443\u0434\u0430\u043B\u0435\u043D\u0438\u0435 \u0437\u0430\u043C\u0435\u0442\u043E\u043A/\u0444\u0430\u0439\u043B\u043E\u0432",
+  intentCreationReason: "\u041E\u0431\u043D\u0430\u0440\u0443\u0436\u0435\u043D \u0448\u0430\u0431\u043B\u043E\u043D \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u044F \u0437\u0430\u043C\u0435\u0442\u043A\u0438/\u043F\u0430\u043F\u043A\u0438",
+  intentAnalysisReason: "\u041E\u0431\u043D\u0430\u0440\u0443\u0436\u0435\u043D \u0448\u0430\u0431\u043B\u043E\u043D \u0430\u043D\u0430\u043B\u0438\u0437\u0430/\u0441\u0440\u0430\u0432\u043D\u0435\u043D\u0438\u044F \u0445\u0440\u0430\u043D\u0438\u043B\u0438\u0449\u0430",
+  intentSearchReason: "\u041E\u0431\u043D\u0430\u0440\u0443\u0436\u0435\u043D \u0448\u0430\u0431\u043B\u043E\u043D \u043F\u043E\u0438\u0441\u043A\u0430 \u043F\u043E \u0437\u0430\u043C\u0435\u0442\u043A\u0430\u043C",
+  intentModifyReason: "\u041E\u0431\u043D\u0430\u0440\u0443\u0436\u0435\u043D \u0448\u0430\u0431\u043B\u043E\u043D \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u044F \u0438\u043B\u0438 \u043F\u0435\u0440\u0435\u0438\u043C\u0435\u043D\u043E\u0432\u0430\u043D\u0438\u044F",
+  intentHistoryReason: "\u041F\u0440\u043E\u0434\u043E\u043B\u0436\u0435\u043D\u0438\u0435 \u0430\u0433\u0435\u043D\u0442\u043D\u043E\u0433\u043E \u043A\u043E\u043D\u0442\u0435\u043A\u0441\u0442\u0430 \u0438\u0437 \u0438\u0441\u0442\u043E\u0440\u0438\u0438 \u0447\u0430\u0442\u0430",
+  intentStaleReason: "\u0412\u0440\u0435\u043C\u0435\u043D\u043D\u043E-\u0447\u0443\u0432\u0441\u0442\u0432\u0438\u0442\u0435\u043B\u044C\u043D\u044B\u0439 \u0437\u0430\u043F\u0440\u043E\u0441 (\u0442\u0440\u0435\u0431\u0443\u0435\u0442\u0441\u044F \u0432\u0435\u0431-\u043F\u043E\u0438\u0441\u043A)",
+  intentConfidenceHigh: "\u0412\u044B\u0441\u043E\u043A\u0430\u044F \u0443\u0432\u0435\u0440\u0435\u043D\u043D\u043E\u0441\u0442\u044C \u0440\u043E\u0443\u0442\u0435\u0440\u0430",
+  intentConfidenceLow: "\u041D\u0438\u0437\u043A\u0430\u044F \u0443\u0432\u0435\u0440\u0435\u043D\u043D\u043E\u0441\u0442\u044C \u0440\u043E\u0443\u0442\u0435\u0440\u0430",
+  freshnessSuggestion: "\u042D\u0442\u043E\u0442 \u0437\u0430\u043F\u0440\u043E\u0441 \u043C\u043E\u0436\u0435\u0442 \u0442\u0440\u0435\u0431\u043E\u0432\u0430\u0442\u044C \u0430\u043A\u0442\u0443\u0430\u043B\u044C\u043D\u044B\u0445 \u0434\u0430\u043D\u043D\u044B\u0445 (\u043C\u043E\u0434\u0435\u043B\u044C \u0437\u043D\u0430\u0435\u0442 \u0434\u043E {cutoff}). \u0412\u043A\u043B\u044E\u0447\u0438\u0442\u044C \u0432\u0435\u0431-\u043F\u043E\u0438\u0441\u043A?",
+  ragPrefetchTitle: "\u0418\u043D\u0434\u0435\u043A\u0441\u0438\u0440\u043E\u0432\u0430\u043D\u043E \u0437\u0430\u043C\u0435\u0442\u043E\u043A \u0447\u0435\u0440\u0435\u0437 RAG: {count}",
+  ragPrefetchDetail: "\u041D\u0430\u0439\u0434\u0435\u043D\u043E \u0440\u0435\u043B\u0435\u0432\u0430\u043D\u0442\u043D\u044B\u0445: {count}",
+  chatsFolderLabel: "\u041F\u0430\u043F\u043A\u0430 \u0445\u0440\u0430\u043D\u0435\u043D\u0438\u044F \u0447\u0430\u0442\u043E\u0432:",
+  memoryFileLabel: "\u0424\u0430\u0439\u043B \u0434\u043E\u043B\u0433\u043E\u0441\u0440\u043E\u0447\u043D\u043E\u0439 \u043F\u0430\u043C\u044F\u0442\u0438:",
+  skillsFolderLabel: "\u041F\u0430\u043F\u043A\u0430 \u0441\u043A\u0438\u043B\u043B\u043E\u0432 \u0430\u0433\u0435\u043D\u0442\u0430:",
+  maxAgentIterationsLabel: "\u041C\u0430\u043A\u0441. \u0438\u0442\u0435\u0440\u0430\u0446\u0438\u0439 \u0430\u0433\u0435\u043D\u0442\u0430:",
+  maxPrefetchedNotesLabel: "\u041C\u0430\u043A\u0441. \u043F\u0440\u0435\u0444\u0435\u0442\u0447 \u0437\u0430\u043C\u0435\u0442\u043E\u043A:",
+  prefetchSnippetLengthLabel: "\u0414\u043B\u0438\u043D\u0430 \u0441\u043D\u0438\u043F\u043F\u0435\u0442\u0430 \u043F\u0440\u0435\u0444\u0435\u0442\u0447\u0430:",
+  ragResultLimitLabel: "\u041B\u0438\u043C\u0438\u0442 RAG \u0437\u0430\u043C\u0435\u0442\u043E\u043A:",
+  ragSnippetLengthLabel: "\u0414\u043B\u0438\u043D\u0430 \u0441\u043D\u0438\u043F\u043F\u0435\u0442\u0430 RAG:",
+  confirmObsidianCommandsLabel: "\u0417\u0430\u043F\u0440\u0430\u0448\u0438\u0432\u0430\u0442\u044C \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043D\u0438\u0435 \u043A\u043E\u043C\u0430\u043D\u0434 Obsidian:"
+};
+var translations = {
+  ru: baseRu,
+  en: baseEn,
+  es: { ...baseEn },
+  de: { ...baseEn },
+  fr: { ...baseEn },
+  zh: { ...baseEn },
+  ja: { ...baseEn },
+  pt: { ...baseEn },
+  ko: { ...baseEn }
+};
+function detectLanguage() {
+  try {
+    const obsLang = (window.localStorage.getItem("language") || navigator.language || "en").toLowerCase();
+    if (obsLang.startsWith("ru"))
+      return "ru";
+    if (obsLang.startsWith("es"))
+      return "es";
+    if (obsLang.startsWith("de"))
+      return "de";
+    if (obsLang.startsWith("fr"))
+      return "fr";
+    if (obsLang.startsWith("zh"))
+      return "zh";
+    if (obsLang.startsWith("ja"))
+      return "ja";
+    if (obsLang.startsWith("pt"))
+      return "pt";
+    if (obsLang.startsWith("ko"))
+      return "ko";
+  } catch (e) {
+  }
+  return "en";
+}
+function t(key, lang, params) {
+  const selectedLang = !lang || lang === "auto" ? detectLanguage() : lang;
+  const dict = translations[selectedLang] || translations.en;
+  let str = dict[key] || translations.en[key] || key;
+  if (params) {
+    for (const [k, v] of Object.entries(params)) {
+      str = str.replace(new RegExp(`\\{${k}\\}`, "g"), String(v));
+    }
+  }
+  return str;
+}
+
+// src/services/agent/intentRouter.ts
+var IntentRouter = class {
+  static estimateComplexity(query) {
+    const lower = query.toLowerCase();
+    const actionVerbs = ["\u0441\u043E\u0437\u0434\u0430\u0439", "\u043D\u0430\u0439\u0434\u0438", "\u043F\u0440\u043E\u0430\u043D\u0430\u043B\u0438\u0437\u0438\u0440\u0443\u0439", "\u0441\u0440\u0430\u0432\u043D\u0438", "\u043E\u0431\u044A\u044F\u0441\u043D\u0438", "\u043D\u0430\u043F\u0438\u0448\u0438", "\u0438\u0437\u0443\u0447\u0438", "\u043F\u043E\u0434\u0433\u043E\u0442\u043E\u0432\u044C", "\u0441\u043F\u043B\u0430\u043D\u0438\u0440\u0443\u0439", "\u043E\u0440\u0433\u0430\u043D\u0438\u0437\u0443\u0439", "create", "find", "analyze", "compare", "explain", "write", "study", "prepare", "plan", "organize"];
+    const matchedVerbs = new Set(actionVerbs.filter((v) => lower.includes(v)));
+    const clauses = (query.match(/[,.]/g) || []).length + 1;
+    return matchedVerbs.size * 0.5 + clauses * 0.2;
+  }
+  /**
+   * Extracts numerical intent features from user query, attachments, recent conversation history, and model temporal metadata.
+   */
+  static extractFeatures(userQuery, hasAttachments = false, chatHistory = [], modelId = "google/gemini-2.5-flash") {
+    const queryLower = userQuery.trim().toLowerCase();
+    const vaultKeywords = [
+      "\u0432\u0430\u0443\u043B\u0442",
+      "vault",
+      "\u0445\u0440\u0430\u043D\u0438\u043B\u0438\u0449\u0435",
+      "\u043F\u0430\u043F\u043A\u0430",
+      "\u043F\u0430\u043F\u043A\u0435",
+      "\u0437\u0430\u043C\u0435\u0442\u043A\u0430",
+      "\u0437\u0430\u043C\u0435\u0442\u043A\u0435",
+      "\u0437\u0430\u043C\u0435\u0442\u043A\u0438",
+      "\u0444\u0430\u0439\u043B",
+      "\u0444\u0430\u0439\u043B\u0435",
+      "\u0442\u0430\u0441\u043A\u0438",
+      "notes",
+      "folder"
+    ];
+    const creationPatterns = [
+      "\u0441\u043E\u0437\u0434\u0430\u0439",
+      "\u0441\u043E\u0437\u0434\u0430\u0442\u044C",
+      "\u043D\u0430\u043F\u0438\u0448\u0438 \u0437\u0430\u043C\u0435\u0442\u043A\u0443",
+      "\u0441\u0434\u0435\u043B\u0430\u0439 \u0437\u0430\u043C\u0435\u0442\u043A\u0443",
+      "\u0441\u0433\u0435\u043D\u0435\u0440\u0438\u0440\u0443\u0439 \u0437\u0430\u043C\u0435\u0442\u043A\u0443",
+      "\u0441\u043E\u0445\u0440\u0430\u043D\u0438",
+      "\u0441\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C",
+      "\u0437\u0430\u043F\u0438\u0448\u0438 \u0432",
+      "\u0441\u043E\u0437\u0434\u0430\u0439 \u0432",
+      "create note",
+      "make note",
+      "write note",
+      "save note",
+      "create folder",
+      "create file"
+    ];
+    const deletionPatterns = [
+      "\u0443\u0434\u0430\u043B\u0438",
+      "\u0443\u0434\u0430\u043B\u0438\u0442\u044C",
+      "\u0441\u0442\u0435\u0440\u0435\u0442\u044C",
+      "\u0441\u043E\u0442\u0440\u0438",
+      "delete note",
+      "remove note",
+      "delete folder"
+    ];
+    const analysisPatterns = [
+      "\u043F\u0440\u043E\u0430\u043D\u0430\u043B\u0438\u0437\u0438\u0440\u0443\u0439",
+      "\u0441\u0440\u0430\u0432\u043D\u0438",
+      "\u0441\u043A\u0430\u043D\u0438\u0440\u0443\u0439",
+      "\u0441\u043A\u0430\u043D",
+      "\u043F\u0440\u043E\u0432\u0435\u0440\u044C",
+      "\u0441\u0442\u0440\u0443\u043A\u0442\u0443\u0440\u0438\u0440\u0443\u0439",
+      "\u043E\u0431\u043E\u0431\u0449\u0438",
+      "analyze",
+      "scan",
+      "check notes",
+      "summarize vault"
+    ];
+    const searchPatterns = [
+      "\u043D\u0430\u0439\u0434\u0438",
+      "\u043F\u043E\u0438\u0449\u0438",
+      "\u043D\u0430\u0439\u0434\u0438 \u0432",
+      "\u043F\u043E\u0438\u0441\u043A",
+      "search",
+      "find",
+      "lookup"
+    ];
+    const modifyPatterns = [
+      "\u043F\u0435\u0440\u0435\u0438\u043C\u0435\u043D\u0443\u0439",
+      "\u043E\u0431\u043D\u043E\u0432\u0438",
+      "\u0441\u0433\u0440\u0443\u043F\u043F\u0438\u0440\u0443\u0439",
+      "\u0438\u0437\u043C\u0435\u043D\u0438",
+      "\u0434\u043E\u0431\u0430\u0432\u044C \u0432",
+      "\u0434\u043E\u043F\u043E\u043B\u043D\u0438",
+      "update",
+      "rename",
+      "append"
+    ];
+    const questionPatterns = [
+      "\u0447\u0442\u043E \u0442\u0430\u043A\u043E\u0435",
+      "\u043A\u0430\u043A \u0441\u0434\u0435\u043B\u0430\u0442\u044C",
+      "\u043E\u0431\u044A\u044F\u0441\u043D\u0438",
+      "\u043F\u0435\u0440\u0435\u0432\u0435\u0434\u0438",
+      "\u043F\u0435\u0440\u0435\u0444\u0440\u0430\u0437\u0438\u0440\u0443\u0439",
+      "\u0447\u0442\u043E \u0437\u043D\u0430\u0447\u0438\u0442",
+      "\u043A\u0430\u043A\u0430\u044F \u0440\u0430\u0437\u043D\u0438\u0446\u0430",
+      "what is",
+      "how to",
+      "explain",
+      "translate",
+      "why does"
+    ];
+    const codePatterns = [
+      "\u043D\u0430\u043F\u0438\u0448\u0438 \u043A\u043E\u0434",
+      "\u043D\u0430\u043F\u0438\u0448\u0438 \u0444\u0443\u043D\u043A\u0446\u0438\u044E",
+      "\u043D\u0430\u043F\u0438\u0448\u0438 \u0441\u043A\u0440\u0438\u043F\u0442",
+      "write code",
+      "write script",
+      "code snippet",
+      "```"
+    ];
+    const countMatches = (patterns) => patterns.reduce((acc, p) => acc + (queryLower.includes(p) ? 1 : 0), 0);
+    const hasVaultKeywords = countMatches(vaultKeywords);
+    const hasCreationPatterns = countMatches(creationPatterns);
+    const hasDeletionPatterns = countMatches(deletionPatterns);
+    const hasAnalysisPatterns = countMatches(analysisPatterns);
+    const hasSearchPatterns = countMatches(searchPatterns);
+    const hasModifyPatterns = countMatches(modifyPatterns);
+    const hasQuestionPatterns = countMatches(questionPatterns);
+    const hasCodePatterns = codePatterns.some((p) => queryLower.includes(p));
+    const recentHistory = chatHistory.slice(-5);
+    const recentAgentTurns = recentHistory.filter((m) => m.role === "assistant" && (m.tool_calls || m.content.includes("\u{1F527}") || m.content.includes("Agent"))).length;
+    const recentToolCalls = recentHistory.filter((m) => m.role === "tool" || m.tool_calls && m.tool_calls.length > 0).length;
+    const complexityScore = hasCreationPatterns * 2 + hasDeletionPatterns * 3 + hasAnalysisPatterns * 2 + hasModifyPatterns * 1.5 + hasSearchPatterns * 1;
+    const temporalInfo = getModelTemporalInfo(modelId);
+    const isStaleQuery = isQueryLikelyStale(userQuery, modelId);
+    const cutoffDate = new Date(temporalInfo.knowledgeCutoff);
+    const daysSinceCutoff = Math.floor((Date.now() - cutoffDate.getTime()) / (1e3 * 60 * 60 * 24));
+    return {
+      hasAttachments,
+      hasVaultKeywords,
+      hasCreationPatterns,
+      hasDeletionPatterns,
+      hasAnalysisPatterns,
+      hasSearchPatterns,
+      hasModifyPatterns,
+      hasQuestionPatterns,
+      hasCodePatterns,
+      queryLength: userQuery.length,
+      complexityScore,
+      recentAgentTurns,
+      recentToolCalls,
+      isStaleQuery,
+      modelKnowledgeCutoff: temporalInfo.knowledgeCutoff,
+      modelSupportsWebSearch: temporalInfo.supportsWebSearch,
+      daysSinceCutoff
+    };
+  }
+  /**
+   * Computes raw intent score from extracted features and scoring weights.
+   */
+  static computeScore(features, weights) {
+    return (features.hasAttachments ? 1 : 0) * weights.attachmentWeight + features.hasVaultKeywords * weights.vaultKeywordWeight + features.hasCreationPatterns * weights.creationPatternWeight + features.hasDeletionPatterns * weights.deletionPatternWeight + features.hasAnalysisPatterns * weights.analysisPatternWeight + features.hasSearchPatterns * weights.searchPatternWeight + features.hasModifyPatterns * weights.modifyPatternWeight + features.hasQuestionPatterns * weights.questionPatternWeight + (features.hasCodePatterns ? 1 : 0) * weights.codePatternWeight + features.queryLength * weights.lengthWeight + (features.recentAgentTurns + features.recentToolCalls * 0.5) * weights.historyWeight + (features.isStaleQuery ? 1 : 0) * weights.staleQueryWeight + (features.isStaleQuery && features.modelSupportsWebSearch ? 1 : 0) * weights.freshnessWeight;
+  }
+  /**
+   * Sigmoid transfer function mapping raw score minus threshold to [0, 1] confidence range.
+   */
+  static sigmoid(z) {
+    return 1 / (1 + Math.exp(-z));
+  }
+  /**
+   * Classifies precise tool requirements for a given query and intent features.
+   */
+  static classifyToolNeeds(userQuery, features, modelId) {
+    const reasons = [];
+    let needsWebSearch = false;
+    let needsVaultSearch = false;
+    let needsVaultWrite = false;
+    const temporalInfo = getModelTemporalInfo(modelId);
+    const isStale = features.isStaleQuery;
+    const hasVaultKeywords = features.hasVaultKeywords > 0;
+    const hasCreationPatterns = features.hasCreationPatterns > 0;
+    const hasDeletionPatterns = features.hasDeletionPatterns > 0;
+    const hasAnalysisPatterns = features.hasAnalysisPatterns > 0;
+    const hasSearchPatterns = features.hasSearchPatterns > 0;
+    if (isStale && temporalInfo.supportsWebSearch) {
+      needsWebSearch = true;
+      reasons.push(`Time-sensitive query (model cutoff: ${temporalInfo.knowledgeCutoff})`);
+    }
+    if (hasSearchPatterns && !hasVaultKeywords) {
+      needsWebSearch = true;
+      reasons.push("Explicit search intent without vault references");
+    }
+    if (features.queryLength > 200 && isStale) {
+      needsWebSearch = true;
+      reasons.push("Complex time-sensitive query");
+    }
+    if (hasVaultKeywords || hasAnalysisPatterns || hasSearchPatterns && hasVaultKeywords) {
+      needsVaultSearch = true;
+      reasons.push("Vault references or analysis intent detected");
+    }
+    if (hasCreationPatterns || hasDeletionPatterns) {
+      needsVaultWrite = true;
+      needsVaultSearch = true;
+      reasons.push("Creation/deletion intent detected");
+    }
+    let recommendedMode = "quick";
+    if (needsWebSearch || needsVaultSearch || needsVaultWrite || features.hasAttachments) {
+      recommendedMode = "agent";
+    } else if (features.hasQuestionPatterns > 0 && features.queryLength < 150 && !isStale) {
+      recommendedMode = "quick";
+    } else if (features.queryLength > 150 || features.complexityScore > 3) {
+      recommendedMode = "agent";
+    }
+    let confidence = 0.5;
+    if (needsWebSearch && temporalInfo.supportsWebSearch)
+      confidence += 0.3;
+    if (needsVaultSearch && hasVaultKeywords)
+      confidence += 0.2;
+    if (needsVaultWrite)
+      confidence += 0.3;
+    if (recommendedMode === "agent" && features.hasAttachments)
+      confidence += 0.2;
+    confidence = Math.min(0.95, confidence);
+    return { needsWebSearch, needsVaultSearch, needsVaultWrite, needsCodeExecution: false, recommendedMode, confidence, reasoning: reasons };
+  }
+  /**
+   * Main entry point for intent classification.
+   */
+  static classifyIntent(userQuery, hasAttachments = false, language = "auto", chatHistory = [], settings) {
+    const threshold = settings?.intentRoutingThreshold ?? 2.5;
+    const modelId = settings?.model || "google/gemini-2.5-flash";
+    const weights = {
+      vaultKeywordWeight: settings?.intentVaultKeywordWeight ?? 2,
+      creationPatternWeight: settings?.intentCreationWeight ?? 3,
+      deletionPatternWeight: settings?.intentDeletionWeight ?? 4,
+      analysisPatternWeight: settings?.intentAnalysisWeight ?? 2.5,
+      searchPatternWeight: settings?.intentSearchWeight ?? 1.5,
+      modifyPatternWeight: settings?.intentModifyWeight ?? 1.5,
+      questionPatternWeight: settings?.intentQuestionWeight ?? -1.5,
+      codePatternWeight: settings?.intentCodeWeight ?? -1,
+      lengthWeight: settings?.intentLengthWeight ?? 5e-3,
+      historyWeight: settings?.intentHistoryWeight ?? 0.3,
+      attachmentWeight: settings?.intentAttachmentWeight ?? 5,
+      staleQueryWeight: settings?.intentStaleQueryWeight ?? 3,
+      freshnessWeight: settings?.intentFreshnessWeight ?? 2
+    };
+    const features = this.extractFeatures(userQuery, hasAttachments, chatHistory, modelId);
+    const score = this.computeScore(features, weights);
+    const confidence = this.sigmoid(score - threshold);
+    const isAgentMode = score >= threshold;
+    const mode = isAgentMode ? "agent" : "quick";
+    const toolNeeds = this.classifyToolNeeds(userQuery, features, modelId);
+    let reason = t("intentDefaultQuickReason", language);
+    if (features.hasAttachments) {
+      reason = t("intentAttachmentsReason", language);
+    } else if (features.isStaleQuery && isAgentMode) {
+      reason = t("intentStaleReason", language);
+    } else if (features.hasDeletionPatterns > 0) {
+      reason = t("intentDeletionReason", language);
+    } else if (features.hasCreationPatterns > 0) {
+      reason = t("intentCreationReason", language);
+    } else if (features.hasAnalysisPatterns > 0) {
+      reason = t("intentAnalysisReason", language);
+    } else if (features.hasSearchPatterns > 0) {
+      reason = t("intentSearchReason", language);
+    } else if (features.hasModifyPatterns > 0) {
+      reason = t("intentModifyReason", language);
+    } else if (features.hasVaultKeywords > 0) {
+      reason = t("intentVaultActionReason", language, { keyword: "vault" });
+    } else if (features.recentAgentTurns > 0) {
+      reason = t("intentHistoryReason", language);
+    } else if (!isAgentMode && features.hasQuestionPatterns > 0) {
+      reason = t("intentQuickReason", language);
+    } else if (isAgentMode && features.queryLength > 150) {
+      reason = t("intentLongQueryReason", language);
+    }
+    return {
+      mode,
+      reason,
+      confidence,
+      toolNeeds,
+      debug: { features, score }
+    };
+  }
+};
+
+// src/services/agent/contextManager.ts
+var ContextManager = class {
+  /**
+   * Limits chat history using both turn count AND character budget
+   * to prevent token explosion from large tool outputs.
+   */
+  static pruneHistory(messages, maxTurns = 6, maxChars = 24e3) {
+    const systemMsgs = messages.filter((m) => m.role === "system");
+    const nonSystemMsgs = messages.filter((m) => m.role !== "system");
+    let trimmed = nonSystemMsgs.slice(-maxTurns);
+    let totalChars = trimmed.reduce((sum, m) => sum + (m.content?.length || 0), 0);
+    while (totalChars > maxChars && trimmed.length > 2) {
+      const removed = trimmed.shift();
+      if (removed) {
+        totalChars -= removed.content?.length || 0;
+      }
+    }
+    trimmed = trimmed.map((m) => {
+      if (m.role === "tool" && m.content && m.content.length > 4e3) {
+        return { ...m, content: this.compactText(m.content, 4e3) };
+      }
+      return m;
+    });
+    return [...systemMsgs, ...trimmed];
+  }
+  /**
+   * Compacts tool outputs and long file snippets to save tokens.
+   */
+  static compactText(text, maxLength = 8e3) {
+    if (!text || text.length <= maxLength)
+      return text;
+    const half = Math.floor(maxLength / 2);
+    const head = text.substring(0, half);
+    const tail = text.substring(text.length - half);
+    return `${head}
+
+... [\u0421\u0436\u0430\u0442\u043E \u0441\u0438\u0441\u0442\u0435\u043C\u043E\u0439 NEI: \u043F\u0440\u043E\u043F\u0443\u0449\u0435\u043D\u043E ${text.length - maxLength} \u0441\u0438\u043C\u0432\u043E\u043B\u043E\u0432 \u0434\u043B\u044F \u044D\u043A\u043E\u043D\u043E\u043C\u0438\u0438 \u0442\u043E\u043A\u0435\u043D\u043E\u0432] ...
+
+${tail}`;
+  }
+};
+
+// src/services/agent/agentLoop.ts
+var AgentLoop = class {
+  static getSystemPrompt(language, userQuery, vaultContext, agentsRules, memory, skills, prefetchedContext, settings, modelId) {
+    const cacheKey = `${language}|${vaultContext.ragContext?.length || 0}|${agentsRules.length}|${memory.learnedFacts.length}|${skills.length}|${prefetchedContext.length}|${settings.memoryFile}|${modelId}`;
+    const cached = this.promptCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < 3e4) {
+      return cached.prompt;
+    }
+    const isRu = language === "ru" || language === "auto" && /[а-яА-ЯёЁ]{3,}/.test(userQuery);
+    let systemPrompt = isRu ? t("systemPromptRu", language) : t("systemPromptEn", language);
+    if (settings.enableTemporalAwareness) {
+      const temporalInfo = getModelTemporalInfo(modelId);
+      const cutoffDate = temporalInfo.knowledgeCutoff;
+      const today = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
+      let freshnessDirective = `
+--- TEMPORAL AWARENESS ---
+`;
+      freshnessDirective += `Current Date: ${today}
+`;
+      freshnessDirective += `Your Knowledge Cutoff: ${cutoffDate}
+`;
+      freshnessDirective += `Days Since Cutoff: ${Math.floor((Date.now() - new Date(cutoffDate).getTime()) / (1e3 * 60 * 60 * 24))}
+`;
+      if (temporalInfo.supportsWebSearch) {
+        freshnessDirective += `\u26A0\uFE0F CRITICAL: For questions about events, prices, data, or facts after ${cutoffDate}, `;
+        freshnessDirective += `you MUST use available tools (web_search, read_web_page) to get current information.
+`;
+        freshnessDirective += `Do NOT rely on training data for time-sensitive queries.
+`;
+      } else {
+        freshnessDirective += `\u26A0\uFE0F WARNING: This model cannot access live data. For time-sensitive queries, `;
+        freshnessDirective += `explicitly state your knowledge cutoff and recommend user to verify externally.
+`;
+      }
+      freshnessDirective += `------------------------
+`;
+      systemPrompt += freshnessDirective;
+    }
+    if (vaultContext.ragContext) {
+      systemPrompt += `
+--- VAULT CONTEXT (RAG) ---
+${vaultContext.ragContext}
+`;
+    }
+    if (agentsRules.trim()) {
+      systemPrompt += `
+--- USER RULES (${settings.memoryFile}) ---
+${agentsRules}
+`;
+    }
+    if (memory.learnedFacts.length > 0) {
+      systemPrompt += `
+--- LONG-TERM MEMORY (${settings.memoryFile}) ---
+${memory.learnedFacts.map((f) => `- ${f}`).join("\n")}
+`;
+    }
+    if (skills.length > 0) {
+      systemPrompt += `
+--- AGENT SKILLS (${settings.skillsFolder}/) ---
+${skills.map((s) => `[Skill: ${s.name}]
+${s.description}`).join("\n")}
+`;
+    }
+    if (prefetchedContext) {
+      systemPrompt += prefetchedContext;
+    }
+    this.promptCache.set(cacheKey, { prompt: systemPrompt, timestamp: Date.now() });
+    return systemPrompt;
+  }
+  static async run(options) {
+    const {
+      app,
+      config,
+      userQuery,
+      chatHistory,
+      images,
+      executionMode = "auto",
+      onStepUpdate,
+      onConfirmationRequired,
+      maxIterations,
+      toolRegistry,
+      language = "auto",
+      settings
+    } = options;
+    const steps = [];
+    let totalPromptTokens = 0;
+    let totalCompletionTokens = 0;
+    const notifySteps = () => {
+      if (onStepUpdate)
+        onStepUpdate([...steps]);
+    };
+    const features = IntentRouter.extractFeatures(userQuery, Boolean(images && images.length > 0), chatHistory, config.model);
+    const toolNeeds = IntentRouter.classifyToolNeeds(userQuery, features, config.model);
+    let actualMode = "agent";
+    if (executionMode === "quick") {
+      actualMode = "quick";
+    } else if (executionMode === "agent") {
+      actualMode = "agent";
+    } else {
+      const decision = IntentRouter.classifyIntent(userQuery, Boolean(images && images.length > 0), language, chatHistory, settings);
+      actualMode = decision.mode;
+      steps.push({
+        id: "intent-routing-step",
+        type: "thought",
+        title: `Mode: ${actualMode === "quick" ? "Quick" : "Agent"}`,
+        detail: decision.reason,
+        status: "completed"
+      });
+      notifySteps();
+    }
+    const vaultContext = await resolveContext(app, userQuery, true);
+    const memory = await MemoryStore.loadMemory(app, settings);
+    const agentsRules = await MemoryStore.loadAgentsRules(app, settings);
+    const skills = await SkillsLoader.loadSkills(app, settings);
+    let prefetchedContext = "";
+    const shouldPrefetchVault = settings.enableAdaptivePrefetch ? toolNeeds.needsVaultSearch && actualMode === "agent" : actualMode === "agent";
+    if (shouldPrefetchVault) {
+      const searchResults = await searchVaultLexical(app, userQuery, settings.maxPrefetchedNotes, settings.prefetchSnippetLength);
+      if (searchResults.length > 0) {
+        const prefetchedBlocks = [];
+        const matchedFoldersSet = /* @__PURE__ */ new Set();
+        for (const res of searchResults) {
+          const abstractFile = res.file;
+          const folderName = abstractFile.parent?.name || "Vault";
+          if (folderName) {
+            matchedFoldersSet.add(folderName);
+          }
+          const cleanContent = res.content.replace(/^---[\s\S]*?---\n?/, "").trim();
+          const snippet = cleanContent.length > settings.prefetchSnippetLength ? cleanContent.substring(0, settings.prefetchSnippetLength) + "... [\u043E\u0431\u0440\u0435\u0437\u0430\u043D\u043E]" : cleanContent;
+          prefetchedBlocks.push(`--- NOTE: [[${abstractFile.basename}]] (${abstractFile.path}) ---
+${snippet}`);
+        }
+        const matchedFoldersArr = Array.from(matchedFoldersSet);
+        prefetchedContext += `
+${t("autoIndexedVaultNotes", language)}
+${prefetchedBlocks.join("\n\n")}
+`;
+        steps.push({
+          id: "folder-prefetch-step",
+          type: "tool_result",
+          title: t("folderPrefetchTitle", language, { folders: matchedFoldersArr.join(", ") || "Vault" }),
+          detail: t("folderPrefetchDetail", language, { count: matchedFoldersArr.length.toString() }),
+          status: "completed"
+        });
+        notifySteps();
+      }
+    }
+    const userMsg = { role: "user", content: userQuery };
+    if (images && images.length > 0) {
+      userMsg.images = images;
+    }
+    const systemPrompt = this.getSystemPrompt(language, userQuery, vaultContext, agentsRules, memory, skills, prefetchedContext, settings, config.model);
+    const prunedHistory = ContextManager.pruneHistory(chatHistory, 6);
+    const messages = [
+      { role: "system", content: systemPrompt },
+      ...prunedHistory.filter((m) => m.role !== "system"),
+      userMsg
+    ];
+    if (actualMode === "quick") {
+      try {
+        const response = await sendChatRequest(config, messages);
+        if (response.usage) {
+          totalPromptTokens += response.usage.promptTokens;
+          totalCompletionTokens += response.usage.completionTokens;
+        }
+        const responseText = response.content || "";
+        if (this.shouldAutoCreateNote(userQuery, responseText)) {
+          await this.attemptAutoCreateNote(app, userQuery, responseText, steps, notifySteps, toolRegistry, language);
+        }
+        return {
+          responseText,
+          promptTokens: totalPromptTokens,
+          completionTokens: totalCompletionTokens,
+          executionModeUsed: "quick"
+        };
+      } catch (e) {
+        const err = e;
+        throw new Error(t("quickLlmError", language, { error: err?.message || String(e) }));
+      }
+    }
+    const allTools = toolRegistry.getToolDefinitions();
+    let filteredTools = allTools;
+    if (settings.enableSmartToolFiltering) {
+      if (toolNeeds.needsWebSearch && !toolNeeds.needsVaultSearch && !toolNeeds.needsVaultWrite) {
+        filteredTools = allTools.filter(
+          (t2) => ["web_search", "read_web_page", "analyze_github_repo"].includes(t2.function.name)
+        );
+      } else if (!toolNeeds.needsWebSearch && (toolNeeds.needsVaultSearch || toolNeeds.needsVaultWrite)) {
+        filteredTools = allTools.filter(
+          (t2) => t2.function.name.startsWith("read_") || t2.function.name.startsWith("get_") || t2.function.name.startsWith("search_") || t2.function.name.startsWith("create_") || t2.function.name.startsWith("edit_") || t2.function.name.startsWith("rename_") || t2.function.name.startsWith("delete_") || t2.function.name.startsWith("list_") || t2.function.name.startsWith("diff_")
+        );
+      }
+    }
+    let iteration = 0;
+    let finalResponseText = "";
+    let toolCalledCount = 0;
+    const executedCallsMap = {};
+    const effectiveMaxIterations = maxIterations ?? settings.maxAgentIterations;
+    while (iteration < effectiveMaxIterations) {
+      iteration++;
+      const isLastIteration = iteration === effectiveMaxIterations;
+      const activeTools = isLastIteration ? void 0 : filteredTools;
+      const response = await sendChatRequest(config, messages, activeTools);
+      if (response.usage) {
+        totalPromptTokens += response.usage.promptTokens;
+        totalCompletionTokens += response.usage.completionTokens;
+      }
+      if (response.reasoning) {
+        steps.push({
+          id: `reasoning-${iteration}`,
+          type: "reasoning",
+          title: `${t("agentReasoningLog", language)} (${iteration})`,
+          detail: response.reasoning,
+          status: "completed"
+        });
+        notifySteps();
+      }
+      if (response.tool_calls && response.tool_calls.length > 0 && !isLastIteration) {
+        toolCalledCount += response.tool_calls.length;
+        messages.push({
+          role: "assistant",
+          content: response.content || "Executing tool calls...",
+          tool_calls: response.tool_calls
+        });
+        for (const toolCall of response.tool_calls) {
+          const toolName = toolCall.function.name;
+          const toolArgsStr = toolCall.function.arguments;
+          const callKey = `${toolName}:${toolArgsStr}`;
+          executedCallsMap[callKey] = (executedCallsMap[callKey] || 0) + 1;
+          const stepId = `tool-${toolCall.id}`;
+          steps.push({
+            id: stepId,
+            type: "tool_call",
+            title: `Tool: ${toolName}`,
+            detail: `Args: ${toolArgsStr}`,
+            status: "running"
+          });
+          notifySteps();
+          let trimmedResult = "";
+          let isError = false;
+          if (toolName === "execute_obsidian_command" && settings.confirmObsidianCommands && onConfirmationRequired) {
+            const confirmed = await onConfirmationRequired(toolName, toolArgsStr);
+            if (!confirmed) {
+              trimmedResult = "Obsidian command execution denied by user.";
+              isError = true;
+            }
+          }
+          if (!trimmedResult) {
+            if (executedCallsMap[callKey] > 2) {
+              trimmedResult = `[NEI SYSTEM WARNING]: Tool (${toolName}) with these args was called ${executedCallsMap[callKey] - 1} times. Loop prevented.`;
+              isError = true;
+            } else {
+              const execResult = await toolRegistry.executeTool(
+                app,
+                toolCall.id,
+                toolName,
+                toolArgsStr
+              );
+              const rawRes = typeof execResult.result === "string" ? execResult.result : JSON.stringify(execResult.result);
+              trimmedResult = ContextManager.compactText(rawRes, 12e3);
+              isError = execResult.isError || false;
+            }
+          }
+          const currentStep = steps.find((s) => s.id === stepId);
+          if (currentStep) {
+            currentStep.status = isError ? "failed" : "completed";
+            currentStep.detail = trimmedResult.substring(0, 300);
+          }
+          notifySteps();
+          messages.push({
+            role: "tool",
+            name: toolName,
+            tool_call_id: toolCall.id,
+            content: trimmedResult
+          });
+        }
+      } else if (response.content && this.containsJsonToolCall(response.content) && !isLastIteration) {
+        const parsedTool = this.extractJsonToolCall(response.content);
+        if (parsedTool) {
+          toolCalledCount++;
+          const callId = "text_call_" + Date.now();
+          const callArgsStr = JSON.stringify(parsedTool.args);
+          const callKey = `${parsedTool.name}:${callArgsStr}`;
+          executedCallsMap[callKey] = (executedCallsMap[callKey] || 0) + 1;
+          steps.push({
+            id: callId,
+            type: "tool_call",
+            title: `Tool (Fallback JSON): ${parsedTool.name}`,
+            detail: callArgsStr,
+            status: "running"
+          });
+          notifySteps();
+          let execResultText = "";
+          let isError = false;
+          if (parsedTool.name === "execute_obsidian_command" && settings.confirmObsidianCommands && onConfirmationRequired) {
+            const confirmed = await onConfirmationRequired(parsedTool.name, callArgsStr);
+            if (!confirmed) {
+              execResultText = "Obsidian command execution denied by user.";
+              isError = true;
+            }
+          }
+          if (!execResultText) {
+            const execResult = await toolRegistry.executeTool(
+              app,
+              callId,
+              parsedTool.name,
+              callArgsStr
+            );
+            execResultText = String(execResult.result);
+            isError = execResult.isError || false;
+          }
+          const currentStep = steps.find((s) => s.id === callId);
+          if (currentStep) {
+            currentStep.status = isError ? "failed" : "completed";
+            currentStep.detail = execResultText.substring(0, 300);
+          }
+          notifySteps();
+          messages.push({
+            role: "assistant",
+            content: response.content
+          });
+          messages.push({
+            role: "tool",
+            name: parsedTool.name,
+            tool_call_id: callId,
+            content: execResultText
+          });
+        } else {
+          finalResponseText = response.content;
+          break;
+        }
+      } else {
+        finalResponseText = response.content || "";
+        break;
+      }
+    }
+    if (toolCalledCount > 0 && this.shouldAutoCreateNote(userQuery, finalResponseText)) {
+      await this.attemptAutoCreateNote(app, userQuery, finalResponseText, steps, notifySteps, toolRegistry, language);
+    }
+    return {
+      responseText: finalResponseText || t("agentNoOutput", language),
+      promptTokens: totalPromptTokens,
+      completionTokens: totalCompletionTokens,
+      executionModeUsed: "agent"
+    };
+  }
+  static containsJsonToolCall(text) {
+    return /```(?:json)?\s*\{[\s\S]*?"(?:tool|name|function|action)"\s*:/i.test(text) || /<tool_call>/i.test(text);
+  }
+  static extractJsonToolCall(text) {
+    try {
+      const xmlMatch = text.match(/<tool_call>\s*([\s\S]*?)\s*<\/tool_call>/i);
+      const rawJson = xmlMatch ? xmlMatch[1] : text;
+      const jsonMatch = rawJson.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/i) || rawJson.match(/(\{[\s\S]*?\})/i);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[1]);
+        const toolName = typeof parsed.tool === "string" ? parsed.tool : typeof parsed.name === "string" ? parsed.name : typeof parsed.function === "string" ? parsed.function : typeof parsed.action === "string" ? parsed.action : void 0;
+        if (toolName) {
+          const args = parsed.arguments || parsed.args || parsed.action_input || {};
+          return {
+            name: toolName,
+            args
+          };
+        }
+      }
+    } catch {
+    }
+    return null;
+  }
+  static shouldAutoCreateNote(query, responseText) {
+    const queryLower = query.toLowerCase();
+    const isCreateRequest = queryLower.includes("\u0441\u043E\u0437\u0434\u0430\u0439") || queryLower.includes("\u0441\u043E\u0437\u0434\u0430\u0442\u044C") || queryLower.includes("\u043D\u0430\u043F\u0438\u0448\u0438 \u0437\u0430\u043C\u0435\u0442\u043A\u0443") || queryLower.includes("\u0441\u043E\u0445\u0440\u0430\u043D\u0438") || queryLower.includes("create note") || queryLower.includes("save note");
+    return isCreateRequest && responseText.length > 30;
+  }
+  static async attemptAutoCreateNote(app, query, responseText, steps, notifySteps, toolRegistry, language) {
+    let notePath = "";
+    const folderMatch = query.match(/(?:папке|папку|folder|directory)\s+["']?([a-zA-Z0-9_\-/А-Яа-яЁё ]+?)["']?(?:\s|$)/i);
+    const fileMatch = query.match(/(?:заметку|файл|note|file)\s+["']?([a-zA-Z0-9_\-/А-Яа-яЁё ]+?\.md)["']?/i);
+    if (fileMatch && fileMatch[1]) {
+      notePath = fileMatch[1].trim();
+    } else {
+      const folder = folderMatch && folderMatch[1] ? folderMatch[1].trim() : "";
+      const dateStr = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
+      const titleMatch = query.match(/(?:создай|создать|create|write)\s+(?:заметку|файл|название|note)?\s*["']?([^"'\n,]{3,30})["']?/i);
+      let slug = titleMatch && titleMatch[1] ? titleMatch[1].trim().replace(/[^\w\sА-Яа-яЁё-]/g, "") : "New_Note";
+      if (slug.length < 3)
+        slug = "New_Note";
+      notePath = folder ? `${folder}/${slug}_${dateStr}.md` : `${slug}_${dateStr}.md`;
+    }
+    try {
+      const execResult = await toolRegistry.executeTool(
+        app,
+        "auto-create-fallback",
+        "create_note",
+        JSON.stringify({ path: notePath, content: responseText })
+      );
+      steps.push({
+        id: "auto-create-step",
+        type: "tool_result",
+        title: t("autoCreatedNote", language, { path: notePath }),
+        detail: String(execResult.result),
+        status: execResult.isError ? "failed" : "completed"
+      });
+      notifySteps();
+    } catch {
+    }
+  }
+};
+AgentLoop.promptCache = /* @__PURE__ */ new Map();
+
+// src/services/chat/chatStore.ts
+var import_obsidian6 = require("obsidian");
+var ChatStore = class {
+  static getChatsFolder(settings) {
+    return settings.chatsFolder || ".nei/chats";
+  }
+  static getIndexFile(settings) {
+    const folder = this.getChatsFolder(settings);
+    return `${folder}/index.json`;
+  }
+  static async listSessions(app, settings) {
+    try {
+      const indexFile = this.getIndexFile(settings);
+      if (await app.vault.adapter.exists(indexFile)) {
+        const content = await app.vault.adapter.read(indexFile);
+        const parsed = JSON.parse(content);
+        return Array.isArray(parsed) ? parsed : [];
+      }
+    } catch (e) {
+      console.error("[NEI ChatStore] Error reading chat index:", e);
+    }
+    return [];
+  }
+  static async loadSession(app, settings, sessionId) {
+    const folder = this.getChatsFolder(settings);
+    const path = `${folder}/${sessionId}.json`;
+    try {
+      if (await app.vault.adapter.exists(path)) {
+        const content = await app.vault.adapter.read(path);
+        return JSON.parse(content);
+      }
+    } catch (e) {
+      console.error(`[NEI ChatStore] Error loading session ${sessionId}:`, e);
+    }
+    return null;
+  }
+  static async saveSession(app, settings, session) {
+    try {
+      const folder = this.getChatsFolder(settings);
+      await this.ensureFolder(app, folder);
+      session.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
+      const sessionPath = `${folder}/${session.id}.json`;
+      const content = JSON.stringify(session, null, 2);
+      await app.vault.adapter.write(sessionPath, content);
+      const sessions = await this.listSessions(app, settings);
+      const existingIdx = sessions.findIndex((s) => s.id === session.id);
+      const summary = {
+        id: session.id,
+        title: session.title || "New Chat",
+        updatedAt: session.updatedAt
+      };
+      if (existingIdx >= 0) {
+        sessions[existingIdx] = summary;
+      } else {
+        sessions.unshift(summary);
+      }
+      const indexFile = this.getIndexFile(settings);
+      const indexContent = JSON.stringify(sessions, null, 2);
+      await app.vault.adapter.write(indexFile, indexContent);
+    } catch (e) {
+      console.error("[NEI ChatStore] Error saving session:", e);
+    }
+  }
+  static async deleteSession(app, settings, sessionId) {
+    try {
+      const folder = this.getChatsFolder(settings);
+      const path = `${folder}/${sessionId}.json`;
+      if (await app.vault.adapter.exists(path)) {
+        await app.vault.adapter.remove(path);
+      }
+      const sessions = await this.listSessions(app, settings);
+      const filtered = sessions.filter((s) => s.id !== sessionId);
+      const indexFile = this.getIndexFile(settings);
+      await app.vault.adapter.write(indexFile, JSON.stringify(filtered, null, 2));
+    } catch (e) {
+      console.error(`[NEI ChatStore] Error deleting session ${sessionId}:`, e);
+    }
+  }
+  static async clearAllSessions(app, settings) {
+    try {
+      const sessions = await this.listSessions(app, settings);
+      const folder = this.getChatsFolder(settings);
+      for (const s of sessions) {
+        const path = `${folder}/${s.id}.json`;
+        if (await app.vault.adapter.exists(path)) {
+          await app.vault.adapter.remove(path);
+        }
+      }
+      const indexFile = this.getIndexFile(settings);
+      await app.vault.adapter.write(indexFile, JSON.stringify([], null, 2));
+    } catch (e) {
+      console.error("[NEI ChatStore] Error clearing all sessions:", e);
+    }
+  }
+  static createNewSession() {
+    const id = "chat_" + Date.now() + "_" + Math.random().toString(36).substring(2, 7);
+    return {
+      id,
+      title: "New Chat",
+      createdAt: (/* @__PURE__ */ new Date()).toISOString(),
+      updatedAt: (/* @__PURE__ */ new Date()).toISOString(),
+      messages: []
+    };
+  }
+  static async ensureFolder(app, folderPath) {
+    const norm = (0, import_obsidian6.normalizePath)(folderPath);
+    if (!await app.vault.adapter.exists(norm)) {
+      await app.vault.adapter.mkdir(norm);
+    }
+  }
+};
+
+// src/services/openrouter.ts
+var import_obsidian7 = require("obsidian");
+var OpenRouterService = class {
+  /**
+   * Fetches details about the user's OpenRouter API key (usage, limits).
+   */
+  static async getKeyInfo(apiKey) {
+    if (!apiKey)
+      return null;
+    try {
+      const response = await (0, import_obsidian7.requestUrl)({
+        url: "https://openrouter.ai/api/v1/auth/key",
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${apiKey}`
+        }
+      });
+      if (response.status === 200 && response.json) {
+        const json = response.json;
+        if (json.data) {
+          const data = json.data;
+          return {
+            label: data.label,
+            usage: Number(data.usage || 0),
+            limit: data.limit ? Number(data.limit) : null,
+            isFreeTier: Boolean(data.is_free_tier)
+          };
+        }
+      }
+    } catch (e) {
+      console.error("[OpenRouterService] Error fetching key info:", e);
+    }
+    return null;
+  }
+  /**
+   * Fetches all available models and their capabilities from OpenRouter API.
+   */
+  static async fetchModels(apiKey) {
+    const now = Date.now();
+    if (this.cachedModels.size > 0 && now - this.lastFetchTime < 3e5) {
+      return Array.from(this.cachedModels.values());
+    }
+    try {
+      const headers = {
+        "HTTP-Referer": "https://github.com/GhelgenWhy/NEI",
+        "X-Title": "NEI Obsidian Plugin"
+      };
+      if (apiKey) {
+        headers["Authorization"] = `Bearer ${apiKey}`;
+      }
+      const response = await (0, import_obsidian7.requestUrl)({
+        url: "https://openrouter.ai/api/v1/models",
+        method: "GET",
+        headers
+      });
+      if (response.status !== 200) {
+        throw new Error(`OpenRouter API status: ${response.status}`);
+      }
+      const json = response.json;
+      const modelsData = json.data || [];
+      const result = [];
+      for (const item of modelsData) {
+        const supportedParams = item.supported_parameters || [];
+        const supportsTools = supportedParams.includes("tools") || supportedParams.includes("function_calling");
+        let supportsVision = false;
+        if (item.architecture && item.architecture.modality) {
+          supportsVision = item.architecture.modality.includes("multimodal") || item.architecture.modality.includes("image");
+        }
+        const info = {
+          id: item.id,
+          name: item.name || item.id,
+          description: item.description,
+          contextLength: item.context_length,
+          supportsTools,
+          supportsVision,
+          pricing: item.pricing ? {
+            prompt: item.pricing.prompt,
+            completion: item.pricing.completion
+          } : void 0
+        };
+        this.cachedModels.set(item.id, info);
+        result.push(info);
+      }
+      this.lastFetchTime = now;
+      return result;
+    } catch (e) {
+      console.error("[OpenRouterService] Error fetching models:", e);
+      return Array.from(this.cachedModels.values());
+    }
+  }
+  /**
+   * Get capability details for a specific model ID.
+   */
+  static async getModelDetails(modelId, apiKey) {
+    if (this.cachedModels.has(modelId)) {
+      return this.cachedModels.get(modelId) || null;
+    }
+    const models = await this.fetchModels(apiKey);
+    return models.find((m) => m.id === modelId) || null;
+  }
+};
+OpenRouterService.cachedModels = /* @__PURE__ */ new Map();
+OpenRouterService.lastFetchTime = 0;
+
+// src/components/ErrorBoundary.tsx
+var React = __toESM(require_react());
+var import_obsidian8 = require("obsidian");
+var import_jsx_runtime = __toESM(require_jsx_runtime());
+var ErrorBoundary = class extends React.Component {
+  constructor() {
+    super(...arguments);
+    this.state = {
+      hasError: false,
+      error: null
+    };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, errorInfo) {
+    console.error("[NEI Chat ErrorBoundary]", error, errorInfo);
+    new import_obsidian8.Notice(`\u274C NEI Chat Error: ${error.message}`);
+  }
+  render() {
+    if (this.state.hasError) {
+      if (this.props.fallback) {
+        return this.props.fallback;
+      }
+      return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { padding: "16px", color: "var(--text-error, red)", textAlign: "center" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", { children: "\u26A0\uFE0F NEI Chat Component Error" }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { style: { fontSize: "12px", opacity: 0.8 }, children: this.state.error?.message || "An unknown error occurred." }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+          "button",
+          {
+            onClick: () => this.setState({ hasError: false, error: null }),
+            style: { marginTop: "8px", padding: "4px 12px", cursor: "pointer" },
+            children: "\u{1F504} Reset UI"
+          }
+        )
+      ] });
+    }
+    return this.props.children;
+  }
+};
+
+// src/components/ChatPanel.tsx
+var import_jsx_runtime2 = __toESM(require_jsx_runtime());
+var ObsidianMarkdown = ({ markdown, app }) => {
+  const containerRef = React2.useRef(null);
+  React2.useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.empty();
+      const component = new import_obsidian9.Component();
+      component.load();
+      void import_obsidian9.MarkdownRenderer.render(
+        app,
+        markdown,
+        containerRef.current,
+        "",
+        component
+      );
+    }
+  }, [markdown, app]);
+  return /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { ref: containerRef, className: "markdown-preview-view markdown-rendered", style: { background: "transparent", padding: 0 } });
+};
+var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) => {
+  const isMainTab = viewLeaf ? viewLeaf.getRoot() === app.workspace.rootSplit : false;
+  const handleToggleTabMode = async () => {
+    try {
+      const workspace = app.workspace;
+      if (isMainTab) {
+        const rightLeaf = workspace.getRightLeaf(false);
+        if (rightLeaf) {
+          await rightLeaf.setViewState({ type: "nei-chat-view", active: true });
+          void workspace.revealLeaf(rightLeaf);
+        }
+        if (viewLeaf) {
+          viewLeaf.detach();
+        }
+      } else {
+        const tabLeaf = workspace.getLeaf("tab");
+        await tabLeaf.setViewState({ type: "nei-chat-view", active: true });
+        void workspace.revealLeaf(tabLeaf);
+        if (viewLeaf) {
+          viewLeaf.detach();
+        }
+      }
+    } catch (e) {
+      const err = e;
+      new import_obsidian9.Notice(`${t("modeSwitchError", language)} ${err?.message || String(e)}`);
+    }
+  };
+  const [currentSession, setCurrentSession] = React2.useState(() => ChatStore.createNewSession());
+  const [sessionsList, setSessionsList] = React2.useState([]);
+  const [input, setInput] = React2.useState("");
+  const [attachedImages, setAttachedImages] = React2.useState([]);
+  const [executionMode, setExecutionMode] = React2.useState(settings.executionMode || "auto");
+  const [loading, setLoading] = React2.useState(false);
+  const [activeSteps, setActiveSteps] = React2.useState([]);
+  const [showSessionsDrawer, setShowSessionsDrawer] = React2.useState(false);
+  const [showConfig, setShowConfig] = React2.useState(false);
+  const [showIntentDebug, setShowIntentDebug] = React2.useState(false);
+  const [pendingConfirmation, setPendingConfirmation] = React2.useState(null);
+  const [showFreshnessSuggestion, setShowFreshnessSuggestion] = React2.useState(null);
+  const [editingMsgIdx, setEditingMsgIdx] = React2.useState(null);
+  const [editingText, setEditingText] = React2.useState("");
+  const [endpointUrl, setEndpointUrl] = React2.useState(settings.endpointUrl || "https://openrouter.ai/api/v1");
+  const [apiKey, setApiKey] = React2.useState(settings.apiKey || "");
+  const [model, setModel] = React2.useState(settings.model || "google/gemini-2.5-flash");
+  const [visionModel, setVisionModel] = React2.useState(settings.visionModel || "google/gemini-2.5-flash");
+  const [quickModel, setQuickModel] = React2.useState(settings.quickModel || "google/gemini-2.5-flash");
+  const [customModels, setCustomModels] = React2.useState(settings.customModels || [
+    "google/gemini-2.5-flash",
+    "anthropic/claude-3.5-sonnet",
+    "google/gemini-2.5-pro",
+    "openai/gpt-4o",
+    "deepseek/deepseek-chat"
+  ]);
+  const [newModelInput, setNewModelInput] = React2.useState("");
+  const [activeModelDetails, setActiveModelDetails] = React2.useState(null);
+  const [keyInfo, setKeyInfo] = React2.useState(null);
+  const [verifyingModel, setVerifyingModel] = React2.useState(false);
+  const [modelFreshness, setModelFreshness] = React2.useState(null);
+  React2.useEffect(() => {
+    const info = getModelTemporalInfo(model);
+    const cutoff = new Date(info.knowledgeCutoff);
+    const daysSince = Math.floor((Date.now() - cutoff.getTime()) / (1e3 * 60 * 60 * 24));
+    setModelFreshness({
+      cutoff: info.knowledgeCutoff,
+      daysSince,
+      supportsWeb: info.supportsWebSearch,
+      isStale: daysSince > 30
+    });
+  }, [model]);
+  React2.useEffect(() => {
+    void refreshSessionsList();
+    void verifyActiveModel(model, apiKey);
+    if (apiKey) {
+      void OpenRouterService.getKeyInfo(apiKey).then(setKeyInfo);
+    }
+  }, []);
+  const refreshSessionsList = async () => {
+    const list = await ChatStore.listSessions(app, settings);
+    setSessionsList(list);
+  };
+  const verifyActiveModel = async (targetModel, key) => {
+    setVerifyingModel(true);
+    try {
+      const details = await OpenRouterService.getModelDetails(targetModel, key);
+      setActiveModelDetails(details);
+    } catch {
+      setActiveModelDetails(null);
+    } finally {
+      setVerifyingModel(false);
+    }
+  };
+  const formatSessionTitle = (tTitle) => {
+    if (!tTitle || tTitle === "\u041D\u043E\u0432\u044B\u0439 \u0434\u0438\u0430\u043B\u043E\u0433" || tTitle === "New Chat") {
+      return t("newChatSession", language);
+    }
+    return tTitle;
+  };
+  const handleSelectModel = (selectedModel) => {
+    setModel(selectedModel);
+    void verifyActiveModel(selectedModel, apiKey);
+    void saveSettings({ ...settings, model: selectedModel, visionModel, quickModel, executionMode });
+  };
+  const handleAddModel = () => {
+    if (!newModelInput.trim())
+      return;
+    const trimmed = newModelInput.trim();
+    if (!customModels.includes(trimmed)) {
+      const updated = [...customModels, trimmed];
+      setCustomModels(updated);
+      setModel(trimmed);
+      void verifyActiveModel(trimmed, apiKey);
+      new import_obsidian9.Notice(`${t("modelAddedNotice", language)} ${trimmed}`);
+    }
+    setNewModelInput("");
+  };
+  const handleDeleteModel = (e, targetModel) => {
+    e.stopPropagation();
+    if (customModels.length <= 1) {
+      new import_obsidian9.Notice(t("cannotDeleteLastModel", language));
+      return;
+    }
+    const updated = customModels.filter((m) => m !== targetModel);
+    setCustomModels(updated);
+    if (model === targetModel) {
+      const nextModel = updated[0];
+      setModel(nextModel);
+      void verifyActiveModel(nextModel, apiKey);
+    }
+  };
+  const handleNewChat = () => {
+    const newSess = ChatStore.createNewSession();
+    setCurrentSession(newSess);
+    setActiveSteps([]);
+    setShowSessionsDrawer(false);
+    setEditingMsgIdx(null);
+    setShowFreshnessSuggestion(null);
+  };
+  const handleSelectSession = async (sessionId) => {
+    const loaded = await ChatStore.loadSession(app, settings, sessionId);
+    if (loaded) {
+      setCurrentSession(loaded);
+      setActiveSteps(loaded.steps || []);
+      setShowSessionsDrawer(false);
+      setEditingMsgIdx(null);
+      setShowFreshnessSuggestion(null);
+    }
+  };
+  const handleDeleteSession = async (e, sessionId) => {
+    e.stopPropagation();
+    await ChatStore.deleteSession(app, settings, sessionId);
+    await refreshSessionsList();
+    if (currentSession.id === sessionId) {
+      handleNewChat();
+    }
+  };
+  const [confirmingClear, setConfirmingClear] = React2.useState(false);
+  const clearTimerRef = React2.useRef(null);
+  React2.useEffect(() => {
+    return () => {
+      if (clearTimerRef.current)
+        clearTimeout(clearTimerRef.current);
+      if (settingsSaveTimerRef.current)
+        clearTimeout(settingsSaveTimerRef.current);
+    };
+  }, []);
+  const handleClearAllSessions = async () => {
+    if (!confirmingClear) {
+      setConfirmingClear(true);
+      clearTimerRef.current = setTimeout(() => setConfirmingClear(false), 4e3);
+      return;
+    }
+    setConfirmingClear(false);
+    if (clearTimerRef.current)
+      clearTimeout(clearTimerRef.current);
+    await ChatStore.clearAllSessions(app, settings);
+    await refreshSessionsList();
+    handleNewChat();
+    new import_obsidian9.Notice(t("historyClearedNotice", language));
+  };
+  const handleBranchFromMessage = async (msgIndex) => {
+    if (!currentSession)
+      return;
+    const historyBefore = currentSession.messages.slice(0, msgIndex + 1);
+    const newSession = ChatStore.createNewSession();
+    newSession.title = `Branch: ${currentSession.title || "Chat"}`;
+    newSession.messages = [...historyBefore];
+    setCurrentSession(newSession);
+    await ChatStore.saveSession(app, settings, newSession);
+    await refreshSessionsList();
+    new import_obsidian9.Notice("\u{1F33F} Conversation branched!");
+  };
+  const [language, setLanguage] = React2.useState(settings.language || "auto");
+  const [defaultNoteFolder, setDefaultNoteFolder] = React2.useState(settings.defaultNoteFolder || "");
+  const [chatsFolder, setChatsFolder] = React2.useState(settings.chatsFolder || ".nei/chats");
+  const [memoryFile, setMemoryFile] = React2.useState(settings.memoryFile || ".nei/memory.json");
+  const [skillsFolder, setSkillsFolder] = React2.useState(settings.skillsFolder || ".nei/skills");
+  const [maxAgentIterations, setMaxAgentIterations] = React2.useState(settings.maxAgentIterations || 10);
+  const [maxPrefetchedNotes, setMaxPrefetchedNotes] = React2.useState(settings.maxPrefetchedNotes || 5);
+  const [prefetchSnippetLength, setPrefetchSnippetLength] = React2.useState(settings.prefetchSnippetLength || 400);
+  const [ragResultLimit, setRagResultLimit] = React2.useState(settings.ragResultLimit || 5);
+  const [ragSnippetLength, setRagSnippetLength] = React2.useState(settings.ragSnippetLength || 1e3);
+  const [confirmObsidianCommands, setConfirmObsidianCommands] = React2.useState(settings.confirmObsidianCommands ?? true);
+  const [enableTemporalAwareness, setEnableTemporalAwareness] = React2.useState(settings.enableTemporalAwareness ?? true);
+  const [enableAdaptivePrefetch, setEnableAdaptivePrefetch] = React2.useState(settings.enableAdaptivePrefetch ?? true);
+  const [enableFreshnessSuggestions, setEnableFreshnessSuggestions] = React2.useState(settings.enableFreshnessSuggestions ?? true);
+  const [enableSmartToolFiltering, setEnableSmartToolFiltering] = React2.useState(settings.enableSmartToolFiltering ?? true);
+  const [intentRoutingThreshold, setIntentRoutingThreshold] = React2.useState(settings.intentRoutingThreshold ?? 2.5);
+  const [intentVaultKeywordWeight, setIntentVaultKeywordWeight] = React2.useState(settings.intentVaultKeywordWeight ?? 2);
+  const [intentCreationWeight, setIntentCreationWeight] = React2.useState(settings.intentCreationWeight ?? 3);
+  const [intentDeletionWeight, setIntentDeletionWeight] = React2.useState(settings.intentDeletionWeight ?? 4);
+  const [intentAnalysisWeight, setIntentAnalysisWeight] = React2.useState(settings.intentAnalysisWeight ?? 2.5);
+  const [intentQuestionWeight, setIntentQuestionWeight] = React2.useState(settings.intentQuestionWeight ?? -1.5);
+  const [intentLengthWeight, setIntentLengthWeight] = React2.useState(settings.intentLengthWeight ?? 5e-3);
+  const [intentHistoryWeight, setIntentHistoryWeight] = React2.useState(settings.intentHistoryWeight ?? 0.3);
+  const [intentStaleQueryWeight, setIntentStaleQueryWeight] = React2.useState(settings.intentStaleQueryWeight ?? 3);
+  const [intentFreshnessWeight, setIntentFreshnessWeight] = React2.useState(settings.intentFreshnessWeight ?? 2);
+  const settingsSaveTimerRef = React2.useRef(null);
+  const handleSaveConfig = async () => {
+    const newSettings = {
+      ...settings,
+      provider: "openrouter",
+      endpointUrl,
+      apiKey,
+      model,
+      visionModel,
+      quickModel,
+      executionMode,
+      customModels,
+      language,
+      defaultNoteFolder,
+      chatsFolder,
+      memoryFile,
+      skillsFolder,
+      maxAgentIterations,
+      maxPrefetchedNotes,
+      prefetchSnippetLength,
+      ragResultLimit,
+      ragSnippetLength,
+      confirmObsidianCommands,
+      enableTemporalAwareness,
+      enableAdaptivePrefetch,
+      enableFreshnessSuggestions,
+      enableSmartToolFiltering,
+      intentRoutingThreshold,
+      intentVaultKeywordWeight,
+      intentCreationWeight,
+      intentDeletionWeight,
+      intentAnalysisWeight,
+      intentQuestionWeight,
+      intentLengthWeight,
+      intentHistoryWeight,
+      intentStaleQueryWeight,
+      intentFreshnessWeight
+    };
+    await saveSettings(newSettings);
+    setShowConfig(false);
+    new import_obsidian9.Notice(t("saveSettings", language) + "!");
+  };
+  const handleCopyText = async (text) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      new import_obsidian9.Notice(t("copied", language));
+    } catch {
+      new import_obsidian9.Notice(t("copyError", language));
+    }
+  };
+  const handleSaveResponseAsNote = async (content) => {
+    const now = /* @__PURE__ */ new Date();
+    const timestamp = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}_${String(now.getHours()).padStart(2, "0")}-${String(now.getMinutes()).padStart(2, "0")}`;
+    const fileName = `AI_Note_${timestamp}.md`;
+    try {
+      const execResult = await toolRegistry.executeTool(
+        app,
+        "save-response-note",
+        "create_note",
+        JSON.stringify({ path: fileName, content })
+      );
+      if (execResult.isError) {
+        new import_obsidian9.Notice(`${t("noteCreateError", language)} ${execResult.result}`);
+      } else {
+        const pathMatch = execResult.result.match(/'([^']+)'/);
+        const savedPath = pathMatch ? pathMatch[1] : fileName;
+        new import_obsidian9.Notice(`${t("noteCreatedSuccess", language)} '${savedPath}'`);
+      }
+    } catch (e) {
+      const err = e;
+      new import_obsidian9.Notice(`${t("noteCreateError", language)} ${err?.message || String(e)}`);
+    }
+  };
+  const executeQuery = async (queryText, historySlice, imagesPayload) => {
+    setLoading(true);
+    setActiveSteps([]);
+    setEditingMsgIdx(null);
+    const currentImages = imagesPayload || attachedImages;
+    const userMsg = {
+      role: "user",
+      content: queryText,
+      ...currentImages.length > 0 ? { images: currentImages } : {}
+    };
+    const updatedMessages = [...historySlice, userMsg];
+    const updatedSession = {
+      ...currentSession,
+      title: currentSession.messages.length === 0 ? queryText.substring(0, 30) + (queryText.length > 30 ? "..." : "") : currentSession.title,
+      messages: updatedMessages
+    };
+    setCurrentSession(updatedSession);
+    setAttachedImages([]);
+    try {
+      const isVisionRequired = currentImages.length > 0;
+      const activeModelToUse = isVisionRequired ? visionModel : executionMode === "quick" ? quickModel : model;
+      const result = await AgentLoop.run({
+        app,
+        config: {
+          provider: "openrouter",
+          endpointUrl,
+          apiKey,
+          model: activeModelToUse
+        },
+        userQuery: queryText,
+        chatHistory: historySlice,
+        images: currentImages,
+        executionMode,
+        onStepUpdate: (steps) => {
+          setActiveSteps(steps);
+        },
+        onConfirmationRequired: async (toolName, argsStr) => {
+          return new Promise((resolve) => {
+            setPendingConfirmation({ toolName, argsStr, resolve });
+          });
+        },
+        toolRegistry,
+        language,
+        settings
+      });
+      const assistantMsg = {
+        role: "assistant",
+        content: result.responseText,
+        promptTokens: result.promptTokens,
+        completionTokens: result.completionTokens
+      };
+      const finalMessages = [...updatedMessages, assistantMsg];
+      const finalSession = {
+        ...updatedSession,
+        messages: finalMessages,
+        steps: activeSteps
+      };
+      setCurrentSession(finalSession);
+      await ChatStore.saveSession(app, settings, finalSession);
+      await refreshSessionsList();
+      if (apiKey) {
+        void OpenRouterService.getKeyInfo(apiKey).then(setKeyInfo);
+      }
+    } catch (e) {
+      console.error("[NEI Agent Error]", e);
+      const err = e;
+      const errMessages = [...updatedMessages, { role: "assistant", content: `${t("agentError", language)} ${err?.message || String(e)}` }];
+      const errSession = {
+        ...updatedSession,
+        messages: errMessages
+      };
+      setCurrentSession(errSession);
+      await ChatStore.saveSession(app, settings, errSession);
+    } finally {
+      setLoading(false);
+      setActiveSteps([]);
+      setPendingConfirmation(null);
+    }
+  };
+  const handleSendMessage = () => {
+    if (!input.trim() || loading)
+      return;
+    const queryText = input.trim();
+    setInput("");
+    void executeQuery(queryText, currentSession.messages);
+  };
+  const handleRetryUserMessage = (msgIdx) => {
+    if (loading)
+      return;
+    const targetMsg = currentSession.messages[msgIdx];
+    if (targetMsg && targetMsg.role === "user" && targetMsg.content) {
+      const historyBefore = currentSession.messages.slice(0, msgIdx);
+      void executeQuery(targetMsg.content, historyBefore);
+    }
+  };
+  const handleStartEdit = (idx, content) => {
+    setEditingMsgIdx(idx);
+    setEditingText(content);
+  };
+  const handleSaveEdit = (idx) => {
+    if (!editingText.trim() || loading)
+      return;
+    const historyBefore = currentSession.messages.slice(0, idx);
+    void executeQuery(editingText.trim(), historyBefore);
+  };
+  const handleFileSelect = (e) => {
+    const files = e.target.files;
+    if (!files || files.length === 0)
+      return;
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const res = event.target?.result;
+        if (res) {
+          setAttachedImages((prev) => [...prev, res]);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+  return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "nei-chat-panel-container", children: [
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "nei-chat-header", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: "6px" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(
+          "button",
+          {
+            onClick: () => setShowSessionsDrawer(!showSessionsDrawer),
+            title: t("historyTooltip", language),
+            style: { background: "var(--background-secondary)", border: "1px solid var(--background-modifier-border)", borderRadius: "4px", cursor: "pointer", padding: "4px 8px", fontSize: "11px", fontWeight: "500" },
+            children: [
+              "\u{1F4C2} ",
+              formatSessionTitle(currentSession.title),
+              /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("span", { style: { fontSize: "10px", opacity: 0.7, marginLeft: "4px" }, children: [
+                "(",
+                currentSession.messages.length,
+                ")"
+              ] })
+            ]
+          }
+        ),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+          "button",
+          {
+            onClick: () => {
+              handleNewChat();
+            },
+            title: t("newChatTooltip", language),
+            style: { background: "var(--interactive-accent)", color: "var(--text-on-accent)", border: "none", borderRadius: "4px", cursor: "pointer", padding: "4px 8px", fontSize: "11px", fontWeight: "bold" },
+            children: t("newChat", language)
+          }
+        ),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+          "button",
+          {
+            onClick: () => {
+              void handleToggleTabMode();
+            },
+            title: isMainTab ? t("moveSidebarTitle", language) : t("moveTabTitle", language),
+            style: { background: "var(--background-secondary)", border: "1px solid var(--background-modifier-border)", borderRadius: "4px", cursor: "pointer", padding: "4px 6px", fontSize: "11px" },
+            children: isMainTab ? t("moveSidebar", language) : t("moveTab", language)
+          }
+        )
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: "4px" }, children: [
+        modelFreshness && enableTemporalAwareness && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(
+          "div",
+          {
+            className: "nei-freshness-indicator",
+            title: `Cutoff: ${modelFreshness.cutoff} (${modelFreshness.daysSince}d ago)`,
+            style: {
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "3px",
+              padding: "2px 6px",
+              borderRadius: "4px",
+              background: modelFreshness.isStale ? "var(--background-modifier-error-hover, #ff444433)" : "var(--background-modifier-success, #44ff4433)",
+              fontSize: "10px",
+              fontWeight: 600,
+              color: "var(--text-normal)"
+            },
+            children: [
+              modelFreshness.supportsWeb ? "\u{1F310}" : "\u{1F512}",
+              /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { children: modelFreshness.cutoff })
+            ]
+          }
+        ),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(
+          "select",
+          {
+            value: executionMode,
+            onChange: (e) => {
+              const val = e.target.value;
+              setExecutionMode(val);
+              void saveSettings({ ...settings, executionMode: val });
+            },
+            title: t("modeAutoTitle", language),
+            className: "nei-select-mode",
+            children: [
+              /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("option", { value: "auto", children: t("modeAuto", language) }),
+              /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("option", { value: "quick", children: t("modeQuick", language) }),
+              /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("option", { value: "agent", children: t("modeAgent", language) })
+            ]
+          }
+        ),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+          "button",
+          {
+            onClick: () => setShowConfig(!showConfig),
+            style: { background: "transparent", border: "none", cursor: "pointer", fontSize: "12px", color: "var(--text-muted)" },
+            title: t("settingsTooltip", language),
+            children: "\u2699\uFE0F"
+          }
+        )
+      ] })
+    ] }),
+    showSessionsDrawer && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { position: "absolute", top: "45px", left: "10px", right: "10px", zIndex: 100, background: "var(--background-primary)", border: "1px solid var(--background-modifier-border)", borderRadius: "8px", boxShadow: "0 4px 12px rgba(0,0,0,0.25)", maxHeight: "280px", overflowY: "auto", padding: "8px" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px", paddingBottom: "4px", borderBottom: "1px solid var(--background-modifier-border)" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { style: { fontWeight: "bold", fontSize: "12px", color: "var(--text-muted)" }, children: t("historyTitle", language) }),
+        sessionsList.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+          "button",
+          {
+            onClick: () => {
+              void handleClearAllSessions();
+            },
+            title: t("clearChats", language),
+            style: { background: "transparent", border: "none", color: "var(--text-error, #ff5555)", cursor: "pointer", fontSize: "11px", fontWeight: "500" },
+            children: confirmingClear ? `\u26A0\uFE0F ${t("confirmClearChats", language)}` : t("clearAll", language)
+          }
+        )
+      ] }),
+      sessionsList.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { style: { fontSize: "12px", color: "var(--text-muted)", padding: "6px" }, children: t("noSavedChats", language) }) : sessionsList.map((s) => /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(
+        "div",
+        {
+          onClick: () => {
+            void handleSelectSession(s.id);
+          },
+          style: {
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "6px 8px",
+            borderRadius: "4px",
+            cursor: "pointer",
+            fontSize: "12px",
+            background: s.id === currentSession.id ? "var(--background-secondary-alt)" : "transparent",
+            marginBottom: "2px"
+          },
+          children: [
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { style: { textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", maxWidth: "80%" }, children: formatSessionTitle(s.title) }),
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+              "button",
+              {
+                onClick: (e) => {
+                  void handleDeleteSession(e, s.id);
+                },
+                title: t("deleteChatTooltip", language),
+                style: { background: "transparent", border: "none", cursor: "pointer", fontSize: "12px", opacity: 0.6 },
+                children: "\u{1F5D1}\uFE0F"
+              }
+            )
+          ]
+        },
+        s.id
+      ))
+    ] }),
+    showConfig && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { flexShrink: 0, maxHeight: "55vh", overflowY: "auto", background: "var(--background-secondary)", padding: "12px", borderRadius: "8px", marginBottom: "12px", fontSize: "12px", display: "flex", flexDirection: "column", gap: "10px" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("label", { style: { display: "block", marginBottom: "4px", fontWeight: "500" }, children: "OpenRouter API Key:" }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+          "input",
+          {
+            type: "password",
+            value: apiKey,
+            onChange: (e) => setApiKey(e.target.value),
+            placeholder: "sk-or-v1-...",
+            style: { width: "100%", padding: "6px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-primary)", color: "var(--text-normal)" }
+          }
+        )
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("label", { style: { display: "block", marginBottom: "4px", fontWeight: "500" }, children: "API Endpoint URL:" }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+          "input",
+          {
+            type: "text",
+            value: endpointUrl,
+            onChange: (e) => setEndpointUrl(e.target.value),
+            placeholder: "https://openrouter.ai/api/v1",
+            style: { width: "100%", padding: "6px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-primary)", color: "var(--text-normal)" }
+          }
+        )
+      ] }),
+      keyInfo && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { background: "var(--background-primary)", padding: "6px 10px", borderRadius: "6px", fontSize: "11px", display: "flex", justifyContent: "space-between", alignItems: "center" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("span", { children: [
+          "\u{1F4B0} ",
+          t("keyUsage", language),
+          " ",
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("strong", { children: [
+            "$",
+            keyInfo.usage.toFixed(4)
+          ] })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { children: keyInfo.isFreeTier ? "\u{1F7E2} Free Tier" : "\u{1F4B3} Paid Tier" })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { background: "var(--background-primary)", padding: "8px 10px", borderRadius: "6px", border: "1px solid var(--background-modifier-border)", display: "flex", flexDirection: "column", gap: "6px" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { style: { fontWeight: "bold", fontSize: "11px" }, children: t("modelCategories", language) }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("primaryModel", language) }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+            "select",
+            {
+              value: model,
+              onChange: (e) => handleSelectModel(e.target.value),
+              style: { width: "100%", padding: "4px", borderRadius: "4px", fontSize: "11px", background: "var(--background-secondary)", color: "var(--text-normal)", border: "1px solid var(--background-modifier-border)" },
+              children: customModels.map((m) => /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("option", { value: m, children: m }, m))
+            }
+          )
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("visionModel", language) }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+            "select",
+            {
+              value: visionModel,
+              onChange: (e) => {
+                setVisionModel(e.target.value);
+                void saveSettings({ ...settings, visionModel: e.target.value });
+              },
+              style: { width: "100%", padding: "4px", borderRadius: "4px", fontSize: "11px", background: "var(--background-secondary)", color: "var(--text-normal)", border: "1px solid var(--background-modifier-border)" },
+              children: customModels.map((m) => /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("option", { value: m, children: m }, m))
+            }
+          )
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("quickModel", language) }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+            "select",
+            {
+              value: quickModel,
+              onChange: (e) => {
+                setQuickModel(e.target.value);
+                void saveSettings({ ...settings, quickModel: e.target.value });
+              },
+              style: { width: "100%", padding: "4px", borderRadius: "4px", fontSize: "11px", background: "var(--background-secondary)", color: "var(--text-normal)", border: "1px solid var(--background-modifier-border)" },
+              children: customModels.map((m) => /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("option", { value: m, children: m }, m))
+            }
+          )
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)", fontWeight: "bold", marginTop: "4px" }, children: [
+            "\u{1F310} ",
+            t("languageLabel", language)
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(
+            "select",
+            {
+              value: language,
+              onChange: (e) => {
+                const langVal = e.target.value;
+                setLanguage(langVal);
+                void saveSettings({ ...settings, language: langVal });
+              },
+              style: { width: "100%", padding: "4px", borderRadius: "4px", fontSize: "11px", background: "var(--background-secondary)", color: "var(--text-normal)", border: "1px solid var(--background-modifier-border)" },
+              children: [
+                /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("option", { value: "auto", children: [
+                  "\u{1F310} ",
+                  t("autoDetect", language)
+                ] }),
+                /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("option", { value: "ru", children: "\u{1F310} RU \u2014 \u0420\u0443\u0441\u0441\u043A\u0438\u0439" }),
+                /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("option", { value: "en", children: "\u{1F310} EN \u2014 English" }),
+                /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("option", { value: "es", children: "\u{1F310} ES \u2014 Espa\xF1ol" }),
+                /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("option", { value: "de", children: "\u{1F310} DE \u2014 Deutsch" }),
+                /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("option", { value: "fr", children: "\u{1F310} FR \u2014 Fran\xE7ais" }),
+                /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("option", { value: "zh", children: "\u{1F310} ZH \u2014 \u4E2D\u6587" }),
+                /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("option", { value: "ja", children: "\u{1F310} JA \u2014 \u65E5\u672C\u8A9E" }),
+                /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("option", { value: "pt", children: "\u{1F310} PT \u2014 Portugu\xEAs" }),
+                /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("option", { value: "ko", children: "\u{1F310} KO \u2014 \uD55C\uAD6D\uC5B4" })
+              ]
+            }
+          )
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)", fontWeight: "bold", marginTop: "4px" }, children: [
+            "\u{1F4C1} ",
+            t("defaultNoteFolderLabel", language)
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+            "input",
+            {
+              type: "text",
+              value: defaultNoteFolder,
+              onChange: (e) => {
+                const folderVal = e.target.value;
+                setDefaultNoteFolder(folderVal);
+                if (settingsSaveTimerRef.current)
+                  clearTimeout(settingsSaveTimerRef.current);
+                settingsSaveTimerRef.current = setTimeout(() => {
+                  void saveSettings({ ...settings, defaultNoteFolder: folderVal });
+                }, 300);
+              },
+              placeholder: t("defaultNoteFolderPlaceholder", language),
+              style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" }
+            }
+          )
+        ] })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { background: "var(--background-primary)", padding: "8px 10px", borderRadius: "6px", border: "1px solid var(--background-modifier-border)" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("strong", { style: { fontSize: "11px" }, children: [
+            t("parameters", language),
+            ": ",
+            model
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+            "button",
+            {
+              onClick: () => {
+                void verifyActiveModel(model, apiKey);
+              },
+              style: { background: "transparent", border: "none", cursor: "pointer", fontSize: "11px", color: "var(--interactive-accent)" },
+              children: verifyingModel ? t("checkingApi", language) : t("checkApi", language)
+            }
+          )
+        ] }),
+        activeModelDetails ? /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { fontSize: "11px", color: "var(--text-muted)", display: "flex", flexDirection: "column", gap: "2px" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { children: [
+            "\u2022 ",
+            t("contextLength", language),
+            " ",
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("strong", { children: [
+              activeModelDetails.contextLength ? activeModelDetails.contextLength.toLocaleString() : "N/A",
+              " ",
+              t("tokens", language)
+            ] })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { children: [
+            "\u2022 ",
+            t("toolCallingSupport", language),
+            " ",
+            activeModelDetails.supportsTools ? "\u2705" : "\u274C"
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { children: [
+            "\u2022 ",
+            t("visionSupport", language),
+            " ",
+            activeModelDetails.supportsVision ? "\u2705" : "\u274C"
+          ] })
+        ] }) : /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { style: { fontSize: "11px", color: "var(--text-muted)" }, children: verifyingModel ? t("checkingApi", language) : t("infoUnavailable", language) })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { background: "var(--background-primary)", padding: "8px 10px", borderRadius: "6px", border: "1px solid var(--background-modifier-border)" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("label", { style: { display: "block", marginBottom: "6px", fontWeight: "bold", fontSize: "11px" }, children: [
+          t("modelsList", language),
+          ":"
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { style: { display: "flex", flexDirection: "column", gap: "4px", marginBottom: "8px", maxHeight: "120px", overflowY: "auto" }, children: customModels.map((m) => /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "3px 6px", background: "var(--background-secondary)", borderRadius: "4px", fontSize: "11px" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { style: { fontFamily: "monospace", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }, children: m }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+            "button",
+            {
+              onClick: (e) => handleDeleteModel(e, m),
+              title: t("deleteModelTooltip", language),
+              style: { background: "transparent", border: "none", cursor: "pointer", color: "var(--text-error, #ff5555)", fontSize: "11px" },
+              children: "\u2715"
+            }
+          )
+        ] }, m)) }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { display: "flex", gap: "4px" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+            "input",
+            {
+              type: "text",
+              value: newModelInput,
+              onChange: (e) => setNewModelInput(e.target.value),
+              placeholder: t("addModelPlaceholder", language),
+              style: { flex: 1, padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-primary)", color: "var(--text-normal)" }
+            }
+          ),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+            "button",
+            {
+              onClick: handleAddModel,
+              style: { padding: "4px 8px", fontSize: "11px", background: "var(--interactive-accent)", color: "var(--text-on-accent)", border: "none", borderRadius: "4px", cursor: "pointer", fontWeight: "bold" },
+              children: t("addBtn", language)
+            }
+          )
+        ] })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { background: "var(--background-primary)", padding: "8px 10px", borderRadius: "6px", border: "1px solid var(--background-modifier-border)", display: "flex", flexDirection: "column", gap: "6px" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { style: { fontWeight: "bold", fontSize: "11px" }, children: "\u{1F4C2} Storage Paths & Limits" }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("chatsFolderLabel", language) }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("input", { type: "text", value: chatsFolder, onChange: (e) => setChatsFolder(e.target.value), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("memoryFileLabel", language) }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("input", { type: "text", value: memoryFile, onChange: (e) => setMemoryFile(e.target.value), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("skillsFolderLabel", language) }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("input", { type: "text", value: skillsFolder, onChange: (e) => setSkillsFolder(e.target.value), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { display: "flex", gap: "8px" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { flex: 1 }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("maxAgentIterationsLabel", language) }),
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("input", { type: "number", value: maxAgentIterations, onChange: (e) => setMaxAgentIterations(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { flex: 1 }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("maxPrefetchedNotesLabel", language) }),
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("input", { type: "number", value: maxPrefetchedNotes, onChange: (e) => setMaxPrefetchedNotes(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
+          ] })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { display: "flex", gap: "8px" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { flex: 1 }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("prefetchSnippetLengthLabel", language) }),
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("input", { type: "number", value: prefetchSnippetLength, onChange: (e) => setPrefetchSnippetLength(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { flex: 1 }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("ragResultLimitLabel", language) }),
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("input", { type: "number", value: ragResultLimit, onChange: (e) => setRagResultLimit(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
+          ] })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("label", { style: { fontSize: "11px", display: "flex", alignItems: "center", gap: "6px", color: "var(--text-normal)", cursor: "pointer", marginTop: "4px" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("input", { type: "checkbox", checked: confirmObsidianCommands, onChange: (e) => setConfirmObsidianCommands(e.target.checked) }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { children: t("confirmObsidianCommandsLabel", language) })
+        ] }) })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { background: "var(--background-primary)", padding: "8px 10px", borderRadius: "6px", border: "1px solid var(--background-modifier-border)", display: "flex", flexDirection: "column", gap: "6px" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { style: { fontWeight: "bold", fontSize: "11px" }, children: "\u{1F9E0} Temporal Intelligence & Smart Routing" }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("label", { style: { fontSize: "11px", display: "flex", alignItems: "center", gap: "6px", color: "var(--text-normal)", cursor: "pointer" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("input", { type: "checkbox", checked: enableTemporalAwareness, onChange: (e) => setEnableTemporalAwareness(e.target.checked) }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { children: t("enableTemporalAwarenessLabel", language) })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("label", { style: { fontSize: "11px", display: "flex", alignItems: "center", gap: "6px", color: "var(--text-normal)", cursor: "pointer" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("input", { type: "checkbox", checked: enableAdaptivePrefetch, onChange: (e) => setEnableAdaptivePrefetch(e.target.checked) }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { children: t("enableAdaptivePrefetchLabel", language) })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("label", { style: { fontSize: "11px", display: "flex", alignItems: "center", gap: "6px", color: "var(--text-normal)", cursor: "pointer" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("input", { type: "checkbox", checked: enableFreshnessSuggestions, onChange: (e) => setEnableFreshnessSuggestions(e.target.checked) }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { children: t("enableFreshnessSuggestionsLabel", language) })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("label", { style: { fontSize: "11px", display: "flex", alignItems: "center", gap: "6px", color: "var(--text-normal)", cursor: "pointer" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("input", { type: "checkbox", checked: enableSmartToolFiltering, onChange: (e) => setEnableSmartToolFiltering(e.target.checked) }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { children: t("enableSmartToolFilteringLabel", language) })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { display: "flex", gap: "8px", marginTop: "4px" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { flex: 1 }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: [
+              t("intentStaleQueryWeightLabel", language),
+              " (",
+              intentStaleQueryWeight,
+              ")"
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("input", { type: "number", step: "0.1", value: intentStaleQueryWeight, onChange: (e) => setIntentStaleQueryWeight(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { flex: 1 }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: [
+              t("intentFreshnessWeightLabel", language),
+              " (",
+              intentFreshnessWeight,
+              ")"
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("input", { type: "number", step: "0.1", value: intentFreshnessWeight, onChange: (e) => setIntentFreshnessWeight(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
+          ] })
+        ] })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { background: "var(--background-primary)", padding: "8px 10px", borderRadius: "6px", border: "1px solid var(--background-modifier-border)", display: "flex", flexDirection: "column", gap: "6px" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { style: { fontWeight: "bold", fontSize: "11px" }, children: "\u{1F3AF} Intent Router Scoring Weights" }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { display: "flex", gap: "8px" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { flex: 1 }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: [
+              "Threshold (",
+              intentRoutingThreshold,
+              ")"
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("input", { type: "number", step: "0.1", value: intentRoutingThreshold, onChange: (e) => setIntentRoutingThreshold(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { flex: 1 }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: [
+              "Creation Wt (",
+              intentCreationWeight,
+              ")"
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("input", { type: "number", step: "0.1", value: intentCreationWeight, onChange: (e) => setIntentCreationWeight(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
+          ] })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { display: "flex", gap: "8px" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { flex: 1 }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: [
+              "Deletion Wt (",
+              intentDeletionWeight,
+              ")"
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("input", { type: "number", step: "0.1", value: intentDeletionWeight, onChange: (e) => setIntentDeletionWeight(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { flex: 1 }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: [
+              "Question Wt (",
+              intentQuestionWeight,
+              ")"
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("input", { type: "number", step: "0.1", value: intentQuestionWeight, onChange: (e) => setIntentQuestionWeight(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
+          ] })
+        ] })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+        "button",
+        {
+          onClick: () => {
+            void handleSaveConfig();
+          },
+          style: { marginTop: "4px", padding: "6px 12px", background: "var(--interactive-accent)", color: "var(--text-on-accent)", border: "none", borderRadius: "4px", cursor: "pointer", fontWeight: "bold" },
+          children: t("saveSettings", language)
+        }
+      )
+    ] }),
+    showFreshnessSuggestion && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "nei-suggestion-banner", style: {
+      background: "var(--background-secondary-alt)",
+      border: "1px solid var(--interactive-accent)",
+      borderRadius: "6px",
+      padding: "8px 12px",
+      margin: "0 10px 8px 10px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: "8px"
+    }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("span", { style: { fontSize: "11px" }, children: [
+        "\u26A1 ",
+        showFreshnessSuggestion.message
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { display: "flex", gap: "6px" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("button", { onClick: showFreshnessSuggestion.onEnableWeb, style: { fontSize: "11px", padding: "3px 8px", background: "var(--interactive-accent)", color: "var(--text-on-accent)", border: "none", borderRadius: "4px", cursor: "pointer", fontWeight: "bold" }, children: [
+          "\u{1F310} ",
+          t("agentMode", language)
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("button", { onClick: showFreshnessSuggestion.onDismiss, style: { fontSize: "11px", padding: "3px 8px", background: "transparent", border: "1px solid var(--background-modifier-border)", color: "var(--text-muted)", borderRadius: "4px", cursor: "pointer" }, children: "\u2715" })
+      ] })
+    ] }),
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "nei-chat-messages-container", children: [
+      currentSession.messages.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { textAlign: "center", color: "var(--text-muted)", marginTop: "24px", padding: "0 12px", fontSize: "13px" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { style: { fontSize: "15px", fontWeight: "bold", marginBottom: "8px", color: "var(--text-normal)" }, children: t("welcomeGreeting", language) }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { style: { fontSize: "12px", marginBottom: "16px", opacity: 0.85 }, children: t("welcomeSubText", language) }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { textAlign: "left", display: "inline-block", fontSize: "12px", lineHeight: "1.8", background: "var(--background-secondary)", padding: "12px 16px", borderRadius: "10px", border: "1px solid var(--background-modifier-border)", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }, children: [
+          "\u2022 ",
+          t("featureNotes", language),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("br", {}),
+          "\u2022 ",
+          t("featureRouting", language),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("br", {}),
+          "\u2022 ",
+          t("featureVision", language),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("br", {}),
+          "\u2022 ",
+          t("featureTokens", language)
+        ] })
+      ] }),
+      currentSession.messages.map((msg, idx) => /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+        "div",
+        {
+          className: "nei-chat-bubble",
+          style: {
+            alignSelf: msg.role === "user" ? "flex-end" : "flex-start",
+            maxWidth: "92%",
+            padding: "10px 14px",
+            borderRadius: "12px",
+            background: msg.role === "user" ? "var(--interactive-accent)" : "var(--background-secondary)",
+            color: msg.role === "user" ? "var(--text-on-accent)" : "var(--text-normal)",
+            fontSize: "13px",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+            position: "relative"
+          },
+          children: msg.role === "user" ? editingMsgIdx === idx ? (
+            /* Inline Edit Form for User Message */
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { display: "flex", flexDirection: "column", gap: "6px", minWidth: "220px" }, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+                "textarea",
+                {
+                  value: editingText,
+                  onChange: (e) => setEditingText(e.target.value),
+                  style: { width: "100%", minHeight: "60px", padding: "6px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-primary)", color: "var(--text-normal)", fontSize: "12px" }
+                }
+              ),
+              /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { display: "flex", gap: "6px", justifyContent: "flex-end" }, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+                  "button",
+                  {
+                    onClick: () => setEditingMsgIdx(null),
+                    style: { padding: "3px 8px", fontSize: "11px", background: "transparent", border: "1px solid var(--background-modifier-border)", color: "inherit", borderRadius: "4px", cursor: "pointer" },
+                    children: t("cancelBtn", language)
+                  }
+                ),
+                /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+                  "button",
+                  {
+                    onClick: () => handleSaveEdit(idx),
+                    style: { padding: "3px 8px", fontSize: "11px", background: "var(--background-primary)", color: "var(--interactive-accent)", border: "none", borderRadius: "4px", cursor: "pointer", fontWeight: "bold" },
+                    children: t("saveResendBtn", language)
+                  }
+                )
+              ] })
+            ] })
+          ) : (
+            /* Standard User Message Display */
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { children: [
+              msg.images && msg.images.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { style: { display: "flex", gap: "4px", marginBottom: "6px", flexWrap: "wrap" }, children: msg.images.map((img, i) => /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("img", { src: img, style: { width: "60px", height: "60px", borderRadius: "4px", objectFit: "cover" } }, i)) }),
+              /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { style: { whiteSpace: "pre-wrap" }, children: msg.content }),
+              /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { display: "flex", gap: "6px", marginTop: "6px", justifyContent: "flex-end", fontSize: "11px", flexWrap: "wrap", maxWidth: "100%", opacity: 0.9 }, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+                  "button",
+                  {
+                    onClick: () => {
+                      void handleCopyText(msg.content || "");
+                    },
+                    title: t("copyText", language),
+                    style: { background: "transparent", border: "none", color: "inherit", cursor: "pointer", padding: "2px 4px", borderRadius: "4px", fontSize: "11px", whiteSpace: "nowrap" },
+                    children: t("copyText", language)
+                  }
+                ),
+                /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+                  "button",
+                  {
+                    onClick: () => handleStartEdit(idx, msg.content || ""),
+                    title: t("editText", language),
+                    style: { background: "transparent", border: "none", color: "inherit", cursor: "pointer", padding: "2px 4px", borderRadius: "4px", fontSize: "11px", whiteSpace: "nowrap" },
+                    children: t("editText", language)
+                  }
+                ),
+                /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+                  "button",
+                  {
+                    onClick: () => handleRetryUserMessage(idx),
+                    title: t("retry", language),
+                    disabled: loading,
+                    style: { background: "transparent", border: "none", color: "inherit", cursor: "pointer", padding: "2px 4px", borderRadius: "4px", fontSize: "11px", whiteSpace: "nowrap" },
+                    children: t("retry", language)
+                  }
+                )
+              ] })
+            ] })
+          ) : (
+            /* Assistant Message Display */
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { minWidth: 0 }, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(ObsidianMarkdown, { markdown: msg.content || "", app }),
+              (msg.promptTokens !== void 0 || msg.completionTokens !== void 0) && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { display: "flex", gap: "6px", marginTop: "6px", fontSize: "10px", color: "var(--text-muted)", borderTop: "1px solid var(--background-modifier-border)", paddingTop: "4px", flexWrap: "wrap", maxWidth: "100%" }, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("span", { style: { background: "var(--background-primary)", padding: "2px 6px", borderRadius: "4px" }, children: [
+                  t("inputTokens", language),
+                  " ",
+                  msg.promptTokens || 0,
+                  " ",
+                  t("tokens", language)
+                ] }),
+                /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("span", { style: { background: "var(--background-primary)", padding: "2px 6px", borderRadius: "4px" }, children: [
+                  t("outputTokens", language),
+                  " ",
+                  msg.completionTokens || 0,
+                  " ",
+                  t("tokens", language)
+                ] })
+              ] }),
+              /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { display: "flex", gap: "6px", marginTop: "8px", alignItems: "center", flexWrap: "wrap", fontSize: "11px", maxWidth: "100%" }, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+                  "button",
+                  {
+                    onClick: () => {
+                      void handleCopyText(msg.content || "");
+                    },
+                    style: { background: "var(--background-primary)", border: "1px solid var(--background-modifier-border)", borderRadius: "4px", cursor: "pointer", padding: "3px 8px", color: "var(--text-muted)", fontSize: "11px", whiteSpace: "nowrap", maxWidth: "100%" },
+                    children: t("copyText", language)
+                  }
+                ),
+                /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+                  "button",
+                  {
+                    onClick: () => {
+                      void handleBranchFromMessage(idx);
+                    },
+                    style: { background: "var(--background-primary)", border: "1px solid var(--background-modifier-border)", borderRadius: "4px", cursor: "pointer", padding: "3px 8px", color: "var(--text-muted)", fontSize: "11px", whiteSpace: "nowrap", maxWidth: "100%" },
+                    title: "Fork conversation from this message",
+                    children: "\u{1F33F} Branch"
+                  }
+                ),
+                msg.content && msg.content.length > 50 && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+                  "button",
+                  {
+                    onClick: () => {
+                      void handleSaveResponseAsNote(msg.content || "");
+                    },
+                    style: { background: "var(--background-primary)", border: "1px solid var(--background-modifier-border)", borderRadius: "4px", cursor: "pointer", padding: "3px 8px", color: "var(--text-muted)", fontSize: "11px", whiteSpace: "nowrap", maxWidth: "100%" },
+                    children: t("saveNote", language)
+                  }
+                )
+              ] })
+            ] })
+          )
+        },
+        idx
+      )),
+      activeSteps.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { background: "var(--background-secondary-alt)", border: "1px solid var(--background-modifier-border)", borderRadius: "8px", padding: "8px 12px", fontSize: "11px", display: "flex", flexDirection: "column", gap: "4px" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { fontWeight: "bold", color: "var(--text-muted)", marginBottom: "2px" }, children: [
+          "\u26A1 ",
+          t("agentReasoningLog", language)
+        ] }),
+        activeSteps.map((step) => /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { display: "flex", alignItems: "flex-start", gap: "6px", opacity: step.status === "running" ? 1 : 0.8 }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { children: step.status === "running" ? "\u23F3" : step.status === "completed" ? "\u2705" : "\u274C" }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { flex: 1 }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("strong", { style: { color: "var(--text-normal)" }, children: step.title }),
+            step.detail && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { style: { color: "var(--text-muted)", fontSize: "10px", marginTop: "2px", fontFamily: "monospace", whiteSpace: "pre-wrap", maxHeight: "80px", overflowY: "auto" }, children: step.detail })
+          ] })
+        ] }, step.id))
+      ] }),
+      pendingConfirmation && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { background: "var(--background-secondary)", border: "2px solid var(--interactive-accent)", borderRadius: "8px", padding: "12px", marginTop: "6px", fontSize: "12px" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { fontWeight: "bold", marginBottom: "6px", color: "var(--text-normal)" }, children: [
+          "\u26A0\uFE0F ",
+          t("actionConfirmation", language)
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { marginBottom: "4px" }, children: [
+          t("agentWantsExecute", language),
+          ": ",
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("code", { children: pendingConfirmation.toolName })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { style: { background: "var(--background-primary)", padding: "6px", borderRadius: "4px", fontFamily: "monospace", fontSize: "11px", marginBottom: "10px", whiteSpace: "pre-wrap", maxHeight: "100px", overflowY: "auto" }, children: pendingConfirmation.argsStr }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { display: "flex", gap: "8px", justifyContent: "flex-end" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+            "button",
+            {
+              onClick: () => {
+                pendingConfirmation.resolve(false);
+                setPendingConfirmation(null);
+              },
+              style: { padding: "4px 12px", background: "transparent", border: "1px solid var(--background-modifier-border)", borderRadius: "4px", cursor: "pointer" },
+              children: t("cancelBtn", language)
+            }
+          ),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+            "button",
+            {
+              onClick: () => {
+                pendingConfirmation.resolve(true);
+                setPendingConfirmation(null);
+              },
+              style: { padding: "4px 12px", background: "var(--interactive-accent)", color: "var(--text-on-accent)", border: "none", borderRadius: "4px", cursor: "pointer", fontWeight: "bold" },
+              children: t("allowBtn", language)
+            }
+          )
+        ] })
+      ] })
+    ] }),
+    attachedImages.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { style: { flexShrink: 0, display: "flex", gap: "6px", padding: "6px", background: "var(--background-secondary)", borderRadius: "6px", marginBottom: "6px", flexWrap: "wrap" }, children: attachedImages.map((img, idx) => /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { position: "relative" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("img", { src: img, style: { width: "48px", height: "48px", objectFit: "cover", borderRadius: "4px" } }),
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+        "button",
+        {
+          onClick: () => setAttachedImages((prev) => prev.filter((_, i) => i !== idx)),
+          style: { position: "absolute", top: "-4px", right: "-4px", background: "var(--text-error, #ff5555)", color: "#fff", border: "none", borderRadius: "50%", width: "16px", height: "16px", fontSize: "10px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" },
+          children: "\u2715"
+        }
+      )
+    ] }, idx)) }),
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "nei-chat-input-container", children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { display: "flex", gap: "6px", alignItems: "flex-end" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(
+        "label",
+        {
+          title: t("attachTooltip", language),
+          style: { padding: "8px 10px", background: "var(--background-secondary)", border: "1px solid var(--background-modifier-border)", borderRadius: "6px", cursor: "pointer", fontSize: "14px", marginBottom: "2px" },
+          children: [
+            "\u{1F4CE}",
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+              "input",
+              {
+                type: "file",
+                accept: "image/*,.txt,.md,.json,.js,.ts",
+                multiple: true,
+                onChange: handleFileSelect,
+                style: { display: "none" }
+              }
+            )
+          ]
+        }
+      ),
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+        "textarea",
+        {
+          value: input,
+          onChange: (e) => {
+            setInput(e.target.value);
+            const target = e.target;
+            target.setCssStyles({
+              height: `${Math.min(target.scrollHeight, 280)}px`
+            });
+          },
+          onKeyDown: (e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              handleSendMessage();
+            }
+          },
+          placeholder: t("inputPlaceholder", language),
+          disabled: loading,
+          rows: 3,
+          style: {
+            flex: 1,
+            minHeight: "60px",
+            maxHeight: "280px",
+            padding: "8px 10px",
+            borderRadius: "6px",
+            border: "1px solid var(--background-modifier-border)",
+            background: "var(--background-primary)",
+            color: "var(--text-normal)",
+            resize: "vertical",
+            fontSize: "13px",
+            lineHeight: "1.4",
+            fontFamily: "inherit"
+          }
+        }
+      ),
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+        "button",
+        {
+          onClick: handleSendMessage,
+          disabled: loading || !input.trim() && attachedImages.length === 0,
+          style: { padding: "0 14px", height: "60px", background: "var(--interactive-accent)", color: "var(--text-on-accent)", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px", marginBottom: "2px" },
+          children: loading ? "..." : "\u27A4"
+        }
+      )
+    ] }) })
+  ] });
+};
+var ChatPanel = (props) => /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(ErrorBoundary, { children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(ChatPanelInner, { ...props }) });
+
+// src/views/ChatView.ts
+var VIEW_TYPE_NEI_CHAT = "nei-chat-view";
+var NeiChatView = class extends import_obsidian10.ItemView {
+  constructor(leaf, plugin) {
+    super(leaf);
+    this.root = null;
+    this.plugin = plugin;
+  }
+  getViewType() {
+    return VIEW_TYPE_NEI_CHAT;
+  }
+  getDisplayText() {
+    return "NEI AI Chat";
+  }
+  getIcon() {
+    return "bot";
+  }
+  async onOpen() {
+    const container = this.contentEl;
+    container.empty();
+    container.addClass("nei-chat-view-container");
+    const rootEl = container.createDiv({ cls: "nei-chat-view-root" });
+    this.root = ReactDOM.createRoot(rootEl);
+    this.root.render(
+      React3.createElement(ChatPanel, {
+        app: this.app,
+        viewLeaf: this.leaf,
+        settings: this.plugin.settings,
+        saveSettings: async (newSettings) => {
+          this.plugin.settings = newSettings;
+          await this.plugin.saveSettings();
+        },
+        toolRegistry: this.plugin.toolRegistry
+      })
+    );
+  }
+  async onClose() {
+    if (this.root) {
+      this.root.unmount();
+    }
+    const isMainTab = this.leaf.getRoot() === this.app.workspace.rootSplit;
+    if (isMainTab) {
+      window.setTimeout(() => {
+        const existing = this.app.workspace.getLeavesOfType(VIEW_TYPE_NEI_CHAT);
+        if (existing.length === 0) {
+          void this.plugin.activateView();
+        }
+      }, 100);
+    }
+  }
+};
+
+// src/services/tools/vaultTools.ts
+var import_obsidian12 = require("obsidian");
+
+// src/utils/pathUtils.ts
+var import_obsidian11 = require("obsidian");
+function getNoteSavePath(settings, requestedPath) {
+  const defaultFolder = settings.defaultNoteFolder.trim();
+  if (defaultFolder && !requestedPath.startsWith(defaultFolder + "/")) {
+    return (0, import_obsidian11.normalizePath)(`${defaultFolder}/${requestedPath}`);
+  }
+  return (0, import_obsidian11.normalizePath)(requestedPath);
+}
+
+// src/services/tools/vaultTools.ts
 var vaultToolDefinitions = [
   {
     type: "function",
@@ -24587,7 +27609,7 @@ var vaultToolDefinitions = [
         properties: {
           path: {
             type: "string",
-            description: "\u041F\u0443\u0442\u044C \u043A \u0444\u0430\u0439\u043B\u0443 \u0438\u043B\u0438 \u0438\u043C\u044F \u0437\u0430\u043C\u0435\u0442\u043A\u0438 (\u043D\u0430\u043F\u0440\u0438\u043C\u0435\u0440, 'tasks/task1.md' \u0438\u043B\u0438 'task1')"
+            description: "\u041F\u0443\u0442\u044C \u043A \u0444\u0430\u0439\u043B\u0443 \u0438\u043B\u0438 \u0438\u043C\u044F \u0437\u0430\u043C\u0435\u0442\u043A\u0438 (\u043D\u0430\u043F\u0440\u0438\u043C\u0435\u0440, 'folder/note.md' \u0438\u043B\u0438 'note.md')"
           }
         },
         required: ["path"]
@@ -24615,13 +27637,13 @@ var vaultToolDefinitions = [
     type: "function",
     function: {
       name: "get_folder_notes",
-      description: "\u041F\u0430\u043A\u0435\u0442\u043D\u043E \u043F\u0440\u043E\u0447\u0438\u0442\u0430\u0442\u044C \u0438 \u043F\u0440\u043E\u0430\u043D\u0430\u043B\u0438\u0437\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u0412\u0421\u0415 \u0437\u0430\u043C\u0435\u0442\u043A\u0438 \u0432 \u0443\u043A\u0430\u0437\u0430\u043D\u043D\u043E\u0439 \u043F\u0430\u043F\u043A\u0435 (\u043D\u0430\u043F\u0440\u0438\u043C\u0435\u0440, 'tasks' \u0438\u043B\u0438 'Projects'). \u041E\u0442\u043B\u0438\u0447\u043D\u044B\u0439 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442 \u0434\u043B\u044F \u0432\u044B\u0436\u0438\u043C\u043E\u043A \u0438 \u043E\u0431\u0437\u043E\u0440\u0430 \u043F\u0440\u043E\u0435\u043A\u0442\u043E\u0432.",
+      description: "\u041F\u0430\u043A\u0435\u0442\u043D\u043E \u043F\u0440\u043E\u0447\u0438\u0442\u0430\u0442\u044C \u0438 \u043F\u0440\u043E\u0430\u043D\u0430\u043B\u0438\u0437\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u0412\u0421\u0415 \u0437\u0430\u043C\u0435\u0442\u043A\u0438 \u0432 \u0443\u043A\u0430\u0437\u0430\u043D\u043D\u043E\u0439 \u043F\u0430\u043F\u043A\u0435. \u041E\u0442\u043B\u0438\u0447\u043D\u044B\u0439 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442 \u0434\u043B\u044F \u043E\u0431\u0437\u043E\u0440\u0430 \u0441\u0442\u0440\u0443\u043A\u0442\u0443\u0440 \u043F\u0430\u043F\u043E\u043A.",
       parameters: {
         type: "object",
         properties: {
           folderPath: {
             type: "string",
-            description: "\u041E\u0442\u043D\u043E\u0441\u0438\u0442\u0435\u043B\u044C\u043D\u044B\u0439 \u043F\u0443\u0442\u044C \u043A \u043F\u0430\u043F\u043A\u0435 \u0432 \u0432\u0430\u0443\u043B\u0442\u0435 (\u043D\u0430\u043F\u0440\u0438\u043C\u0435\u0440, 'tasks' \u0438\u043B\u0438 'Notes/Study')"
+            description: "\u041E\u0442\u043D\u043E\u0441\u0438\u0442\u0435\u043B\u044C\u043D\u044B\u0439 \u043F\u0443\u0442\u044C \u043A \u043F\u0430\u043F\u043A\u0435 \u0432 \u0432\u0430\u0443\u043B\u0442\u0435 (\u043D\u0430\u043F\u0440\u0438\u043C\u0435\u0440, 'Folder/SubFolder' \u0438\u043B\u0438 \u043F\u0443\u0441\u0442\u0430\u044F \u0441\u0442\u0440\u043E\u043A\u0430 \u0434\u043B\u044F \u043A\u043E\u0440\u043D\u044F)"
           },
           includeContent: {
             type: "string",
@@ -24841,7 +27863,7 @@ var vaultToolDefinitions = [
   }
 ];
 function findFile(app, rawPath) {
-  let cleanPath = (0, import_obsidian2.normalizePath)(rawPath.trim());
+  let cleanPath = (0, import_obsidian12.normalizePath)(rawPath.trim());
   if (!cleanPath.endsWith(".md")) {
     const fileWithMd = app.vault.getFileByPath(cleanPath + ".md");
     if (fileWithMd)
@@ -24858,18 +27880,35 @@ function findFile(app, rawPath) {
   return matched || null;
 }
 function findFolder(app, rawPath) {
-  let cleanPath = (0, import_obsidian2.normalizePath)(rawPath.trim());
+  let cleanPath = (0, import_obsidian12.normalizePath)(rawPath.trim());
   if (!cleanPath || cleanPath === "/" || cleanPath === ".") {
     return app.vault.getRoot();
   }
   const folder = app.vault.getFolderByPath(cleanPath);
   if (folder)
     return folder;
-  const allFolders = app.vault.getAllLoadedFiles().filter((f) => f instanceof import_obsidian2.TFolder);
+  const allFolders = app.vault.getAllLoadedFiles().filter((f) => f instanceof import_obsidian12.TFolder);
   const matched = allFolders.find(
     (f) => f.name.toLowerCase() === cleanPath.toLowerCase() || f.path.toLowerCase() === cleanPath.toLowerCase() || f.path.toLowerCase().endsWith("/" + cleanPath.toLowerCase())
   );
   return matched || null;
+}
+async function ensureFolderExists(app, folderPath) {
+  const cleanPath = (0, import_obsidian12.normalizePath)(folderPath.trim());
+  if (!cleanPath || cleanPath === "." || cleanPath === "/")
+    return;
+  const parts = cleanPath.split("/").filter(Boolean);
+  let currentPath = "";
+  for (const part of parts) {
+    currentPath = currentPath ? `${currentPath}/${part}` : part;
+    const folder = app.vault.getAbstractFileByPath(currentPath);
+    if (!folder) {
+      try {
+        await app.vault.createFolder(currentPath);
+      } catch {
+      }
+    }
+  }
 }
 var vaultExecutors = {
   read_note: async (app, rawArgs) => {
@@ -24920,9 +27959,9 @@ ${content}`);
     const markdownFiles = [];
     const collectFiles = (f) => {
       for (const child of f.children) {
-        if (child instanceof import_obsidian2.TFile && child.extension === "md") {
+        if (child instanceof import_obsidian12.TFile && child.extension === "md") {
           markdownFiles.push(child);
-        } else if (child instanceof import_obsidian2.TFolder) {
+        } else if (child instanceof import_obsidian12.TFolder) {
           collectFiles(child);
         }
       }
@@ -24950,26 +27989,28 @@ ${content}
     }
     return output.join("\n");
   },
-  create_note: async (app, rawArgs) => {
+  create_note: async (app, rawArgs, plugin) => {
     const args = rawArgs;
-    let path = (0, import_obsidian2.normalizePath)(args.path);
-    if (!path.endsWith(".md"))
-      path += ".md";
-    const existing = app.vault.getAbstractFileByPath(path);
-    if (existing) {
-      return `\u041E\u0448\u0438\u0431\u043A\u0430: \u0424\u0430\u0439\u043B '${path}' \u0443\u0436\u0435 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u0435\u0442. \u0418\u0441\u043F\u043E\u043B\u044C\u0437\u0443\u0439\u0442\u0435 edit_note.`;
+    let path = getNoteSavePath(plugin.settings, args.path);
+    const normalized = (0, import_obsidian12.normalizePath)(path);
+    if (normalized.includes("..") || normalized.startsWith("/") || normalized.startsWith("\\")) {
+      return "\u041E\u0448\u0438\u0431\u043A\u0430: \u041D\u0435\u0434\u043E\u043F\u0443\u0441\u0442\u0438\u043C\u044B\u0439 \u043F\u0443\u0442\u044C (path traversal \u0437\u0430\u0449\u0438\u0442\u0430)";
     }
-    const folderParts = path.split("/");
+    let finalPath = normalized;
+    if (!finalPath.endsWith(".md"))
+      finalPath += ".md";
+    const existing = app.vault.getAbstractFileByPath(finalPath);
+    if (existing) {
+      return `\u041E\u0448\u0438\u0431\u043A\u0430: \u0424\u0430\u0439\u043B '${finalPath}' \u0443\u0436\u0435 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u0435\u0442. \u0418\u0441\u043F\u043E\u043B\u044C\u0437\u0443\u0439\u0442\u0435 edit_note.`;
+    }
+    const folderParts = finalPath.split("/");
     if (folderParts.length > 1) {
       folderParts.pop();
       const folderPath = folderParts.join("/");
-      const folder = app.vault.getAbstractFileByPath(folderPath);
-      if (!folder) {
-        await app.vault.createFolder(folderPath);
-      }
+      await ensureFolderExists(app, folderPath);
     }
     try {
-      const created = await app.vault.create(path, args.content);
+      const created = await app.vault.create(finalPath, args.content);
       return `\u0423\u0441\u043F\u0435\u0445: \u0421\u043E\u0437\u0434\u0430\u043D\u0430 \u043D\u043E\u0432\u0430\u044F \u0437\u0430\u043C\u0435\u0442\u043A\u0430 '${created.path}'.`;
     } catch (e) {
       const err = e;
@@ -25000,7 +28041,7 @@ ${content}
     const file = findFile(app, args.oldPath);
     if (!file)
       return `\u041E\u0448\u0438\u0431\u043A\u0430: \u0424\u0430\u0439\u043B '${args.oldPath}' \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D.`;
-    let targetPath = (0, import_obsidian2.normalizePath)(args.newPath);
+    let targetPath = (0, import_obsidian12.normalizePath)(args.newPath);
     if (!targetPath.endsWith(".md"))
       targetPath += ".md";
     try {
@@ -25033,7 +28074,7 @@ ${content}
     const items = [];
     const collect = (f, prefix = "") => {
       for (const child of f.children) {
-        const isDir = child instanceof import_obsidian2.TFolder;
+        const isDir = child instanceof import_obsidian12.TFolder;
         items.push(`${prefix}- ${isDir ? "\u{1F4C1} \u041F\u0430\u043F\u043A\u0430" : "\u{1F4C4} \u0424\u0430\u0439\u043B"}: ${child.path}`);
         if (isDir && args.recursive) {
           collect(child, prefix + "  ");
@@ -25132,13 +28173,26 @@ ${content}
       }
     };
   },
-  execute_obsidian_command: async (app, rawArgs) => {
+  execute_obsidian_command: async (app, rawArgs, plugin) => {
     const args = rawArgs;
+    const commandId = args.commandId;
+    if (plugin?.settings?.confirmObsidianCommands) {
+      const allowedCommands = plugin.settings.allowedObsidianCommands || [
+        "editor:toggle-line-wrap",
+        "theme:toggle-dark",
+        "canvas:new-file",
+        "workspace:new-tab",
+        "app:reload"
+      ];
+      if (!allowedCommands.includes(commandId)) {
+        return `\u041E\u0448\u0438\u0431\u043A\u0430: \u041A\u043E\u043C\u0430\u043D\u0434\u0430 '${commandId}' \u043D\u0435 \u0432 whitelist. \u0414\u043E\u0431\u0430\u0432\u044C\u0442\u0435 \u0435\u0435 \u0432 \u043D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0430\u0445 \u0438\u043B\u0438 \u043E\u0431\u0440\u0430\u0442\u0438\u0442\u0435\u0441\u044C \u043A \u0430\u0434\u043C\u0438\u043D\u0438\u0441\u0442\u0440\u0430\u0442\u043E\u0440\u0443.`;
+      }
+    }
     try {
       const appCommands = app;
-      const result = appCommands.commands?.executeCommandById(args.commandId);
+      const result = appCommands.commands?.executeCommandById(commandId);
       if (result !== false) {
-        return `\u0423\u0441\u043F\u0435\u0448\u043D\u043E \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u0430 \u043A\u043E\u043C\u0430\u043D\u0434\u0430 Obsidian '${args.commandId}'.`;
+        return `\u0423\u0441\u043F\u0435\u0448\u043D\u043E \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u0430 \u043A\u043E\u043C\u0430\u043D\u0434\u0430 Obsidian '${commandId}'.`;
       } else {
         return `\u041A\u043E\u043C\u0430\u043D\u0434\u0430 '${args.commandId}' \u043D\u0435 \u0432\u0435\u0440\u043D\u0443\u043B\u0430 \u043F\u043E\u043B\u043E\u0436\u0438\u0442\u0435\u043B\u044C\u043D\u044B\u0439 \u0440\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442 (\u0432\u043E\u0437\u043C\u043E\u0436\u043D\u043E \u043D\u0435 \u0430\u043A\u0442\u0438\u0432\u043D\u0430 \u0432 \u0434\u0430\u043D\u043D\u043E\u043C \u043A\u043E\u043D\u0442\u0435\u043A\u0441\u0442\u0435).`;
       }
@@ -25195,7 +28249,7 @@ ${content}
 };
 
 // src/services/tools/systemTools.ts
-var import_obsidian3 = require("obsidian");
+var import_obsidian13 = require("obsidian");
 var systemToolDefinitions = [
   {
     type: "function",
@@ -25254,7 +28308,7 @@ var systemExecutors = {
     const args = rawArgs;
     try {
       const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(args.query)}`;
-      const response = await (0, import_obsidian3.requestUrl)({
+      const response = await (0, import_obsidian13.requestUrl)({
         url: searchUrl,
         method: "GET",
         headers: {
@@ -25293,8 +28347,8 @@ var systemExecutors = {
       const repo = githubRepoMatch[2].replace(/\.git$/, "");
       try {
         const rawReadmeUrl = `https://raw.githubusercontent.com/${owner}/${repo}/main/README.md`;
-        const response = await (0, import_obsidian3.requestUrl)({ url: rawReadmeUrl, method: "GET" }).catch(
-          () => (0, import_obsidian3.requestUrl)({ url: `https://raw.githubusercontent.com/${owner}/${repo}/master/README.md`, method: "GET" })
+        const response = await (0, import_obsidian13.requestUrl)({ url: rawReadmeUrl, method: "GET" }).catch(
+          () => (0, import_obsidian13.requestUrl)({ url: `https://raw.githubusercontent.com/${owner}/${repo}/master/README.md`, method: "GET" })
         );
         if (response.status === 200 && response.text) {
           const text = response.text.length > 3e3 ? response.text.substring(0, 3e3) + "\n...[README \u043E\u0431\u0440\u0435\u0437\u0430\u043D \u0434\u043B\u044F \u044D\u043A\u043E\u043D\u043E\u043C\u0438\u0438 \u0442\u043E\u043A\u0435\u043D\u043E\u0432]" : response.text;
@@ -25305,7 +28359,7 @@ ${text}`;
       }
     }
     try {
-      const response = await (0, import_obsidian3.requestUrl)({
+      const response = await (0, import_obsidian13.requestUrl)({
         url: urlStr,
         method: "GET",
         headers: {
@@ -25336,7 +28390,7 @@ ${truncated}`;
     try {
       let repoMetaInfo = "";
       try {
-        const metaRes = await (0, import_obsidian3.requestUrl)({
+        const metaRes = await (0, import_obsidian13.requestUrl)({
           url: `https://api.github.com/repos/${owner}/${repo}`,
           method: "GET",
           headers: { "User-Agent": "NEI-Obsidian-Plugin" }
@@ -25360,7 +28414,7 @@ ${truncated}`;
           break;
         for (const fname of filenames) {
           try {
-            const res = await (0, import_obsidian3.requestUrl)({
+            const res = await (0, import_obsidian13.requestUrl)({
               url: `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${fname}`,
               method: "GET"
             });
@@ -25384,71 +28438,6 @@ ${cleanReadme}`;
     }
   }
 };
-
-// src/services/memory/memoryStore.ts
-var import_obsidian4 = require("obsidian");
-var DEFAULT_MEMORY = {
-  userPreferences: {},
-  projectContexts: {},
-  learnedFacts: [],
-  lastUpdated: (/* @__PURE__ */ new Date()).toISOString()
-};
-var MemoryStore = class {
-  static async loadMemory(app) {
-    try {
-      const file = app.vault.getAbstractFileByPath(this.MEMORY_PATH);
-      if (file instanceof import_obsidian4.TFile) {
-        const content = await app.vault.read(file);
-        const parsed = JSON.parse(content);
-        return Object.assign({}, DEFAULT_MEMORY, parsed);
-      }
-    } catch (e) {
-      console.error("[NEI Memory] \u041E\u0448\u0438\u0431\u043A\u0430 \u0447\u0442\u0435\u043D\u0438\u044F memory.json:", e);
-    }
-    return DEFAULT_MEMORY;
-  }
-  static async saveMemory(app, memory) {
-    try {
-      memory.lastUpdated = (/* @__PURE__ */ new Date()).toISOString();
-      const content = JSON.stringify(memory, null, 2);
-      await this.ensureFolder(app, ".nei");
-      const file = app.vault.getAbstractFileByPath(this.MEMORY_PATH);
-      if (file instanceof import_obsidian4.TFile) {
-        await app.vault.modify(file, content);
-      } else {
-        await app.vault.create(this.MEMORY_PATH, content);
-      }
-    } catch (e) {
-      console.error("[NEI Memory] \u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u0438\u044F memory.json:", e);
-    }
-  }
-  static async addFact(app, fact) {
-    const memory = await this.loadMemory(app);
-    if (!memory.learnedFacts.includes(fact)) {
-      memory.learnedFacts.push(fact);
-      await this.saveMemory(app, memory);
-    }
-  }
-  static async loadAgentsRules(app) {
-    try {
-      const file = app.vault.getAbstractFileByPath(this.AGENTS_RULES_PATH);
-      if (file instanceof import_obsidian4.TFile) {
-        return await app.vault.read(file);
-      }
-    } catch {
-    }
-    return "";
-  }
-  static async ensureFolder(app, folderPath) {
-    const norm = (0, import_obsidian4.normalizePath)(folderPath);
-    const folder = app.vault.getAbstractFileByPath(norm);
-    if (!folder) {
-      await app.vault.createFolder(norm);
-    }
-  }
-};
-MemoryStore.MEMORY_PATH = ".nei/memory.json";
-MemoryStore.AGENTS_RULES_PATH = ".nei/AGENTS.md";
 
 // src/services/tools/memoryTools.ts
 var memoryToolDefinitions = [
@@ -25496,20 +28485,21 @@ var memoryToolDefinitions = [
   }
 ];
 var memoryExecutors = {
-  save_to_memory: async (app, rawArgs) => {
+  save_to_memory: async (app, rawArgs, plugin) => {
     const args = rawArgs;
     try {
-      await MemoryStore.addFact(app, args.fact);
-      return `\u0423\u0441\u043F\u0435\u0445: \u0424\u0430\u043A\u0442 '${args.fact}' \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D \u0432 \u0434\u043E\u043B\u0433\u043E\u0441\u0440\u043E\u0447\u043D\u0443\u044E \u043F\u0430\u043C\u044F\u0442\u044C \u0430\u0433\u0435\u043D\u0442\u0430 (.nei/memory.json).`;
+      await MemoryStore.addFact(app, plugin ? plugin.settings : void 0, args.fact);
+      return `\u0423\u0441\u043F\u0435\u0445: \u0424\u0430\u043A\u0442 '${args.fact}' \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D \u0432 \u0434\u043E\u043B\u0433\u043E\u0441\u0440\u043E\u0447\u043D\u0443\u044E \u043F\u0430\u043C\u044F\u0442\u044C \u0430\u0433\u0435\u043D\u0442\u0430.`;
     } catch (e) {
       const err = e;
       return `\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u0438\u044F \u0432 \u043F\u0430\u043C\u044F\u0442\u044C: ${err?.message || String(e)}`;
     }
   },
-  create_agent_skill: async (app, rawArgs) => {
+  create_agent_skill: async (app, rawArgs, plugin) => {
     const args = rawArgs;
     const cleanName = args.skillName.toLowerCase().replace(/[^a-z0-9_-]/g, "_");
-    const skillPath = `.nei/skills/${cleanName}/SKILL.md`;
+    const skillsRoot = plugin ? plugin.settings.skillsFolder || ".nei/skills" : ".nei/skills";
+    const skillPath = `${skillsRoot}/${cleanName}/SKILL.md`;
     const content = `---
 name: "${cleanName}"
 description: "${args.description}"
@@ -25518,11 +28508,7 @@ description: "${args.description}"
 ${args.instructions}
 `;
     try {
-      const folderPath = `.nei/skills/${cleanName}`;
-      const folder = app.vault.getAbstractFileByPath(folderPath);
-      if (!folder) {
-        await app.vault.createFolder(folderPath);
-      }
+      await ensureFolderExists(app, `${skillsRoot}/${cleanName}`);
       const existingFile = app.vault.getAbstractFileByPath(skillPath);
       if (existingFile) {
         return `\u041E\u0448\u0438\u0431\u043A\u0430: \u0421\u043A\u0438\u043B\u043B '${cleanName}' \u0443\u0436\u0435 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u0435\u0442.`;
@@ -25538,9 +28524,10 @@ ${args.instructions}
 
 // src/services/tools/toolRegistry.ts
 var ToolRegistry = class {
-  constructor() {
+  constructor(plugin) {
     this.definitions = /* @__PURE__ */ new Map();
     this.executors = /* @__PURE__ */ new Map();
+    this.plugin = plugin;
     this.registerAll(vaultToolDefinitions, vaultExecutors);
     this.registerAll(systemToolDefinitions, systemExecutors);
     this.registerAll(memoryToolDefinitions, memoryExecutors);
@@ -25553,6 +28540,12 @@ var ToolRegistry = class {
         this.executors.set(name, execs[name]);
       }
     }
+  }
+  registerDefinition(def) {
+    this.definitions.set(def.function.name, def);
+  }
+  registerExecutor(name, executor) {
+    this.executors.set(name, executor);
   }
   getToolDefinitions() {
     return Array.from(this.definitions.values());
@@ -25580,7 +28573,7 @@ var ToolRegistry = class {
       };
     }
     try {
-      const execResult = await executor(app, parsedArgs);
+      const execResult = await executor(app, parsedArgs, this.plugin);
       if (typeof execResult === "object" && execResult !== null && "result" in execResult) {
         return execResult;
       }
@@ -25600,2710 +28593,88 @@ var ToolRegistry = class {
     }
   }
 };
-var defaultToolRegistry = new ToolRegistry();
 
-// src/services/skills/skillsLoader.ts
-var import_obsidian5 = require("obsidian");
-var SkillsLoader = class {
-  static async loadSkills(app) {
-    const skills = [];
-    const root = app.vault.getAbstractFileByPath(this.SKILLS_ROOT);
-    if (!(root instanceof import_obsidian5.TFolder)) {
-      return skills;
-    }
-    for (const child of root.children) {
-      if (child instanceof import_obsidian5.TFolder) {
-        const skillFile = app.vault.getAbstractFileByPath(`${child.path}/SKILL.md`);
-        if (skillFile instanceof import_obsidian5.TFile) {
-          try {
-            const content = await app.vault.read(skillFile);
-            const parsed = this.parseSkillMarkdown(content, child.name, skillFile.path);
-            if (parsed)
-              skills.push(parsed);
-          } catch (e) {
-            console.error(`[NEI Skills] \u041E\u0448\u0438\u0431\u043A\u0430 \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0438 \u0441\u043A\u0438\u043B\u043B\u0430 ${child.name}:`, e);
-          }
-        }
-      }
-    }
-    return skills;
-  }
-  static parseSkillMarkdown(content, folderName, path) {
-    let name = folderName;
-    let description = "";
-    let instructions = content;
-    const frontmatterMatch = content.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
-    if (frontmatterMatch) {
-      const yaml = frontmatterMatch[1];
-      instructions = frontmatterMatch[2].trim();
-      const nameMatch = yaml.match(/^name:\s*(.+)$/m);
-      if (nameMatch)
-        name = nameMatch[1].trim().replace(/^['"]|['"]$/g, "");
-      const descMatch = yaml.match(/^description:\s*(.+)$/m);
-      if (descMatch)
-        description = descMatch[1].trim().replace(/^['"]|['"]$/g, "");
-    }
-    return {
-      name,
-      description: description || `\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C\u0441\u043A\u0438\u0439 \u0441\u043A\u0438\u043B\u043B \u0438\u0437 ${folderName}`,
-      instructions,
-      path
-    };
-  }
-};
-SkillsLoader.SKILLS_ROOT = ".nei/skills";
-
-// src/services/context.ts
-var import_obsidian7 = require("obsidian");
-
-// src/services/rag.ts
-var import_obsidian6 = require("obsidian");
-function tokenize(text) {
-  return text.toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~()?"']/g, " ").split(/\s+/).filter((word) => word.length > 2);
-}
-async function searchVaultLexical(app, query, limit = 5) {
-  const files = app.vault.getMarkdownFiles();
-  const queryTokens = tokenize(query);
-  if (queryTokens.length === 0)
-    return [];
-  const results = [];
-  for (const file of files) {
-    let content = "";
-    try {
-      content = await app.vault.cachedRead(file);
-    } catch {
-    }
-    if (!content)
-      continue;
-    const fileTokens = tokenize(content);
-    let score = 0;
-    for (const qToken of queryTokens) {
-      const occurrences = fileTokens.filter((t2) => t2.includes(qToken)).length;
-      score += occurrences;
-    }
-    if (score > 0) {
-      results.push({
-        file,
-        content: content.slice(0, 1e3),
-        // Trim content preview
-        score
-      });
-    }
-  }
-  results.sort((a, b) => b.score - a.score);
-  return results.slice(0, limit);
-}
-
-// src/services/context.ts
-async function resolveContext(app, query, useRag, limitRag = 3) {
-  const activeFile = app.workspace.getActiveFile();
-  let activeNoteTitle = "";
-  let activeNoteContent = "";
-  if (activeFile instanceof import_obsidian7.TFile) {
-    activeNoteTitle = activeFile.basename;
-    try {
-      activeNoteContent = await app.vault.cachedRead(activeFile);
-    } catch {
-    }
-  }
-  const appPluginContainer = app;
-  const internalSet = appPluginContainer.internalPlugins?.enabledPlugins;
-  const communitySet = appPluginContainer.plugins?.enabledPlugins;
-  const manifests = appPluginContainer.plugins?.manifests;
-  const enabledInternal = Array.from(internalSet || []);
-  const enabledCommunity = Object.keys(manifests || {}).filter((id) => communitySet?.has(id));
-  const activePlugins = [...enabledInternal, ...enabledCommunity];
-  let characterStats = void 0;
-  let activeQuests = [];
-  const corePlugin = appPluginContainer.plugins?.getPlugin?.("nei-core-plugin");
-  if (corePlugin && corePlugin.enabled && corePlugin.api) {
-    try {
-      characterStats = await corePlugin.api.loadCharacterProfile();
-      activeQuests = await corePlugin.api.getAllQuests();
-    } catch (e) {
-      console.error("[NEI AI Chat] Error pulling RPG stats from Core plugin:", e);
-    }
-  }
-  let ragContext = "";
-  if (useRag && query.trim().length > 3) {
-    try {
-      const searchResults = await searchVaultLexical(app, query, limitRag);
-      if (searchResults.length > 0) {
-        ragContext = searchResults.map((res) => `---
-\u0424\u0430\u0439\u043B: ${res.file.path}
-\u0421\u043E\u0434\u0435\u0440\u0436\u0438\u043C\u043E\u0435:
-${res.content.substring(0, 1500)}${res.content.length > 1500 ? "..." : ""}
----`).join("\n\n");
-      }
-    } catch (e) {
-      console.error("[NEI AI Chat] RAG search error:", e);
-    }
-  }
-  return {
-    activeNoteTitle,
-    activeNoteContent,
-    activePlugins,
-    characterStats,
-    activeQuests,
-    ragContext
-  };
-}
-
-// src/services/agent/intentRouter.ts
-var IntentRouter = class {
-  /**
-   * Determines whether a user prompt should execute in Quick Mode (1 turn, no tools)
-   * or Agent Mode (multi-turn tool execution loop).
-   */
-  static classifyIntent(userQuery, hasAttachments = false) {
-    if (hasAttachments) {
-      return { mode: "agent", reason: "\u041F\u0440\u0438\u043A\u0440\u0435\u043F\u043B\u0435\u043D\u044B \u0444\u0430\u0439\u043B\u044B/\u0438\u0437\u043E\u0431\u0440\u0430\u0436\u0435\u043D\u0438\u044F \u0434\u043B\u044F \u0430\u043D\u0430\u043B\u0438\u0437\u0430" };
-    }
-    const queryLower = userQuery.trim().toLowerCase();
-    const vaultActionKeywords = [
-      "\u0441\u043E\u0437\u0434\u0430\u0439",
-      "\u043D\u0430\u043F\u0438\u0448\u0438 \u0437\u0430\u043C\u0435\u0442\u043A\u0443",
-      "\u0441\u043E\u0437\u0434\u0430\u0442\u044C \u0437\u0430\u043C\u0435\u0442\u043A\u0443",
-      "\u0441\u043E\u0437\u0434\u0430\u0439 \u0437\u0430\u043C\u0435\u0442\u043A\u0443",
-      "\u0441\u043E\u0437\u0434\u0430\u0439 \u043F\u0430\u043F\u043A\u0443",
-      "\u0441\u043E\u0437\u0434\u0430\u0439 \u0444\u0430\u0439\u043B",
-      "\u0441\u043E\u0445\u0440\u0430\u043D\u0438",
-      "\u0441\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C",
-      "\u0437\u0430\u043F\u0438\u0448\u0438 \u0432",
-      "\u0441\u043E\u0437\u0434\u0430\u0439 \u0432",
-      "\u0441\u0434\u0435\u043B\u0430\u0439 \u0437\u0430\u043C\u0435\u0442\u043A\u0443",
-      "\u0441\u0433\u0435\u043D\u0435\u0440\u0438\u0440\u0443\u0439 \u0437\u0430\u043C\u0435\u0442\u043A\u0443",
-      "\u043F\u0440\u043E\u0430\u043D\u0430\u043B\u0438\u0437\u0438\u0440\u0443\u0439",
-      "\u043D\u0430\u0439\u0434\u0438",
-      "\u043F\u043E\u0438\u0449\u0438",
-      "\u0441\u043A\u0430\u043D\u0438\u0440\u0443\u0439",
-      "\u0441\u043A\u0430\u043D",
-      "\u043F\u0440\u043E\u0432\u0435\u0440\u044C",
-      "\u0441\u0440\u0430\u0432\u043D\u0438",
-      "\u0443\u0434\u0430\u043B\u0438",
-      "\u043F\u0435\u0440\u0435\u0438\u043C\u0435\u043D\u0443\u0439",
-      "\u043E\u0431\u043D\u043E\u0432\u0438",
-      "\u0441\u0433\u0440\u0443\u043F\u043F\u0438\u0440\u0443\u0439",
-      "\u0442\u0430\u0441\u043A\u0438",
-      "\u043F\u0430\u043F\u043A\u0435",
-      "\u0437\u0430\u043C\u0435\u0442\u043A\u0435",
-      "\u0432\u0430\u0443\u043B\u0442",
-      "vault",
-      "create note",
-      "make note",
-      "write note",
-      "save note",
-      "create folder",
-      "create file",
-      "search",
-      "find",
-      "analyze",
-      "scan",
-      "check notes"
-    ];
-    for (const kw of vaultActionKeywords) {
-      if (queryLower.includes(kw)) {
-        return { mode: "agent", reason: `\u041E\u0431\u043D\u0430\u0440\u0443\u0436\u0435\u043D \u0437\u0430\u043F\u0440\u043E\u0441 \u0440\u0430\u0431\u043E\u0442\u044B \u0441 \u0437\u0430\u043C\u0435\u0442\u043A\u0430\u043C\u0438/\u0432\u0430\u0443\u043B\u0442\u043E\u043C (${kw})` };
-      }
-    }
-    const isPureQuestion = userQuery.length < 150 && (queryLower.startsWith("\u0447\u0442\u043E \u0442\u0430\u043A\u043E\u0435") || queryLower.startsWith("\u043A\u0430\u043A \u0441\u0434\u0435\u043B\u0430\u0442\u044C") || queryLower.startsWith("\u043E\u0431\u044A\u044F\u0441\u043D\u0438") || queryLower.startsWith("\u043F\u0435\u0440\u0435\u0432\u0435\u0434\u0438") || queryLower.startsWith("\u043D\u0430\u043F\u0438\u0448\u0438 \u043A\u043E\u0434") || queryLower.startsWith("\u043F\u0435\u0440\u0435\u0444\u0440\u0430\u0437\u0438\u0440\u0443\u0439") || queryLower.startsWith("\u0447\u0442\u043E \u0437\u043D\u0430\u0447\u0438\u0442") || queryLower.startsWith("\u043A\u0430\u043A\u0430\u044F \u0440\u0430\u0437\u043D\u0438\u0446\u0430"));
-    if (isPureQuestion) {
-      return { mode: "quick", reason: "\u041F\u0440\u044F\u043C\u043E\u0439 \u0432\u043E\u043F\u0440\u043E\u0441/\u043E\u0442\u0432\u0435\u0442 (\u0431\u0435\u0437 \u0432\u0437\u0430\u0438\u043C\u043E\u0434\u0435\u0439\u0441\u0442\u0432\u0438\u044F \u0441 \u0445\u0440\u0430\u043D\u0438\u043B\u0438\u0449\u0435\u043C)" };
-    }
-    if (userQuery.length > 150) {
-      return { mode: "agent", reason: "\u0420\u0430\u0437\u0432\u0435\u0440\u043D\u0443\u0442\u044B\u0439 \u0437\u0430\u043F\u0440\u043E\u0441 \u0442\u0440\u0435\u0431\u0443\u0435\u0442 \u0430\u0433\u0435\u043D\u0442\u043D\u043E\u0433\u043E \u0440\u0435\u0436\u0438\u043C\u0430" };
-    }
-    return { mode: "quick", reason: "\u041F\u0440\u043E\u0441\u0442\u0430\u044F \u0431\u0435\u0441\u0435\u0434\u0430 \u0431\u0435\u0437 \u043E\u0431\u0440\u0430\u0449\u0435\u043D\u0438\u044F \u043A \u0432\u0430\u0443\u043B\u0442\u0443" };
-  }
-};
-
-// src/services/agent/contextManager.ts
-var ContextManager = class {
-  /**
-   * Limits chat history to a maximum number of turns (sliding window) to prevent token explosion.
-   */
-  static pruneHistory(messages, maxTurns = 6) {
-    const systemMsgs = messages.filter((m) => m.role === "system");
-    const nonSystemMsgs = messages.filter((m) => m.role !== "system");
-    const trimmedNonSystem = nonSystemMsgs.slice(-maxTurns);
-    return [...systemMsgs, ...trimmedNonSystem];
+// src/services/mcp/mcpClient.ts
+var import_obsidian14 = require("obsidian");
+var McpService = class {
+  static setServers(servers) {
+    this.servers = servers;
   }
   /**
-   * Compacts tool outputs and long file snippets to save tokens.
+   * Discovers all available tools from enabled MCP servers.
    */
-  static compactText(text, maxLength = 8e3) {
-    if (!text || text.length <= maxLength)
-      return text;
-    const half = Math.floor(maxLength / 2);
-    const head = text.substring(0, half);
-    const tail = text.substring(text.length - half);
-    return `${head}
-
-... [\u0421\u0436\u0430\u0442\u043E \u0441\u0438\u0441\u0442\u0435\u043C\u043E\u0439 NEI: \u043F\u0440\u043E\u043F\u0443\u0449\u0435\u043D\u043E ${text.length - maxLength} \u0441\u0438\u043C\u0432\u043E\u043B\u043E\u0432 \u0434\u043B\u044F \u044D\u043A\u043E\u043D\u043E\u043C\u0438\u0438 \u0442\u043E\u043A\u0435\u043D\u043E\u0432] ...
-
-${tail}`;
-  }
-};
-
-// src/services/agent/agentLoop.ts
-var AgentLoop = class {
-  static async run(options) {
-    const {
-      app,
-      config,
-      userQuery,
-      chatHistory,
-      images,
-      executionMode = "auto",
-      onStepUpdate,
-      onConfirmationRequired,
-      maxIterations = 6
-    } = options;
-    const steps = [];
-    let totalPromptTokens = 0;
-    let totalCompletionTokens = 0;
-    const notifySteps = () => {
-      if (onStepUpdate)
-        onStepUpdate([...steps]);
-    };
-    let actualMode = "agent";
-    if (executionMode === "quick") {
-      actualMode = "quick";
-    } else if (executionMode === "agent") {
-      actualMode = "agent";
-    } else {
-      const decision = IntentRouter.classifyIntent(userQuery, Boolean(images && images.length > 0));
-      actualMode = decision.mode;
-      steps.push({
-        id: "intent-routing-step",
-        type: "thought",
-        title: `\u041C\u0430\u0440\u0448\u0440\u0443\u0442\u0438\u0437\u0430\u0446\u0438\u044F \u0440\u0435\u0436\u0438\u043C\u0430: ${actualMode === "quick" ? "\u0411\u044B\u0441\u0442\u0440\u044B\u0439 \u043E\u0442\u0432\u0435\u0442 (Quick)" : "\u0410\u0433\u0435\u043D\u0442\u043D\u044B\u0439 \u0430\u043D\u0430\u043B\u0438\u0437 (Agent)"}`,
-        detail: decision.reason,
-        status: "completed"
-      });
-      notifySteps();
-    }
-    const vaultContext = await resolveContext(app, userQuery, true);
-    const memory = await MemoryStore.loadMemory(app);
-    const agentsRules = await MemoryStore.loadAgentsRules(app);
-    const skills = await SkillsLoader.loadSkills(app);
-    let prefetchedContext = "";
-    const queryLower = userQuery.toLowerCase();
-    const allFiles = app.vault.getMarkdownFiles();
-    const folderMap = {};
-    for (const file of allFiles) {
-      const parts = file.path.split("/");
-      if (parts.length > 1) {
-        const folderName = parts[0];
-        if (!folderMap[folderName])
-          folderMap[folderName] = [];
-        folderMap[folderName].push(file);
-      }
-    }
-    const matchedFolderNames = [];
-    for (const folderName of Object.keys(folderMap)) {
-      if (queryLower.includes(folderName.toLowerCase()) || queryLower.includes(folderName.toLowerCase().replace(/s$/, ""))) {
-        matchedFolderNames.push(folderName);
-      }
-    }
-    if (matchedFolderNames.length > 0) {
-      const prefetchedBlocks = [];
-      for (const folderName of matchedFolderNames) {
-        const filesInFolder = (folderMap[folderName] || []).slice(0, 12);
-        prefetchedBlocks.push(`=== \u041F\u0410\u041F\u041A\u0410 '${folderName}' (\u0417\u0430\u043C\u0435\u0442\u043E\u043A: ${filesInFolder.length}) ===`);
-        for (const file of filesInFolder) {
-          try {
-            const content = await app.vault.read(file);
-            const cleanText = content.replace(/^---[\s\S]*?---\n?/, "").trim();
-            const snippet = cleanText.length > 400 ? cleanText.substring(0, 400) + "... [\u043E\u0431\u0440\u0435\u0437\u0430\u043D\u043E]" : cleanText;
-            prefetchedBlocks.push(`--- \u0417\u0410\u041C\u0415\u0422\u041A\u0410: [[${file.basename}]] (${file.path}) ---
-${snippet}`);
-          } catch {
-          }
-        }
-      }
-      prefetchedContext += `
---- \u0410\u0412\u0422\u041E\u041C\u0410\u0422\u0418\u0427\u0415\u0421\u041A\u0418 \u0418\u041D\u0414\u0415\u041A\u0421\u0418\u0420\u041E\u0412\u0410\u041D\u041D\u042B\u0415 \u0417\u0410\u041C\u0415\u0422\u041A\u0418 \u0412\u0410\u0423\u041B\u0422\u0410 ---
-${prefetchedBlocks.join("\n\n")}
-`;
-      steps.push({
-        id: "folder-prefetch-step",
-        type: "tool_result",
-        title: `\u0418\u043D\u044A\u0435\u0446\u0438\u0440\u043E\u0432\u0430\u043D\u044B \u0437\u0430\u043C\u0435\u0442\u043A\u0438 \u043F\u0430\u043F\u043E\u043A: ${matchedFolderNames.join(", ")}`,
-        detail: `\u041F\u0430\u043F\u043E\u043A: ${matchedFolderNames.length}`,
-        status: "completed"
-      });
-      notifySteps();
-    }
-    const userMsg = { role: "user", content: userQuery };
-    if (images && images.length > 0) {
-      userMsg.images = images;
-    }
-    let systemPrompt = `\u0422\u044B \u2014 \u0441\u0432\u0435\u0440\u0445\u0430\u0433\u0435\u043D\u0442\u043D\u044B\u0439 \u0418\u0418-\u043F\u043E\u043C\u043E\u0449\u043D\u0438\u043A NEI \u0432 Obsidian.
-\u0422\u0432\u043E\u044F \u0446\u0435\u043B\u044C: \u043F\u043E\u043C\u043E\u0433\u0430\u0442\u044C \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044E \u0440\u0430\u0431\u043E\u0442\u0430\u0442\u044C \u0441 \u0445\u0440\u0430\u043D\u0438\u043B\u0438\u0449\u0435\u043C \u0437\u0430\u043C\u0435\u0442\u043E\u043A Vault \u0438 \u043E\u0442\u0432\u0435\u0447\u0430\u0442\u044C \u043D\u0430 \u0435\u0433\u043E \u0432\u043E\u043F\u0440\u043E\u0441\u044B.
-
-\u041E\u0411\u042F\u0417\u0410\u0422\u0415\u041B\u042C\u041D\u042B\u0415 \u041F\u0420\u0410\u0412\u0418\u041B\u0410 \u0418\u0421\u041F\u041E\u041B\u042C\u0417\u041E\u0412\u0410\u041D\u0418\u042F \u0418\u041D\u0421\u0422\u0420\u0423\u041C\u0415\u041D\u0422\u041E\u0412:
-1. \u0415\u0441\u043B\u0438 \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C \u043F\u0440\u043E\u0441\u0438\u0442 "\u0441\u043E\u0437\u0434\u0430\u0439 \u0437\u0430\u043C\u0435\u0442\u043A\u0443", "\u0441\u043E\u0437\u0434\u0430\u0439 \u043F\u0430\u043F\u043A\u0443", "\u0441\u043E\u0437\u0434\u0430\u0439 \u0444\u0430\u0439\u043B" \u0438\u043B\u0438 "\u0441\u043E\u0445\u0440\u0430\u043D\u0438": \u0422\u042B \u041E\u0411\u042F\u0417\u0410\u041D \u0412\u042B\u0417\u0412\u0410\u0422\u042C \u0418\u041D\u0421\u0422\u0420\u0423\u041C\u0415\u041D\u0422 \`create_note(path, content)\`. \u041D\u0435 \u043E\u0433\u0440\u0430\u043D\u0438\u0447\u0438\u0432\u0430\u0439\u0441\u044F \u043E\u0431\u044B\u0447\u043D\u044B\u043C \u0442\u0435\u043A\u0441\u0442\u043E\u0432\u044B\u043C \u043E\u0442\u0432\u0435\u0442\u043E\u043C \u0432 \u0447\u0430\u0442!
-2. \u0414\u043B\u044F \u0447\u0442\u0435\u043D\u0438\u044F \u0437\u0430\u043C\u0435\u0442\u043E\u043A \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u0443\u0439 \`read_note\` \u0438\u043B\u0438 \`get_folder_notes\`.
-3. \u041F\u0440\u0438 \u043D\u0435\u043E\u0431\u0445\u043E\u0434\u0438\u043C\u043E\u0441\u0442\u0438 \u0441\u043E\u0437\u0434\u0430\u0442\u044C \u0441\u0442\u0440\u0443\u043A\u0442\u0443\u0440\u0443 \u043F\u0430\u043F\u043E\u043A (\u043D\u0430\u043F\u0440\u0438\u043C\u0435\u0440 \`Projects/Subfolder/Note.md\`), \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442 \`create_note\` \u0441\u0430\u043C \u0441\u043E\u0437\u0434\u0430\u0441\u0442 \u0432\u0441\u0435 \u043D\u0443\u0436\u043D\u044B\u0435 \u043F\u0430\u043F\u043A\u0438 \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438.
-
-\u0424\u041E\u0420\u041C\u0410\u0422\u0418\u0420\u041E\u0412\u0410\u041D\u0418\u0415 \u041E\u0422\u0412\u0415\u0422\u0410:
-- \u0427\u0438\u0441\u0442\u044B\u0439 GitHub Flavored Markdown \u0441 \u0442\u0430\u0431\u043B\u0438\u0446\u0430\u043C\u0438, \u0441\u043F\u0438\u0441\u043A\u0430\u043C\u0438, \u0446\u0438\u0442\u0430\u0442\u0430\u043C\u0438 \u0438 \u043F\u043E\u043D\u044F\u0442\u043D\u043E\u0439 \u0441\u0442\u0440\u0443\u043A\u0442\u0443\u0440\u043E\u0439.
-`;
-    if (vaultContext.ragContext) {
-      systemPrompt += `
---- \u0421\u041F\u0420\u0410\u0412\u041E\u0427\u041D\u042B\u0419 \u041A\u041E\u041D\u0422\u0415\u041A\u0421\u0422 \u0412\u0410\u0423\u041B\u0422\u0410 (RAG) ---
-${vaultContext.ragContext}
-`;
-    }
-    if (agentsRules.trim()) {
-      systemPrompt += `
---- \u041F\u0420\u0410\u0412\u0418\u041B\u0410 \u041F\u041E\u041B\u042C\u0417\u041E\u0412\u0410\u0422\u0415\u041B\u042F (.nei/AGENTS.md) ---
-${agentsRules}
-`;
-    }
-    if (memory.learnedFacts.length > 0) {
-      systemPrompt += `
---- \u0414\u041E\u041B\u0413\u041E\u0421\u0420\u041E\u0427\u041D\u0410\u042F \u041F\u0410\u041C\u042F\u0422\u042C (.nei/memory.json) ---
-${memory.learnedFacts.map((f) => `- ${f}`).join("\n")}
-`;
-    }
-    if (skills.length > 0) {
-      systemPrompt += `
---- \u0421\u041A\u0418\u041B\u041B\u042B (.nei/skills/) ---
-${skills.map((s) => `[\u0421\u043A\u0438\u043B\u043B: ${s.name}]
-${s.description}`).join("\n")}
-`;
-    }
-    if (prefetchedContext) {
-      systemPrompt += prefetchedContext;
-    }
-    const prunedHistory = ContextManager.pruneHistory(chatHistory, 6);
-    const messages = [
-      { role: "system", content: systemPrompt },
-      ...prunedHistory.filter((m) => m.role !== "system"),
-      userMsg
-    ];
-    if (actualMode === "quick") {
+  static async discoverMcpTools() {
+    const definitions = [];
+    const executors = {};
+    for (const server of this.servers) {
+      if (!server.enabled || !server.endpointUrl)
+        continue;
       try {
-        const response = await sendChatRequest(config, messages);
-        if (response.usage) {
-          totalPromptTokens += response.usage.promptTokens;
-          totalCompletionTokens += response.usage.completionTokens;
+        const response = await (0, import_obsidian14.requestUrl)({
+          url: server.endpointUrl.endsWith("/") ? `${server.endpointUrl}tools/list` : `${server.endpointUrl}/tools/list`,
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ jsonrpc: "2.0", method: "tools/list", id: "1" })
+        });
+        if (response.status === 200 && response.json) {
+          const json = response.json;
+          const tools = json.result?.tools || [];
+          for (const tool of tools) {
+            const mcpToolName = `mcp_${server.name.toLowerCase().replace(/[^a-z0-9]/g, "_")}_${tool.name}`;
+            definitions.push({
+              type: "function",
+              function: {
+                name: mcpToolName,
+                description: `[MCP: ${server.name}] ${tool.description || ""}`,
+                parameters: tool.inputSchema || { type: "object", properties: {} }
+              }
+            });
+            executors[mcpToolName] = async (_app, args) => {
+              return await this.callMcpTool(server, tool.name, args);
+            };
+          }
         }
-        let responseText = response.content || "";
-        if (this.shouldAutoCreateNote(userQuery, responseText)) {
-          await this.attemptAutoCreateNote(app, userQuery, responseText, steps, notifySteps);
-        }
-        return {
-          responseText,
-          promptTokens: totalPromptTokens,
-          completionTokens: totalCompletionTokens,
-          executionModeUsed: "quick"
-        };
       } catch (e) {
         const err = e;
-        throw new Error(`\u041E\u0448\u0438\u0431\u043A\u0430 \u0432\u044B\u0437\u043E\u0432\u0430 Quick LLM: ${err?.message || String(e)}`);
+        console.error(`[McpService] Failed to discover tools from MCP server '${server.name}':`, err?.message || String(e));
       }
     }
-    const tools = defaultToolRegistry.getToolDefinitions();
-    let iteration = 0;
-    let finalResponseText = "";
-    let toolCalledCount = 0;
-    const executedCallsMap = {};
-    while (iteration < maxIterations) {
-      iteration++;
-      const isLastIteration = iteration === maxIterations;
-      const activeTools = isLastIteration ? void 0 : tools;
-      const response = await sendChatRequest(config, messages, activeTools);
-      if (response.usage) {
-        totalPromptTokens += response.usage.promptTokens;
-        totalCompletionTokens += response.usage.completionTokens;
-      }
-      if (response.reasoning) {
-        steps.push({
-          id: `reasoning-${iteration}`,
-          type: "reasoning",
-          title: `\u0420\u0430\u0441\u0441\u0443\u0436\u0434\u0435\u043D\u0438\u044F (\u0428\u0430\u0433 ${iteration})`,
-          detail: response.reasoning,
-          status: "completed"
-        });
-        notifySteps();
-      }
-      if (response.tool_calls && response.tool_calls.length > 0 && !isLastIteration) {
-        toolCalledCount += response.tool_calls.length;
-        messages.push({
-          role: "assistant",
-          content: response.content || "\u0412\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u0438\u0435 \u0432\u044B\u0437\u043E\u0432\u0430 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u043E\u0432...",
-          tool_calls: response.tool_calls
-        });
-        for (const toolCall of response.tool_calls) {
-          const toolName = toolCall.function.name;
-          const toolArgsStr = toolCall.function.arguments;
-          const callKey = `${toolName}:${toolArgsStr}`;
-          executedCallsMap[callKey] = (executedCallsMap[callKey] || 0) + 1;
-          const stepId = `tool-${toolCall.id}`;
-          steps.push({
-            id: stepId,
-            type: "tool_call",
-            title: `\u0418\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442: ${toolName}`,
-            detail: `\u0410\u0440\u0433\u0443\u043C\u0435\u043D\u0442\u044B: ${toolArgsStr}`,
-            status: "running"
-          });
-          notifySteps();
-          let trimmedResult = "";
-          let isError = false;
-          if (!trimmedResult) {
-            if (executedCallsMap[callKey] > 2) {
-              trimmedResult = `[\u0412\u041D\u0418\u041C\u0410\u041D\u0418\u0415 \u0421\u0418\u0421\u0422\u0415\u041C\u042B NEI]: \u042D\u0442\u043E\u0442 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442 (${toolName}) \u0441 \u0442\u0430\u043A\u0438\u043C\u0438 \u0430\u0440\u0433\u0443\u043C\u0435\u043D\u0442\u0430\u043C\u0438 \u0443\u0436\u0435 \u0432\u044B\u0437\u044B\u0432\u0430\u043B\u0441\u044F ${executedCallsMap[callKey] - 1} \u0440\u0430\u0437\u0430. \u041F\u043E\u0432\u0442\u043E\u0440\u043D\u044B\u0439 \u0432\u044B\u0437\u043E\u0432 \u043E\u0442\u043C\u0435\u043D\u0435\u043D. \u0421\u0444\u043E\u0440\u043C\u0438\u0440\u0443\u0439\u0442\u0435 \u043E\u043A\u043E\u043D\u0447\u0430\u0442\u0435\u043B\u044C\u043D\u044B\u0439 \u043E\u0442\u0432\u0435\u0442 \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044E \u043D\u0430 \u043E\u0441\u043D\u043E\u0432\u0435 \u0443\u0436\u0435 \u0438\u043C\u0435\u044E\u0449\u0438\u0445\u0441\u044F \u0441\u0432\u0435\u0434\u0435\u043D\u0438\u0439.`;
-              isError = true;
-            } else {
-              const execResult = await defaultToolRegistry.executeTool(
-                app,
-                toolCall.id,
-                toolName,
-                toolArgsStr
-              );
-              const rawRes = typeof execResult.result === "string" ? execResult.result : JSON.stringify(execResult.result);
-              trimmedResult = ContextManager.compactText(rawRes, 12e3);
-              isError = execResult.isError || false;
-            }
-          }
-          const currentStep = steps.find((s) => s.id === stepId);
-          if (currentStep) {
-            currentStep.status = isError ? "failed" : "completed";
-            currentStep.detail = trimmedResult.substring(0, 300);
-          }
-          notifySteps();
-          messages.push({
-            role: "tool",
-            name: toolName,
-            tool_call_id: toolCall.id,
-            content: trimmedResult
-          });
-        }
-      } else if (response.content && this.containsJsonToolCall(response.content) && !isLastIteration) {
-        const parsedTool = this.extractJsonToolCall(response.content);
-        if (parsedTool) {
-          toolCalledCount++;
-          const callId = "text_call_" + Date.now();
-          const callKey = `${parsedTool.name}:${JSON.stringify(parsedTool.args)}`;
-          executedCallsMap[callKey] = (executedCallsMap[callKey] || 0) + 1;
-          steps.push({
-            id: callId,
-            type: "tool_call",
-            title: `\u0418\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442 (Fallback JSON): ${parsedTool.name}`,
-            detail: JSON.stringify(parsedTool.args),
-            status: "running"
-          });
-          notifySteps();
-          const execResult = await defaultToolRegistry.executeTool(
-            app,
-            callId,
-            parsedTool.name,
-            JSON.stringify(parsedTool.args)
-          );
-          const currentStep = steps.find((s) => s.id === callId);
-          if (currentStep) {
-            currentStep.status = execResult.isError ? "failed" : "completed";
-            currentStep.detail = String(execResult.result).substring(0, 300);
-          }
-          notifySteps();
-          messages.push({
-            role: "assistant",
-            content: response.content
-          });
-          messages.push({
-            role: "tool",
-            name: parsedTool.name,
-            tool_call_id: callId,
-            content: String(execResult.result)
-          });
-        } else {
-          finalResponseText = response.content;
-          break;
-        }
-      } else {
-        finalResponseText = response.content || "";
-        break;
-      }
-    }
-    if (toolCalledCount > 0 && this.shouldAutoCreateNote(userQuery, finalResponseText)) {
-      await this.attemptAutoCreateNote(app, userQuery, finalResponseText, steps, notifySteps);
-    }
-    return {
-      responseText: finalResponseText || "\u0410\u0433\u0435\u043D\u0442 \u0437\u0430\u0432\u0435\u0440\u0448\u0438\u043B \u0440\u0430\u0431\u043E\u0442\u0443 \u0431\u0435\u0437 \u0442\u0435\u043A\u0441\u0442\u043E\u0432\u043E\u0433\u043E \u0432\u044B\u0432\u043E\u0434\u0430.",
-      promptTokens: totalPromptTokens,
-      completionTokens: totalCompletionTokens,
-      executionModeUsed: "agent"
-    };
+    return { definitions, executors };
   }
-  static containsJsonToolCall(text) {
-    return /```(?:json)?\s*\{[\s\S]*?"(?:tool|name|function|action)"\s*:/i.test(text) || /<tool_call>/i.test(text);
-  }
-  static extractJsonToolCall(text) {
-    try {
-      const xmlMatch = text.match(/<tool_call>\s*([\s\S]*?)\s*<\/tool_call>/i);
-      const rawJson = xmlMatch ? xmlMatch[1] : text;
-      const jsonMatch = rawJson.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/i) || rawJson.match(/(\{[\s\S]*?\})/i);
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[1]);
-        const toolName = typeof parsed.tool === "string" ? parsed.tool : typeof parsed.name === "string" ? parsed.name : typeof parsed.function === "string" ? parsed.function : typeof parsed.action === "string" ? parsed.action : void 0;
-        if (toolName) {
-          const args = parsed.arguments || parsed.args || parsed.action_input || {};
-          return {
-            name: toolName,
-            args
-          };
-        }
-      }
-    } catch {
-    }
-    return null;
-  }
-  static shouldAutoCreateNote(query, responseText) {
-    const queryLower = query.toLowerCase();
-    const isCreateRequest = queryLower.includes("\u0441\u043E\u0437\u0434\u0430\u0439") || queryLower.includes("\u0441\u043E\u0437\u0434\u0430\u0442\u044C") || queryLower.includes("\u043D\u0430\u043F\u0438\u0448\u0438 \u0437\u0430\u043C\u0435\u0442\u043A\u0443") || queryLower.includes("\u0441\u043E\u0445\u0440\u0430\u043D\u0438") || queryLower.includes("create note") || queryLower.includes("save note");
-    return isCreateRequest && responseText.length > 30;
-  }
-  static async attemptAutoCreateNote(app, query, responseText, steps, notifySteps) {
-    let notePath = "";
-    const folderMatch = query.match(/(?:папке|папку|folder|directory)\s+["']?([a-zA-Z0-9_\-/А-Яа-яЁё ]+?)["']?(?:\s|$)/i);
-    const fileMatch = query.match(/(?:заметку|файл|note|file)\s+["']?([a-zA-Z0-9_\-/А-Яа-яЁё ]+?\.md)["']?/i);
-    if (fileMatch && fileMatch[1]) {
-      notePath = fileMatch[1].trim();
-    } else {
-      const folder = folderMatch && folderMatch[1] ? folderMatch[1].trim() : "Notes";
-      const dateStr = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
-      const titleMatch = query.match(/(?:создай|создать|create|write)\s+(?:заметку|файл|название|note)?\s*["']?([^"'\n,]{3,30})["']?/i);
-      let slug = titleMatch && titleMatch[1] ? titleMatch[1].trim().replace(/[^\w\sА-Яа-яЁё-]/g, "") : "New_Note";
-      if (slug.length < 3)
-        slug = "New_Note";
-      notePath = `${folder}/${slug}_${dateStr}.md`;
-    }
-    try {
-      const execResult = await defaultToolRegistry.executeTool(
-        app,
-        "auto-create-fallback",
-        "create_note",
-        JSON.stringify({ path: notePath, content: responseText })
-      );
-      steps.push({
-        id: "auto-create-step",
-        type: "tool_result",
-        title: `\u0410\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438 \u0441\u043E\u0437\u0434\u0430\u043D\u0430 \u0437\u0430\u043C\u0435\u0442\u043A\u0430: ${notePath}`,
-        detail: String(execResult.result),
-        status: execResult.isError ? "failed" : "completed"
-      });
-      notifySteps();
-    } catch {
-    }
-  }
-};
-
-// src/services/chat/chatStore.ts
-var import_obsidian8 = require("obsidian");
-var ChatStore = class {
-  static async listSessions(app) {
-    try {
-      if (await app.vault.adapter.exists(this.INDEX_FILE)) {
-        const content = await app.vault.adapter.read(this.INDEX_FILE);
-        const parsed = JSON.parse(content);
-        return Array.isArray(parsed) ? parsed : [];
-      }
-    } catch (e) {
-      console.error("[NEI ChatStore] Error reading chat index:", e);
-    }
-    return [];
-  }
-  static async loadSession(app, sessionId) {
-    const path = `${this.CHATS_FOLDER}/${sessionId}.json`;
-    try {
-      if (await app.vault.adapter.exists(path)) {
-        const content = await app.vault.adapter.read(path);
-        return JSON.parse(content);
-      }
-    } catch (e) {
-      console.error(`[NEI ChatStore] Error loading session ${sessionId}:`, e);
-    }
-    return null;
-  }
-  static async saveSession(app, session) {
-    try {
-      await this.ensureFolder(app, this.CHATS_FOLDER);
-      session.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
-      const sessionPath = `${this.CHATS_FOLDER}/${session.id}.json`;
-      const content = JSON.stringify(session, null, 2);
-      await app.vault.adapter.write(sessionPath, content);
-      const sessions = await this.listSessions(app);
-      const existingIdx = sessions.findIndex((s) => s.id === session.id);
-      const summary = {
-        id: session.id,
-        title: session.title || "\u041D\u043E\u0432\u044B\u0439 \u0447\u0430\u0442",
-        updatedAt: session.updatedAt
-      };
-      if (existingIdx >= 0) {
-        sessions[existingIdx] = summary;
-      } else {
-        sessions.unshift(summary);
-      }
-      const indexContent = JSON.stringify(sessions, null, 2);
-      await app.vault.adapter.write(this.INDEX_FILE, indexContent);
-    } catch (e) {
-      console.error("[NEI ChatStore] Error saving session:", e);
-    }
-  }
-  static async deleteSession(app, sessionId) {
-    try {
-      const path = `${this.CHATS_FOLDER}/${sessionId}.json`;
-      if (await app.vault.adapter.exists(path)) {
-        await app.vault.adapter.remove(path);
-      }
-      const sessions = await this.listSessions(app);
-      const filtered = sessions.filter((s) => s.id !== sessionId);
-      await app.vault.adapter.write(this.INDEX_FILE, JSON.stringify(filtered, null, 2));
-    } catch (e) {
-      console.error(`[NEI ChatStore] Error deleting session ${sessionId}:`, e);
-    }
-  }
-  static async clearAllSessions(app) {
-    try {
-      const sessions = await this.listSessions(app);
-      for (const s of sessions) {
-        const path = `${this.CHATS_FOLDER}/${s.id}.json`;
-        if (await app.vault.adapter.exists(path)) {
-          await app.vault.adapter.remove(path);
-        }
-      }
-      await app.vault.adapter.write(this.INDEX_FILE, JSON.stringify([], null, 2));
-    } catch (e) {
-      console.error("[NEI ChatStore] Error clearing all sessions:", e);
-    }
-  }
-  static createNewSession() {
-    const id = "chat_" + Date.now() + "_" + Math.random().toString(36).substring(2, 7);
-    return {
-      id,
-      title: "\u041D\u043E\u0432\u044B\u0439 \u0434\u0438\u0430\u043B\u043E\u0433",
-      createdAt: (/* @__PURE__ */ new Date()).toISOString(),
-      updatedAt: (/* @__PURE__ */ new Date()).toISOString(),
-      messages: []
-    };
-  }
-  static async ensureFolder(app, folderPath) {
-    const norm = (0, import_obsidian8.normalizePath)(folderPath);
-    if (!await app.vault.adapter.exists(norm)) {
-      await app.vault.adapter.mkdir(norm);
-    }
-  }
-};
-ChatStore.CHATS_FOLDER = ".nei/chats";
-ChatStore.INDEX_FILE = ".nei/chats/index.json";
-
-// src/services/openrouter.ts
-var import_obsidian9 = require("obsidian");
-var OpenRouterService = class {
   /**
-   * Fetches details about the user's OpenRouter API key (usage, limits).
+   * Executes a tool on a specific MCP server.
    */
-  static async getKeyInfo(apiKey) {
-    if (!apiKey)
-      return null;
+  static async callMcpTool(server, originalToolName, args) {
     try {
-      const response = await (0, import_obsidian9.requestUrl)({
-        url: "https://openrouter.ai/api/v1/auth/key",
-        method: "GET",
-        headers: {
-          "Authorization": `Bearer ${apiKey}`
-        }
+      const response = await (0, import_obsidian14.requestUrl)({
+        url: server.endpointUrl.endsWith("/") ? `${server.endpointUrl}tools/call` : `${server.endpointUrl}/tools/call`,
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          method: "tools/call",
+          params: { name: originalToolName, arguments: args },
+          id: "2"
+        })
       });
       if (response.status === 200 && response.json) {
         const json = response.json;
-        if (json.data) {
-          const data = json.data;
-          return {
-            label: data.label,
-            usage: Number(data.usage || 0),
-            limit: data.limit ? Number(data.limit) : null,
-            isFreeTier: Boolean(data.is_free_tier)
-          };
+        if (json.error) {
+          return `\u041E\u0448\u0438\u0431\u043A\u0430 MCP \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u0430 '${originalToolName}': ${json.error.message || JSON.stringify(json.error)}`;
         }
+        const contentBlocks = json.result?.content || [];
+        const textOutputs = contentBlocks.map((c) => c.text || JSON.stringify(c)).join("\n");
+        return `[\u041E\u0442\u0432\u0435\u0442 MCP \u0441\u0435\u0440\u0432\u0435\u0440\u0430 '${server.name}']:
+${textOutputs || "\u0418\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442 \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D \u0443\u0441\u043F\u0435\u0448\u043D\u043E."}`;
       }
-    } catch (e) {
-      console.error("[OpenRouterService] Error fetching key info:", e);
-    }
-    return null;
-  }
-  /**
-   * Fetches all available models and their capabilities from OpenRouter API.
-   */
-  static async fetchModels(apiKey) {
-    const now = Date.now();
-    if (this.cachedModels.size > 0 && now - this.lastFetchTime < 3e5) {
-      return Array.from(this.cachedModels.values());
-    }
-    try {
-      const headers = {
-        "HTTP-Referer": "https://github.com/GhelgenWhy/NEI",
-        "X-Title": "NEI Obsidian Plugin"
-      };
-      if (apiKey) {
-        headers["Authorization"] = `Bearer ${apiKey}`;
-      }
-      const response = await (0, import_obsidian9.requestUrl)({
-        url: "https://openrouter.ai/api/v1/models",
-        method: "GET",
-        headers
-      });
-      if (response.status !== 200) {
-        throw new Error(`OpenRouter API status: ${response.status}`);
-      }
-      const json = response.json;
-      const modelsData = json.data || [];
-      const result = [];
-      for (const item of modelsData) {
-        const supportedParams = item.supported_parameters || [];
-        const supportsTools = supportedParams.includes("tools") || supportedParams.includes("function_calling");
-        let supportsVision = false;
-        if (item.architecture && item.architecture.modality) {
-          supportsVision = item.architecture.modality.includes("multimodal") || item.architecture.modality.includes("image");
-        }
-        const info = {
-          id: item.id,
-          name: item.name || item.id,
-          description: item.description,
-          contextLength: item.context_length,
-          supportsTools,
-          supportsVision,
-          pricing: item.pricing ? {
-            prompt: item.pricing.prompt,
-            completion: item.pricing.completion
-          } : void 0
-        };
-        this.cachedModels.set(item.id, info);
-        result.push(info);
-      }
-      this.lastFetchTime = now;
-      return result;
-    } catch (e) {
-      console.error("[OpenRouterService] Error fetching models:", e);
-      return Array.from(this.cachedModels.values());
-    }
-  }
-  /**
-   * Get capability details for a specific model ID.
-   */
-  static async getModelDetails(modelId, apiKey) {
-    if (this.cachedModels.has(modelId)) {
-      return this.cachedModels.get(modelId) || null;
-    }
-    const models = await this.fetchModels(apiKey);
-    return models.find((m) => m.id === modelId) || null;
-  }
-};
-OpenRouterService.cachedModels = /* @__PURE__ */ new Map();
-OpenRouterService.lastFetchTime = 0;
-
-// src/i18n/translations.ts
-var translations = {
-  ru: {
-    welcomeGreeting: "\u{1F44B} \u041F\u043E\u043C\u043E\u0449\u043D\u0438\u043A NEI \u0432\u0430\u0441 \u043F\u0440\u0438\u0432\u0435\u0442\u0441\u0442\u0432\u0443\u0435\u0442. \u041E\u0436\u0438\u0434\u0430\u044E \u0443\u043A\u0430\u0437\u0430\u043D\u0438\u0439",
-    welcomeSubText: "\u0418\u043D\u0442\u0435\u043B\u043B\u0435\u043A\u0442\u0443\u0430\u043B\u044C\u043D\u044B\u0439 \u0441\u0443\u043F\u0435\u0440\u0430\u0433\u0435\u043D\u0442 \u0433\u043E\u0442\u043E\u0432\u0438\u0442 \u043F\u0435\u0440\u0441\u043E\u043D\u0430\u043B\u044C\u043D\u044B\u0435 \u0440\u0435\u0448\u0435\u043D\u0438\u044F \u0434\u043B\u044F \u0432\u0430\u0448\u0435\u0439 \u0431\u0430\u0437\u044B \u0437\u043D\u0430\u043D\u0438\u0439:",
-    featureNotes: "\u041F\u0440\u044F\u043C\u043E\u0439 \u0434\u043E\u0441\u0442\u0443\u043F \u043A \u0437\u0430\u043C\u0435\u0442\u043A\u0430\u043C, \u043F\u0430\u043F\u043A\u0430\u043C \u0438 \u0441\u0432\u044F\u0437\u044F\u043C Vault",
-    featureRouting: "\u0420\u0435\u0436\u0438\u043C\u044B Quick \u0438 Agent \u0441 \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438\u043C \u043F\u043E\u0434\u0431\u043E\u0440\u043E\u043C \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u043E\u0432",
-    featureVision: "\u0410\u043D\u0430\u043B\u0438\u0437 \u0438\u0437\u043E\u0431\u0440\u0430\u0436\u0435\u043D\u0438\u0439, \u0434\u043E\u043A\u0443\u043C\u0435\u043D\u0442\u043E\u0432 \u0438 \u0432\u0435\u0431-\u0441\u0442\u0440\u0430\u043D\u0438\u0446",
-    featureTokens: "\u041F\u043E\u043B\u043D\u0430\u044F \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0430 RAG, \u043F\u0430\u043C\u044F\u0442\u0438 \u0438 \u0432\u043D\u0435\u0448\u043D\u0438\u0445 MCP \u0441\u0435\u0440\u0432\u0435\u0440\u043E\u0432",
-    inputPlaceholder: "\u0417\u0430\u0434\u0430\u0439\u0442\u0435 \u0432\u043E\u043F\u0440\u043E\u0441 \u0438\u043B\u0438 \u043E\u043F\u0438\u0448\u0438\u0442\u0435 \u0437\u0430\u0434\u0430\u0447\u0443... (Enter \u2014 \u043E\u0442\u043F\u0440\u0430\u0432\u0438\u0442\u044C, Shift+Enter \u2014 \u043F\u0435\u0440\u0435\u043D\u043E\u0441)",
-    attachTooltip: "\u041F\u0440\u0438\u043A\u0440\u0435\u043F\u0438\u0442\u044C \u0438\u0437\u043E\u0431\u0440\u0430\u0436\u0435\u043D\u0438\u0435 \u0438\u043B\u0438 \u0444\u0430\u0439\u043B (.txt, .md, .js, .ts, .json)",
-    quickMode: "\u26A1 \u0411\u044B\u0441\u0442\u0440\u044B\u0439",
-    agentMode: "\u{1F916} \u0410\u0433\u0435\u043D\u0442",
-    ragToggle: "\u{1F9E0} RAG \u0411\u0430\u0437\u0430 \u0437\u043D\u0430\u043D\u0438\u0439",
-    settingsTitle: "\u2699\uFE0F \u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438 NEI AI Chat",
-    providerLabel: "\u041F\u0440\u043E\u0432\u0430\u0439\u0434\u0435\u0440 \u0418\u0418:",
-    endpointLabel: "URL \u044D\u043D\u0434\u043F\u043E\u0438\u043D\u0442\u0430:",
-    apiKeyLabel: "API \u041A\u043B\u044E\u0447:",
-    modelLabel: "\u041C\u043E\u0434\u0435\u043B\u044C:",
-    customModelsLabel: "\u0421\u043F\u0438\u0441\u043E\u043A \u043C\u043E\u0434\u0435\u043B\u0435\u0439 (\u043F\u043E \u043E\u0434\u043D\u043E\u0439 \u043D\u0430 \u0441\u0442\u0440\u043E\u043A\u0443):",
-    languageLabel: "\u042F\u0437\u044B\u043A \u0438\u043D\u0442\u0435\u0440\u0444\u0435\u0439\u0441\u0430:",
-    saveSettings: "\u0421\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C \u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438",
-    checkApi: "\u{1F504} \u041F\u0440\u043E\u0432\u0435\u0440\u0438\u0442\u044C API \u0438 \u041C\u043E\u0434\u0435\u043B\u0438",
-    checkingApi: "\u23F3 \u041F\u0440\u043E\u0432\u0435\u0440\u043A\u0430 \u0441\u0432\u044F\u0437\u0438...",
-    apiCheckSuccess: "\u2705 API \u043F\u043E\u0434\u043A\u043B\u044E\u0447\u0435\u043D \u0443\u0441\u043F\u0435\u0448\u043D\u043E!",
-    apiCheckFailed: "\u274C \u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u043E\u0434\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u044F \u043A API",
-    newChat: "\u2795 \u041D\u043E\u0432\u044B\u0439",
-    newChatSession: "\u041D\u043E\u0432\u044B\u0439 \u0434\u0438\u0430\u043B\u043E\u0433",
-    clearChats: "\u{1F5D1}\uFE0F \u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u0432\u0441\u0435 \u0434\u0438\u0430\u043B\u043E\u0433\u0438",
-    confirmClearChats: "\u0412\u044B \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u0442\u0435\u043B\u044C\u043D\u043E \u0445\u043E\u0442\u0438\u0442\u0435 \u0443\u0434\u0430\u043B\u0438\u0442\u044C \u0432\u0441\u044E \u0438\u0441\u0442\u043E\u0440\u0438\u044E \u0447\u0430\u0442\u043E\u0432?",
-    saveNote: "\u{1F4C4} \u0421\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C \u043A\u0430\u043A \u0437\u0430\u043C\u0435\u0442\u043A\u0443",
-    copyText: "\u{1F4CB} \u041A\u043E\u043F\u0438\u0440\u043E\u0432\u0430\u0442\u044C",
-    copied: "\u2705 \u0421\u043A\u043E\u043F\u0438\u0440\u043E\u0432\u0430\u043D\u043E \u0432 \u0431\u0443\u0444\u0435\u0440 \u043E\u0431\u043C\u0435\u043D\u0430!",
-    agentRunning: "\u26A1 \u0410\u0433\u0435\u043D\u0442 \u0432\u044B\u043F\u043E\u043B\u043D\u044F\u0435\u0442 \u0437\u0430\u0434\u0430\u0447\u0443...",
-    confirmAction: "\u0417\u0430\u043F\u0440\u043E\u0441 \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043D\u0438\u044F:",
-    allow: "\u2705 \u0420\u0430\u0437\u0440\u0435\u0448\u0438\u0442\u044C",
-    deny: "\u274C \u041E\u0442\u043A\u043B\u043E\u043D\u0438\u0442\u044C",
-    autoDetect: "\u0410\u0432\u0442\u043E-\u043E\u043F\u0440\u0435\u0434\u0435\u043B\u0435\u043D\u0438\u0435 (Obsidian)",
-    historyTitle: "\u0418\u0441\u0442\u043E\u0440\u0438\u044F \u0434\u0438\u0430\u043B\u043E\u0433\u043E\u0432",
-    clearAll: "\u{1F5D1}\uFE0F \u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u0432\u0441\u0435",
-    noSavedChats: "\u041D\u0435\u0442 \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u043D\u044B\u0445 \u0447\u0430\u0442\u043E\u0432",
-    moveSidebar: "\u2199\uFE0F \u0412 \u043F\u0430\u043D\u0435\u043B\u044C",
-    moveTab: "\u2197\uFE0F \u0412\u043A\u043B\u0430\u0434\u043A\u0430",
-    moveSidebarTitle: "\u041F\u0435\u0440\u0435\u043C\u0435\u0441\u0442\u0438\u0442\u044C \u0447\u0430\u0442 \u0432 \u0431\u043E\u043A\u043E\u0432\u0443\u044E \u043F\u0430\u043D\u0435\u043B\u044C",
-    moveTabTitle: "\u041F\u0435\u0440\u0435\u043C\u0435\u0441\u0442\u0438\u0442\u044C \u0447\u0430\u0442 \u043D\u0430 \u0433\u043B\u0430\u0432\u043D\u0443\u044E \u0432\u043A\u043B\u0430\u0434\u043A\u0443",
-    modelCategories: "\u041A\u0430\u0442\u0435\u0433\u043E\u0440\u0438\u0438 \u043C\u043E\u0434\u0435\u043B\u0435\u0439 (\u041C\u0443\u043B\u044C\u0442\u0438\u043C\u043E\u0434\u0430\u043B\u044C\u043D\u043E\u0441\u0442\u044C):",
-    primaryModel: "1. \u0422\u0435\u043A\u0441\u0442 \u0438 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u044B (Primary):",
-    visionModel: "2. \u0424\u0430\u0439\u043B\u044B \u0438 \u0444\u043E\u0442\u043E (Vision):",
-    quickModel: "3. \u0411\u044B\u0441\u0442\u0440\u044B\u0439 \u0440\u0435\u0436\u0438\u043C (Quick Mode Router):",
-    parameters: "\u041F\u0430\u0440\u0430\u043C\u0435\u0442\u0440\u044B",
-    requestingCapabilities: "\u0417\u0430\u043F\u0440\u043E\u0441 \u0432\u043E\u0437\u043C\u043E\u0436\u043D\u043E\u0441\u0442\u0435\u0439 \u0447\u0435\u0440\u0435\u0437 OpenRouter API...",
-    nativeToolCalling: "\u{1F7E2} \u041D\u0430\u0442\u0438\u0432\u043D\u044B\u0439 Tool Calling \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u0438\u0432\u0430\u0435\u0442\u0441\u044F",
-    textToolCalling: "\u{1F7E1} \u0422\u0435\u043A\u0441\u0442\u043E\u0432\u044B\u0439 \u0440\u0435\u0436\u0438\u043C \u0432\u044B\u0437\u043E\u0432\u0430 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u043E\u0432",
-    visionSupported: "\u{1F5BC}\uFE0F \u0410\u043D\u0430\u043B\u0438\u0437 \u0444\u043E\u0442\u043E/\u0438\u0437\u043E\u0431\u0440\u0430\u0436\u0435\u043D\u0438\u0439 \u0434\u043E\u0441\u0442\u0443\u043F\u0435\u043D",
-    textOnlyInput: "\u{1F4DD} \u0422\u043E\u043B\u044C\u043A\u043E \u0442\u0435\u043A\u0441\u0442\u043E\u0432\u044B\u0439 \u0432\u0432\u043E\u0434",
-    contextWindow: "\u041A\u043E\u043D\u0442\u0435\u043A\u0441\u0442\u043D\u043E\u0435 \u043E\u043A\u043D\u043E:",
-    tokens: "\u0442\u043E\u043A\u0435\u043D\u043E\u0432",
-    pressCheckApi: '\u041D\u0430\u0436\u043C\u0438\u0442\u0435 "\u041F\u0440\u043E\u0432\u0435\u0440\u0438\u0442\u044C API" \u0434\u043B\u044F \u043F\u043E\u043B\u0443\u0447\u0435\u043D\u0438\u044F \u043F\u0430\u0440\u0430\u043C\u0435\u0442\u0440\u043E\u0432 \u0441 OpenRouter',
-    yourSavedModels: "\u0412\u0430\u0448\u0438 \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u043D\u044B\u0435 \u043C\u043E\u0434\u0435\u043B\u0438:",
-    addModelPlaceholder: "\u041D\u0430\u043F\u0440\u0438\u043C\u0435\u0440: anthropic/claude-3.5-sonnet",
-    addBtn: "+ \u0414\u043E\u0431\u0430\u0432\u0438\u0442\u044C",
-    deleteFromList: "\u0423\u0434\u0430\u043B\u0438\u0442\u044C \u0438\u0437 \u0441\u043F\u0438\u0441\u043A\u0430",
-    keyUsage: "\u0418\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u043D\u043E \u043D\u0430 \u043A\u043B\u044E\u0447\u0435:",
-    modeAutoTitle: "\u0420\u0435\u0436\u0438\u043C \u0418\u0418: \u0410\u0432\u0442\u043E (\u0443\u043C\u043D\u044B\u0439 \u0440\u043E\u0443\u0442\u0438\u043D\u0433), \u0411\u044B\u0441\u0442\u0440\u044B\u0439 (\u0431\u0435\u0437 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u043E\u0432), \u0410\u0433\u0435\u043D\u0442 (\u043C\u043D\u043E\u0433\u043E\u0448\u0430\u0433\u043E\u0432\u044B\u0439)",
-    modeAuto: "\u26A1 \u0410\u0432\u0442\u043E (\u0423\u043C\u043D\u044B\u0439)",
-    modeQuick: "\u{1F680} \u0411\u044B\u0441\u0442\u0440\u044B\u0439 (\u041F\u0440\u044F\u043C\u043E\u0439)",
-    modeAgent: "\u{1F9E0} \u0410\u0433\u0435\u043D\u0442 (\u041C\u043D\u043E\u0433\u043E\u0448\u0430\u0433\u043E\u0432\u044B\u0439)",
-    settingsTooltip: "\u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438 \u043C\u043E\u0434\u0435\u043B\u0435\u0439 \u0438 API",
-    newChatTooltip: "\u041D\u043E\u0432\u044B\u0439 \u0447\u0430\u0442",
-    historyTooltip: "\u0418\u0441\u0442\u043E\u0440\u0438\u044F \u0434\u0438\u0430\u043B\u043E\u0433\u043E\u0432",
-    deleteChatTooltip: "\u0423\u0434\u0430\u043B\u0438\u0442\u044C \u0447\u0430\u0442",
-    noteCreatedSuccess: "\u0423\u0441\u043F\u0435\u0445: \u0421\u043E\u0437\u0434\u0430\u043D\u0430 \u0437\u0430\u043C\u0435\u0442\u043A\u0430",
-    noteCreateError: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u044F \u0437\u0430\u043C\u0435\u0442\u043A\u0438:",
-    copyError: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0441\u043A\u043E\u043F\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u0442\u0435\u043A\u0441\u0442.",
-    modelAddedNotice: "\u0414\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u0430 \u043C\u043E\u0434\u0435\u043B\u044C:",
-    cannotDeleteLastModel: "\u041D\u0435\u043B\u044C\u0437\u044F \u0443\u0434\u0430\u043B\u0438\u0442\u044C \u043F\u043E\u0441\u043B\u0435\u0434\u043D\u044E\u044E \u043C\u043E\u0434\u0435\u043B\u044C \u0438\u0437 \u0441\u043F\u0438\u0441\u043A\u0430!",
-    historyClearedNotice: "\u0412\u0441\u044F \u0438\u0441\u0442\u043E\u0440\u0438\u044F \u0447\u0430\u0442\u043E\u0432 \u043E\u0447\u0438\u0449\u0435\u043D\u0430!",
-    modeSwitchError: "\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0435\u0440\u0435\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u044F \u0440\u0435\u0436\u0438\u043C\u0430:",
-    agentError: "\u274C \u041E\u0448\u0438\u0431\u043A\u0430 \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u0438\u044F \u0430\u0433\u0435\u043D\u0442\u0430:",
-    cancel: "\u041E\u0442\u043C\u0435\u043D\u0430",
-    saveSend: "\u{1F4BE} \u041E\u0442\u043F\u0440\u0430\u0432\u0438\u0442\u044C",
-    editText: "\u270F\uFE0F \u0418\u0437\u043C\u0435\u043D\u0438\u0442\u044C",
-    retry: "\u{1F504} \u041F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u044C",
-    inputTokens: "\u{1F4E5} \u0412\u0445\u043E\u0434:",
-    outputTokens: "\u{1F4E4} \u0412\u044B\u0445\u043E\u0434:",
-    confirmTitle: "\u26A0\uFE0F \u041F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043D\u0438\u0435 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u044F",
-    confirmDetail: "\u0410\u0433\u0435\u043D\u0442 \u0437\u0430\u043F\u0440\u0430\u0448\u0438\u0432\u0430\u0435\u0442 \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u0438\u0435 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u0430:",
-    contextLength: "\u041A\u043E\u043D\u0442\u0435\u043A\u0441\u0442\u043D\u043E\u0435 \u043E\u043A\u043D\u043E:",
-    toolCallingSupport: "\u041F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0430 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u043E\u0432 (Tools):",
-    visionSupport: "\u041F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0430 \u0438\u0437\u043E\u0431\u0440\u0430\u0436\u0435\u043D\u0438\u0439 (Vision):",
-    infoUnavailable: "\u041D\u0430\u0436\u043C\u0438\u0442\u0435 '\u041F\u0440\u043E\u0432\u0435\u0440\u0438\u0442\u044C API' \u0434\u043B\u044F \u043F\u043E\u043B\u0443\u0447\u0435\u043D\u0438\u044F \u0434\u0430\u043D\u043D\u044B\u0445",
-    modelsList: "\u0421\u043F\u0438\u0441\u043E\u043A \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u043D\u044B\u0445 \u043C\u043E\u0434\u0435\u043B\u0435\u0439",
-    deleteModelTooltip: "\u0423\u0434\u0430\u043B\u0438\u0442\u044C \u043C\u043E\u0434\u0435\u043B\u044C \u0438\u0437 \u0441\u043F\u0438\u0441\u043A\u0430",
-    cancelBtn: "\u041E\u0442\u043C\u0435\u043D\u0430",
-    saveResendBtn: "\u0421\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C \u0438 \u043E\u0442\u043F\u0440\u0430\u0432\u0438\u0442\u044C",
-    agentReasoningLog: "\u0425\u043E\u0434 \u0440\u0430\u0441\u0441\u0443\u0436\u0434\u0435\u043D\u0438\u0439 \u0430\u0433\u0435\u043D\u0442\u0430",
-    actionConfirmation: "\u0422\u0440\u0435\u0431\u0443\u0435\u0442\u0441\u044F \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043D\u0438\u0435 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u044F",
-    agentWantsExecute: "\u0410\u0433\u0435\u043D\u0442 \u0445\u043E\u0447\u0435\u0442 \u0432\u044B\u043F\u043E\u043B\u043D\u0438\u0442\u044C \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442",
-    allowBtn: "\u0420\u0430\u0437\u0440\u0435\u0448\u0438\u0442\u044C"
-  },
-  en: {
-    welcomeGreeting: "\u{1F44B} NEI Assistant greets you. Awaiting instructions",
-    welcomeSubText: "Your intelligent super-agent ready to assist with your knowledge base:",
-    featureNotes: "Direct access to notes, folders, and vault linkages",
-    featureRouting: "Quick and Agent modes with automatic tool routing",
-    featureVision: "Analysis of images, documents, and web pages",
-    featureTokens: "Full support for RAG, memory, and external MCP servers",
-    inputPlaceholder: "Ask a question or describe a task... (Enter to send, Shift+Enter for newline)",
-    attachTooltip: "Attach image or text file (.txt, .md, .js, .ts, .json)",
-    quickMode: "\u26A1 Quick",
-    agentMode: "\u{1F916} Agent",
-    ragToggle: "\u{1F9E0} RAG Knowledge Vault",
-    settingsTitle: "\u2699\uFE0F NEI AI Chat Settings",
-    providerLabel: "AI Provider:",
-    endpointLabel: "Endpoint URL:",
-    apiKeyLabel: "API Key:",
-    modelLabel: "Model:",
-    customModelsLabel: "Custom Models List (one per line):",
-    languageLabel: "Interface Language:",
-    saveSettings: "Save Settings",
-    checkApi: "\u{1F504} Check API & Models",
-    checkingApi: "\u23F3 Checking connection...",
-    apiCheckSuccess: "\u2705 API connected successfully!",
-    apiCheckFailed: "\u274C API Connection Failed",
-    newChat: "\u2795 New",
-    newChatSession: "New Chat",
-    clearChats: "\u{1F5D1}\uFE0F Clear All Chats",
-    confirmClearChats: "Are you sure you want to delete all chat history?",
-    saveNote: "\u{1F4C4} Save as Note",
-    copyText: "\u{1F4CB} Copy",
-    copied: "\u2705 Copied to clipboard!",
-    agentRunning: "\u26A1 Agent executing task...",
-    confirmAction: "Action Confirmation Required:",
-    allow: "\u2705 Allow",
-    deny: "\u274C Deny",
-    autoDetect: "Auto-detect (Obsidian)",
-    historyTitle: "Chat History",
-    clearAll: "\u{1F5D1}\uFE0F Clear All",
-    noSavedChats: "No saved chats",
-    moveSidebar: "\u2199\uFE0F To Sidebar",
-    moveTab: "\u2197\uFE0F To Tab",
-    moveSidebarTitle: "Move chat to right sidebar",
-    moveTabTitle: "Move chat to main editor tab",
-    modelCategories: "Model Categories (Multimodality):",
-    primaryModel: "1. Text & Tools (Primary):",
-    visionModel: "2. Files & Vision:",
-    quickModel: "3. Quick Mode Router:",
-    parameters: "Parameters",
-    requestingCapabilities: "Fetching capabilities via OpenRouter API...",
-    nativeToolCalling: "\u{1F7E2} Native Tool Calling supported",
-    textToolCalling: "\u{1F7E1} Text fallback tool calling mode",
-    visionSupported: "\u{1F5BC}\uFE0F Image/vision analysis supported",
-    textOnlyInput: "\u{1F4DD} Text input only",
-    contextWindow: "Context window:",
-    tokens: "tokens",
-    pressCheckApi: 'Click "Check API" to retrieve parameters from OpenRouter',
-    yourSavedModels: "Your saved models:",
-    addModelPlaceholder: "e.g., anthropic/claude-3.5-sonnet",
-    addBtn: "+ Add",
-    deleteFromList: "Delete from list",
-    keyUsage: "Used on API key:",
-    modeAutoTitle: "AI Mode: Auto (smart routing), Quick (direct chat), Agent (multi-step reasoning)",
-    modeAuto: "\u26A1 Auto (Smart)",
-    modeQuick: "\u{1F680} Quick (Direct)",
-    modeAgent: "\u{1F9E0} Agent (Multi-step)",
-    settingsTooltip: "Model & API Settings",
-    newChatTooltip: "New Chat",
-    historyTooltip: "Chat History",
-    deleteChatTooltip: "Delete Chat",
-    noteCreatedSuccess: "Success: Created note",
-    noteCreateError: "Error creating note:",
-    copyError: "Failed to copy text.",
-    modelAddedNotice: "Added model:",
-    cannotDeleteLastModel: "Cannot delete the last model!",
-    historyClearedNotice: "Chat history cleared!",
-    modeSwitchError: "Mode switch error:",
-    agentError: "\u274C Agent execution error:",
-    cancel: "Cancel",
-    saveSend: "\u{1F4BE} Send",
-    editText: "\u270F\uFE0F Edit",
-    retry: "\u{1F504} Retry",
-    inputTokens: "\u{1F4E5} In:",
-    outputTokens: "\u{1F4E4} Out:",
-    confirmTitle: "\u26A0\uFE0F Action Confirmation Required",
-    confirmDetail: "Agent requests tool execution:",
-    contextLength: "Context Window:",
-    toolCallingSupport: "Tool Calling Support:",
-    visionSupport: "Vision Support:",
-    infoUnavailable: "Click 'Check API' to retrieve details",
-    modelsList: "Custom Models List",
-    deleteModelTooltip: "Delete model from list",
-    cancelBtn: "Cancel",
-    saveResendBtn: "Save & Resend",
-    agentReasoningLog: "Agent Reasoning Log",
-    actionConfirmation: "Action Confirmation Required",
-    agentWantsExecute: "Agent requests tool execution",
-    allowBtn: "Allow"
-  },
-  es: {
-    welcomeGreeting: "\u{1F44B} El Asistente NEI le da la bienvenida. Esperando instrucciones",
-    welcomeSubText: "Su s\xFAper agente inteligente listo para ayudar con su base de conocimientos:",
-    featureNotes: "Acceso directo a notas, carpetas y enlaces de la b\xF3veda",
-    featureRouting: "Modos R\xE1pido y Agente con enrutamiento autom\xE1tico de herramientas",
-    featureVision: "An\xE1lisis de im\xE1genes, documentos y p\xE1ginas web",
-    featureTokens: "Soporte completo para RAG, memoria y servidores MCP externos",
-    inputPlaceholder: "Haga una pregunta o describa una tarea... (Enter para enviar)",
-    attachTooltip: "Adjuntar imagen o archivo de texto",
-    quickMode: "\u26A1 R\xE1pido",
-    agentMode: "\u{1F916} Agente",
-    ragToggle: "\u{1F9E0} B\xF3veda RAG",
-    settingsTitle: "\u2699\uFE0F Configuraci\xF3n de NEI AI Chat",
-    providerLabel: "Proveedor de IA:",
-    endpointLabel: "URL del punto final:",
-    apiKeyLabel: "Clave API:",
-    modelLabel: "Modelo:",
-    customModelsLabel: "Lista de modelos personalizados:",
-    languageLabel: "Idioma de la interfaz:",
-    saveSettings: "Guardar configuraci\xF3n",
-    checkApi: "\u{1F504} Verificar API y modelos",
-    checkingApi: "\u23F3 Verificando conexi\xF3n...",
-    apiCheckSuccess: "\u2705 \xA1API conectada con \xE9xito!",
-    apiCheckFailed: "\u274C Conexi\xF3n a API fallida",
-    newChat: "\u2795 Nuevo",
-    newChatSession: "Nuevo chat",
-    clearChats: "\u{1F5D1}\uFE0F Borrar todos los chats",
-    confirmClearChats: "\xBFEst\xE1 seguro de que desea eliminar todo el historial?",
-    saveNote: "\u{1F4C4} Guardar como nota",
-    copyText: "\u{1F4CB} Copiar",
-    copied: "\u2705 \xA1Copiado al portapapeles!",
-    agentRunning: "\u26A1 El agente est\xE1 ejecutando la tarea...",
-    confirmAction: "Confirmaci\xF3n de acci\xF3n requerida:",
-    allow: "\u2705 Permitir",
-    deny: "\u274C Denegar",
-    autoDetect: "Detecci\xF3n autom\xE1tica (Obsidian)",
-    historyTitle: "Historial de chats",
-    clearAll: "\u{1F5D1}\uFE0F Borrar todo",
-    noSavedChats: "Sin chats guardados",
-    moveSidebar: "\u2199\uFE0F A la barra",
-    moveTab: "\u2197\uFE0F A pesta\xF1a",
-    moveSidebarTitle: "Mover chat a la barra lateral",
-    moveTabTitle: "Mover chat a la pesta\xF1a principal",
-    modelCategories: "Categor\xEDas de modelos:",
-    primaryModel: "1. Texto y Herramientas (Principal):",
-    visionModel: "2. Archivos e Im\xE1genes (Visi\xF3n):",
-    quickModel: "3. Enrutador Modo R\xE1pido:",
-    parameters: "Par\xE1metros",
-    requestingCapabilities: "Obteniendo capacidades de OpenRouter API...",
-    nativeToolCalling: "\u{1F7E2} Llamadas a herramientas nativas soportadas",
-    textToolCalling: "\u{1F7E1} Modo de herramientas por texto",
-    visionSupported: "\u{1F5BC}\uFE0F An\xE1lisis de im\xE1genes soportado",
-    textOnlyInput: "\u{1F4DD} Solo entrada de texto",
-    contextWindow: "Ventana de contexto:",
-    tokens: "tokens",
-    pressCheckApi: 'Haga clic en "Verificar API" para obtener par\xE1metros',
-    yourSavedModels: "Sus modelos guardados:",
-    addModelPlaceholder: "ej., anthropic/claude-3.5-sonnet",
-    addBtn: "+ A\xF1adir",
-    deleteFromList: "Eliminar de la lista",
-    keyUsage: "Usado en clave API:",
-    modeAutoTitle: "Modo IA: Auto (inteligente), R\xE1pido (directo), Agente (multi-paso)",
-    modeAuto: "\u26A1 Auto (Inteligente)",
-    modeQuick: "\u{1F680} R\xE1pido (Directo)",
-    modeAgent: "\u{1F9E0} Agente (Multi-paso)",
-    settingsTooltip: "Configuraci\xF3n de API y Modelos",
-    newChatTooltip: "Nuevo Chat",
-    historyTooltip: "Historial de chats",
-    deleteChatTooltip: "Eliminar chat",
-    noteCreatedSuccess: "\xC9xito: Nota creada",
-    noteCreateError: "Error al crear la nota:",
-    copyError: "Error al copiar el texto.",
-    modelAddedNotice: "Modelo a\xF1adido:",
-    cannotDeleteLastModel: "\xA1No se puede eliminar el \xFAltimo modelo!",
-    historyClearedNotice: "\xA1Historial de chats borrado!",
-    modeSwitchError: "Error de cambio de modo:",
-    agentError: "\u274C Error de ejecuci\xF3n del agente:",
-    cancel: "Cancelar",
-    saveSend: "\u{1F4BE} Enviar",
-    editText: "\u270F\uFE0F Editar",
-    retry: "\u{1F504} Reintentar",
-    inputTokens: "\u{1F4E5} Ent:",
-    outputTokens: "\u{1F4E4} Sal:",
-    confirmTitle: "\u26A0\uFE0F Confirmaci\xF3n de acci\xF3n requerida",
-    confirmDetail: "El agente solicita la ejecuci\xF3n de la herramienta:",
-    contextLength: "Ventana de contexto:",
-    toolCallingSupport: "Soporte de herramientas:",
-    visionSupport: "Soporte de visi\xF3n:",
-    infoUnavailable: "Haga clic en 'Verificar API' para obtener detalles",
-    modelsList: "Lista de modelos personalizados",
-    deleteModelTooltip: "Eliminar modelo de la lista",
-    cancelBtn: "Cancelar",
-    saveResendBtn: "Guardar y reenviar",
-    agentReasoningLog: "Registro de razonamiento del agente",
-    actionConfirmation: "Confirmaci\xF3n de acci\xF3n requerida",
-    agentWantsExecute: "El agente solicita ejecutar la herramienta",
-    allowBtn: "Permitir"
-  },
-  de: {
-    welcomeGreeting: "\u{1F44B} NEI Assistent begr\xFC\xDFt Sie. Warten auf Anweisungen",
-    welcomeSubText: "Ihr intelligenter Super-Agent bereit f\xFCr Ihre Wissensdatenbank:",
-    featureNotes: "Direkter Zugriff auf Notizen, Ordner und Vault-Verkn\xFCpfungen",
-    featureRouting: "Schnell- und Agenten-Modus mit automatischer Werkzeugauswahl",
-    featureVision: "Analyse von Bildern, Dokumenten und Webseiten",
-    featureTokens: "Vollst\xE4ndige Unterst\xFCtzung f\xFCr RAG, Speicher und externe MCP-Server",
-    inputPlaceholder: "Stellen Sie eine Frage... (Enter zum Senden)",
-    attachTooltip: "Bild oder Textdatei anh\xE4ngen",
-    quickMode: "\u26A1 Schnell",
-    agentMode: "\u{1F916} Agent",
-    ragToggle: "\u{1F9E0} RAG Wissen",
-    settingsTitle: "\u2699\uFE0F NEI AI Chat Einstellungen",
-    providerLabel: "KI-Anbieter:",
-    endpointLabel: "Endpunkt-URL:",
-    apiKeyLabel: "API-Schl\xFCssel:",
-    modelLabel: "Modell:",
-    customModelsLabel: "Benutzerdefinierte Modelle:",
-    languageLabel: "Oberfl\xE4chensprache:",
-    saveSettings: "Einstellungen speichern",
-    checkApi: "\u{1F504} API & Modelle pr\xFCfen",
-    checkingApi: "\u23F3 Verbindung wird gepr\xFCft...",
-    apiCheckSuccess: "\u2705 API erfolgreich verbunden!",
-    apiCheckFailed: "\u274C API-Verbindung fehlgeschlagen",
-    newChat: "\u2795 Neu",
-    newChatSession: "Neuer Chat",
-    clearChats: "\u{1F5D1}\uFE0F Alle Chats l\xF6schen",
-    confirmClearChats: "M\xF6chten Sie wirklich den gesamten Verlauf l\xF6schen?",
-    saveNote: "\u{1F4C4} Als Notiz speichern",
-    copyText: "\u{1F4CB} Kopieren",
-    copied: "\u2705 In Zwischenablage kopiert!",
-    agentRunning: "\u26A1 Agent f\xFChrt Aufgabe aus...",
-    confirmAction: "Aktionsbest\xE4tigung erforderlich:",
-    allow: "\u2705 Erlauben",
-    deny: "\u274C Ablehnen",
-    autoDetect: "Automatisch (Obsidian)",
-    historyTitle: "Chat-Verlauf",
-    clearAll: "\u{1F5D1}\uFE0F Alle l\xF6schen",
-    noSavedChats: "Keine gespeicherten Chats",
-    moveSidebar: "\u2199\uFE0F Zur Leiste",
-    moveTab: "\u2197\uFE0F Zum Tab",
-    moveSidebarTitle: "Chat in rechte Seitenleiste verschieben",
-    moveTabTitle: "Chat in Haupt-Tab verschieben",
-    modelCategories: "Modellkategorien:",
-    primaryModel: "1. Text & Werkzeuge (Haupt):",
-    visionModel: "2. Dateien & Bilder (Vision):",
-    quickModel: "3. Schnell-Modus Router:",
-    parameters: "Parameter",
-    requestingCapabilities: "Funktionen von OpenRouter API abrufen...",
-    nativeToolCalling: "\u{1F7E2} Natives Tool Calling unterst\xFCtzt",
-    textToolCalling: "\u{1F7E1} Textbasiertes Tool Calling",
-    visionSupported: "\u{1F5BC}\uFE0F Bildanalyse unterst\xFCtzt",
-    textOnlyInput: "\u{1F4DD} Nur Texteingabe",
-    contextWindow: "Kontextfenster:",
-    tokens: "Tokens",
-    pressCheckApi: 'Klicken Sie auf "API pr\xFCfen", um Parameter abzurufen',
-    yourSavedModels: "Ihre gespeicherten Modelle:",
-    addModelPlaceholder: "z.B. anthropic/claude-3.5-sonnet",
-    addBtn: "+ Hinzuf\xFCgen",
-    deleteFromList: "Aus Liste l\xF6schen",
-    keyUsage: "API-Schl\xFCssel Nutzung:",
-    modeAutoTitle: "KI-Modus: Auto (intelligent), Schnell (direkt), Agent (mehrstufig)",
-    modeAuto: "\u26A1 Auto (Smart)",
-    modeQuick: "\u{1F680} Schnell (Direkt)",
-    modeAgent: "\u{1F9E0} Agent (Mehrstufig)",
-    settingsTooltip: "Einstellungen f\xFCr Modelle & API",
-    newChatTooltip: "Neuer Chat",
-    historyTooltip: "Chat-Verlauf",
-    deleteChatTooltip: "Chat l\xF6schen",
-    noteCreatedSuccess: "Erfolg: Notiz erstellt",
-    noteCreateError: "Fehler beim Erstellen der Notiz:",
-    copyError: "Text konnte nicht kopiert werden.",
-    modelAddedNotice: "Modell hinzugef\xFCgt:",
-    cannotDeleteLastModel: "Das letzte Modell kann nicht gel\xF6scht werden!",
-    historyClearedNotice: "Verlauf gel\xF6scht!",
-    modeSwitchError: "Fehler beim Wechseln des Modus:",
-    agentError: "\u274C Agenten-Ausf\xFChrungsfehler:",
-    cancel: "Abbrechen",
-    saveSend: "\u{1F4BE} Senden",
-    editText: "\u270F\uFE0F Bearbeiten",
-    retry: "\u{1F504} Wiederholen",
-    inputTokens: "\u{1F4E5} In:",
-    outputTokens: "\u{1F4E4} Out:",
-    confirmTitle: "\u26A0\uFE0F Aktionsbest\xE4tigung erforderlich",
-    confirmDetail: "Agent fordert Werkzeugausf\xFChrung an:",
-    contextLength: "Kontextfenster:",
-    toolCallingSupport: "Werkzeug-Unterst\xFCtzung:",
-    visionSupport: "Bild-Unterst\xFCtzung:",
-    infoUnavailable: "Klicken Sie auf 'API pr\xFCfen' f\xFCr Details",
-    modelsList: "Liste benutzerdefinierter Modelle",
-    deleteModelTooltip: "Modell aus Liste l\xF6schen",
-    cancelBtn: "Abbrechen",
-    saveResendBtn: "Speichern & erneut senden",
-    agentReasoningLog: "Agenten-Denkprotokoll",
-    actionConfirmation: "Aktionsbest\xE4tigung erforderlich",
-    agentWantsExecute: "Agent m\xF6chte Werkzeug ausf\xFChren",
-    allowBtn: "Erlauben"
-  },
-  fr: {
-    welcomeGreeting: "\u{1F44B} L'assistant NEI vous souhaite la bienvenue. En attente d'instructions",
-    welcomeSubText: "Votre super-agent intelligent pr\xEAt \xE0 analyser votre base de connaissances :",
-    featureNotes: "Acc\xE8s direct aux notes, dossiers et liens du coffre",
-    featureRouting: "Modes Rapide et Agent avec routage automatique des outils",
-    featureVision: "Analyse d'images, de documents et de pages web",
-    featureTokens: "Prise en charge compl\xE8te du RAG, de la m\xE9moire et des serveurs MCP",
-    inputPlaceholder: "Posez une question... (Entr\xE9e pour envoyer)",
-    attachTooltip: "Joindre une image ou un fichier texte",
-    quickMode: "\u26A1 Rapide",
-    agentMode: "\u{1F916} Agent",
-    ragToggle: "\u{1F9E0} Base RAG",
-    settingsTitle: "\u2699\uFE0F Param\xE8tres NEI AI Chat",
-    providerLabel: "Fournisseur d'IA :",
-    endpointLabel: "URL du point d'acc\xE8s :",
-    apiKeyLabel: "Cl\xE9 API :",
-    modelLabel: "Mod\xE8le :",
-    customModelsLabel: "Liste des mod\xE8les personnalis\xE9s :",
-    languageLabel: "Langue de l'interface :",
-    saveSettings: "Enregistrer les param\xE8tres",
-    checkApi: "\u{1F504} V\xE9rifier l'API et les mod\xE8les",
-    checkingApi: "\u23F3 Connexion en cours...",
-    apiCheckSuccess: "\u2705 API connect\xE9e avec succ\xE8s !",
-    apiCheckFailed: "\u274C \xC9chec de connexion API",
-    newChat: "\u2795 Nouveau",
-    newChatSession: "Nouveau chat",
-    clearChats: "\u{1F5D1}\uFE0F Effacer tous les chats",
-    confirmClearChats: "Voulez-vous vraiment supprimer tout l'historique ?",
-    saveNote: "\u{1F4C4} Enregistrer comme note",
-    copyText: "\u{1F4CB} Copier",
-    copied: "\u2705 Copi\xE9 dans le presse-papiers !",
-    agentRunning: "\u26A1 L'agent ex\xE9cute la t\xE2che...",
-    confirmAction: "Confirmation d'action requise :",
-    allow: "\u2705 Autoriser",
-    deny: "\u274C Refuser",
-    autoDetect: "D\xE9tection auto (Obsidian)",
-    historyTitle: "Historique des chats",
-    clearAll: "\u{1F5D1}\uFE0F Tout effacer",
-    noSavedChats: "Aucun chat enregistr\xE9",
-    moveSidebar: "\u2199\uFE0F Vers volet",
-    moveTab: "\u2197\uFE0F Vers onglet",
-    moveSidebarTitle: "D\xE9placer le chat vers le panneau lat\xE9ral",
-    moveTabTitle: "D\xE9placer le chat vers l'onglet principal",
-    modelCategories: "Cat\xE9gories de mod\xE8les :",
-    primaryModel: "1. Texte et Outils (Principal) :",
-    visionModel: "2. Fichiers et Images (Vision) :",
-    quickModel: "3. Routeur Mode Rapide :",
-    parameters: "Param\xE8tres",
-    requestingCapabilities: "R\xE9cup\xE9ration des capacit\xE9s via OpenRouter...",
-    nativeToolCalling: "\u{1F7E2} Appel d'outils natifs pris en charge",
-    textToolCalling: "\u{1F7E1} Mode outils par texte",
-    visionSupported: "\u{1F5BC}\uFE0F Analyse d'images prise en charge",
-    textOnlyInput: "\u{1F4DD} Saisie texte uniquement",
-    contextWindow: "Fen\xEAtre de contexte :",
-    tokens: "jetons",
-    pressCheckApi: `Cliquez sur "V\xE9rifier l'API" pour obtenir les param\xE8tres`,
-    yourSavedModels: "Vos mod\xE8les enregistr\xE9s :",
-    addModelPlaceholder: "ex. anthropic/claude-3.5-sonnet",
-    addBtn: "+ Ajouter",
-    deleteFromList: "Supprimer de la liste",
-    keyUsage: "Utilis\xE9 sur la cl\xE9 API :",
-    modeAutoTitle: "Mode IA : Auto (intelligent), Rapide (direct), Agent (multi-\xE9tapes)",
-    modeAuto: "\u26A1 Auto (Intelligent)",
-    modeQuick: "\u{1F680} Rapide (Direct)",
-    modeAgent: "\u{1F9E0} Agent (Multi-\xE9tapes)",
-    settingsTooltip: "Param\xE8tres des mod\xE8les et de l'API",
-    newChatTooltip: "Nouveau chat",
-    historyTooltip: "Historique des chats",
-    deleteChatTooltip: "Supprimer le chat",
-    noteCreatedSuccess: "Succ\xE8s : Note cr\xE9\xE9e",
-    noteCreateError: "Erreur lors de la cr\xE9ation de la note :",
-    copyError: "Impossible de copier le texte.",
-    modelAddedNotice: "Mod\xE8le ajout\xE9 :",
-    cannotDeleteLastModel: "Impossible de supprimer le dernier mod\xE8le !",
-    historyClearedNotice: "Historique effac\xE9 !",
-    modeSwitchError: "Erreur de changement de mode :",
-    agentError: "\u274C Erreur d'ex\xE9cution de l'agent :",
-    cancel: "Annuler",
-    saveSend: "\u{1F4BE} Envoyer",
-    editText: "\u270F\uFE0F Modifier",
-    retry: "\u{1F504} R\xE9essayer",
-    inputTokens: "\u{1F4E5} Ent :",
-    outputTokens: "\u{1F4E4} Sort :",
-    confirmTitle: "\u26A0\uFE0F Confirmation d'action requise",
-    confirmDetail: "L'agent demande l'ex\xE9cution de l'outil :",
-    contextLength: "Fen\xEAtre de contexte :",
-    toolCallingSupport: "Support d'outils :",
-    visionSupport: "Support d'images :",
-    infoUnavailable: "Cliquez sur 'V\xE9rifier l'API' pour les d\xE9tails",
-    modelsList: "Liste des mod\xE8les personnalis\xE9s",
-    deleteModelTooltip: "Supprimer le mod\xE8le de la liste",
-    cancelBtn: "Annuler",
-    saveResendBtn: "Enregistrer & renvoyer",
-    agentReasoningLog: "Journal de raisonnement de l'agent",
-    actionConfirmation: "Confirmation d'action requise",
-    agentWantsExecute: "L'agent demande l'ex\xE9cution de l'outil",
-    allowBtn: "Autoriser"
-  },
-  zh: {
-    welcomeGreeting: "\u{1F44B} NEI \u52A9\u624B\u5411\u60A8\u81F4\u610F\u3002\u7B49\u5F85\u6307\u4EE4\u4E2D",
-    welcomeSubText: "\u60A8\u7684\u667A\u80FD\u8D85\u7EA7\u4EE3\u7406\u968F\u65F6\u4E3A\u60A8\u670D\u52A1\uFF0C\u5904\u7406\u60A8\u7684\u77E5\u8BC6\u5E93\uFF1A",
-    featureNotes: "\u76F4\u63A5\u8BBF\u95EE Vault \u7B14\u8BB0\u3001\u6587\u4EF6\u5939\u548C\u76F8\u5173\u94FE\u63A5",
-    featureRouting: "\u62E5\u6709\u81EA\u52A8\u5DE5\u5177\u8DEF\u7531\u7684\u5FEB\u901F\u6A21\u5F0F\u4E0E\u4EE3\u7406\u6A21\u5F0F",
-    featureVision: "\u56FE\u50CF\u3001\u6587\u6863\u548C\u7F51\u9875\u5206\u6790",
-    featureTokens: "\u5168\u9762\u652F\u6301 RAG\u3001\u8BB0\u5FC6\u5E93\u548C\u5916\u90E8 MCP \u670D\u52A1\u5668",
-    inputPlaceholder: "\u8F93\u5165\u95EE\u9898\u6216\u4EFB\u52A1... (Enter \u53D1\u9001)",
-    attachTooltip: "\u9644\u52A0\u56FE\u50CF\u6216\u6587\u672C\u6587\u4EF6",
-    quickMode: "\u26A1 \u5FEB\u901F",
-    agentMode: "\u{1F916} \u4EE3\u7406",
-    ragToggle: "\u{1F9E0} RAG \u77E5\u8BC6\u5E93",
-    settingsTitle: "\u2699\uFE0F NEI AI Chat \u8BBE\u7F6E",
-    providerLabel: "AI \u63D0\u4F9B\u5546\uFF1A",
-    endpointLabel: "\u7AEF\u70B9 URL\uFF1A",
-    apiKeyLabel: "API \u5BC6\u94A5\uFF1A",
-    modelLabel: "\u6A21\u578B\uFF1A",
-    customModelsLabel: "\u81EA\u5B9A\u4E49\u6A21\u578B\u5217\u8868\uFF1A",
-    languageLabel: "\u754C\u9762\u8BED\u8A00\uFF1A",
-    saveSettings: "\u4FDD\u5B58\u8BBE\u7F6E",
-    checkApi: "\u{1F504} \u68C0\u67E5 API \u4E0E\u6A21\u578B",
-    checkingApi: "\u23F3 \u6B63\u5728\u68C0\u67E5\u8FDE\u63A5...",
-    apiCheckSuccess: "\u2705 API \u8FDE\u63A5\u6210\u529F\uFF01",
-    apiCheckFailed: "\u274C API \u8FDE\u63A5\u5931\u8D25",
-    newChat: "\u2795 \u65B0\u5EFA",
-    newChatSession: "\u65B0\u5BF9\u8BDD",
-    clearChats: "\u{1F5D1}\uFE0F \u6E05\u7A7A\u6240\u6709\u5BF9\u8BDD",
-    confirmClearChats: "\u786E\u5B9A\u8981\u5220\u9664\u6240\u6709\u5386\u53F2\u5BF9\u8BDD\u5417\uFF1F",
-    saveNote: "\u{1F4C4} \u4FDD\u5B58\u4E3A\u7B14\u8BB0",
-    copyText: "\u{1F4CB} \u590D\u5236",
-    copied: "\u2705 \u5DF2\u590D\u5236\u5230\u526A\u8D34\u677F\uFF01",
-    agentRunning: "\u26A1 \u4EE3\u7406\u6B63\u5728\u6267\u884C\u4EFB\u52A1...",
-    confirmAction: "\u9700\u8981\u786E\u8BA4\u64CD\u4F5C\uFF1A",
-    allow: "\u2705 \u5141\u8BB8",
-    deny: "\u274C \u62D2\u7EDD",
-    autoDetect: "\u81EA\u52A8\u68C0\u6D4B (Obsidian)",
-    historyTitle: "\u5BF9\u8BDD\u5386\u53F2",
-    clearAll: "\u{1F5D1}\uFE0F \u6E05\u7A7A\u5168\u90E8",
-    noSavedChats: "\u65E0\u5DF2\u4FDD\u5B58\u5BF9\u8BDD",
-    moveSidebar: "\u2199\uFE0F \u81F3\u4FA7\u8FB9\u680F",
-    moveTab: "\u2197\uFE0F \u81F3\u6807\u7B7E\u9875",
-    moveSidebarTitle: "\u5C06\u5BF9\u8BDD\u79FB\u52A8\u81F3\u53F3\u4FA7\u8FB9\u680F",
-    moveTabTitle: "\u5C06\u5BF9\u8BDD\u79FB\u52A8\u81F3\u4E3B\u7F16\u8F91\u6807\u7B7E\u9875",
-    modelCategories: "\u6A21\u578B\u5206\u7C7B (\u591A\u6A21\u6001)\uFF1A",
-    primaryModel: "1. \u6587\u672C\u4E0E\u5DE5\u5177 (\u4E3B\u6A21\u578B)\uFF1A",
-    visionModel: "2. \u6587\u4EF6\u4E0E\u56FE\u50CF (Vision)\uFF1A",
-    quickModel: "3. \u5FEB\u901F\u6A21\u5F0F\u8DEF\u7531\u5668\uFF1A",
-    parameters: "\u53C2\u6570",
-    requestingCapabilities: "\u6B63\u5728\u901A\u8FC7 OpenRouter API \u83B7\u53D6\u529F\u80FD...",
-    nativeToolCalling: "\u{1F7E2} \u652F\u6301\u539F\u751F\u5DE5\u5177\u8C03\u7528",
-    textToolCalling: "\u{1F7E1} \u6587\u672C\u964D\u7EA7\u5DE5\u5177\u6A21\u5F0F",
-    visionSupported: "\u{1F5BC}\uFE0F \u652F\u6301\u56FE\u50CF\u5206\u6790",
-    textOnlyInput: "\u{1F4DD} \u4EC5\u652F\u6301\u6587\u672C\u8F93\u5165",
-    contextWindow: "\u4E0A\u4E0B\u6587\u7A97\u53E3\uFF1A",
-    tokens: "Tokens",
-    pressCheckApi: "\u70B9\u51FB\u201C\u68C0\u67E5 API\u201D\u83B7\u53D6 OpenRouter \u53C2\u6570",
-    yourSavedModels: "\u5DF2\u4FDD\u5B58\u7684\u6A21\u578B\uFF1A",
-    addModelPlaceholder: "\u4F8B\u5982\uFF1Aanthropic/claude-3.5-sonnet",
-    addBtn: "+ \u6DFB\u52A0",
-    deleteFromList: "\u4ECE\u5217\u8868\u4E2D\u5220\u9664",
-    keyUsage: "API \u5BC6\u94A5\u5DF2\u7528\u989D\u5EA6\uFF1A",
-    modeAutoTitle: "AI \u6A21\u5F0F\uFF1A\u81EA\u52A8\uFF08\u667A\u80FD\u8DEF\u7531\uFF09\uFF0C\u5FEB\u901F\uFF08\u76F4\u63A5\u56DE\u7B54\uFF09\uFF0C\u4EE3\u7406\uFF08\u591A\u6B65\u63A8\u7406\uFF09",
-    modeAuto: "\u26A1 \u81EA\u52A8 (\u667A\u80FD)",
-    modeQuick: "\u{1F680} \u5FEB\u901F (\u76F4\u63A5)",
-    modeAgent: "\u{1F9E0} \u4EE3\u7406 (\u591A\u6B65)",
-    settingsTooltip: "\u6A21\u578B\u4E0E API \u8BBE\u7F6E",
-    newChatTooltip: "\u65B0\u5EFA\u5BF9\u8BDD",
-    historyTooltip: "\u5BF9\u8BDD\u5386\u53F2",
-    deleteChatTooltip: "\u5220\u9664\u5BF9\u8BDD",
-    noteCreatedSuccess: "\u6210\u529F\uFF1A\u7B14\u8BB0\u5DF2\u521B\u5EFA",
-    noteCreateError: "\u521B\u5EFA\u7B14\u8BB0\u5931\u8D25\uFF1A",
-    copyError: "\u590D\u5236\u6587\u672C\u5931\u8D25\u3002",
-    modelAddedNotice: "\u5DF2\u6DFB\u52A0\u6A21\u578B\uFF1A",
-    cannotDeleteLastModel: "\u65E0\u6CD5\u5220\u9664\u5217\u8868\u4E2D\u6700\u540E\u4E00\u4E2A\u6A21\u578B\uFF01",
-    historyClearedNotice: "\u6240\u6709\u5BF9\u8BDD\u5386\u53F2\u5DF2\u6E05\u7A7A\uFF01",
-    modeSwitchError: "\u5207\u6362\u6A21\u5F0F\u5931\u8D25\uFF1A",
-    agentError: "\u274C \u4EE3\u7406\u6267\u884C\u9519\u8BEF\uFF1A",
-    cancel: "\u53D6\u6D88",
-    saveSend: "\u{1F4BE} \u53D1\u9001",
-    editText: "\u270F\uFE0F \u7F16\u8F91",
-    retry: "\u{1F504} \u91CD\u8BD5",
-    inputTokens: "\u{1F4E5} \u8F93\u5165\uFF1A",
-    outputTokens: "\u{1F4E4} \u8F93\u51FA\uFF1A",
-    confirmTitle: "\u26A0\uFE0F \u9700\u8981\u786E\u8BA4\u64CD\u4F5C",
-    confirmDetail: "\u4EE3\u7406\u8BF7\u6C42\u6267\u884C\u5DE5\u5177\uFF1A",
-    contextLength: "\u4E0A\u4E0B\u6587\u7A97\u53E3\uFF1A",
-    toolCallingSupport: "\u5DE5\u5177\u8C03\u7528\u652F\u6301\uFF1A",
-    visionSupport: "\u56FE\u50CF/\u89C6\u89C9\u652F\u6301\uFF1A",
-    infoUnavailable: "\u70B9\u51FB\u201C\u68C0\u67E5 API\u201D\u83B7\u53D6\u8BE6\u7EC6\u4FE1\u606F",
-    modelsList: "\u81EA\u5B9A\u4E49\u6A21\u578B\u5217\u8868",
-    deleteModelTooltip: "\u4ECE\u5217\u8868\u4E2D\u5220\u9664\u6A21\u578B",
-    cancelBtn: "\u53D6\u6D88",
-    saveResendBtn: "\u4FDD\u5B58\u5E76\u91CD\u53D1",
-    agentReasoningLog: "\u4EE3\u7406\u63A8\u7406\u65E5\u5FD7",
-    actionConfirmation: "\u9700\u8981\u786E\u8BA4\u64CD\u4F5C",
-    agentWantsExecute: "\u4EE3\u7406\u8BF7\u6C42\u6267\u884C\u5DE5\u5177",
-    allowBtn: "\u5141\u8BB8"
-  },
-  ja: {
-    welcomeGreeting: "\u{1F44B} NEI \u30A2\u30B7\u30B9\u30BF\u30F3\u30C8\u3078\u3088\u3046\u3053\u305D\u3002\u6307\u793A\u3092\u5F85\u3063\u3066\u3044\u307E\u3059",
-    welcomeSubText: "\u3042\u306A\u305F\u306E\u30CA\u30EC\u30C3\u30B8\u30D9\u30FC\u30B9\u3092\u30B5\u30DD\u30FC\u30C8\u3059\u308B\u30A4\u30F3\u30C6\u30EA\u30B8\u30A7\u30F3\u30C8\u30FB\u30B9\u30FC\u30D1\u30FC\u30A8\u30FC\u30B8\u30A7\u30F3\u30C8\uFF1A",
-    featureNotes: "\u30CE\u30FC\u30C8\u3001\u30D5\u30A9\u30EB\u30C0\u3001\u4FDD\u7BA1\u5EAB\u306E\u30EA\u30F3\u30AF\u3078\u306E\u76F4\u63A5\u30A2\u30AF\u30BB\u30B9",
-    featureRouting: "\u81EA\u52D5\u30C4\u30FC\u30EB\u30EB\u30FC\u30C6\u30A3\u30F3\u30B0\u3092\u5099\u3048\u305F Quick / Agent \u30E2\u30FC\u30C9",
-    featureVision: "\u753B\u50CF\u3001\u30C9\u30AD\u30E5\u30E1\u30F3\u30C8\u3001Web \u30DA\u30FC\u30B8\u306E\u89E3\u6790",
-    featureTokens: "RAG\u3001\u30E1\u30E2\u30EA\u3001\u5916\u90E8 MCP \u30B5\u30FC\u30D0\u30FC\u306E\u30D5\u30EB\u30B5\u30DD\u30FC\u30C8",
-    inputPlaceholder: "\u8CEA\u554F\u3084\u30BF\u30B9\u30AF\u3092\u5165\u529B... (Enter \u3067\u9001\u4FE1)",
-    attachTooltip: "\u753B\u50CF\u307E\u305F\u306F\u30C6\u30AD\u30B9\u30C8\u30D5\u30A1\u30A4\u30EB\u3092\u6DFB\u4ED8",
-    quickMode: "\u26A1 \u30AF\u30A4\u30C3\u30AF",
-    agentMode: "\u{1F916} \u30A8\u30FC\u30B8\u30A7\u30F3\u30C8",
-    ragToggle: "\u{1F9E0} RAG \u77E5\u8B58\u30D9\u30FC\u30B9",
-    settingsTitle: "\u2699\uFE0F NEI AI Chat \u8A2D\u5B9A",
-    providerLabel: "AI \u30D7\u30ED\u30D0\u30A4\u30C0\u30FC:",
-    endpointLabel: "\u30A8\u30F3\u30C9\u30DD\u30A4\u30F3\u30C8 URL:",
-    apiKeyLabel: "API \u30AD\u30FC:",
-    modelLabel: "\u30E2\u30C7\u30EB:",
-    customModelsLabel: "\u30AB\u30B9\u30BF\u30E0\u30E2\u30C7\u30EB\u30EA\u30B9\u30C8:",
-    languageLabel: "\u8868\u793A\u8A00\u8A9E:",
-    saveSettings: "\u8A2D\u5B9A\u3092\u4FDD\u5B58",
-    checkApi: "\u{1F504} API \u3068\u30E2\u30C7\u30EB\u3092\u78BA\u8A8D",
-    checkingApi: "\u23F3 \u63A5\u7D9A\u78BA\u8A8D\u4E2D...",
-    apiCheckSuccess: "\u2705 API \u63A5\u7D9A\u306B\u6210\u529F\u3057\u307E\u3057\u305F\uFF01",
-    apiCheckFailed: "\u274C API \u63A5\u7D9A\u5931\u6557",
-    newChat: "\u2795 \u65B0\u898F",
-    newChatSession: "\u65B0\u3057\u3044\u30C1\u30E3\u30C3\u30C8",
-    clearChats: "\u{1F5D1}\uFE0F \u3059\u3079\u3066\u306E\u30C1\u30E3\u30C3\u30C8\u3092\u6D88\u53BB",
-    confirmClearChats: "\u3059\u3079\u3066\u306E\u5C65\u6B74\uB97C \u524A\u9664\u3057\u3066\u3082\u3088\u308D\u3057\u3044\u3067\u3059\u304B\uFF1F",
-    saveNote: "\u{1F4C4} \u30CE\u30FC\u30C8\u3068\u3057\u3066\u4FDD\u5B58",
-    copyText: "\u{1F4CB} \u30B3\u30D4\u30FC",
-    copied: "\u2705 \u30AF\u30EA\u30C3\u30D7\u30DC\u30FC\u30C9\u306B\u30B3\u30D4\u30FC\u3057\u307E\u3057\u305F\uFF01",
-    agentRunning: "\u26A1 \u30A8\u30FC\u30B8\u30A7\u30F3\u30C8\u304C\u30BF\u30B9\u30AF\u3092\u5B9F\u884C\u4E2D...",
-    confirmAction: "\u30A2\u30AF\u30B7\u30E7\u30F3\u306E\u78BA\u8A8D\u304C\u5FC5\u8981\u3067\u3059:",
-    allow: "\u2705 \u8A31\u53EF",
-    deny: "\u274C \u62D2\u5426",
-    autoDetect: "\u81EA\u52D5\u691C\u51FA (Obsidian)",
-    historyTitle: "\u30C1\u30E3\u30C3\u30C8\u5C65\u6B74",
-    clearAll: "\u{1F5D1}\uFE0F \u3059\u3079\u3066\u524A\u9664",
-    noSavedChats: "\u4FDD\u5B58\u3055\u308C\u305F\u30C1\u30E3\u30C3\u30C8\u306F\u3042\u308A\u307E\u305B\u3093",
-    moveSidebar: "\u2199\uFE0F \u30B5\u30A4\u30C9\u30D0\u30FC\u3078",
-    moveTab: "\u2197\uFE0F \u30BF\u30D6\u3078",
-    moveSidebarTitle: "\u30C1\u30E3\u30C3\u30C8\u3092\u53F3\u30B5\u30A4\u30C9\u30D0\u30FC\u306B\u79FB\u52D5",
-    moveTabTitle: "\u30C1\u30E3\u30C3\u30C8\u3092\u30E1\u30A4\u30F3\u30BF\u30D6\u306B\u79FB\u52D5",
-    modelCategories: "\u30E2\u30C7\u30EB\u30AB\u30C6\u30B4\u30EA:",
-    primaryModel: "1. \u30C6\u30AD\u30B9\u30C8\u3068\u30C4\u30FC\u30EB (\u30E1\u30A4\u30F3):",
-    visionModel: "2. \u30D5\u30A1\u30A4\u30EB\u3068\u753B\u50CF (Vision):",
-    quickModel: "3. \u30AF\u30A4\u30C3\u30AF\u30E2\u30FC\u30C9\u30EB\u30FC\u30BF\u30FC:",
-    parameters: "\u30D1\u30E9\u30E1\u30FC\u30BF",
-    requestingCapabilities: "OpenRouter API \u304B\u3089\u60C5\u5831\u3092\u53D6\u5F97\u4E2D...",
-    nativeToolCalling: "\u{1F7E2} \u30CD\u30A4\u30C6\u30A3\u30D6 Tool Calling \u5BFE\u5FDC",
-    textToolCalling: "\u{1F7E1} \u30C6\u30AD\u30B9\u30C8\u30D5\u30A9\u30FC\u30EB\u30D0\u30C3\u30AF\u30E2\u30FC\u30C9",
-    visionSupported: "\u{1F5BC}\uFE0F \u753B\u50CF\u89E3\u6790\u5BFE\u5FDC",
-    textOnlyInput: "\u{1F4DD} \u30C6\u30AD\u30B9\u30C8\u5165\u529B\u306E\u307F",
-    contextWindow: "\u30B3\u30F3\u30C6\u30AD\u30B9\u30C8\u30A6\u30A3\u30F3\u30C9\u30A6:",
-    tokens: "\u30C8\u30FC\u30AF\u30F3",
-    pressCheckApi: "\u300CAPI \u3092\u78BA\u8A8D\u300D\u3092\u30AF\u30EA\u30C3\u30AF\u3057\u3066\u30D1\u30E9\u30E1\u30FC\u30BF\u3092\u53D6\u5F97",
-    yourSavedModels: "\u4FDD\u5B58\u3055\u308C\u305F\u30E2\u30C7\u30EB:",
-    addModelPlaceholder: "\u4F8B: anthropic/claude-3.5-sonnet",
-    addBtn: "+ \u8FFD\u52A0",
-    deleteFromList: "\u30EA\u30B9\u30C8\u304B\u3089\u524A\u9664",
-    keyUsage: "API \u30AD\u30FC\u4F7F\u7528\u91CF:",
-    modeAutoTitle: "AI \u30E2\u30FC\u30C9: Auto\uFF08\u30B9\u30DE\u30FC\u30C8\uFF09\u3001Quick\uFF08\u76F4\u63A5\uFF09\u3001Agent\uFF08\u591A\u6BB5\u968E\uFF09",
-    modeAuto: "\u26A1 \u81EA\u52D5 (\u30B9\u30DE\u30FC\u30C8)",
-    modeQuick: "\u{1F680} \u30AF\u30A4\u30C3\u30AF (\u76F4\u63A5)",
-    modeAgent: "\u{1F9E0} \u30A8\u30FC\u30B8\u30A7\u30F3\u30C8 (\u591A\u6BB5\u968E)",
-    settingsTooltip: "\u30E2\u30C7\u30EB\u3068 API \u306E\u8A2D\u5B9A",
-    newChatTooltip: "\u65B0\u3057\u3044\u30C1\u30E3\u30C3\u30C8",
-    historyTooltip: "\u30C1\u30E3\u30C3\u30C8\u5C65\u6B74",
-    deleteChatTooltip: "\u30C1\u30E3\u30C3\u30C8\u3092\u524A\u9664",
-    noteCreatedSuccess: "\u6210\u529F: \u30CE\u30FC\u30C8\u3092\u4F5C\u6210\u3057\u307E\u3057\u305F",
-    noteCreateError: "\u30CE\u30FC\u30C8\u4F5C\u6210\u30A8\u30E9\u30FC:",
-    copyError: "\u30C6\u30AD\u30B9\u30C8\u306E\u30B3\u30D4\u30FC\u306B\u5931\u6557\u3057\u307E\u3057\u305F\u3002",
-    modelAddedNotice: "\u30E2\u30C7\u30EB\u3092\u8FFD\u52A0\u3057\u307E\u3057\u305F:",
-    cannotDeleteLastModel: "\u6700\u5F8C\u306E\u30E2\u30C7\u30EB\u306F\u524A\u9664\u3067\u304D\u307E\u305B\u3093\uFF01",
-    historyClearedNotice: "\u30C1\u30E3\u30C3\u30C8\u5C65\u6B74\u3092\u6D88\u53BB\u3057\u307E\u3057\u305F\uFF01",
-    modeSwitchError: "\u30E2\u30FC\u30C9\u5207\u308A\u66FF\u3048\u30A8\u30E9\u30FC:",
-    agentError: "\u274C \u30A8\u30FC\u30B8\u30A7\u30F3\u30C8\u5B9F\u884C\u30A8\u30E9\u30FC:",
-    cancel: "\u30AD\u30E3\u30F3\u30BB\u30EB",
-    saveSend: "\u{1F4BE} \u9001\u4FE1",
-    editText: "\u270F\uFE0F \u7DE8\u96C6",
-    retry: "\u{1F504} \u518D\u8A66\u884C",
-    inputTokens: "\u{1F4E5} \u5165\u529B:",
-    outputTokens: "\u{1F4E4} \u51FA\u529B:",
-    confirmTitle: "\u26A0\uFE0F \u30A2\u30AF\u30B7\u30E7\u30F3\u306E\u78BA\u8A8D\u304C\u5FC5\u8981\u3067\u3059",
-    confirmDetail: "\u30A8\u30FC\u30B8\u30A7\u30F3\u30C8\u304C\u30C4\u30FC\u30EB\u306E\u5B9F\u884C\u3092\u8981\u6C42\u3057\u3066\u3044\u307E\u3059:",
-    contextLength: "\u30B3\u30F3\u30C6\u30AD\u30B9\u30C8\u30A6\u30A3\u30F3\u30C9\u30A6:",
-    toolCallingSupport: "\u30C4\u30FC\u30EB\u547C\u3073\u51FA\u3057\u5BFE\u5FDC:",
-    visionSupport: "\u753B\u50CF\u89E3\u6790\u5BFE\u5FDC:",
-    infoUnavailable: "\u8A73\u7D30\u3092\u53D6\u5F97\u3059\u308B\u306B\u306F\u300CAPI\u3092\u78BA\u8A8D\u300D\u3092\u30AF\u30EA\u30C3\u30AF\u3057\u3066\u304F\u3060\u3055\u3044",
-    modelsList: "\u30AB\u30B9\u30BF\u30E0\u30E2\u30C7\u30EB\u30EA\u30B9\u30C8",
-    deleteModelTooltip: "\u30EA\u30B9\u30C8\u304B\u3089\u30E2\u30C7\u30EB\u3092\u524A\u9664",
-    cancelBtn: "\u30AD\u30E3\u30F3\u30BB\u30EB",
-    saveResendBtn: "\u4FDD\u5B58\u3057\u3066\u518D\u9001\u4FE1",
-    agentReasoningLog: "\u30A8\u30FC\u30B8\u30A7\u30F3\u30C8\u63A8\u8AD6\u30ED\u30B0",
-    actionConfirmation: "\u30A2\u30AF\u30B7\u30E7\u30F3\u306E\u78BA\u8A8D\u304C\u5FC5\u8981\u3067\u3059",
-    agentWantsExecute: "\u30A8\u30FC\u30B8\u30A7\u30F3\u30C8\u304C\u30C4\u30FC\u30EB\u306E\u5B9F\u884C\u3092\u8981\u6C42\u3057\u3066\u3044\u307E\u3059",
-    allowBtn: "\u8A31\u53EF"
-  },
-  pt: {
-    welcomeGreeting: "\u{1F44B} O Assistente NEI sa\xFAda voc\xEA. Aguardando instru\xE7\xF5es",
-    welcomeSubText: "Seu superagente inteligente pronto para auxiliar na sua base de conhecimento:",
-    featureNotes: "Acesso direto a notas, pastas e links do cofre",
-    featureRouting: "Modos R\xE1pido e Agente com roteamento autom\xE1tico de ferramentas",
-    featureVision: "An\xE1lise de imagens, documentos e p\xE1ginas da web",
-    featureTokens: "Suporte completo para RAG, mem\xF3ria e servidores MCP externos",
-    inputPlaceholder: "Fa\xE7a uma pergunta... (Enter para enviar)",
-    attachTooltip: "Anexar imagem ou arquivo de texto",
-    quickMode: "\u26A1 R\xE1pido",
-    agentMode: "\u{1F916} Agente",
-    ragToggle: "\u{1F9E0} Cofre RAG",
-    settingsTitle: "\u2699\uFE0F Configura\xE7\xF5es do NEI AI Chat",
-    providerLabel: "Provedor de IA:",
-    endpointLabel: "URL do ponto de extremidade:",
-    apiKeyLabel: "Chave API:",
-    modelLabel: "Modelo:",
-    customModelsLabel: "Lista de modelos personalizados:",
-    languageLabel: "Idioma da interface:",
-    saveSettings: "Salvar configura\xE7\xF5es",
-    checkApi: "\u{1F504} Verificar API e Modelos",
-    checkingApi: "\u23F3 Verificando conex\xE3o...",
-    apiCheckSuccess: "\u2705 API conectada com sucesso!",
-    apiCheckFailed: "\u274C Falha na conex\xE3o da API",
-    newChat: "\u2795 Novo",
-    newChatSession: "Novo chat",
-    clearChats: "\u{1F5D1}\uFE0F Limpar todos os chats",
-    confirmClearChats: "Tem certeza de que deseja excluir todo o hist\xF3rico?",
-    saveNote: "\u{1F4C4} Salvar como nota",
-    copyText: "\u{1F4CB} Copiar",
-    copied: "\u2705 Copiado para a \xE1rea de transfer\xEAncia!",
-    agentRunning: "\u26A1 Agente executando tarefa...",
-    confirmAction: "Confirma\xE7\xE3o de a\xE7\xE3o necess\xE1ria:",
-    allow: "\u2705 Permitir",
-    deny: "\u274C Negar",
-    autoDetect: "Detec\xE7\xE3o autom\xE1tica (Obsidian)",
-    historyTitle: "Hist\xF3rico de Chats",
-    clearAll: "\u{1F5D1}\uFE0F Limpar Tudo",
-    noSavedChats: "Nenhum chat salvo",
-    moveSidebar: "\u2199\uFE0F Para Painel",
-    moveTab: "\u2197\uFE0F Para Aba",
-    moveSidebarTitle: "Mover chat para a barra lateral direita",
-    moveTabTitle: "Mover chat para a aba principal",
-    modelCategories: "Categorias de modelos:",
-    primaryModel: "1. Texto e Ferramentas (Principal):",
-    visionModel: "2. Arquivos e Imagens (Vis\xE3o):",
-    quickModel: "3. Roteador Modo R\xE1pido:",
-    parameters: "Par\xE2metros",
-    requestingCapabilities: "Obtendo recursos via OpenRouter API...",
-    nativeToolCalling: "\u{1F7E2} Chamada de ferramenta nativa suportada",
-    textToolCalling: "\u{1F7E1} Modo de ferramenta por texto",
-    visionSupported: "\u{1F5BC}\uFE0F An\xE1lise de imagem suportada",
-    textOnlyInput: "\u{1F4DD} Apenas entrada de texto",
-    contextWindow: "Janela de contexto:",
-    tokens: "tokens",
-    pressCheckApi: 'Clique em "Verificar API" para obter par\xE2metros',
-    yourSavedModels: "Seus modelos salvos:",
-    addModelPlaceholder: "ex: anthropic/claude-3.5-sonnet",
-    addBtn: "+ Adicionar",
-    deleteFromList: "Excluir da lista",
-    keyUsage: "Uso na chave API:",
-    modeAutoTitle: "Modo IA: Auto (inteligente), R\xE1pido (direto), Agente (multi-etapas)",
-    modeAuto: "\u26A1 Auto (Inteligente)",
-    modeQuick: "\u{1F680} R\xE1pido (Direto)",
-    modeAgent: "\u{1F9E0} Agente (Multi-etapas)",
-    settingsTooltip: "Configura\xE7\xF5es de modelos e API",
-    newChatTooltip: "Novo chat",
-    historyTooltip: "Hist\xF3rico de chats",
-    deleteChatTooltip: "Excluir chat",
-    noteCreatedSuccess: "Sucesso: Nota criada",
-    noteCreateError: "Erro ao criar nota:",
-    copyError: "Falha ao copiar texto.",
-    modelAddedNotice: "Modelo adicionado:",
-    cannotDeleteLastModel: "N\xE3o \xE9 poss\xEDvel excluir o \xFAltimo modelo!",
-    historyClearedNotice: "Hist\xF3rico limpo!",
-    modeSwitchError: "Erro ao alternar modo:",
-    agentError: "\u274C Erro na execu\xE7\xE3o do agente:",
-    cancel: "Cancelar",
-    saveSend: "\u{1F4BE} Enviar",
-    editText: "\u270F\uFE0F Editar",
-    retry: "\u{1F504} Tentar novamente",
-    inputTokens: "\u{1F4E5} Ent:",
-    outputTokens: "\u{1F4E4} Sa\xED:",
-    confirmTitle: "\u26A0\uFE0F Confirma\xE7\xE3o de a\xE7\xE3o necess\xE1ria",
-    confirmDetail: "O agente solicita a execu\xE7\xE3o da ferramenta:",
-    contextLength: "Janela de contexto:",
-    toolCallingSupport: "Suporte a ferramentas:",
-    visionSupport: "Suporte \xE0 vis\xE3o:",
-    infoUnavailable: "Clique em 'Verificar API' para obter detalhes",
-    modelsList: "Lista de modelos personalizados",
-    deleteModelTooltip: "Excluir modelo da lista",
-    cancelBtn: "Cancelar",
-    saveResendBtn: "Salvar e reenviar",
-    agentReasoningLog: "Log de racioc\xEDnio do agente",
-    actionConfirmation: "Confirma\xE7\xE3o de a\xE7\xE3o necess\xE1ria",
-    agentWantsExecute: "Agente solicita executar a ferramenta",
-    allowBtn: "Permitir"
-  },
-  ko: {
-    welcomeGreeting: "\u{1F44B} NEI \uC5B4\uC2DC\uC2A4\uD134\uD2B8\uAC00 \uC778\uC0AC\uB4DC\uB9BD\uB2C8\uB2E4. \uC9C0\uC2DC\uB97C \uAE30\uB2E4\uB9AC\uB294 \uC911\uC785\uB2C8\uB2E4",
-    welcomeSubText: "\uC9C0\uC2DD \uBCA0\uC774\uC2A4 \uAD00\uB9AC \uBC0F \uC791\uC131\uC744 \uC9C0\uC6D0\uD558\uB294 \uC9C0\uB2A5\uD615 \uC288\uD37C \uC5D0\uC774\uC804\uD2B8:",
-    featureNotes: "\uBCF4\uAD00\uD568\uC758 \uB178\uD2B8, \uD3F4\uB354 \uBC0F \uB9C1\uD06C\uC5D0 \uC9C1\uC811 \uC811\uADFC",
-    featureRouting: "\uC790\uB3D9 \uB3C4\uAD6C \uB77C\uC6B0\uD305\uC774 \uD3EC\uD568\uB41C Quick \uBC0F Agent \uBAA8\uB4DC",
-    featureVision: "\uC774\uBBF8\uC9C0, \uBB38\uC11C \uBC0F \uC6F9 \uD398\uC774\uC9C0 \uBD84\uC11D",
-    featureTokens: "RAG, \uBA54\uBAA8\uB9AC \uBC0F \uC678\uBD80 MCP \uC11C\uBC84 \uC644\uBCBD \uC9C0\uC6D0",
-    inputPlaceholder: "\uC9C8\uBB38\uC774\uB098 \uC791\uC5C5 \uB0B4\uC6A9\uC744 \uC785\uB825\uD558\uC138\uC694... (Enter\uB85C \uC804\uC1A1)",
-    attachTooltip: "\uC774\uBBF8\uC9C0 \uB610\uB294 \uD14D\uC2A4\uD2B8 \uD30C\uC77C \uCCA8\uBD80",
-    quickMode: "\u26A1 \uBE60\uB978",
-    agentMode: "\u{1F916} \uC5D0\uC774\uC804\uD2B8",
-    ragToggle: "\u{1F9E0} RAG \uC9C0\uC2DD \uBCA0\uC774\uC2A4",
-    settingsTitle: "\u2699\uFE0F NEI AI Chat \uC124\uC815",
-    providerLabel: "AI \uC81C\uACF5\uC5C5\uCCB4:",
-    endpointLabel: "\uC5D4\uB4DC\uD3EC\uC778\uD2B8 URL:",
-    apiKeyLabel: "API \uD0A4:",
-    modelLabel: "\uBAA8\uB378:",
-    customModelsLabel: "\uC0AC\uC6A9\uC790 \uC9C0\uC815 \uBAA8\uB378 \uBAA9\uB85D:",
-    languageLabel: "\uC778\uD130\uD398\uC774\uC2A4 \uC5B8\uC5B4:",
-    saveSettings: "\uC124\uC815 \uC800\uC7A5",
-    checkApi: "\u{1F504} API \uBC0F \uBAA8\uB378 \uD655\uC778",
-    checkingApi: "\u23F3 \uC5F0\uACB0 \uD655\uC778 \uC911...",
-    apiCheckSuccess: "\u2705 API \uC5F0\uACB0 \uC131\uACF5!",
-    apiCheckFailed: "\u274C API \uC5F0\uACB0 \uC2E4\uD328",
-    newChat: "\u2795 \uC0C8\uB85C \uB9CC\uB4E4\uAE30",
-    newChatSession: "\uC0C8 \uCC44\uD305",
-    clearChats: "\u{1F5D1}\uFE0F \uBAA8\uB4E0 \uCC44\uD305 \uC9C0\uC6B0\uAE30",
-    confirmClearChats: "\uBAA8\uB4E0 \uCC44\uD305 \uAE30\uB85D\uC744 \uC0AD\uC81C\uD558\uC2DC\uACA0\uC2B5\uB2C8\uAE4C?",
-    saveNote: "\u{1F4C4} \uB178\uD2B8\uB85C \uC800\uC7A5",
-    copyText: "\u{1F4CB} \uBCF5\uC0AC",
-    copied: "\u2705 \uD074\uB9BD\uBCF4\uB4DC\uC5D0 \uBCF5\uC0AC\uB418\uC5C8\uC2B5\uB2C8\uB2E4!",
-    agentRunning: "\u26A1 \uC5D0\uC774\uC804\uD2B8\uAC00 \uC791\uC5C5\uC744 \uC218\uD589 \uC911...",
-    confirmAction: "\uC791\uC5C5 \uC2B9\uC778 \uD544\uC694:",
-    allow: "\u2705 \uD5C8\uC6A9",
-    deny: "\u274C \uAC70\uBD80",
-    autoDetect: "\uC790\uB3D9 \uAC10\uC9C0 (Obsidian)",
-    historyTitle: "\uCC44\uD305 \uAE30\uB85D",
-    clearAll: "\u{1F5D1}\uFE0F \uBAA8\uB450 \uC9C0\uC6B0\uAE30",
-    noSavedChats: "\uC800\uC7A5\uB41C \uCC44\uD305 \uC5C6\uC74C",
-    moveSidebar: "\u2199\uFE0F \uC0AC\uC774\uB4DC\uBC14\uB85C",
-    moveTab: "\u2197\uFE0F \uD0ED\uC73C\uB85C",
-    moveSidebarTitle: "\uCC44\uD305\uC744 \uC624\uB978\uCABD \uC0AC\uC774\uB4DC\uBC14\uB85C \uC774\uB3D9",
-    moveTabTitle: "\uCC44\uD305\uC744 \uC8FC \uD3B8\uC9D1 \uD0ED\uC73C\uB85C \uC774\uB3D9",
-    modelCategories: "\uBAA8\uB378 \uBC94\uC8FC:",
-    primaryModel: "1. \uD14D\uC2A4\uD2B8 \uBC0F \uB3C4\uAD6C (\uAE30\uBCF8):",
-    visionModel: "2. \uD30C\uC77C \uBC0F \uC774\uBBF8\uC9C0 (Vision):",
-    quickModel: "3. \uBE60\uB978 \uBAA8\uB4DC \uB77C\uC6B0\uD130:",
-    parameters: "\uB9E4\uAC1C\uBCC0\uC218",
-    requestingCapabilities: "OpenRouter API\uC5D0\uC11C \uC0AC\uC591\uC744 \uAC00\uC838\uC624\uB294 \uC911...",
-    nativeToolCalling: "\u{1F7E2} \uAE30\uBCF8 Tool Calling \uC9C0\uC6D0",
-    textToolCalling: "\u{1F7E1} \uD14D\uC2A4\uD2B8 \uD3F4\uBC31 \uB3C4\uAD6C \uBAA8\uB4DC",
-    visionSupported: "\u{1F5BC}\uFE0F \uC774\uBBF8\uC9C0 \uBD84\uC11D \uC9C0\uC6D0",
-    textOnlyInput: "\u{1F4DD} \uD14D\uC2A4\uD2B8 \uC785\uB825\uB9CC \uAC00\uB2A5",
-    contextWindow: "\uCEE8\uD14D\uC2A4\uD2B8 \uCC3D:",
-    tokens: "\uD1A0\uD070",
-    pressCheckApi: '"API \uD655\uC778"\uC744 \uD074\uB9AD\uD558\uC5EC \uB9E4\uAC1C\uBCC0\uC218\uB97C \uAC00\uC838\uC624\uC138\uC694',
-    yourSavedModels: "\uC800\uC7A5\uB41C \uBAA8\uB378 \uBAA9\uB85D:",
-    addModelPlaceholder: "\uC608: anthropic/claude-3.5-sonnet",
-    addBtn: "+ \uCD94\uAC00",
-    deleteFromList: "\uBAA9\uB85D\uC5D0\uC11C \uC0AD\uC81C",
-    keyUsage: "API \uD0A4 \uC0AC\uC6A9\uB7C9:",
-    modeAutoTitle: "AI \uBAA8\uB4DC: Auto(\uC2A4\uB9C8\uD2B8 \uB77C\uC6B0\uD305), Quick(\uC9C1\uC811 \uB300\uD654), Agent(\uB2E4\uB2E8\uACC4 \uCD94\uB860)",
-    modeAuto: "\u26A1 \uC790\uB3D9 (\uC2A4\uB9C8\uD2B8)",
-    modeQuick: "\u{1F680} \uBE60\uB978 (\uC9C1\uC811)",
-    modeAgent: "\u{1F9E0} \uC5D0\uC774\uC804\uD2B8 (\uB2E4\uB2E8\uACC4)",
-    settingsTooltip: "\uBAA8\uB378 \uBC0F API \uC124\uC815",
-    newChatTooltip: "\uC0C8 \uCC44\uD305",
-    historyTooltip: "\uCC44\uD305 \uAE30\uB85D",
-    deleteChatTooltip: "\uCC44\uD305 \uC0AD\uC81C",
-    noteCreatedSuccess: "\uC131\uACF5: \uB178\uD2B8\uAC00 \uC0DD\uC131\uB418\uC5C8\uC2B5\uB2C8\uB2E4",
-    noteCreateError: "\uB178\uD2B8 \uC0DD\uC131 \uC624\uB958:",
-    copyError: "\uD14D\uC2A4\uD2B8 \uBCF5\uC0AC \uC2E4\uD328.",
-    modelAddedNotice: "\uBAA8\uB378 \uCD94\uAC00\uB428:",
-    cannotDeleteLastModel: "\uB9C8\uC9C0\uB9C9 \uBAA8\uB378\uC740 \uC0AD\uC81C\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4!",
-    historyClearedNotice: "\uCC44\uD305 \uAE30\uB85D\uC774 \uC9C0\uC6CC\uC84C\uC2B5\uB2C8\uB2E4!",
-    modeSwitchError: "\uBAA8\uB4DC \uC804\uD658 \uC624\uB958:",
-    agentError: "\u274C \uC5D0\uC774\uC804\uD2B8 \uC2E4\uD589 \uC624\uB958:",
-    cancel: "\uCDE8\uC18C",
-    saveSend: "\u{1F4BE} \uC804\uC1A1",
-    editText: "\u270F\uFE0F \uD3B8\uC9D1",
-    retry: "\u{1F504} \uB2E4\uC2DC \uC2DC\uB3C4",
-    inputTokens: "\u{1F4E5} \uC785\uB825:",
-    outputTokens: "\u{1F4E4} \uCD9C\uB825:",
-    confirmTitle: "\u26A0\uFE0F \uC791\uC5C5 \uC2B9\uC778 \uD544\uC694",
-    confirmDetail: "\uC5D0\uC774\uC804\uD2B8\uAC00 \uB3C4\uAD6C \uC2E4\uD589\uC744 \uC694\uCCAD\uD569\uB2C8\uB2E4:",
-    contextLength: "\uCEE8\uD14D\uC2A4\uD2B8 \uCC3D:",
-    toolCallingSupport: "\uB3C4\uAD6C \uD638\uCD9C \uC9C0\uC6D0:",
-    visionSupport: "\uBE44\uC804 \uC9C0\uC6D0:",
-    infoUnavailable: "\uC138\uBD80 \uC815\uBCF4\uB97C \uAC00\uC838\uC624\uB824\uBA74 'API \uD655\uC778'\uC744 \uD074\uB9AD\uD558\uC138\uC694",
-    modelsList: "\uC0AC\uC6A9\uC790 \uC9C0\uC815 \uBAA8\uB378 \uBAA9\uB85D",
-    deleteModelTooltip: "\uBAA9\uB85D\uC5D0\uC11C \uBAA8\uB378 \uC0AD\uC81C",
-    cancelBtn: "\uCDE8\uC18C",
-    saveResendBtn: "\uC800\uC7A5 \uBC0F \uB2E4\uC2DC \uBCF4\uB0B4\uAE30",
-    agentReasoningLog: "\uC5D0\uC774\uC804\uD2B8 \uCD94\uB860 \uB85C\uADF8",
-    actionConfirmation: "\uC791\uC5C5 \uC2B9\uC778 \uD544\uC694",
-    agentWantsExecute: "\uC5D0\uC774\uC804\uD2B8\uAC00 \uB3C4\uAD6C \uC2E4\uD589\uC744 \uC694\uCCAD\uD569\uB2C8\uB2E4",
-    allowBtn: "\uD5C8\uC6A9"
-  }
-};
-function detectLanguage() {
-  try {
-    const obsLang = (window.localStorage.getItem("language") || navigator.language || "en").toLowerCase();
-    if (obsLang.startsWith("ru"))
-      return "ru";
-    if (obsLang.startsWith("es"))
-      return "es";
-    if (obsLang.startsWith("de"))
-      return "de";
-    if (obsLang.startsWith("fr"))
-      return "fr";
-    if (obsLang.startsWith("zh"))
-      return "zh";
-    if (obsLang.startsWith("ja"))
-      return "ja";
-    if (obsLang.startsWith("pt"))
-      return "pt";
-    if (obsLang.startsWith("ko"))
-      return "ko";
-  } catch (e) {
-  }
-  return "en";
-}
-function t(key, lang) {
-  const selectedLang = !lang || lang === "auto" ? detectLanguage() : lang;
-  const dict = translations[selectedLang] || translations.en;
-  return dict[key] || translations.en[key] || key;
-}
-
-// src/components/ChatPanel.tsx
-var import_jsx_runtime = __toESM(require_jsx_runtime());
-var ObsidianMarkdown = ({ markdown, app }) => {
-  const containerRef = React.useRef(null);
-  React.useEffect(() => {
-    if (containerRef.current) {
-      containerRef.current.empty();
-      const component = new import_obsidian10.Component();
-      component.load();
-      void import_obsidian10.MarkdownRenderer.render(
-        app,
-        markdown,
-        containerRef.current,
-        "",
-        component
-      );
-    }
-  }, [markdown, app]);
-  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { ref: containerRef, className: "markdown-preview-view markdown-rendered", style: { background: "transparent", padding: 0 } });
-};
-var ChatPanel = ({ app, viewLeaf, settings, saveSettings }) => {
-  const isMainTab = viewLeaf ? viewLeaf.getRoot() === app.workspace.rootSplit : false;
-  const handleToggleTabMode = async () => {
-    try {
-      const workspace = app.workspace;
-      if (isMainTab) {
-        const rightLeaf = workspace.getRightLeaf(false);
-        if (rightLeaf) {
-          await rightLeaf.setViewState({ type: "nei-chat-view", active: true });
-          void workspace.revealLeaf(rightLeaf);
-        }
-        if (viewLeaf) {
-          viewLeaf.detach();
-        }
-      } else {
-        const tabLeaf = workspace.getLeaf("tab");
-        await tabLeaf.setViewState({ type: "nei-chat-view", active: true });
-        void workspace.revealLeaf(tabLeaf);
-        if (viewLeaf) {
-          viewLeaf.detach();
-        }
-      }
+      return `\u041E\u0448\u0438\u0431\u043A\u0430 MCP \u0441\u0435\u0440\u0432\u0435\u0440\u0430 '${server.name}' (HTTP ${response.status})`;
     } catch (e) {
       const err = e;
-      new import_obsidian10.Notice(`${t("modeSwitchError", language)} ${err?.message || String(e)}`);
-    }
-  };
-  const [currentSession, setCurrentSession] = React.useState(() => ChatStore.createNewSession());
-  const [sessionsList, setSessionsList] = React.useState([]);
-  const [input, setInput] = React.useState("");
-  const [attachedImages, setAttachedImages] = React.useState([]);
-  const [executionMode, setExecutionMode] = React.useState(settings.executionMode || "auto");
-  const [loading, setLoading] = React.useState(false);
-  const [activeSteps, setActiveSteps] = React.useState([]);
-  const [showSessionsDrawer, setShowSessionsDrawer] = React.useState(false);
-  const [showConfig, setShowConfig] = React.useState(false);
-  const [pendingConfirmation, setPendingConfirmation] = React.useState(null);
-  const [editingMsgIdx, setEditingMsgIdx] = React.useState(null);
-  const [editingText, setEditingText] = React.useState("");
-  const [endpointUrl, setEndpointUrl] = React.useState(settings.endpointUrl || "https://openrouter.ai/api/v1");
-  const [apiKey, setApiKey] = React.useState(settings.apiKey || "");
-  const [model, setModel] = React.useState(settings.model || "google/gemini-2.5-flash");
-  const [visionModel, setVisionModel] = React.useState(settings.visionModel || "google/gemini-2.5-flash");
-  const [quickModel, setQuickModel] = React.useState(settings.quickModel || "google/gemini-2.5-flash");
-  const [customModels, setCustomModels] = React.useState(settings.customModels || [
-    "google/gemini-2.5-flash",
-    "anthropic/claude-3.5-sonnet",
-    "google/gemini-2.5-pro",
-    "openai/gpt-4o",
-    "deepseek/deepseek-chat"
-  ]);
-  const [newModelInput, setNewModelInput] = React.useState("");
-  const [activeModelDetails, setActiveModelDetails] = React.useState(null);
-  const [keyInfo, setKeyInfo] = React.useState(null);
-  const [verifyingModel, setVerifyingModel] = React.useState(false);
-  React.useEffect(() => {
-    void refreshSessionsList();
-    void verifyActiveModel(model, apiKey);
-    if (apiKey) {
-      void OpenRouterService.getKeyInfo(apiKey).then(setKeyInfo);
-    }
-  }, []);
-  const refreshSessionsList = async () => {
-    const list = await ChatStore.listSessions(app);
-    setSessionsList(list);
-  };
-  const verifyActiveModel = async (targetModel, key) => {
-    setVerifyingModel(true);
-    try {
-      const details = await OpenRouterService.getModelDetails(targetModel, key);
-      setActiveModelDetails(details);
-    } catch {
-      setActiveModelDetails(null);
-    } finally {
-      setVerifyingModel(false);
-    }
-  };
-  const formatSessionTitle = (tTitle) => {
-    if (!tTitle || tTitle === "\u041D\u043E\u0432\u044B\u0439 \u0434\u0438\u0430\u043B\u043E\u0433" || tTitle === "New Chat") {
-      return t("newChatSession", language);
-    }
-    return tTitle;
-  };
-  const handleSelectModel = (selectedModel) => {
-    setModel(selectedModel);
-    void verifyActiveModel(selectedModel, apiKey);
-    void saveSettings({ ...settings, model: selectedModel, visionModel, quickModel, executionMode });
-  };
-  const handleAddModel = () => {
-    if (!newModelInput.trim())
-      return;
-    const trimmed = newModelInput.trim();
-    if (!customModels.includes(trimmed)) {
-      const updated = [...customModels, trimmed];
-      setCustomModels(updated);
-      setModel(trimmed);
-      void verifyActiveModel(trimmed, apiKey);
-      new import_obsidian10.Notice(`${t("modelAddedNotice", language)} ${trimmed}`);
-    }
-    setNewModelInput("");
-  };
-  const handleDeleteModel = (e, targetModel) => {
-    e.stopPropagation();
-    if (customModels.length <= 1) {
-      new import_obsidian10.Notice(t("cannotDeleteLastModel", language));
-      return;
-    }
-    const updated = customModels.filter((m) => m !== targetModel);
-    setCustomModels(updated);
-    if (model === targetModel) {
-      const nextModel = updated[0];
-      setModel(nextModel);
-      void verifyActiveModel(nextModel, apiKey);
-    }
-  };
-  const handleNewChat = () => {
-    const newSess = ChatStore.createNewSession();
-    setCurrentSession(newSess);
-    setActiveSteps([]);
-    setShowSessionsDrawer(false);
-    setEditingMsgIdx(null);
-  };
-  const handleSelectSession = async (sessionId) => {
-    const loaded = await ChatStore.loadSession(app, sessionId);
-    if (loaded) {
-      setCurrentSession(loaded);
-      setActiveSteps(loaded.steps || []);
-      setShowSessionsDrawer(false);
-      setEditingMsgIdx(null);
-    }
-  };
-  const handleDeleteSession = async (e, sessionId) => {
-    e.stopPropagation();
-    await ChatStore.deleteSession(app, sessionId);
-    await refreshSessionsList();
-    if (currentSession.id === sessionId) {
-      handleNewChat();
-    }
-  };
-  const [confirmingClear, setConfirmingClear] = React.useState(false);
-  const handleClearAllSessions = async () => {
-    if (!confirmingClear) {
-      setConfirmingClear(true);
-      window.setTimeout(() => setConfirmingClear(false), 3e3);
-      return;
-    }
-    setConfirmingClear(false);
-    await ChatStore.clearAllSessions(app);
-    await refreshSessionsList();
-    handleNewChat();
-    new import_obsidian10.Notice(t("historyClearedNotice", language));
-  };
-  const [language, setLanguage] = React.useState(settings.language || "auto");
-  const handleSaveConfig = async () => {
-    const newSettings = {
-      ...settings,
-      provider: "openrouter",
-      endpointUrl,
-      apiKey,
-      model,
-      visionModel,
-      quickModel,
-      executionMode,
-      customModels,
-      language
-    };
-    await saveSettings(newSettings);
-    setShowConfig(false);
-    new import_obsidian10.Notice(t("saveSettings", language) + "!");
-  };
-  const handleCopyText = async (text) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      new import_obsidian10.Notice(t("copied", language));
-    } catch {
-      new import_obsidian10.Notice(t("copyError", language));
-    }
-  };
-  const handleSaveResponseAsNote = async (content) => {
-    const notePath = `Tasks/Summary_${Date.now()}.md`;
-    try {
-      await app.vault.create(notePath, content);
-      new import_obsidian10.Notice(`${t("noteCreatedSuccess", language)} '${notePath}'!`);
-    } catch (e) {
-      const err = e;
-      new import_obsidian10.Notice(`${t("noteCreateError", language)} ${err?.message || String(e)}`);
-    }
-  };
-  const executeQuery = async (queryText, historySlice, imagesPayload) => {
-    setLoading(true);
-    setActiveSteps([]);
-    setEditingMsgIdx(null);
-    const currentImages = imagesPayload || attachedImages;
-    const userMsg = {
-      role: "user",
-      content: queryText,
-      ...currentImages.length > 0 ? { images: currentImages } : {}
-    };
-    const updatedMessages = [...historySlice, userMsg];
-    const updatedSession = {
-      ...currentSession,
-      title: currentSession.messages.length === 0 ? queryText.substring(0, 30) + (queryText.length > 30 ? "..." : "") : currentSession.title,
-      messages: updatedMessages
-    };
-    setCurrentSession(updatedSession);
-    setAttachedImages([]);
-    try {
-      const isVisionRequired = currentImages.length > 0;
-      const activeModelToUse = isVisionRequired ? visionModel : executionMode === "quick" ? quickModel : model;
-      const result = await AgentLoop.run({
-        app,
-        config: {
-          provider: "openrouter",
-          endpointUrl,
-          apiKey,
-          model: activeModelToUse
-        },
-        userQuery: queryText,
-        chatHistory: historySlice,
-        images: currentImages,
-        executionMode,
-        onStepUpdate: (steps) => {
-          setActiveSteps(steps);
-        },
-        onConfirmationRequired: async (toolName, argsStr) => {
-          return new Promise((resolve) => {
-            setPendingConfirmation({ toolName, argsStr, resolve });
-          });
-        }
-      });
-      const assistantMsg = {
-        role: "assistant",
-        content: result.responseText,
-        promptTokens: result.promptTokens,
-        completionTokens: result.completionTokens
-      };
-      const finalMessages = [...updatedMessages, assistantMsg];
-      const finalSession = {
-        ...updatedSession,
-        messages: finalMessages,
-        steps: activeSteps
-      };
-      setCurrentSession(finalSession);
-      await ChatStore.saveSession(app, finalSession);
-      await refreshSessionsList();
-      if (apiKey) {
-        void OpenRouterService.getKeyInfo(apiKey).then(setKeyInfo);
-      }
-    } catch (e) {
-      console.error("[NEI Agent Error]", e);
-      const err = e;
-      const errMessages = [...updatedMessages, { role: "assistant", content: `${t("agentError", language)} ${err?.message || String(e)}` }];
-      const errSession = {
-        ...updatedSession,
-        messages: errMessages
-      };
-      setCurrentSession(errSession);
-      await ChatStore.saveSession(app, errSession);
-    } finally {
-      setLoading(false);
-      setActiveSteps([]);
-      setPendingConfirmation(null);
-    }
-  };
-  const handleSendMessage = () => {
-    if (!input.trim() || loading)
-      return;
-    const queryText = input.trim();
-    setInput("");
-    void executeQuery(queryText, currentSession.messages);
-  };
-  const handleRetryUserMessage = (msgIdx) => {
-    if (loading)
-      return;
-    const targetMsg = currentSession.messages[msgIdx];
-    if (targetMsg && targetMsg.role === "user" && targetMsg.content) {
-      const historyBefore = currentSession.messages.slice(0, msgIdx);
-      void executeQuery(targetMsg.content, historyBefore);
-    }
-  };
-  const handleStartEdit = (idx, content) => {
-    setEditingMsgIdx(idx);
-    setEditingText(content);
-  };
-  const handleSaveEdit = (idx) => {
-    if (!editingText.trim() || loading)
-      return;
-    const historyBefore = currentSession.messages.slice(0, idx);
-    void executeQuery(editingText.trim(), historyBefore);
-  };
-  const handleFileSelect = (e) => {
-    const files = e.target.files;
-    if (!files || files.length === 0)
-      return;
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const res = event.target?.result;
-        if (res) {
-          setAttachedImages((prev) => [...prev, res]);
-        }
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-  return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", flexDirection: "column", height: "100%", padding: "10px", boxSizing: "border-box", position: "relative" }, children: [
-    /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", paddingBottom: "8px", borderBottom: "1px solid var(--background-modifier-border)", flexWrap: "wrap", gap: "6px" }, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: "6px" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
-          "button",
-          {
-            onClick: () => setShowSessionsDrawer(!showSessionsDrawer),
-            title: t("historyTooltip", language),
-            style: { background: "var(--background-secondary)", border: "1px solid var(--background-modifier-border)", borderRadius: "4px", cursor: "pointer", padding: "4px 8px", fontSize: "11px", fontWeight: "500" },
-            children: [
-              "\u{1F4C2} ",
-              formatSessionTitle(currentSession.title),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { style: { fontSize: "10px", opacity: 0.7, marginLeft: "4px" }, children: [
-                "(",
-                currentSession.messages.length,
-                ")"
-              ] })
-            ]
-          }
-        ),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-          "button",
-          {
-            onClick: () => {
-              handleNewChat();
-            },
-            title: t("newChatTooltip", language),
-            style: { background: "var(--interactive-accent)", color: "var(--text-on-accent)", border: "none", borderRadius: "4px", cursor: "pointer", padding: "4px 8px", fontSize: "11px", fontWeight: "bold" },
-            children: t("newChat", language)
-          }
-        ),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-          "button",
-          {
-            onClick: () => {
-              void handleToggleTabMode();
-            },
-            title: isMainTab ? t("moveSidebarTitle", language) : t("moveTabTitle", language),
-            style: { background: "var(--background-secondary)", border: "1px solid var(--background-modifier-border)", borderRadius: "4px", cursor: "pointer", padding: "4px 6px", fontSize: "11px" },
-            children: isMainTab ? t("moveSidebar", language) : t("moveTab", language)
-          }
-        )
-      ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: "4px" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
-          "select",
-          {
-            value: executionMode,
-            onChange: (e) => {
-              const val = e.target.value;
-              setExecutionMode(val);
-              void saveSettings({ ...settings, executionMode: val });
-            },
-            title: t("modeAutoTitle", language),
-            className: "nei-select-mode",
-            children: [
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { value: "auto", children: t("modeAuto", language) }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { value: "quick", children: t("modeQuick", language) }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { value: "agent", children: t("modeAgent", language) })
-            ]
-          }
-        ),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-          "button",
-          {
-            onClick: () => setShowConfig(!showConfig),
-            style: { background: "transparent", border: "none", cursor: "pointer", fontSize: "12px", color: "var(--text-muted)" },
-            title: t("settingsTooltip", language),
-            children: "\u2699\uFE0F"
-          }
-        )
-      ] })
-    ] }),
-    showSessionsDrawer && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { position: "absolute", top: "45px", left: "10px", right: "10px", zIndex: 10, background: "var(--background-primary)", border: "1px solid var(--background-modifier-border)", borderRadius: "8px", boxShadow: "0 4px 12px rgba(0,0,0,0.15)", maxHeight: "280px", overflowY: "auto", padding: "8px" }, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px", paddingBottom: "4px", borderBottom: "1px solid var(--background-modifier-border)" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { style: { fontWeight: "bold", fontSize: "12px", color: "var(--text-muted)" }, children: t("historyTitle", language) }),
-        sessionsList.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-          "button",
-          {
-            onClick: () => {
-              void handleClearAllSessions();
-            },
-            title: t("clearChats", language),
-            style: { background: "transparent", border: "none", color: "var(--text-error, #ff5555)", cursor: "pointer", fontSize: "11px", fontWeight: "500" },
-            children: confirmingClear ? `\u26A0\uFE0F ${t("confirmClearChats", language)}` : t("clearAll", language)
-          }
-        )
-      ] }),
-      sessionsList.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { fontSize: "12px", color: "var(--text-muted)", padding: "6px" }, children: t("noSavedChats", language) }) : sessionsList.map((s) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
-        "div",
-        {
-          onClick: () => {
-            void handleSelectSession(s.id);
-          },
-          style: {
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            padding: "6px 8px",
-            borderRadius: "4px",
-            cursor: "pointer",
-            fontSize: "12px",
-            background: s.id === currentSession.id ? "var(--background-secondary-alt)" : "transparent",
-            marginBottom: "2px"
-          },
-          children: [
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { style: { textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", maxWidth: "80%" }, children: formatSessionTitle(s.title) }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-              "button",
-              {
-                onClick: (e) => {
-                  void handleDeleteSession(e, s.id);
-                },
-                title: t("deleteChatTooltip", language),
-                style: { background: "transparent", border: "none", cursor: "pointer", fontSize: "12px", opacity: 0.6 },
-                children: "\u{1F5D1}\uFE0F"
-              }
-            )
-          ]
-        },
-        s.id
-      ))
-    ] }),
-    showConfig && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { background: "var(--background-secondary)", padding: "12px", borderRadius: "8px", marginBottom: "12px", fontSize: "12px", display: "flex", flexDirection: "column", gap: "10px" }, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", { style: { display: "block", marginBottom: "4px", fontWeight: "500" }, children: "OpenRouter API Key:" }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-          "input",
-          {
-            type: "password",
-            value: apiKey,
-            onChange: (e) => setApiKey(e.target.value),
-            placeholder: "sk-or-v1-...",
-            style: { width: "100%", padding: "6px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-primary)", color: "var(--text-normal)" }
-          }
-        )
-      ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", { style: { display: "block", marginBottom: "4px", fontWeight: "500" }, children: "API Endpoint URL:" }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-          "input",
-          {
-            type: "text",
-            value: endpointUrl,
-            onChange: (e) => setEndpointUrl(e.target.value),
-            placeholder: "https://openrouter.ai/api/v1",
-            style: { width: "100%", padding: "6px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-primary)", color: "var(--text-normal)" }
-          }
-        )
-      ] }),
-      keyInfo && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { background: "var(--background-primary)", padding: "6px 10px", borderRadius: "6px", fontSize: "11px", display: "flex", justifyContent: "space-between", alignItems: "center" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [
-          "\u{1F4B0} ",
-          t("keyUsage", language),
-          " ",
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("strong", { children: [
-            "$",
-            keyInfo.usage.toFixed(4)
-          ] })
-        ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: keyInfo.isFreeTier ? "\u{1F7E2} Free Tier" : "\u{1F4B3} Paid Tier" })
-      ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { background: "var(--background-primary)", padding: "8px 10px", borderRadius: "6px", border: "1px solid var(--background-modifier-border)", display: "flex", flexDirection: "column", gap: "6px" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { fontWeight: "bold", fontSize: "11px" }, children: t("modelCategories", language) }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("primaryModel", language) }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-            "select",
-            {
-              value: model,
-              onChange: (e) => handleSelectModel(e.target.value),
-              style: { width: "100%", padding: "4px", borderRadius: "4px", fontSize: "11px", background: "var(--background-secondary)", color: "var(--text-normal)", border: "1px solid var(--background-modifier-border)" },
-              children: customModels.map((m) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { value: m, children: m }, m))
-            }
-          )
-        ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("visionModel", language) }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-            "select",
-            {
-              value: visionModel,
-              onChange: (e) => {
-                setVisionModel(e.target.value);
-                void saveSettings({ ...settings, visionModel: e.target.value });
-              },
-              style: { width: "100%", padding: "4px", borderRadius: "4px", fontSize: "11px", background: "var(--background-secondary)", color: "var(--text-normal)", border: "1px solid var(--background-modifier-border)" },
-              children: customModels.map((m) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { value: m, children: m }, m))
-            }
-          )
-        ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("quickModel", language) }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-            "select",
-            {
-              value: quickModel,
-              onChange: (e) => {
-                setQuickModel(e.target.value);
-                void saveSettings({ ...settings, quickModel: e.target.value });
-              },
-              style: { width: "100%", padding: "4px", borderRadius: "4px", fontSize: "11px", background: "var(--background-secondary)", color: "var(--text-normal)", border: "1px solid var(--background-modifier-border)" },
-              children: customModels.map((m) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { value: m, children: m }, m))
-            }
-          )
-        ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)", fontWeight: "bold", marginTop: "4px" }, children: [
-            "\u{1F310} ",
-            t("languageLabel", language)
-          ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
-            "select",
-            {
-              value: language,
-              onChange: (e) => {
-                const langVal = e.target.value;
-                setLanguage(langVal);
-                void saveSettings({ ...settings, language: langVal });
-              },
-              style: { width: "100%", padding: "4px", borderRadius: "4px", fontSize: "11px", background: "var(--background-secondary)", color: "var(--text-normal)", border: "1px solid var(--background-modifier-border)" },
-              children: [
-                /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("option", { value: "auto", children: [
-                  "\u{1F310} ",
-                  t("autoDetect", language)
-                ] }),
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { value: "ru", children: "\u{1F310} RU \u2014 \u0420\u0443\u0441\u0441\u043A\u0438\u0439" }),
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { value: "en", children: "\u{1F310} EN \u2014 English" }),
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { value: "es", children: "\u{1F310} ES \u2014 Espa\xF1ol" }),
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { value: "de", children: "\u{1F310} DE \u2014 Deutsch" }),
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { value: "fr", children: "\u{1F310} FR \u2014 Fran\xE7ais" }),
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { value: "zh", children: "\u{1F310} ZH \u2014 \u4E2D\u6587" }),
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { value: "ja", children: "\u{1F310} JA \u2014 \u65E5\u672C\u8A9E" }),
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { value: "pt", children: "\u{1F310} PT \u2014 Portugu\xEAs" }),
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", { value: "ko", children: "\u{1F310} KO \u2014 \uD55C\uAD6D\uC5B4" })
-              ]
-            }
-          )
-        ] })
-      ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { background: "var(--background-primary)", padding: "8px 10px", borderRadius: "6px", border: "1px solid var(--background-modifier-border)" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("strong", { style: { fontSize: "11px" }, children: [
-            t("parameters", language),
-            ": ",
-            model
-          ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-            "button",
-            {
-              onClick: () => {
-                void verifyActiveModel(model, apiKey);
-              },
-              style: { background: "transparent", border: "none", cursor: "pointer", fontSize: "11px", color: "var(--interactive-accent)" },
-              children: verifyingModel ? t("checkingApi", language) : t("checkApi", language)
-            }
-          )
-        ] }),
-        activeModelDetails ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { fontSize: "11px", color: "var(--text-muted)", display: "flex", flexDirection: "column", gap: "2px" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
-            "\u2022 ",
-            t("contextLength", language),
-            " ",
-            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("strong", { children: [
-              activeModelDetails.contextLength ? activeModelDetails.contextLength.toLocaleString() : "N/A",
-              " ",
-              t("tokens", language)
-            ] })
-          ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
-            "\u2022 ",
-            t("toolCallingSupport", language),
-            " ",
-            activeModelDetails.supportsTools ? "\u2705" : "\u274C"
-          ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
-            "\u2022 ",
-            t("visionSupport", language),
-            " ",
-            activeModelDetails.supportsVision ? "\u2705" : "\u274C"
-          ] })
-        ] }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { fontSize: "11px", color: "var(--text-muted)" }, children: verifyingModel ? t("checkingApi", language) : t("infoUnavailable", language) })
-      ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { background: "var(--background-primary)", padding: "8px 10px", borderRadius: "6px", border: "1px solid var(--background-modifier-border)" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", { style: { display: "block", marginBottom: "6px", fontWeight: "bold", fontSize: "11px" }, children: [
-          t("modelsList", language),
-          ":"
-        ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { display: "flex", flexDirection: "column", gap: "4px", marginBottom: "8px", maxHeight: "120px", overflowY: "auto" }, children: customModels.map((m) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "3px 6px", background: "var(--background-secondary)", borderRadius: "4px", fontSize: "11px" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { style: { fontFamily: "monospace", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }, children: m }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-            "button",
-            {
-              onClick: (e) => handleDeleteModel(e, m),
-              title: t("deleteModelTooltip", language),
-              style: { background: "transparent", border: "none", cursor: "pointer", color: "var(--text-error, #ff5555)", fontSize: "11px" },
-              children: "\u2715"
-            }
-          )
-        ] }, m)) }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", gap: "4px" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-            "input",
-            {
-              type: "text",
-              value: newModelInput,
-              onChange: (e) => setNewModelInput(e.target.value),
-              placeholder: t("addModelPlaceholder", language),
-              style: { flex: 1, padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-primary)", color: "var(--text-normal)" }
-            }
-          ),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-            "button",
-            {
-              onClick: handleAddModel,
-              style: { padding: "4px 8px", fontSize: "11px", background: "var(--interactive-accent)", color: "var(--text-on-accent)", border: "none", borderRadius: "4px", cursor: "pointer", fontWeight: "bold" },
-              children: t("addBtn", language)
-            }
-          )
-        ] })
-      ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-        "button",
-        {
-          onClick: () => {
-            void handleSaveConfig();
-          },
-          style: { marginTop: "4px", padding: "6px 12px", background: "var(--interactive-accent)", color: "var(--text-on-accent)", border: "none", borderRadius: "4px", cursor: "pointer", fontWeight: "bold" },
-          children: t("saveSettings", language)
-        }
-      )
-    ] }),
-    /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: "12px", marginBottom: "10px" }, children: [
-      currentSession.messages.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { textAlign: "center", color: "var(--text-muted)", marginTop: "24px", padding: "0 12px", fontSize: "13px" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { fontSize: "15px", fontWeight: "bold", marginBottom: "8px", color: "var(--text-normal)" }, children: t("welcomeGreeting", language) }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { fontSize: "12px", marginBottom: "16px", opacity: 0.85 }, children: t("welcomeSubText", language) }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { textAlign: "left", display: "inline-block", fontSize: "12px", lineHeight: "1.8", background: "var(--background-secondary)", padding: "12px 16px", borderRadius: "10px", border: "1px solid var(--background-modifier-border)", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }, children: [
-          "\u2022 ",
-          t("featureNotes", language),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("br", {}),
-          "\u2022 ",
-          t("featureRouting", language),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("br", {}),
-          "\u2022 ",
-          t("featureVision", language),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("br", {}),
-          "\u2022 ",
-          t("featureTokens", language)
-        ] })
-      ] }),
-      currentSession.messages.map((msg, idx) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-        "div",
-        {
-          className: "nei-chat-bubble",
-          style: {
-            alignSelf: msg.role === "user" ? "flex-end" : "flex-start",
-            maxWidth: "92%",
-            padding: "10px 14px",
-            borderRadius: "12px",
-            background: msg.role === "user" ? "var(--interactive-accent)" : "var(--background-secondary)",
-            color: msg.role === "user" ? "var(--text-on-accent)" : "var(--text-normal)",
-            fontSize: "13px",
-            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-            position: "relative"
-          },
-          children: msg.role === "user" ? editingMsgIdx === idx ? (
-            /* Inline Edit Form for User Message */
-            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", flexDirection: "column", gap: "6px", minWidth: "220px" }, children: [
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-                "textarea",
-                {
-                  value: editingText,
-                  onChange: (e) => setEditingText(e.target.value),
-                  style: { width: "100%", minHeight: "60px", padding: "6px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-primary)", color: "var(--text-normal)", fontSize: "12px" }
-                }
-              ),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", gap: "6px", justifyContent: "flex-end" }, children: [
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-                  "button",
-                  {
-                    onClick: () => setEditingMsgIdx(null),
-                    style: { padding: "3px 8px", fontSize: "11px", background: "transparent", border: "1px solid var(--background-modifier-border)", color: "inherit", borderRadius: "4px", cursor: "pointer" },
-                    children: t("cancelBtn", language)
-                  }
-                ),
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-                  "button",
-                  {
-                    onClick: () => handleSaveEdit(idx),
-                    style: { padding: "3px 8px", fontSize: "11px", background: "var(--background-primary)", color: "var(--interactive-accent)", border: "none", borderRadius: "4px", cursor: "pointer", fontWeight: "bold" },
-                    children: t("saveResendBtn", language)
-                  }
-                )
-              ] })
-            ] })
-          ) : (
-            /* Standard User Message Display */
-            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
-              msg.images && msg.images.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { display: "flex", gap: "4px", marginBottom: "6px", flexWrap: "wrap" }, children: msg.images.map((img, i) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", { src: img, style: { width: "60px", height: "60px", borderRadius: "4px", objectFit: "cover" } }, i)) }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { whiteSpace: "pre-wrap" }, children: msg.content }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", gap: "6px", marginTop: "6px", justifyContent: "flex-end", fontSize: "11px", flexWrap: "wrap", maxWidth: "100%", opacity: 0.9 }, children: [
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-                  "button",
-                  {
-                    onClick: () => {
-                      void handleCopyText(msg.content || "");
-                    },
-                    title: t("copyText", language),
-                    style: { background: "transparent", border: "none", color: "inherit", cursor: "pointer", padding: "2px 4px", borderRadius: "4px", fontSize: "11px", whiteSpace: "nowrap" },
-                    children: t("copyText", language)
-                  }
-                ),
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-                  "button",
-                  {
-                    onClick: () => handleStartEdit(idx, msg.content || ""),
-                    title: t("editText", language),
-                    style: { background: "transparent", border: "none", color: "inherit", cursor: "pointer", padding: "2px 4px", borderRadius: "4px", fontSize: "11px", whiteSpace: "nowrap" },
-                    children: t("editText", language)
-                  }
-                ),
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-                  "button",
-                  {
-                    onClick: () => handleRetryUserMessage(idx),
-                    title: t("retry", language),
-                    disabled: loading,
-                    style: { background: "transparent", border: "none", color: "inherit", cursor: "pointer", padding: "2px 4px", borderRadius: "4px", fontSize: "11px", whiteSpace: "nowrap" },
-                    children: t("retry", language)
-                  }
-                )
-              ] })
-            ] })
-          ) : (
-            /* Assistant Message Display */
-            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { minWidth: 0 }, children: [
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ObsidianMarkdown, { markdown: msg.content || "", app }),
-              (msg.promptTokens !== void 0 || msg.completionTokens !== void 0) && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", gap: "6px", marginTop: "6px", fontSize: "10px", color: "var(--text-muted)", borderTop: "1px solid var(--background-modifier-border)", paddingTop: "4px", flexWrap: "wrap", maxWidth: "100%" }, children: [
-                /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { style: { background: "var(--background-primary)", padding: "2px 6px", borderRadius: "4px" }, children: [
-                  t("inputTokens", language),
-                  " ",
-                  msg.promptTokens || 0,
-                  " ",
-                  t("tokens", language)
-                ] }),
-                /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { style: { background: "var(--background-primary)", padding: "2px 6px", borderRadius: "4px" }, children: [
-                  t("outputTokens", language),
-                  " ",
-                  msg.completionTokens || 0,
-                  " ",
-                  t("tokens", language)
-                ] })
-              ] }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", gap: "6px", marginTop: "8px", alignItems: "center", flexWrap: "wrap", fontSize: "11px", maxWidth: "100%" }, children: [
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-                  "button",
-                  {
-                    onClick: () => {
-                      void handleCopyText(msg.content || "");
-                    },
-                    style: { background: "var(--background-primary)", border: "1px solid var(--background-modifier-border)", borderRadius: "4px", cursor: "pointer", padding: "3px 8px", color: "var(--text-muted)", fontSize: "11px", whiteSpace: "nowrap", maxWidth: "100%" },
-                    children: t("copyText", language)
-                  }
-                ),
-                msg.content && msg.content.length > 50 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-                  "button",
-                  {
-                    onClick: () => {
-                      void handleSaveResponseAsNote(msg.content || "");
-                    },
-                    style: { background: "var(--background-primary)", border: "1px solid var(--background-modifier-border)", borderRadius: "4px", cursor: "pointer", padding: "3px 8px", color: "var(--text-muted)", fontSize: "11px", whiteSpace: "nowrap", maxWidth: "100%" },
-                    children: t("saveNote", language)
-                  }
-                )
-              ] })
-            ] })
-          )
-        },
-        idx
-      )),
-      activeSteps.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { background: "var(--background-secondary-alt)", border: "1px solid var(--background-modifier-border)", borderRadius: "8px", padding: "8px 12px", fontSize: "11px", display: "flex", flexDirection: "column", gap: "4px" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { fontWeight: "bold", color: "var(--text-muted)", marginBottom: "2px" }, children: [
-          "\u26A1 ",
-          t("agentReasoningLog", language)
-        ] }),
-        activeSteps.map((step) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", alignItems: "flex-start", gap: "6px", opacity: step.status === "running" ? 1 : 0.8 }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: step.status === "running" ? "\u23F3" : step.status === "completed" ? "\u2705" : "\u274C" }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { flex: 1 }, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { style: { color: "var(--text-normal)" }, children: step.title }),
-            step.detail && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { color: "var(--text-muted)", fontSize: "10px", marginTop: "2px", fontFamily: "monospace", whiteSpace: "pre-wrap", maxHeight: "80px", overflowY: "auto" }, children: step.detail })
-          ] })
-        ] }, step.id))
-      ] }),
-      pendingConfirmation && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { background: "var(--background-secondary)", border: "2px solid var(--interactive-accent)", borderRadius: "8px", padding: "12px", marginTop: "6px", fontSize: "12px" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { fontWeight: "bold", marginBottom: "6px", color: "var(--text-normal)" }, children: [
-          "\u26A0\uFE0F ",
-          t("actionConfirmation", language)
-        ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { marginBottom: "4px" }, children: [
-          t("agentWantsExecute", language),
-          ": ",
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("code", { children: pendingConfirmation.toolName })
-        ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { background: "var(--background-primary)", padding: "6px", borderRadius: "4px", fontFamily: "monospace", fontSize: "11px", marginBottom: "10px", whiteSpace: "pre-wrap", maxHeight: "100px", overflowY: "auto" }, children: pendingConfirmation.argsStr }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", gap: "8px", justifyContent: "flex-end" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-            "button",
-            {
-              onClick: () => {
-                pendingConfirmation.resolve(false);
-                setPendingConfirmation(null);
-              },
-              style: { padding: "4px 12px", background: "transparent", border: "1px solid var(--background-modifier-border)", borderRadius: "4px", cursor: "pointer" },
-              children: t("cancelBtn", language)
-            }
-          ),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-            "button",
-            {
-              onClick: () => {
-                pendingConfirmation.resolve(true);
-                setPendingConfirmation(null);
-              },
-              style: { padding: "4px 12px", background: "var(--interactive-accent)", color: "var(--text-on-accent)", border: "none", borderRadius: "4px", cursor: "pointer", fontWeight: "bold" },
-              children: t("allowBtn", language)
-            }
-          )
-        ] })
-      ] })
-    ] }),
-    attachedImages.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { display: "flex", gap: "6px", padding: "6px", background: "var(--background-secondary)", borderRadius: "6px", marginBottom: "6px", flexWrap: "wrap" }, children: attachedImages.map((img, idx) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { position: "relative" }, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", { src: img, style: { width: "48px", height: "48px", objectFit: "cover", borderRadius: "4px" } }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-        "button",
-        {
-          onClick: () => setAttachedImages((prev) => prev.filter((_, i) => i !== idx)),
-          style: { position: "absolute", top: "-4px", right: "-4px", background: "var(--text-error, #ff5555)", color: "#fff", border: "none", borderRadius: "50%", width: "16px", height: "16px", fontSize: "10px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" },
-          children: "\u2715"
-        }
-      )
-    ] }, idx)) }),
-    /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: { display: "flex", flexDirection: "column", gap: "6px" }, children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { display: "flex", gap: "6px", alignItems: "flex-end" }, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
-        "label",
-        {
-          title: t("attachTooltip", language),
-          style: { padding: "8px 10px", background: "var(--background-secondary)", border: "1px solid var(--background-modifier-border)", borderRadius: "6px", cursor: "pointer", fontSize: "14px", marginBottom: "2px" },
-          children: [
-            "\u{1F4CE}",
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-              "input",
-              {
-                type: "file",
-                accept: "image/*,.txt,.md,.json,.js,.ts",
-                multiple: true,
-                onChange: handleFileSelect,
-                style: { display: "none" }
-              }
-            )
-          ]
-        }
-      ),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-        "textarea",
-        {
-          value: input,
-          onChange: (e) => {
-            setInput(e.target.value);
-            const target = e.target;
-            target.setCssStyles({
-              height: `${Math.min(target.scrollHeight, 280)}px`
-            });
-          },
-          onKeyDown: (e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              handleSendMessage();
-            }
-          },
-          placeholder: t("inputPlaceholder", language),
-          disabled: loading,
-          rows: 3,
-          style: {
-            flex: 1,
-            minHeight: "60px",
-            maxHeight: "280px",
-            padding: "8px 10px",
-            borderRadius: "6px",
-            border: "1px solid var(--background-modifier-border)",
-            background: "var(--background-primary)",
-            color: "var(--text-normal)",
-            resize: "vertical",
-            fontSize: "13px",
-            lineHeight: "1.4",
-            fontFamily: "inherit"
-          }
-        }
-      ),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-        "button",
-        {
-          onClick: handleSendMessage,
-          disabled: loading || !input.trim() && attachedImages.length === 0,
-          style: { padding: "0 14px", height: "60px", background: "var(--interactive-accent)", color: "var(--text-on-accent)", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px", marginBottom: "2px" },
-          children: loading ? "..." : "\u27A4"
-        }
-      )
-    ] }) })
-  ] });
-};
-
-// src/views/ChatView.ts
-var VIEW_TYPE_NEI_CHAT = "nei-chat-view";
-var NeiChatView = class extends import_obsidian11.ItemView {
-  constructor(leaf, plugin) {
-    super(leaf);
-    this.root = null;
-    this.plugin = plugin;
-  }
-  getViewType() {
-    return VIEW_TYPE_NEI_CHAT;
-  }
-  getDisplayText() {
-    return "NEI AI Chat";
-  }
-  getIcon() {
-    return "bot";
-  }
-  async onOpen() {
-    const container = this.contentEl;
-    container.empty();
-    const rootEl = container.createDiv({ cls: "nei-chat-view-root" });
-    this.root = ReactDOM.createRoot(rootEl);
-    this.root.render(
-      React2.createElement(ChatPanel, {
-        app: this.app,
-        viewLeaf: this.leaf,
-        settings: this.plugin.settings,
-        saveSettings: async (newSettings) => {
-          this.plugin.settings = newSettings;
-          await this.plugin.saveSettings();
-        }
-      })
-    );
-  }
-  async onClose() {
-    if (this.root) {
-      this.root.unmount();
-    }
-    const isMainTab = this.leaf.getRoot() === this.app.workspace.rootSplit;
-    if (isMainTab) {
-      window.setTimeout(() => {
-        const existing = this.app.workspace.getLeavesOfType(VIEW_TYPE_NEI_CHAT);
-        if (existing.length === 0) {
-          void this.plugin.activateView();
-        }
-      }, 100);
+      return `\u041E\u0448\u0438\u0431\u043A\u0430 \u0432\u044B\u0437\u043E\u0432\u0430 MCP \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u0430 '${originalToolName}' \u043D\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0435 '${server.name}': ${err?.message || String(e)}`;
     }
   }
 };
+McpService.servers = [];
 
 // main.ts
 var DEFAULT_SETTINGS = {
@@ -28322,15 +28693,70 @@ var DEFAULT_SETTINGS = {
     "deepseek/deepseek-chat"
   ],
   useRag: true,
-  language: "auto"
+  language: "auto",
+  defaultNoteFolder: "",
+  // Default paths - relative to vault root, user can customize
+  chatsFolder: ".nei/chats",
+  memoryFile: ".nei/memory.json",
+  skillsFolder: ".nei/skills",
+  // Agent defaults
+  maxAgentIterations: 6,
+  maxPrefetchedNotes: 12,
+  prefetchSnippetLength: 400,
+  // RAG defaults
+  ragResultLimit: 5,
+  ragSnippetLength: 1e3,
+  // Safety default
+  confirmObsidianCommands: true,
+  allowedObsidianCommands: [
+    "editor:toggle-line-wrap",
+    "theme:toggle-dark",
+    "canvas:new-file",
+    "workspace:new-tab",
+    "app:reload"
+  ],
+  // Temporal Intelligence defaults
+  enableTemporalAwareness: true,
+  enableAdaptivePrefetch: true,
+  enableFreshnessSuggestions: true,
+  enableSmartToolFiltering: true,
+  defaultFreshnessPolicy: "auto",
+  // Intent Routing defaults
+  intentRoutingThreshold: 2.5,
+  intentVaultKeywordWeight: 2,
+  intentCreationWeight: 3,
+  intentDeletionWeight: 4,
+  intentAnalysisWeight: 2.5,
+  intentSearchWeight: 1.5,
+  intentModifyWeight: 1.5,
+  intentQuestionWeight: -1.5,
+  intentCodeWeight: -1,
+  intentLengthWeight: 5e-3,
+  intentHistoryWeight: 0.3,
+  intentAttachmentWeight: 5,
+  intentStaleQueryWeight: 3,
+  intentFreshnessWeight: 2
 };
-var NeiAiChatPlugin = class extends import_obsidian12.Plugin {
+var NeiAiChatPlugin = class extends import_obsidian15.Plugin {
   constructor() {
     super(...arguments);
     this.settings = DEFAULT_SETTINGS;
   }
   async onload() {
     await this.loadSettings();
+    this.toolRegistry = new ToolRegistry(this);
+    try {
+      const { definitions, executors } = await McpService.discoverMcpTools();
+      definitions.forEach((def) => this.toolRegistry.registerDefinition(def));
+      Object.entries(executors).forEach(
+        ([name, executor]) => this.toolRegistry.registerExecutor(name, executor)
+      );
+      if (definitions.length > 0) {
+        console.log(`[NEI] Registered ${definitions.length} MCP tools`);
+      }
+    } catch (e) {
+      console.warn("[NEI] MCP tools discovery failed:", e);
+    }
     this.registerView(
       VIEW_TYPE_NEI_CHAT,
       (leaf) => new NeiChatView(leaf, this)
@@ -28359,13 +28785,26 @@ var NeiAiChatPlugin = class extends import_obsidian12.Plugin {
   }
   async loadSettings() {
     const loadedData = await this.loadData();
+    if (loadedData?.apiKey && typeof this.app.vault.decrypt === "function") {
+      try {
+        loadedData.apiKey = await this.app.vault.decrypt(loadedData.apiKey);
+      } catch {
+      }
+    }
     this.settings = Object.assign({}, DEFAULT_SETTINGS, loadedData || {});
     if (!this.settings.customModels || this.settings.customModels.length === 0) {
       this.settings.customModels = DEFAULT_SETTINGS.customModels;
     }
   }
   async saveSettings() {
-    await this.saveData(this.settings);
+    const dataToSave = { ...this.settings };
+    if (dataToSave.apiKey && typeof this.app.vault.encrypt === "function") {
+      try {
+        dataToSave.apiKey = await this.app.vault.encrypt(dataToSave.apiKey);
+      } catch {
+      }
+    }
+    await this.saveData(dataToSave);
   }
 };
 /*! Bundled license information:

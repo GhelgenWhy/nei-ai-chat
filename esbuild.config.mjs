@@ -13,7 +13,7 @@ if you want to view the source, please visit the github repository of this plugi
 const prod = (process.argv[2] === 'production');
 
 // Sync to local vault if OBSIDIAN_VAULT_PATH env variable or default path is available
-const VAULT_PLUGIN_DIR = process.env.OBSIDIAN_VAULT_PATH || "C:/Users/Ghelgen/Obsidian Vault's/Main/.obsidian/plugins/NEI-ai-chat";
+const VAULT_PLUGIN_DIR = process.env.OBSIDIAN_VAULT_PATH || "c:/Users/Ghelgen/Obsidian Vault's/Main/.obsidian/plugins/NEI-ai-chat";
 
 function copyToVault() {
 	try {

@@ -3,12 +3,15 @@ import { ToolDefinition, ToolExecutor, ToolExecutionResult } from "./types";
 import { vaultToolDefinitions, vaultExecutors } from "./vaultTools";
 import { systemToolDefinitions, systemExecutors } from "./systemTools";
 import { memoryToolDefinitions, memoryExecutors } from "./memoryTools";
+import { NeiAiChatPlugin } from "../../../main";
 
 export class ToolRegistry {
     private definitions: Map<string, ToolDefinition> = new Map();
     private executors: Map<string, ToolExecutor> = new Map();
+    private plugin: NeiAiChatPlugin;
 
-    constructor() {
+    constructor(plugin: NeiAiChatPlugin) {
+        this.plugin = plugin;
         this.registerAll(vaultToolDefinitions, vaultExecutors);
         this.registerAll(systemToolDefinitions, systemExecutors);
         this.registerAll(memoryToolDefinitions, memoryExecutors);
@@ -22,6 +25,14 @@ export class ToolRegistry {
                 this.executors.set(name, execs[name]);
             }
         }
+    }
+
+    public registerDefinition(def: ToolDefinition): void {
+        this.definitions.set(def.function.name, def);
+    }
+
+    public registerExecutor(name: string, executor: ToolExecutor): void {
+        this.executors.set(name, executor);
     }
 
     public getToolDefinitions(): ToolDefinition[] {
@@ -58,7 +69,7 @@ export class ToolRegistry {
         }
 
         try {
-            const execResult = await executor(app, parsedArgs);
+            const execResult = await executor(app, parsedArgs, this.plugin);
 
             if (typeof execResult === "object" && execResult !== null && "result" in execResult) {
                 return execResult;
@@ -81,4 +92,3 @@ export class ToolRegistry {
     }
 }
 
-export const defaultToolRegistry = new ToolRegistry();

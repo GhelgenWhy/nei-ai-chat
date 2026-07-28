@@ -1,5 +1,7 @@
 import { App, TFile, TFolder, normalizePath } from "obsidian";
 import { ToolDefinition, ToolExecutor, ToolExecutionResult } from "./types";
+import { getNoteSavePath } from "../../utils/pathUtils";
+import { NeiAiChatPlugin } from "../../../main";
 
 export const vaultToolDefinitions: ToolDefinition[] = [
     {
@@ -12,7 +14,7 @@ export const vaultToolDefinitions: ToolDefinition[] = [
                 properties: {
                     path: {
                         type: "string",
-                        description: "Путь к файлу или имя заметки (например, 'tasks/task1.md' или 'task1')"
+                        description: "Путь к файлу или имя заметки (например, 'folder/note.md' или 'note.md')"
                     }
                 },
                 required: ["path"]
@@ -40,13 +42,13 @@ export const vaultToolDefinitions: ToolDefinition[] = [
         type: "function",
         function: {
             name: "get_folder_notes",
-            description: "Пакетно прочитать и проанализировать ВСЕ заметки в указанной папке (например, 'tasks' или 'Projects'). Отличный инструмент для выжимок и обзора проектов.",
+            description: "Пакетно прочитать и проанализировать ВСЕ заметки в указанной папке. Отличный инструмент для обзора структур папок.",
             parameters: {
                 type: "object",
                 properties: {
                     folderPath: {
                         type: "string",
-                        description: "Относительный путь к папке в ваулте (например, 'tasks' или 'Notes/Study')"
+                        description: "Относительный путь к папке в ваулте (например, 'Folder/SubFolder' или пустая строка для корня)"
                     },
                     includeContent: {
                         type: "string",
@@ -305,6 +307,25 @@ function findFolder(app: App, rawPath: string): TFolder | null {
     return matched || null;
 }
 
+export async function ensureFolderExists(app: App, folderPath: string): Promise<void> {
+    const cleanPath = normalizePath(folderPath.trim());
+    if (!cleanPath || cleanPath === "." || cleanPath === "/") return;
+    
+    const parts = cleanPath.split("/").filter(Boolean);
+    let currentPath = "";
+    for (const part of parts) {
+        currentPath = currentPath ? `${currentPath}/${part}` : part;
+        const folder = app.vault.getAbstractFileByPath(currentPath);
+        if (!folder) {
+            try {
+                await app.vault.createFolder(currentPath);
+            } catch {
+                /* Folder might have been created concurrently */
+            }
+        }
+    }
+}
+
 export const vaultExecutors: Record<string, ToolExecutor> = {
     read_note: async (app: App, rawArgs: Record<string, unknown>) => {
         const args = rawArgs as { path: string };
@@ -387,28 +408,32 @@ export const vaultExecutors: Record<string, ToolExecutor> = {
         return output.join("\n");
     },
 
-    create_note: async (app: App, rawArgs: Record<string, unknown>) => {
+    create_note: async (app: App, rawArgs: Record<string, unknown>, plugin: NeiAiChatPlugin) => {
         const args = rawArgs as { path: string; content: string };
-        let path = normalizePath(args.path);
-        if (!path.endsWith(".md")) path += ".md";
+        let path = getNoteSavePath(plugin.settings, args.path);
 
-        const existing = app.vault.getAbstractFileByPath(path);
+        // SECURITY: Path traversal protection
+        const normalized = normalizePath(path);
+        if (normalized.includes("..") || normalized.startsWith("/") || normalized.startsWith("\\")) {
+            return "Ошибка: Недопустимый путь (path traversal защита)";
+        }
+        let finalPath = normalized;
+        if (!finalPath.endsWith(".md")) finalPath += ".md";
+
+        const existing = app.vault.getAbstractFileByPath(finalPath);
         if (existing) {
-            return `Ошибка: Файл '${path}' уже существует. Используйте edit_note.`;
+            return `Ошибка: Файл '${finalPath}' уже существует. Используйте edit_note.`;
         }
 
-        const folderParts = path.split("/");
+        const folderParts = finalPath.split("/");
         if (folderParts.length > 1) {
             folderParts.pop();
             const folderPath = folderParts.join("/");
-            const folder = app.vault.getAbstractFileByPath(folderPath);
-            if (!folder) {
-                await app.vault.createFolder(folderPath);
-            }
+            await ensureFolderExists(app, folderPath);
         }
 
         try {
-            const created = await app.vault.create(path, args.content);
+            const created = await app.vault.create(finalPath, args.content);
             return `Успех: Создана новая заметка '${created.path}'.`;
         } catch (e: unknown) {
             const err = e as { message?: string };
@@ -597,13 +622,29 @@ export const vaultExecutors: Record<string, ToolExecutor> = {
         };
     },
 
-    execute_obsidian_command: async (app: App, rawArgs: Record<string, unknown>) => {
+    execute_obsidian_command: async (app: App, rawArgs: Record<string, unknown>, plugin?: NeiAiChatPlugin) => {
         const args = rawArgs as { commandId: string };
+        const commandId = args.commandId;
+
+        // SECURITY: Whitelist check
+        if (plugin?.settings?.confirmObsidianCommands) {
+            const allowedCommands = plugin.settings.allowedObsidianCommands || [
+                'editor:toggle-line-wrap',
+                'theme:toggle-dark',
+                'canvas:new-file',
+                'workspace:new-tab',
+                'app:reload'
+            ];
+            if (!allowedCommands.includes(commandId)) {
+                return `Ошибка: Команда '${commandId}' не в whitelist. Добавьте ее в настройках или обратитесь к администратору.`;
+            }
+        }
+
         try {
             const appCommands = app as unknown as { commands?: { executeCommandById: (id: string) => boolean } };
-            const result = appCommands.commands?.executeCommandById(args.commandId);
+            const result = appCommands.commands?.executeCommandById(commandId);
             if (result !== false) {
-                return `Успешно выполнена команда Obsidian '${args.commandId}'.`;
+                return `Успешно выполнена команда Obsidian '${commandId}'.`;
             } else {
                 return `Команда '${args.commandId}' не вернула положительный результат (возможно не активна в данном контексте).`;
             }

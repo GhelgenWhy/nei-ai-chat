@@ -1,4 +1,5 @@
 import { App } from "obsidian";
+import { NeiAiChatPlugin } from "../../../main";
 
 export interface FunctionParameterSchema {
     type: string;
@@ -46,4 +47,4 @@ export interface ToolExecutionResult {
     };
 }
 
-export type ToolExecutor = (app: App, args: Record<string, unknown>) => Promise<string | ToolExecutionResult>;
+export type ToolExecutor = (app: App, rawArgs: Record<string, unknown>, plugin: NeiAiChatPlugin) => Promise<string | ToolExecutionResult>;

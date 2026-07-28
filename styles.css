@@ -3,6 +3,69 @@ NEI AI Chat Plugin Styles
 Scoped to plugin elements only — does NOT override Obsidian shell containers.
 */
 
+/* ── Layout & Scrolling Isolation ── */
+.nei-chat-view-container {
+    padding: 0 !important;
+    overflow: hidden !important;
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.nei-chat-view-root {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    box-sizing: border-box;
+}
+
+.nei-chat-panel-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    padding: 10px;
+    box-sizing: border-box;
+    position: relative;
+    overflow: hidden;
+}
+
+.nei-chat-header {
+    flex-shrink: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--background-modifier-border);
+    flex-wrap: wrap;
+    gap: 6px;
+    position: relative;
+    z-index: 5;
+}
+
+.nei-chat-messages-container {
+    flex: 1;
+    min-height: 0;          /* CRITICAL flex-child scroll fix */
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 10px;
+    padding-right: 2px;
+}
+
+.nei-chat-input-container {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-bottom: 28px; /* Clear Obsidian status bar overlay */
+}
+
 /* ── Message bubbles: prevent wide content from blowing out ── */
 .nei-chat-bubble {
     box-sizing: border-box;

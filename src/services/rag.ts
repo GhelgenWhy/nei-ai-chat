@@ -6,50 +6,94 @@ export interface SearchResult {
     score: number;
 }
 
+// Common stop words that add noise to search results
+const STOP_WORDS = new Set([
+    // Russian
+    "и", "в", "на", "не", "что", "это", "как", "он", "она", "они", "мы", "вы",
+    "все", "так", "его", "но", "да", "ты", "по", "от", "за", "для", "из", "же",
+    "то", "бы", "ее", "при", "или", "уже", "до", "нет", "если", "них", "был",
+    "без", "ещё", "быть", "мой", "чем", "эти", "где", "мне", "них", "тут",
+    // English
+    "the", "and", "for", "are", "but", "not", "you", "all", "can", "had", "her",
+    "was", "one", "our", "out", "has", "have", "been", "from", "this", "that",
+    "with", "they", "will", "each", "make", "like", "just", "than", "them", "very",
+    "when", "what", "your", "about", "would", "there", "their", "which", "could",
+    "other", "into", "more", "some", "time", "also", "its", "only", "over"
+]);
+
 /**
- * Clean and tokenize text for TF-IDF.
+ * Clean and tokenize text for TF-IDF, filtering stop words.
  */
 function tokenize(text: string): string[] {
     return text
         .toLowerCase()
         .replace(/[.,/#!$%^&*;:{}=\-_`~()?"']/g, " ")
         .split(/\s+/)
-        .filter(word => word.length > 2); // Filter short words
+        .filter(word => word.length > 2 && !STOP_WORDS.has(word));
 }
 
 /**
- * Basic TF-IDF search implementation for zero-dependency local RAG.
+ * Improved TF-IDF search with IDF weighting and length normalization.
  */
-export async function searchVaultLexical(app: App, query: string, limit = 5): Promise<SearchResult[]> {
+export async function searchVaultLexical(app: App, query: string, limit = 5, snippetLength = 1000): Promise<SearchResult[]> {
     const files = app.vault.getMarkdownFiles();
     const queryTokens = tokenize(query);
     if (queryTokens.length === 0) return [];
 
+    // First pass: compute document frequency (DF) for each query token
+    const docFreq: Record<string, number> = {};
+    const fileContents: Map<TFile, string> = new Map();
+
+    const readResults = await Promise.all(
+        files.map(async (file) => {
+            try {
+                const content = await app.vault.cachedRead(file);
+                return { file, content };
+            } catch {
+                return { file, content: "" };
+            }
+        })
+    );
+
+    for (const { file, content } of readResults) {
+        if (!content) continue;
+        fileContents.set(file, content);
+
+        const contentLower = content.toLowerCase();
+        for (const qToken of queryTokens) {
+            if (contentLower.includes(qToken)) {
+                docFreq[qToken] = (docFreq[qToken] || 0) + 1;
+            }
+        }
+    }
+
+    const totalDocs = fileContents.size || 1;
     const results: SearchResult[] = [];
 
-    for (const file of files) {
-        let content = "";
-        try {
-            content = await app.vault.cachedRead(file);
-        } catch {
-            /* ignore read errors */
-        }
-
-        if (!content) continue;
-
+    // Second pass: score each file with TF-IDF
+    for (const [file, content] of fileContents) {
         const fileTokens = tokenize(content);
-        let score = 0;
+        if (fileTokens.length === 0) continue;
 
+        let score = 0;
         for (const qToken of queryTokens) {
-            const occurrences = fileTokens.filter(t => t.includes(qToken)).length;
-            score += occurrences;
+            const tf = fileTokens.filter(t => t.includes(qToken)).length;
+            if (tf === 0) continue;
+
+            // IDF: rare tokens get higher weight
+            const df = docFreq[qToken] || 1;
+            const idf = Math.log(totalDocs / df) + 1;
+
+            score += tf * idf;
         }
 
         if (score > 0) {
+            // Length normalization: prevent long documents from always winning
+            const normalizedScore = score / Math.sqrt(fileTokens.length);
             results.push({
                 file,
-                content: content.slice(0, 1000), // Trim content preview
-                score
+                content: content.slice(0, snippetLength),
+                score: normalizedScore
             });
         }
     }

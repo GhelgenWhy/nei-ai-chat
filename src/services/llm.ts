@@ -31,6 +31,14 @@ export interface LlmResponse {
     };
 }
 
+export {
+    ModelTemporalInfo,
+    MODEL_TEMPORAL_REGISTRY,
+    getModelTemporalInfo,
+    getKnowledgeCutoff,
+    isQueryLikelyStale
+} from "./modelRegistry";
+
 /**
  * Sends a chat request to OpenRouter or OpenAI-compatible LLM endpoint with Tool Calling support.
  */
