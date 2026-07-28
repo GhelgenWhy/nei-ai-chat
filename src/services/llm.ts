@@ -1,5 +1,21 @@
-import { requestUrl } from "obsidian";
 import { ToolDefinition, ToolCall } from "./tools/types";
+
+async function performPostRequest(url: string, headers: Record<string, string>, bodyStr: string): Promise<{ status: number; text: string; json: any }> {
+    if (typeof fetch === 'function') {
+        const res = await fetch(url, { method: "POST", headers, body: bodyStr });
+        const text = await res.text();
+        let json: any = {};
+        try { json = JSON.parse(text); } catch {}
+        return { status: res.status, text, json };
+    }
+    try {
+        const obsidian = await import("obsidian");
+        const res = await obsidian.requestUrl({ url, method: "POST", headers, body: bodyStr });
+        return { status: res.status, text: res.text, json: res.json };
+    } catch {
+        throw new Error("HTTP POST request failed");
+    }
+}
 
 export interface ChatMessage {
     role: 'user' | 'assistant' | 'system' | 'tool';
@@ -97,12 +113,7 @@ export async function sendChatRequest(
         body.tool_choice = "auto";
     }
 
-    const response = await requestUrl({
-        url,
-        method: "POST",
-        headers,
-        body: JSON.stringify(body)
-    });
+    const response = await performPostRequest(url, headers, JSON.stringify(body));
 
     if (response.status < 200 || response.status >= 300) {
         const errorText = response.text || "";
@@ -167,4 +178,132 @@ export async function sendChatRequest(
         reasoning,
         usage
     };
+}
+
+/**
+ * Sends a streaming chat request to OpenRouter or OpenAI-compatible endpoint.
+ * Emits incremental text chunks via onChunk callback.
+ */
+export async function sendChatRequestStream(
+    config: LlmConfig,
+    messages: ChatMessage[],
+    tools?: ToolDefinition[],
+    onChunk?: (chunk: string) => void
+): Promise<LlmResponse> {
+    const url = config.endpointUrl.endsWith('/')
+        ? `${config.endpointUrl}chat/completions`
+        : `${config.endpointUrl}/chat/completions`;
+        
+    const headers: Record<string, string> = {
+        "Content-Type": "application/json"
+    };
+    
+    if (config.apiKey && config.provider !== 'ollama') {
+        headers["Authorization"] = `Bearer ${config.apiKey}`;
+    }
+    
+    if (config.provider === 'openrouter') {
+        headers["HTTP-Referer"] = "https://github.com/GhelgenWhy/NEI";
+        headers["X-Title"] = "NEI AI Assistant Obsidian Plugin";
+    }
+
+    const cleanMessages = messages.map(m => {
+        let messageContent: string | Array<Record<string, unknown>> = m.content || "";
+        if (m.images && m.images.length > 0) {
+            const parts: Array<Record<string, unknown>> = [{ type: "text", text: m.content || "" }];
+            for (const img of m.images) {
+                parts.push({
+                    type: "image_url",
+                    image_url: { url: img }
+                });
+            }
+            messageContent = parts;
+        }
+
+        return {
+            role: m.role,
+            content: messageContent,
+            ...(m.name ? { name: m.name } : {}),
+            ...(m.tool_call_id ? { tool_call_id: m.tool_call_id } : {}),
+            ...(m.tool_calls ? { tool_calls: m.tool_calls } : {})
+        };
+    });
+
+    const body: Record<string, unknown> = {
+        model: config.model,
+        messages: cleanMessages,
+        stream: true
+    };
+
+    if (tools && tools.length > 0) {
+        body.tools = tools;
+        body.tool_choice = "auto";
+    }
+
+    try {
+        if (typeof fetch === 'function') {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify(body)
+            });
+
+            if (!res.ok) {
+                return sendChatRequest(config, messages, tools);
+            }
+
+            const reader = res.body?.getReader();
+            if (!reader) {
+                return sendChatRequest(config, messages, tools);
+            }
+
+            const decoder = new TextDecoder();
+            let accumulatedContent = "";
+            let buffer = "";
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                buffer += decoder.decode(value, { stream: true });
+
+                const lines = buffer.split("\n");
+                buffer = lines.pop() || "";
+
+                for (const line of lines) {
+                    const trimmed = line.trim();
+                    if (!trimmed || trimmed.startsWith(":")) continue;
+                    if (trimmed.startsWith("data: ")) {
+                        const dataStr = trimmed.slice(6);
+                        if (dataStr === "[DONE]") break;
+                        try {
+                            const parsed = JSON.parse(dataStr) as {
+                                choices?: Array<{
+                                    delta?: { content?: string };
+                                }>;
+                            };
+                            const delta = parsed.choices?.[0]?.delta?.content;
+                            if (delta) {
+                                accumulatedContent += delta;
+                                if (onChunk) onChunk(delta);
+                            }
+                        } catch {
+                            /* ignore chunk JSON parse error */
+                        }
+                    }
+                }
+            }
+
+            if (accumulatedContent) {
+                return { content: accumulatedContent };
+            }
+        }
+    } catch {
+        /* fallback to standard non-streaming request */
+    }
+
+    const fallbackRes = await sendChatRequest(config, messages, tools);
+    if (fallbackRes.content && onChunk) {
+        onChunk(fallbackRes.content);
+    }
+    return fallbackRes;
 }

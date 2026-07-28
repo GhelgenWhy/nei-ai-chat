@@ -10,6 +10,8 @@ import { NeiAiChatSettings } from "../../main";
 import { ToolRegistry } from "../services/tools/toolRegistry";
 import { ensureFolderExists } from "../services/tools/vaultTools";
 import { ErrorBoundary } from "./ErrorBoundary";
+import { Tooltip } from "./Tooltip";
+import { WelcomeScreen } from "./WelcomeScreen";
 
 interface ChatPanelProps {
     app: App;
@@ -371,11 +373,47 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
         }
     };
 
+    const [streamingContent, setStreamingContent] = React.useState("");
+    const [showWelcome, setShowWelcome] = React.useState<boolean>(() => !localStorage.getItem("nei_welcome_seen"));
+    const [enableSemanticRag, setEnableSemanticRag] = React.useState<boolean>(settings.enableSemanticRag ?? false);
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+    const handleExportSettings = () => {
+        try {
+            const dataStr = JSON.stringify(settings, null, 2);
+            const blob = new Blob([dataStr], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `nei-settings-${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            new Notice(t("settingsExported", language));
+        } catch (e: any) {
+            new Notice(`Export error: ${e?.message || String(e)}`);
+        }
+    };
+
+    const handleImportSettings = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        try {
+            const text = await file.text();
+            const imported = JSON.parse(text) as Partial<NeiAiChatSettings>;
+            const newSettings = { ...settings, ...imported };
+            await saveSettings(newSettings);
+            new Notice(t("settingsImported", language));
+        } catch (err: any) {
+            new Notice(`Import error: ${err?.message || String(err)}`);
+        }
+    };
+
     // Execute agent loop for a query and history slice
     const executeQuery = async (queryText: string, historySlice: ChatMessage[], imagesPayload?: string[]) => {
         setLoading(true);
         setActiveSteps([]);
         setEditingMsgIdx(null);
+        setStreamingContent("");
 
         const currentImages = imagesPayload || attachedImages;
         const userMsg: ChatMessage = { 
@@ -421,10 +459,14 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                         setPendingConfirmation({ toolName, argsStr, resolve });
                     });
                 },
+                onStreamChunk: (chunk) => {
+                    setStreamingContent(prev => prev + chunk);
+                },
                 toolRegistry,
                 language,
                 settings
             });
+            setStreamingContent("");
 
             const assistantMsg: ChatMessage = { 
                 role: "assistant", 
@@ -865,33 +907,52 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                     <div style={{ background: 'var(--background-primary)', padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--background-modifier-border)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                         <div style={{ fontWeight: 'bold', fontSize: '11px' }}>🧠 Temporal Intelligence & Smart Routing</div>
 
-                        <label style={{ fontSize: '11px', display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-normal)', cursor: 'pointer' }}>
-                            <input type="checkbox" checked={enableTemporalAwareness} onChange={(e) => setEnableTemporalAwareness(e.target.checked)} />
-                            <span>{t("enableTemporalAwarenessLabel", language)}</span>
-                        </label>
+                        <Tooltip titleKey="enableTemporalAwarenessLabel" descriptionKey="enableTemporalAwarenessDesc" language={language}>
+                            <label style={{ fontSize: '11px', display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-normal)', cursor: 'pointer' }}>
+                                <input type="checkbox" checked={enableTemporalAwareness} onChange={(e) => setEnableTemporalAwareness(e.target.checked)} />
+                                <span>{t("enableTemporalAwarenessLabel", language)}</span>
+                            </label>
+                        </Tooltip>
 
-                        <label style={{ fontSize: '11px', display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-normal)', cursor: 'pointer' }}>
-                            <input type="checkbox" checked={enableAdaptivePrefetch} onChange={(e) => setEnableAdaptivePrefetch(e.target.checked)} />
-                            <span>{t("enableAdaptivePrefetchLabel", language)}</span>
-                        </label>
+                        <Tooltip titleKey="enableAdaptivePrefetchLabel" descriptionKey="enableAdaptivePrefetchDesc" language={language}>
+                            <label style={{ fontSize: '11px', display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-normal)', cursor: 'pointer' }}>
+                                <input type="checkbox" checked={enableAdaptivePrefetch} onChange={(e) => setEnableAdaptivePrefetch(e.target.checked)} />
+                                <span>{t("enableAdaptivePrefetchLabel", language)}</span>
+                            </label>
+                        </Tooltip>
 
-                        <label style={{ fontSize: '11px', display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-normal)', cursor: 'pointer' }}>
-                            <input type="checkbox" checked={enableFreshnessSuggestions} onChange={(e) => setEnableFreshnessSuggestions(e.target.checked)} />
-                            <span>{t("enableFreshnessSuggestionsLabel", language)}</span>
-                        </label>
+                        <Tooltip titleKey="enableFreshnessSuggestionsLabel" descriptionKey="enableFreshnessSuggestionsDesc" language={language}>
+                            <label style={{ fontSize: '11px', display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-normal)', cursor: 'pointer' }}>
+                                <input type="checkbox" checked={enableFreshnessSuggestions} onChange={(e) => setEnableFreshnessSuggestions(e.target.checked)} />
+                                <span>{t("enableFreshnessSuggestionsLabel", language)}</span>
+                            </label>
+                        </Tooltip>
 
-                        <label style={{ fontSize: '11px', display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-normal)', cursor: 'pointer' }}>
-                            <input type="checkbox" checked={enableSmartToolFiltering} onChange={(e) => setEnableSmartToolFiltering(e.target.checked)} />
-                            <span>{t("enableSmartToolFilteringLabel", language)}</span>
-                        </label>
+                        <Tooltip titleKey="enableSmartToolFilteringLabel" descriptionKey="enableSmartToolFilteringDesc" language={language}>
+                            <label style={{ fontSize: '11px', display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-normal)', cursor: 'pointer' }}>
+                                <input type="checkbox" checked={enableSmartToolFiltering} onChange={(e) => setEnableSmartToolFiltering(e.target.checked)} />
+                                <span>{t("enableSmartToolFilteringLabel", language)}</span>
+                            </label>
+                        </Tooltip>
+
+                        <Tooltip titleKey="enableSemanticRagLabel" descriptionKey="enableSemanticRagDesc" language={language}>
+                            <label style={{ fontSize: '11px', display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-normal)', cursor: 'pointer' }}>
+                                <input type="checkbox" checked={enableSemanticRag} onChange={(e) => setEnableSemanticRag(e.target.checked)} />
+                                <span>{t("enableSemanticRagLabel", language)}</span>
+                            </label>
+                        </Tooltip>
 
                         <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
                             <div style={{ flex: 1 }}>
-                                <label style={{ fontSize: '11px', display: 'block', color: 'var(--text-muted)' }}>{t("intentStaleQueryWeightLabel", language)} ({intentStaleQueryWeight})</label>
+                                <Tooltip titleKey="intentStaleQueryWeightLabel" descriptionKey="intentStaleQueryWeightDesc" language={language}>
+                                    <label style={{ fontSize: '11px', display: 'block', color: 'var(--text-muted)' }}>{t("intentStaleQueryWeightLabel", language)} ({intentStaleQueryWeight})</label>
+                                </Tooltip>
                                 <input type="number" step="0.1" value={intentStaleQueryWeight} onChange={(e) => setIntentStaleQueryWeight(Number(e.target.value))} style={{ width: '100%', padding: '4px 6px', fontSize: '11px', borderRadius: '4px', border: '1px solid var(--background-modifier-border)', background: 'var(--background-secondary)', color: 'var(--text-normal)' }} />
                             </div>
                             <div style={{ flex: 1 }}>
-                                <label style={{ fontSize: '11px', display: 'block', color: 'var(--text-muted)' }}>{t("intentFreshnessWeightLabel", language)} ({intentFreshnessWeight})</label>
+                                <Tooltip titleKey="intentFreshnessWeightLabel" descriptionKey="intentFreshnessWeightDesc" language={language}>
+                                    <label style={{ fontSize: '11px', display: 'block', color: 'var(--text-muted)' }}>{t("intentFreshnessWeightLabel", language)} ({intentFreshnessWeight})</label>
+                                </Tooltip>
                                 <input type="number" step="0.1" value={intentFreshnessWeight} onChange={(e) => setIntentFreshnessWeight(Number(e.target.value))} style={{ width: '100%', padding: '4px 6px', fontSize: '11px', borderRadius: '4px', border: '1px solid var(--background-modifier-border)', background: 'var(--background-secondary)', color: 'var(--text-normal)' }} />
                             </div>
                         </div>
@@ -902,24 +963,55 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                         <div style={{ fontWeight: 'bold', fontSize: '11px' }}>🎯 Intent Router Scoring Weights</div>
                         <div style={{ display: 'flex', gap: '8px' }}>
                             <div style={{ flex: 1 }}>
-                                <label style={{ fontSize: '11px', display: 'block', color: 'var(--text-muted)' }}>Threshold ({intentRoutingThreshold})</label>
+                                <Tooltip titleKey="intentRoutingThresholdLabel" descriptionKey="intentRoutingThresholdDesc" language={language}>
+                                    <label style={{ fontSize: '11px', display: 'block', color: 'var(--text-muted)' }}>Threshold ({intentRoutingThreshold})</label>
+                                </Tooltip>
                                 <input type="number" step="0.1" value={intentRoutingThreshold} onChange={(e) => setIntentRoutingThreshold(Number(e.target.value))} style={{ width: '100%', padding: '4px 6px', fontSize: '11px', borderRadius: '4px', border: '1px solid var(--background-modifier-border)', background: 'var(--background-secondary)', color: 'var(--text-normal)' }} />
                             </div>
                             <div style={{ flex: 1 }}>
-                                <label style={{ fontSize: '11px', display: 'block', color: 'var(--text-muted)' }}>Creation Wt ({intentCreationWeight})</label>
+                                <Tooltip titleKey="intentCreationWeightLabel" descriptionKey="intentCreationWeightDesc" language={language}>
+                                    <label style={{ fontSize: '11px', display: 'block', color: 'var(--text-muted)' }}>Creation Wt ({intentCreationWeight})</label>
+                                </Tooltip>
                                 <input type="number" step="0.1" value={intentCreationWeight} onChange={(e) => setIntentCreationWeight(Number(e.target.value))} style={{ width: '100%', padding: '4px 6px', fontSize: '11px', borderRadius: '4px', border: '1px solid var(--background-modifier-border)', background: 'var(--background-secondary)', color: 'var(--text-normal)' }} />
                             </div>
                         </div>
                         <div style={{ display: 'flex', gap: '8px' }}>
                             <div style={{ flex: 1 }}>
-                                <label style={{ fontSize: '11px', display: 'block', color: 'var(--text-muted)' }}>Deletion Wt ({intentDeletionWeight})</label>
+                                <Tooltip titleKey="intentDeletionWeightLabel" descriptionKey="intentDeletionWeightDesc" language={language}>
+                                    <label style={{ fontSize: '11px', display: 'block', color: 'var(--text-muted)' }}>Deletion Wt ({intentDeletionWeight})</label>
+                                </Tooltip>
                                 <input type="number" step="0.1" value={intentDeletionWeight} onChange={(e) => setIntentDeletionWeight(Number(e.target.value))} style={{ width: '100%', padding: '4px 6px', fontSize: '11px', borderRadius: '4px', border: '1px solid var(--background-modifier-border)', background: 'var(--background-secondary)', color: 'var(--text-normal)' }} />
                             </div>
                             <div style={{ flex: 1 }}>
-                                <label style={{ fontSize: '11px', display: 'block', color: 'var(--text-muted)' }}>Question Wt ({intentQuestionWeight})</label>
+                                <Tooltip titleKey="intentQuestionWeightLabel" descriptionKey="intentQuestionWeightDesc" language={language}>
+                                    <label style={{ fontSize: '11px', display: 'block', color: 'var(--text-muted)' }}>Question Wt ({intentQuestionWeight})</label>
+                                </Tooltip>
                                 <input type="number" step="0.1" value={intentQuestionWeight} onChange={(e) => setIntentQuestionWeight(Number(e.target.value))} style={{ width: '100%', padding: '4px 6px', fontSize: '11px', borderRadius: '4px', border: '1px solid var(--background-modifier-border)', background: 'var(--background-secondary)', color: 'var(--text-normal)' }} />
                             </div>
                         </div>
+                    </div>
+
+                    {/* Export & Import Settings Card */}
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                        <button 
+                            onClick={handleExportSettings}
+                            style={{ flex: 1, padding: '6px', fontSize: '11px', background: 'var(--background-secondary)', border: '1px solid var(--background-modifier-border)', borderRadius: '4px', cursor: 'pointer', color: 'var(--text-normal)' }}
+                        >
+                            📤 {t("exportSettings", language)}
+                        </button>
+                        <button 
+                            onClick={() => fileInputRef.current?.click()}
+                            style={{ flex: 1, padding: '6px', fontSize: '11px', background: 'var(--background-secondary)', border: '1px solid var(--background-modifier-border)', borderRadius: '4px', cursor: 'pointer', color: 'var(--text-normal)' }}
+                        >
+                            📥 {t("importSettings", language)}
+                        </button>
+                        <input 
+                            type="file" 
+                            ref={fileInputRef} 
+                            accept=".json" 
+                            style={{ display: 'none' }} 
+                            onChange={handleImportSettings} 
+                        />
                     </div>
 
                     <button 
@@ -929,6 +1021,19 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                         {t("saveSettings", language)}
                     </button>
                 </div>
+            )}
+
+            {/* Welcome Screen Guided Tour Overlay */}
+            {showWelcome && (
+                <WelcomeScreen 
+                    language={language}
+                    onClose={() => {
+                        try {
+                            localStorage.setItem("nei_welcome_seen", "true");
+                        } catch {}
+                        setShowWelcome(false);
+                    }}
+                />
             )}
 
             {/* Proactive Freshness Suggestion Banner */}
@@ -1098,18 +1203,40 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                             ⚡ {t("agentReasoningLog", language)}
                         </div>
                         {activeSteps.map((step) => (
-                            <div key={step.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', opacity: step.status === 'running' ? 1 : 0.8 }}>
-                                <span>{step.status === 'running' ? '⏳' : step.status === 'completed' ? '✅' : '❌'}</span>
-                                <div style={{ flex: 1 }}>
+                            <details key={step.id} style={{ marginBottom: '4px' }}>
+                                <summary style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', opacity: step.status === 'running' ? 1 : 0.85 }}>
+                                    <span>{step.status === 'running' ? '⏳' : step.status === 'completed' ? '✅' : '❌'}</span>
                                     <strong style={{ color: 'var(--text-normal)' }}>{step.title}</strong>
-                                    {step.detail && (
-                                        <div style={{ color: 'var(--text-muted)', fontSize: '10px', marginTop: '2px', fontFamily: 'monospace', whiteSpace: 'pre-wrap', maxHeight: '80px', overflowY: 'auto' }}>
-                                            {step.detail}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
+                                </summary>
+                                {step.detail && (
+                                    <div style={{ color: 'var(--text-muted)', fontSize: '10px', marginTop: '2px', fontFamily: 'monospace', whiteSpace: 'pre-wrap', maxHeight: '120px', overflowY: 'auto', padding: '4px 6px', background: 'var(--background-primary)', borderRadius: '4px' }}>
+                                        {step.detail}
+                                    </div>
+                                )}
+                                {step.meta && (
+                                    <div style={{ marginTop: '2px', fontSize: '9px', opacity: 0.75, fontFamily: 'monospace' }}>
+                                        <code>{JSON.stringify(step.meta)}</code>
+                                    </div>
+                                )}
+                            </details>
                         ))}
+                    </div>
+                )}
+
+                {/* Real-time Streaming Response & Spinner */}
+                {loading && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignSelf: 'flex-start', maxWidth: '92%', padding: '10px 14px', borderRadius: '12px', background: 'var(--background-secondary)', fontSize: '13px' }}>
+                        {streamingContent ? (
+                            <div>
+                                <ObsidianMarkdown markdown={streamingContent} app={app} />
+                                <span className="nei-streaming-cursor" style={{ color: 'var(--interactive-accent)', fontWeight: 'bold' }}> ▊</span>
+                            </div>
+                        ) : (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)' }}>
+                                <span className="nei-spinner">⟳</span>
+                                <span>{t("agentRunning", language)}</span>
+                            </div>
+                        )}
                     </div>
                 )}
 

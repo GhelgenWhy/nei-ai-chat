@@ -30,6 +30,13 @@ export interface NeiAiChatSettings {
     ragResultLimit: number;
     ragSnippetLength: number;
     
+    // Streaming & RAG v2
+    enableStreaming: boolean;
+    enableSemanticRag: boolean;
+    embeddingProvider: 'openrouter' | 'ollama';
+    embeddingModel: string;
+    embeddingEndpoint: string;
+
     // Safety
     confirmObsidianCommands: boolean;
     allowedObsidianCommands: string[];
@@ -90,6 +97,13 @@ const DEFAULT_SETTINGS: NeiAiChatSettings = {
     // RAG defaults
     ragResultLimit: 5,
     ragSnippetLength: 1000,
+
+    // Streaming & RAG v2 defaults
+    enableStreaming: true,
+    enableSemanticRag: false,
+    embeddingProvider: "openrouter",
+    embeddingModel: "openai/text-embedding-3-small",
+    embeddingEndpoint: "https://openrouter.ai/api/v1",
     
     // Safety default
     confirmObsidianCommands: true,

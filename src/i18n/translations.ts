@@ -139,11 +139,75 @@ export interface Translations {
     ragSnippetLengthLabel: string;
     confirmObsidianCommandsLabel: string;
     enableTemporalAwarenessLabel: string;
+    enableTemporalAwarenessDesc: string;
     enableAdaptivePrefetchLabel: string;
+    enableAdaptivePrefetchDesc: string;
     enableFreshnessSuggestionsLabel: string;
+    enableFreshnessSuggestionsDesc: string;
     enableSmartToolFilteringLabel: string;
+    enableSmartToolFilteringDesc: string;
     intentStaleQueryWeightLabel: string;
+    intentStaleQueryWeightDesc: string;
     intentFreshnessWeightLabel: string;
+    intentFreshnessWeightDesc: string;
+
+    intentRoutingThresholdLabel: string;
+    intentRoutingThresholdDesc: string;
+    intentVaultKeywordWeightLabel: string;
+    intentVaultKeywordWeightDesc: string;
+    intentCreationWeightLabel: string;
+    intentCreationWeightDesc: string;
+    intentDeletionWeightLabel: string;
+    intentDeletionWeightDesc: string;
+    intentAnalysisWeightLabel: string;
+    intentAnalysisWeightDesc: string;
+    intentSearchWeightLabel: string;
+    intentSearchWeightDesc: string;
+    intentModifyWeightLabel: string;
+    intentModifyWeightDesc: string;
+    intentQuestionWeightLabel: string;
+    intentQuestionWeightDesc: string;
+    intentCodeWeightLabel: string;
+    intentCodeWeightDesc: string;
+    intentLengthWeightLabel: string;
+    intentLengthWeightDesc: string;
+    intentHistoryWeightLabel: string;
+    intentHistoryWeightDesc: string;
+    intentAttachmentWeightLabel: string;
+    intentAttachmentWeightDesc: string;
+
+    chatsFolderDesc: string;
+    memoryFileDesc: string;
+    skillsFolderDesc: string;
+    maxAgentIterationsDesc: string;
+    maxPrefetchedNotesDesc: string;
+    prefetchSnippetLengthDesc: string;
+    ragResultLimitDesc: string;
+    ragSnippetLengthDesc: string;
+    confirmObsidianCommandsDesc: string;
+
+    enableSemanticRagLabel: string;
+    enableSemanticRagDesc: string;
+    embeddingProviderLabel: string;
+    embeddingModelLabel: string;
+
+    exportSettings: string;
+    importSettings: string;
+    settingsExported: string;
+    settingsImported: string;
+
+    welcomeStep1Title: string;
+    welcomeStep1Desc: string;
+    welcomeStep2Title: string;
+    welcomeStep2Desc: string;
+    welcomeStep3Title: string;
+    welcomeStep3Desc: string;
+    welcomeStep4Title: string;
+    welcomeStep4Desc: string;
+    startTour: string;
+    skip: string;
+    next: string;
+    back: string;
 }
 
 const baseEn: Translations = {
@@ -274,20 +338,85 @@ const baseEn: Translations = {
     ragPrefetchDetail: "Relevant notes found: {count}",
 
     chatsFolderLabel: "Chats folder path:",
+    chatsFolderDesc: "Folder relative to Vault root where conversation histories are saved.",
     memoryFileLabel: "Memory file path:",
+    memoryFileDesc: "JSON file path relative to Vault root for long-term facts & user preferences.",
     skillsFolderLabel: "Agent skills folder path:",
+    skillsFolderDesc: "Folder path relative to Vault root containing agent SKILL.md definition files.",
     maxAgentIterationsLabel: "Max agent iterations:",
+    maxAgentIterationsDesc: "Maximum multi-turn tool execution steps per request before returning final answer.",
     maxPrefetchedNotesLabel: "Max prefetched notes:",
+    maxPrefetchedNotesDesc: "Maximum vault notes automatically loaded and injected into context.",
     prefetchSnippetLengthLabel: "Prefetch snippet length:",
+    prefetchSnippetLengthDesc: "Maximum character length for each prefetched vault note snippet.",
     ragResultLimitLabel: "RAG result limit:",
+    ragResultLimitDesc: "Maximum number of notes retrieved via RAG search.",
     ragSnippetLengthLabel: "RAG snippet length:",
+    ragSnippetLengthDesc: "Maximum snippet length per note retrieved via RAG search.",
     confirmObsidianCommandsLabel: "Require confirmation for Obsidian commands:",
-    enableTemporalAwarenessLabel: "Enable temporal awareness (cutoff dates, freshness directives):",
-    enableAdaptivePrefetchLabel: "Adaptive prefetch (RAG vault notes only when vault is needed):",
-    enableFreshnessSuggestionsLabel: "Suggest web search for time-sensitive queries in Quick mode:",
-    enableSmartToolFilteringLabel: "Smart tool filtering (pass only relevant category tools):",
+    confirmObsidianCommandsDesc: "Prompt user before executing potentially destructive Obsidian commands.",
+
+    enableTemporalAwarenessLabel: "Enable temporal awareness:",
+    enableTemporalAwarenessDesc: "Inject knowledge cutoff dates and freshness warnings into model system prompt.",
+    enableAdaptivePrefetchLabel: "Adaptive prefetch:",
+    enableAdaptivePrefetchDesc: "Only search and prefetch vault notes when vault intent is detected.",
+    enableFreshnessSuggestionsLabel: "Suggest web search in Quick mode:",
+    enableFreshnessSuggestionsDesc: "Display proactive banner when a time-sensitive query is asked in Quick mode.",
+    enableSmartToolFilteringLabel: "Smart tool filtering:",
+    enableSmartToolFilteringDesc: "Pass only relevant tool categories (web, vault) to reduce prompt tokens.",
+
     intentStaleQueryWeightLabel: "Stale query routing weight:",
-    intentFreshnessWeightLabel: "Freshness marker routing weight:"
+    intentStaleQueryWeightDesc: "Weight added towards Agent mode when a query is detected as time-sensitive.",
+    intentFreshnessWeightLabel: "Freshness marker routing weight:",
+    intentFreshnessWeightDesc: "Weight added towards Agent mode when freshness keywords ('today', 'latest') are present.",
+
+    intentRoutingThresholdLabel: "Routing threshold:",
+    intentRoutingThresholdDesc: "Score threshold above which Quick mode switches automatically to Agent mode.",
+    intentVaultKeywordWeightLabel: "Vault keyword weight:",
+    intentVaultKeywordWeightDesc: "Weight applied when vault terms ('note', 'folder') are detected.",
+    intentCreationWeightLabel: "Creation pattern weight:",
+    intentCreationWeightDesc: "Weight applied for creation patterns ('create note', 'save').",
+    intentDeletionWeightLabel: "Deletion pattern weight:",
+    intentDeletionWeightDesc: "Weight applied for deletion patterns ('delete file', 'remove').",
+    intentAnalysisWeightLabel: "Analysis pattern weight:",
+    intentAnalysisWeightDesc: "Weight applied for analysis patterns ('analyze', 'compare notes').",
+    intentSearchWeightLabel: "Search pattern weight:",
+    intentSearchWeightDesc: "Weight applied for search patterns ('find in vault', 'search').",
+    intentModifyWeightLabel: "Modification pattern weight:",
+    intentModifyWeightDesc: "Weight applied for edit/rename patterns.",
+    intentQuestionWeightLabel: "Question pattern weight:",
+    intentQuestionWeightDesc: "Weight (usually negative) favoring Quick mode for general Q&A.",
+    intentCodeWeightLabel: "Code pattern weight:",
+    intentCodeWeightDesc: "Weight (usually negative) favoring Quick mode for simple coding questions.",
+    intentLengthWeightLabel: "Query length weight:",
+    intentLengthWeightDesc: "Weight multiplier applied per character of user query length.",
+    intentHistoryWeightLabel: "History turn weight:",
+    intentHistoryWeightDesc: "Weight applied when recent turns in chat history used agent tools.",
+    intentAttachmentWeightLabel: "Attachment weight:",
+    intentAttachmentWeightDesc: "Weight added to score when images or files are attached.",
+
+    enableSemanticRagLabel: "Enable hybrid semantic RAG:",
+    enableSemanticRagDesc: "Combine lexical (TF-IDF) and vector embedding search for notes.",
+    embeddingProviderLabel: "Embedding provider:",
+    embeddingModelLabel: "Embedding model:",
+
+    exportSettings: "Export Settings",
+    importSettings: "Import Settings",
+    settingsExported: "Settings exported to JSON file!",
+    settingsImported: "Settings imported successfully!",
+
+    welcomeStep1Title: "Welcome to NEI AI Chat",
+    welcomeStep1Desc: "Your intelligent agentic co-pilot for Obsidian vault analysis, note creation, and knowledge retrieval.",
+    welcomeStep2Title: "Zero Hardcoding & Smart Routing",
+    welcomeStep2Desc: "Automatically detects whether to answer directly (Quick Mode) or use vault tools and web search (Agent Mode).",
+    welcomeStep3Title: "Temporal Awareness & Hybrid RAG",
+    welcomeStep3Desc: "Stays aware of model knowledge cutoffs, performs live web searches, and indexes vault notes via hybrid search.",
+    welcomeStep4Title: "Custom Skills & MCP Tools",
+    welcomeStep4Desc: "Extend AI capabilities with custom markdown skills and Model Context Protocol (MCP) external tools.",
+    startTour: "Start Guided Tour",
+    skip: "Skip",
+    next: "Next",
+    back: "Back"
 };
 
 const baseRu: Translations = {
@@ -417,14 +546,85 @@ const baseRu: Translations = {
     ragPrefetchDetail: "Найдено релевантных: {count}",
 
     chatsFolderLabel: "Папка хранения чатов:",
+    chatsFolderDesc: "Папка относительно корня Vault, в которой сохраняется история диалогов.",
     memoryFileLabel: "Файл долгосрочной памяти:",
+    memoryFileDesc: "Путь к JSON файлу долгосрочной памяти с фактами и предпочтениями.",
     skillsFolderLabel: "Папка скиллов агента:",
+    skillsFolderDesc: "Папка с файлами SKILL.md, определяющими навыки ИИ-агента.",
     maxAgentIterationsLabel: "Макс. итераций агента:",
+    maxAgentIterationsDesc: "Максимальное количество шагов вызова инструментов за один запрос.",
     maxPrefetchedNotesLabel: "Макс. префетч заметок:",
+    maxPrefetchedNotesDesc: "Максимальное число заметок, автоматически загружаемых в контекст.",
     prefetchSnippetLengthLabel: "Длина сниппета префетча:",
+    prefetchSnippetLengthDesc: "Максимальная длина текста каждой загружаемой заметки.",
     ragResultLimitLabel: "Лимит RAG заметок:",
+    ragResultLimitDesc: "Максимальное количество заметок, получаемых через RAG поиск.",
     ragSnippetLengthLabel: "Длина сниппета RAG:",
-    confirmObsidianCommandsLabel: "Запрашивать подтверждение команд Obsidian:"
+    ragSnippetLengthDesc: "Максимальная длина сниппета для RAG заметок.",
+    confirmObsidianCommandsLabel: "Запрашивать подтверждение команд Obsidian:",
+    confirmObsidianCommandsDesc: "Спрашивать подтверждение перед выполнением команд Obsidian.",
+
+    enableTemporalAwarenessLabel: "Включить временную осведомленность:",
+    enableTemporalAwarenessDesc: "Передавать модели даты cutoff и предупреждения о свежести данных.",
+    enableAdaptivePrefetchLabel: "Адаптивный префетч:",
+    enableAdaptivePrefetchDesc: "Загружать заметки только когда обнаружен запрос к хранилищу.",
+    enableFreshnessSuggestionsLabel: "Предлагать веб-поиск в Быстром режиме:",
+    enableFreshnessSuggestionsDesc: "Показывать баннер с предложением включить веб-поиск для актуальных данных.",
+    enableSmartToolFilteringLabel: "Умная фильтрация инструментов:",
+    enableSmartToolFilteringDesc: "Передавать только нужные категории инструментов для экономии токенов.",
+
+    intentStaleQueryWeightLabel: "Вес устаревшего запроса:",
+    intentStaleQueryWeightDesc: "Дополнительный вес к Agent режиму, если запрос требует свежих данных.",
+    intentFreshnessWeightLabel: "Вес маркеров свежести:",
+    intentFreshnessWeightDesc: "Вес при наличии слов 'сегодня', 'сейчас', 'курс'.",
+
+    intentRoutingThresholdLabel: "Порог роутинга:",
+    intentRoutingThresholdDesc: "Порог баллов, при превышении которого включается Agent режим.",
+    intentVaultKeywordWeightLabel: "Вес ключевых слов Vault:",
+    intentVaultKeywordWeightDesc: "Вес при обнаружении слов 'заметка', 'папка', 'хранилище'.",
+    intentCreationWeightLabel: "Вес шаблонов создания:",
+    intentCreationWeightDesc: "Вес при просьбах создать заметку или сохранить.",
+    intentDeletionWeightLabel: "Вес шаблонов удаления:",
+    intentDeletionWeightDesc: "Вес при запросах на удаление файлов.",
+    intentAnalysisWeightLabel: "Вес шаблонов анализа:",
+    intentAnalysisWeightDesc: "Вес при просьбах проанализировать или сравнить заметки.",
+    intentSearchWeightLabel: "Вес шаблонов поиска:",
+    intentSearchWeightDesc: "Вес при поиске по заметкам.",
+    intentModifyWeightLabel: "Вес шаблонов изменения:",
+    intentModifyWeightDesc: "Вес при переименовании или правке файлов.",
+    intentQuestionWeightLabel: "Вес простых вопросов:",
+    intentQuestionWeightDesc: "Отрицательный вес, склоняющий к Быстрому режиму для обычных вопросов.",
+    intentCodeWeightLabel: "Вес вопросов по коду:",
+    intentCodeWeightDesc: "Отрицательный вес для простых запросов кода.",
+    intentLengthWeightLabel: "Вес длины запроса:",
+    intentLengthWeightDesc: "Множитель веса за каждый символ длины сообщения.",
+    intentHistoryWeightLabel: "Вес истории диалога:",
+    intentHistoryWeightDesc: "Вес при наличии агентных шагов в недавней истории.",
+    intentAttachmentWeightLabel: "Вес прикрепленных файлов:",
+    intentAttachmentWeightDesc: "Прибавляемый вес при наличии изображений или документов.",
+
+    enableSemanticRagLabel: "Включить гибридный семантический RAG:",
+    enableSemanticRagDesc: "Комбинировать лексический (TF-IDF) и векторный эмбеддинг поиск по заметкам.",
+    embeddingProviderLabel: "Провайдер эмбеддингов:",
+    embeddingModelLabel: "Модель эмбеддингов:",
+
+    exportSettings: "Экспорт настроек",
+    importSettings: "Импорт настроек",
+    settingsExported: "Настройки успешно экспортированы в JSON файл!",
+    settingsImported: "Настройки успешно импортированы!",
+
+    welcomeStep1Title: "Добро пожаловать в NEI AI Chat",
+    welcomeStep1Desc: "Ваш интеллектуальный ИИ-копилот для анализа Vault, создания заметок и извлечения знаний.",
+    welcomeStep2Title: "Умный роутинг без хардкода",
+    welcomeStep2Desc: "Автоматически определяет, ответить напрямую (Быстрый) или применить инструменты ваулта и веб-поиск (Агент).",
+    welcomeStep3Title: "Временная осведомленность и гибридный RAG",
+    welcomeStep3Desc: "Учитывает даты cutoff моделей, ищет свежие данные в интернете и индексирует заметки.",
+    welcomeStep4Title: "Персональные скиллы и MCP инструменты",
+    welcomeStep4Desc: "Расширяйте возможности агента собственными markdown скиллами и внешними MCP серверами.",
+    startTour: "Начать тур",
+    skip: "Пропустить",
+    next: "Далее",
+    back: "Назад"
 };
 
 export const translations: Record<string, Translations> = {

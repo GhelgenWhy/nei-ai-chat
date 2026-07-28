@@ -3,6 +3,9 @@ import { ToolDefinition, ToolExecutor, ToolExecutionResult } from "./types";
 import { vaultToolDefinitions, vaultExecutors } from "./vaultTools";
 import { systemToolDefinitions, systemExecutors } from "./systemTools";
 import { memoryToolDefinitions, memoryExecutors } from "./memoryTools";
+import { dataviewToolDefinitions, executeDataviewQuery } from "./dataviewTools";
+import { templaterToolDefinitions, executeTemplaterRender } from "./templaterTools";
+import { canvasToolDefinitions, executeCreateCanvas } from "./canvasTools";
 import { NeiAiChatPlugin } from "../../../main";
 
 export class ToolRegistry {
@@ -15,6 +18,22 @@ export class ToolRegistry {
         this.registerAll(vaultToolDefinitions, vaultExecutors);
         this.registerAll(systemToolDefinitions, systemExecutors);
         this.registerAll(memoryToolDefinitions, memoryExecutors);
+
+        // Ecosystem tools registration
+        this.registerAll(dataviewToolDefinitions, {
+            query_dataview: (app, args) => executeDataviewQuery(app, String(args.query || ""))
+        });
+        this.registerAll(templaterToolDefinitions, {
+            render_templater: (app, args) => executeTemplaterRender(app, String(args.template || ""))
+        });
+        this.registerAll(canvasToolDefinitions, {
+            create_canvas: (app, args) => executeCreateCanvas(
+                app,
+                String(args.path || ""),
+                (args.nodes || []) as any[],
+                (args.edges || []) as any[]
+            )
+        });
     }
 
     private registerAll(defs: ToolDefinition[], execs: Record<string, ToolExecutor>) {

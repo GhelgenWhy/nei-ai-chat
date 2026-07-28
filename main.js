@@ -9,6 +9,9 @@ var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __esm = (fn, res) => function __init() {
+  return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
+};
 var __commonJS = (cb, mod) => function __require() {
   return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
 };
@@ -1093,7 +1096,7 @@ var require_react_development = __commonJS({
           }
           return dispatcher.useContext(Context);
         }
-        function useState2(initialState) {
+        function useState4(initialState) {
           var dispatcher = resolveDispatcher();
           return dispatcher.useState(initialState);
         }
@@ -1101,11 +1104,11 @@ var require_react_development = __commonJS({
           var dispatcher = resolveDispatcher();
           return dispatcher.useReducer(reducer, initialArg, init);
         }
-        function useRef2(initialValue) {
+        function useRef3(initialValue) {
           var dispatcher = resolveDispatcher();
           return dispatcher.useRef(initialValue);
         }
-        function useEffect2(create, deps) {
+        function useEffect3(create, deps) {
           var dispatcher = resolveDispatcher();
           return dispatcher.useEffect(create, deps);
         }
@@ -1888,15 +1891,15 @@ var require_react_development = __commonJS({
         exports.useContext = useContext;
         exports.useDebugValue = useDebugValue;
         exports.useDeferredValue = useDeferredValue;
-        exports.useEffect = useEffect2;
+        exports.useEffect = useEffect3;
         exports.useId = useId;
         exports.useImperativeHandle = useImperativeHandle;
         exports.useInsertionEffect = useInsertionEffect;
         exports.useLayoutEffect = useLayoutEffect;
         exports.useMemo = useMemo;
         exports.useReducer = useReducer;
-        exports.useRef = useRef2;
-        exports.useState = useState2;
+        exports.useRef = useRef3;
+        exports.useState = useState4;
         exports.useSyncExternalStore = useSyncExternalStore;
         exports.useTransition = useTransition;
         exports.version = ReactVersion;
@@ -2392,9 +2395,9 @@ var require_react_dom_development = __commonJS({
         if (typeof __REACT_DEVTOOLS_GLOBAL_HOOK__ !== "undefined" && typeof __REACT_DEVTOOLS_GLOBAL_HOOK__.registerInternalModuleStart === "function") {
           __REACT_DEVTOOLS_GLOBAL_HOOK__.registerInternalModuleStart(new Error());
         }
-        var React4 = require_react();
+        var React6 = require_react();
         var Scheduler = require_scheduler();
-        var ReactSharedInternals = React4.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
+        var ReactSharedInternals = React6.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
         var suppressWarning = false;
         function setSuppressWarning(newSuppressWarning) {
           {
@@ -3999,7 +4002,7 @@ var require_react_dom_development = __commonJS({
           {
             if (props.value == null) {
               if (typeof props.children === "object" && props.children !== null) {
-                React4.Children.forEach(props.children, function(child) {
+                React6.Children.forEach(props.children, function(child) {
                   if (child == null) {
                     return;
                   }
@@ -23568,7 +23571,7 @@ var require_react_jsx_runtime_development = __commonJS({
     if (true) {
       (function() {
         "use strict";
-        var React4 = require_react();
+        var React6 = require_react();
         var REACT_ELEMENT_TYPE = Symbol.for("react.element");
         var REACT_PORTAL_TYPE = Symbol.for("react.portal");
         var REACT_FRAGMENT_TYPE = Symbol.for("react.fragment");
@@ -23594,7 +23597,7 @@ var require_react_jsx_runtime_development = __commonJS({
           }
           return null;
         }
-        var ReactSharedInternals = React4.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
+        var ReactSharedInternals = React6.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
         function error(format) {
           {
             {
@@ -24444,11 +24447,11 @@ var require_react_jsx_runtime_development = __commonJS({
             return jsxWithValidation(type, props, key, false);
           }
         }
-        var jsx3 = jsxWithValidationDynamic;
-        var jsxs3 = jsxWithValidationStatic;
+        var jsx5 = jsxWithValidationDynamic;
+        var jsxs5 = jsxWithValidationStatic;
         exports.Fragment = REACT_FRAGMENT_TYPE;
-        exports.jsx = jsx3;
-        exports.jsxs = jsxs3;
+        exports.jsx = jsx5;
+        exports.jsxs = jsxs5;
       })();
     }
   }
@@ -24466,6 +24469,687 @@ var require_jsx_runtime = __commonJS({
   }
 });
 
+// src/utils/pathUtils.ts
+function getNoteSavePath(settings, requestedPath) {
+  const defaultFolder = settings.defaultNoteFolder.trim();
+  if (defaultFolder && !requestedPath.startsWith(defaultFolder + "/")) {
+    return (0, import_obsidian10.normalizePath)(`${defaultFolder}/${requestedPath}`);
+  }
+  return (0, import_obsidian10.normalizePath)(requestedPath);
+}
+var import_obsidian10;
+var init_pathUtils = __esm({
+  "src/utils/pathUtils.ts"() {
+    "use strict";
+    import_obsidian10 = require("obsidian");
+  }
+});
+
+// src/services/tools/vaultTools.ts
+var vaultTools_exports = {};
+__export(vaultTools_exports, {
+  ensureFolderExists: () => ensureFolderExists,
+  vaultExecutors: () => vaultExecutors,
+  vaultToolDefinitions: () => vaultToolDefinitions
+});
+function findFile(app, rawPath) {
+  let cleanPath = (0, import_obsidian11.normalizePath)(rawPath.trim());
+  if (!cleanPath.endsWith(".md")) {
+    const fileWithMd = app.vault.getFileByPath(cleanPath + ".md");
+    if (fileWithMd)
+      return fileWithMd;
+  }
+  const exact = app.vault.getFileByPath(cleanPath);
+  if (exact)
+    return exact;
+  const files = app.vault.getMarkdownFiles();
+  const cleanLower = cleanPath.toLowerCase();
+  const matched = files.find(
+    (f) => f.basename.toLowerCase() === cleanLower || f.path.toLowerCase() === cleanLower || f.path.toLowerCase().endsWith("/" + cleanLower)
+  );
+  return matched || null;
+}
+function findFolder(app, rawPath) {
+  let cleanPath = (0, import_obsidian11.normalizePath)(rawPath.trim());
+  if (!cleanPath || cleanPath === "/" || cleanPath === ".") {
+    return app.vault.getRoot();
+  }
+  const folder = app.vault.getFolderByPath(cleanPath);
+  if (folder)
+    return folder;
+  const allFolders = app.vault.getAllLoadedFiles().filter((f) => f instanceof import_obsidian11.TFolder);
+  const matched = allFolders.find(
+    (f) => f.name.toLowerCase() === cleanPath.toLowerCase() || f.path.toLowerCase() === cleanPath.toLowerCase() || f.path.toLowerCase().endsWith("/" + cleanPath.toLowerCase())
+  );
+  return matched || null;
+}
+async function ensureFolderExists(app, folderPath) {
+  const cleanPath = (0, import_obsidian11.normalizePath)(folderPath.trim());
+  if (!cleanPath || cleanPath === "." || cleanPath === "/")
+    return;
+  const parts = cleanPath.split("/").filter(Boolean);
+  let currentPath = "";
+  for (const part of parts) {
+    currentPath = currentPath ? `${currentPath}/${part}` : part;
+    const folder = app.vault.getAbstractFileByPath(currentPath);
+    if (!folder) {
+      try {
+        await app.vault.createFolder(currentPath);
+      } catch {
+      }
+    }
+  }
+}
+var import_obsidian11, vaultToolDefinitions, vaultExecutors;
+var init_vaultTools = __esm({
+  "src/services/tools/vaultTools.ts"() {
+    "use strict";
+    import_obsidian11 = require("obsidian");
+    init_pathUtils();
+    vaultToolDefinitions = [
+      {
+        type: "function",
+        function: {
+          name: "read_note",
+          description: "\u041F\u0440\u043E\u0447\u0438\u0442\u0430\u0442\u044C \u0441\u043E\u0434\u0435\u0440\u0436\u0438\u043C\u043E\u0435 \u0437\u0430\u043C\u0435\u0442\u043A\u0438 Markdown \u043F\u043E \u0435\u0451 \u043E\u0442\u043D\u043E\u0441\u0438\u0442\u0435\u043B\u044C\u043D\u043E\u043C\u0443 \u043F\u0443\u0442\u0438 \u0438\u043B\u0438 \u0438\u043C\u0435\u043D\u0438.",
+          parameters: {
+            type: "object",
+            properties: {
+              path: {
+                type: "string",
+                description: "\u041F\u0443\u0442\u044C \u043A \u0444\u0430\u0439\u043B\u0443 \u0438\u043B\u0438 \u0438\u043C\u044F \u0437\u0430\u043C\u0435\u0442\u043A\u0438 (\u043D\u0430\u043F\u0440\u0438\u043C\u0435\u0440, 'folder/note.md' \u0438\u043B\u0438 'note.md')"
+              }
+            },
+            required: ["path"]
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "read_notes_batch",
+          description: "\u041F\u0430\u043A\u0435\u0442\u043D\u043E\u0435 \u0447\u0442\u0435\u043D\u0438\u0435 \u0441\u0440\u0430\u0437\u0443 \u043D\u0435\u0441\u043A\u043E\u043B\u044C\u043A\u0438\u0445 \u0437\u0430\u043C\u0435\u0442\u043E\u043A \u0412\u0430\u0443\u043B\u0442\u0430 \u0437\u0430 \u043E\u0434\u0438\u043D \u0432\u044B\u0437\u043E\u0432.",
+          parameters: {
+            type: "object",
+            properties: {
+              paths: {
+                type: "string",
+                description: "\u041C\u0430\u0441\u0441\u0438\u0432 \u043F\u0443\u0442\u0435\u0439 \u043A \u0437\u0430\u043C\u0435\u0442\u043A\u0430\u043C"
+              }
+            },
+            required: ["paths"]
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "get_folder_notes",
+          description: "\u041F\u0430\u043A\u0435\u0442\u043D\u043E \u043F\u0440\u043E\u0447\u0438\u0442\u0430\u0442\u044C \u0438 \u043F\u0440\u043E\u0430\u043D\u0430\u043B\u0438\u0437\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u0412\u0421\u0415 \u0437\u0430\u043C\u0435\u0442\u043A\u0438 \u0432 \u0443\u043A\u0430\u0437\u0430\u043D\u043D\u043E\u0439 \u043F\u0430\u043F\u043A\u0435. \u041E\u0442\u043B\u0438\u0447\u043D\u044B\u0439 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442 \u0434\u043B\u044F \u043E\u0431\u0437\u043E\u0440\u0430 \u0441\u0442\u0440\u0443\u043A\u0442\u0443\u0440 \u043F\u0430\u043F\u043E\u043A.",
+          parameters: {
+            type: "object",
+            properties: {
+              folderPath: {
+                type: "string",
+                description: "\u041E\u0442\u043D\u043E\u0441\u0438\u0442\u0435\u043B\u044C\u043D\u044B\u0439 \u043F\u0443\u0442\u044C \u043A \u043F\u0430\u043F\u043A\u0435 \u0432 \u0432\u0430\u0443\u043B\u0442\u0435 (\u043D\u0430\u043F\u0440\u0438\u043C\u0435\u0440, 'Folder/SubFolder' \u0438\u043B\u0438 \u043F\u0443\u0441\u0442\u0430\u044F \u0441\u0442\u0440\u043E\u043A\u0430 \u0434\u043B\u044F \u043A\u043E\u0440\u043D\u044F)"
+              },
+              includeContent: {
+                type: "string",
+                description: "\u0412\u043A\u043B\u044E\u0447\u0430\u0442\u044C \u043B\u0438 \u043F\u043E\u043B\u043D\u043E\u0435 \u0441\u043E\u0434\u0435\u0440\u0436\u0438\u043C\u043E\u0435 \u043A\u0430\u0436\u0434\u043E\u0439 \u0437\u0430\u043C\u0435\u0442\u043A\u0438 (\u043F\u043E \u0443\u043C\u043E\u043B\u0447\u0430\u043D\u0438\u044E true)"
+              }
+            },
+            required: ["folderPath"]
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "create_note",
+          description: "\u0421\u043E\u0437\u0434\u0430\u0442\u044C \u043D\u043E\u0432\u0443\u044E \u0437\u0430\u043C\u0435\u0442\u043A\u0443 Markdown \u0432 \u0432\u0430\u0443\u043B\u0442\u0435 \u0441 \u0441\u043E\u0434\u0435\u0440\u0436\u0438\u043C\u044B\u043C.",
+          parameters: {
+            type: "object",
+            properties: {
+              path: {
+                type: "string",
+                description: "\u041F\u0443\u0442\u044C \u043A \u0441\u043E\u0437\u0434\u0430\u0432\u0430\u0435\u043C\u043E\u0439 \u0437\u0430\u043C\u0435\u0442\u043A\u0435 (\u043D\u0430\u043F\u0440\u0438\u043C\u0435\u0440, 'Folder/NewNote.md')"
+              },
+              content: {
+                type: "string",
+                description: "\u0422\u0435\u043A\u0441\u0442 \u0437\u0430\u043C\u0435\u0442\u043A\u0438 \u0432 \u0444\u043E\u0440\u043C\u0430\u0442\u0435 Markdown"
+              }
+            },
+            required: ["path", "content"]
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "edit_note",
+          description: "\u0420\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044E\u0449\u0443\u044E \u0437\u0430\u043C\u0435\u0442\u043A\u0443 (\u0437\u0430\u043C\u0435\u043D\u0438\u0442\u044C \u0432\u0441\u0451 \u0441\u043E\u0434\u0435\u0440\u0436\u0438\u043C\u043E\u0435 \u0438\u043B\u0438 \u043A\u043E\u043D\u043A\u0440\u0435\u0442\u043D\u0443\u044E \u0444\u0440\u0430\u0433\u043C\u0435\u043D\u0442\u043D\u0443\u044E \u0441\u0442\u0440\u043E\u043A\u0443).",
+          parameters: {
+            type: "object",
+            properties: {
+              path: {
+                type: "string",
+                description: "\u041F\u0443\u0442\u044C \u043A \u0437\u0430\u043C\u0435\u0442\u043A\u0435 \u0434\u043B\u044F \u0440\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u044F"
+              },
+              newContent: {
+                type: "string",
+                description: "\u041D\u043E\u0432\u044B\u0439 \u0442\u0435\u043A\u0441\u0442 \u0434\u043B\u044F \u0432\u0441\u0442\u0430\u0432\u043A\u0438"
+              },
+              targetText: {
+                type: "string",
+                description: "\u041D\u0435\u043E\u0431\u044F\u0437\u0430\u0442\u0435\u043B\u044C\u043D\u043E. \u0415\u0441\u043B\u0438 \u0443\u043A\u0430\u0437\u0430\u043D\u043E, \u0431\u0443\u0434\u0435\u0442 \u0437\u0430\u043C\u0435\u043D\u0435\u043D \u0442\u043E\u043B\u044C\u043A\u043E \u044D\u0442\u043E\u0442 \u0442\u043E\u0447\u043D\u044B\u0439 \u0444\u0440\u0430\u0433\u043C\u0435\u043D\u0442 \u0442\u0435\u043A\u0441\u0442\u0430 \u0432 \u0437\u0430\u043C\u0435\u0442\u043A\u0435."
+              }
+            },
+            required: ["path", "newContent"]
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "rename_note",
+          description: "\u041F\u0435\u0440\u0435\u0438\u043C\u0435\u043D\u043E\u0432\u0430\u0442\u044C \u0438\u043B\u0438 \u043F\u0435\u0440\u0435\u043C\u0435\u0441\u0442\u0438\u0442\u044C \u0437\u0430\u043C\u0435\u0442\u043A\u0443 \u0432 \u043D\u043E\u0432\u0443\u044E \u043F\u0430\u043F\u043A\u0443.",
+          parameters: {
+            type: "object",
+            properties: {
+              oldPath: {
+                type: "string",
+                description: "\u0422\u0435\u043A\u0443\u0449\u0438\u0439 \u043F\u0443\u0442\u044C \u043A \u0437\u0430\u043C\u0435\u0442\u043A\u0435"
+              },
+              newPath: {
+                type: "string",
+                description: "\u041D\u043E\u0432\u044B\u0439 \u043F\u0443\u0442\u044C/\u0438\u043C\u044F \u0434\u043B\u044F \u0437\u0430\u043C\u0435\u0442\u043A\u0438"
+              }
+            },
+            required: ["oldPath", "newPath"]
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "delete_note",
+          description: "\u041F\u043E\u043C\u0435\u0441\u0442\u0438\u0442\u044C \u0437\u0430\u043C\u0435\u0442\u043A\u0443 \u0432 \u043A\u043E\u0440\u0437\u0438\u043D\u0443 (trash).",
+          parameters: {
+            type: "object",
+            properties: {
+              path: {
+                type: "string",
+                description: "\u041F\u0443\u0442\u044C \u043A \u0437\u0430\u043C\u0435\u0442\u043A\u0435"
+              }
+            },
+            required: ["path"]
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "list_notes",
+          description: "\u041F\u043E\u043B\u0443\u0447\u0438\u0442\u044C \u0441\u043F\u0438\u0441\u043E\u043A \u0444\u0430\u0439\u043B\u043E\u0432 \u0438 \u043F\u043E\u0434\u043F\u0430\u043F\u043E\u043A \u0432 \u043A\u043E\u043D\u043A\u0440\u0435\u0442\u043D\u043E\u0439 \u043F\u0430\u043F\u043A\u0435 \u0432\u0430\u0443\u043B\u0442\u0430.",
+          parameters: {
+            type: "object",
+            properties: {
+              folderPath: {
+                type: "string",
+                description: "\u041F\u0443\u0442\u044C \u043A \u043F\u0430\u043F\u043A\u0435 (\u043F\u0443\u0441\u0442\u043E\u0435 \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435 \u0434\u043B\u044F \u043A\u043E\u0440\u043D\u044F \u0412\u0430\u0443\u043B\u0442\u0430)"
+              },
+              recursive: {
+                type: "string",
+                description: "\u0420\u0435\u043A\u0443\u0440\u0441\u0438\u0432\u043D\u044B\u0439 \u043E\u0431\u0445\u043E\u0434 \u043F\u043E\u0434\u043F\u0430\u043F\u043E\u043A"
+              }
+            }
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "search_notes",
+          description: "\u041F\u043E\u0438\u0441\u043A \u043F\u043E \u043A\u043B\u044E\u0447\u0435\u0432\u044B\u043C \u0441\u043B\u043E\u0432\u0430\u043C/\u0442\u0435\u043A\u0441\u0442\u0443 \u0432\u043E \u0432\u0441\u0435\u0445 \u0437\u0430\u043C\u0435\u0442\u043A\u0430\u0445 \u0412\u0430\u0443\u043B\u0442\u0430.",
+          parameters: {
+            type: "object",
+            properties: {
+              query: {
+                type: "string",
+                description: "\u041F\u043E\u0438\u0441\u043A\u043E\u0432\u044B\u0439 \u0437\u0430\u043F\u0440\u043E\u0441"
+              },
+              maxResults: {
+                type: "string",
+                description: "\u041C\u0430\u043A\u0441\u0438\u043C\u0430\u043B\u044C\u043D\u043E\u0435 \u043A\u043E\u043B\u0438\u0447\u0435\u0441\u0442\u0432\u043E \u0440\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442\u043E\u0432 (\u043F\u043E \u0443\u043C\u043E\u043B\u0447\u0430\u043D\u0438\u044E 10)"
+              }
+            },
+            required: ["query"]
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "search_by_tag",
+          description: "\u041D\u0430\u0439\u0442\u0438 \u0432\u0441\u0435 \u0437\u0430\u043C\u0435\u0442\u043A\u0438, \u0441\u043E\u0434\u0435\u0440\u0436\u0430\u0449\u0438\u0435 \u043A\u043E\u043D\u043A\u0440\u0435\u0442\u043D\u044B\u0439 \u0442\u0435\u0433.",
+          parameters: {
+            type: "object",
+            properties: {
+              tag: {
+                type: "string",
+                description: "\u0422\u0435\u0433 \u0434\u043B\u044F \u043F\u043E\u0438\u0441\u043A\u0430 (\u043D\u0430\u043F\u0440\u0438\u043C\u0435\u0440, '#project' \u0438\u043B\u0438 'study')"
+              }
+            },
+            required: ["tag"]
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "get_all_tags",
+          description: "\u041F\u043E\u043B\u0443\u0447\u0438\u0442\u044C \u0441\u043F\u0438\u0441\u043E\u043A \u0432\u0441\u0435\u0445 \u0442\u0435\u0433\u043E\u0432 \u0432\u0430\u0443\u043B\u0442\u0430 \u0441 \u043F\u043E\u0434\u0441\u0447\u0435\u0442\u043E\u043C \u0437\u0430\u043C\u0435\u0442\u043E\u043A.",
+          parameters: {
+            type: "object",
+            properties: {}
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "diff_note",
+          description: "\u041F\u0440\u0435\u0434\u043B\u043E\u0436\u0438\u0442\u044C \u0431\u0435\u0437\u043E\u043F\u0430\u0441\u043D\u043E\u0435 \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u0435 \u0437\u0430\u043C\u0435\u0442\u043A\u0438 \u0441 \u0438\u043D\u0442\u0435\u0440\u0430\u043A\u0442\u0438\u0432\u043D\u044B\u043C \u043F\u0440\u043E\u0441\u043C\u043E\u0442\u0440\u043E\u043C Diff \u043F\u0435\u0440\u0435\u0434 \u043F\u0440\u0438\u043C\u0435\u043D\u0435\u043D\u0438\u0435\u043C.",
+          parameters: {
+            type: "object",
+            properties: {
+              path: {
+                type: "string",
+                description: "\u041F\u0443\u0442\u044C \u043A \u0437\u0430\u043C\u0435\u0442\u043A\u0435"
+              },
+              newContent: {
+                type: "string",
+                description: "\u041F\u0440\u0435\u0434\u043B\u0430\u0433\u0430\u0435\u043C\u043E\u0435 \u043D\u043E\u0432\u043E\u0435 \u0441\u043E\u0434\u0435\u0440\u0436\u0438\u043C\u043E\u0435 \u0437\u0430\u043C\u0435\u0442\u043A\u0438"
+              }
+            },
+            required: ["path", "newContent"]
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "execute_obsidian_command",
+          description: "\u0412\u044B\u043F\u043E\u043B\u043D\u0438\u0442\u044C \u043B\u044E\u0431\u0443\u044E \u0432\u043D\u0443\u0442\u0440\u0435\u043D\u043D\u044E\u044E \u043A\u043E\u043C\u0430\u043D\u0434\u0443 Obsidian \u043F\u043E \u0435\u0451 ID (\u043D\u0430\u043F\u0440\u0438\u043C\u0435\u0440, 'theme:toggle-dark' \u0438\u043B\u0438 'canvas:new-file').",
+          parameters: {
+            type: "object",
+            properties: {
+              commandId: {
+                type: "string",
+                description: "ID \u043A\u043E\u043C\u0430\u043D\u0434\u044B Obsidian"
+              }
+            },
+            required: ["commandId"]
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "analyze_vault_graph",
+          description: "\u041F\u0440\u043E\u0430\u043D\u0430\u043B\u0438\u0437\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u0433\u0440\u0430\u0444 \u0441\u0432\u044F\u0437\u0435\u0439 \u0412\u0430\u0443\u043B\u0442\u0430: \u043D\u0430\u0439\u0442\u0438 \u0438\u0437\u043E\u043B\u0438\u0440\u043E\u0432\u0430\u043D\u043D\u044B\u0435 \u0437\u0430\u043C\u0435\u0442\u043A\u0438 (\u0431\u0435\u0437 \u0432\u0445\u043E\u0434\u044F\u0449\u0438\u0445/\u0438\u0441\u0445\u043E\u0434\u044F\u0449\u0438\u0445 \u0441\u0441\u044B\u043B\u043E\u043A), \u043D\u0430\u0438\u043C\u0435\u043D\u0435\u0435 \u0438 \u043D\u0430\u0438\u0431\u043E\u043B\u0435\u0435 \u0441\u0432\u044F\u0437\u0430\u043D\u043D\u044B\u0435 \u0437\u0430\u043C\u0435\u0442\u043A\u0438.",
+          parameters: {
+            type: "object",
+            properties: {
+              folderPath: {
+                type: "string",
+                description: "\u041D\u0435\u043E\u0431\u044F\u0437\u0430\u0442\u0435\u043B\u044C\u043D\u043E. \u041E\u0433\u0440\u0430\u043D\u0438\u0447\u0438\u0442\u044C \u0430\u043D\u0430\u043B\u0438\u0437 \u043A\u043E\u043D\u043A\u0440\u0435\u0442\u043D\u043E\u0439 \u043F\u0430\u043F\u043A\u043E\u0439."
+              }
+            }
+          }
+        }
+      }
+    ];
+    vaultExecutors = {
+      read_note: async (app, rawArgs) => {
+        const args = rawArgs;
+        const file = findFile(app, args.path);
+        if (!file) {
+          return `\u041E\u0448\u0438\u0431\u043A\u0430: \u0417\u0430\u043C\u0435\u0442\u043A\u0430 '${args.path}' \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430 \u0432 \u0412\u0430\u0443\u043B\u0442\u0435.`;
+        }
+        try {
+          const content = await app.vault.read(file);
+          return `--- \u0417\u0430\u043C\u0435\u0442\u043A\u0430: ${file.path} ---
+${content}`;
+        } catch (e) {
+          const err = e;
+          return `\u041E\u0448\u0438\u0431\u043A\u0430 \u0447\u0442\u0435\u043D\u0438\u044F \u0437\u0430\u043C\u0435\u0442\u043A\u0438 '${args.path}': ${err?.message || String(e)}`;
+        }
+      },
+      read_notes_batch: async (app, rawArgs) => {
+        const args = rawArgs;
+        if (!args.paths || args.paths.length === 0) {
+          return "\u041E\u0448\u0438\u0431\u043A\u0430: \u041D\u0435 \u043F\u0435\u0440\u0435\u0434\u0430\u043D\u044B \u043F\u0443\u0442\u0438 \u0434\u043B\u044F \u0447\u0442\u0435\u043D\u0438\u044F.";
+        }
+        const results = [];
+        for (const p of args.paths) {
+          const file = findFile(app, p);
+          if (file) {
+            try {
+              const content = await app.vault.read(file);
+              results.push(`=== \u0424\u0410\u0419\u041B: ${file.path} ===
+${content}`);
+            } catch (e) {
+              const err = e;
+              results.push(`=== \u0424\u0410\u0419\u041B: ${p} === (\u041E\u0448\u0438\u0431\u043A\u0430 \u0447\u0442\u0435\u043D\u0438\u044F: ${err?.message || String(e)})`);
+            }
+          } else {
+            results.push(`=== \u0424\u0410\u0419\u041B: ${p} === (\u0424\u0430\u0439\u043B \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D)`);
+          }
+        }
+        return results.join("\n\n");
+      },
+      get_folder_notes: async (app, rawArgs) => {
+        const args = rawArgs;
+        const folder = findFolder(app, args.folderPath);
+        if (!folder) {
+          return `\u041E\u0448\u0438\u0431\u043A\u0430: \u041F\u0430\u043F\u043A\u0430 '${args.folderPath}' \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430 \u0432 \u0412\u0430\u0443\u043B\u0442\u0435.`;
+        }
+        const includeContent = args.includeContent !== false;
+        const markdownFiles = [];
+        const collectFiles = (f) => {
+          for (const child of f.children) {
+            if (child instanceof import_obsidian11.TFile && child.extension === "md") {
+              markdownFiles.push(child);
+            } else if (child instanceof import_obsidian11.TFolder) {
+              collectFiles(child);
+            }
+          }
+        };
+        collectFiles(folder);
+        if (markdownFiles.length === 0) {
+          return `\u0412 \u043F\u0430\u043F\u043A\u0435 '${folder.path}' \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u043E \u043D\u0438 \u043E\u0434\u043D\u043E\u0439 Markdown-\u0437\u0430\u043C\u0435\u0442\u043A\u0438.`;
+        }
+        const output = [`\u041D\u0430\u0439\u0434\u0435\u043D\u043E \u0437\u0430\u043C\u0435\u0442\u043E\u043A \u0432 \u043F\u0430\u043F\u043A\u0435 '${folder.path}': ${markdownFiles.length}
+`];
+        for (const file of markdownFiles) {
+          if (includeContent) {
+            try {
+              const content = await app.vault.read(file);
+              output.push(`--- \u0417\u0410\u041C\u0415\u0422\u041A\u0410: ${file.path} ---
+${content}
+`);
+            } catch {
+              output.push(`--- \u0417\u0410\u041C\u0415\u0422\u041A\u0410: ${file.path} (\u041E\u0448\u0438\u0431\u043A\u0430 \u0447\u0442\u0435\u043D\u0438\u044F) ---
+`);
+            }
+          } else {
+            output.push(`- \u{1F4C4} ${file.path}`);
+          }
+        }
+        return output.join("\n");
+      },
+      create_note: async (app, rawArgs, plugin) => {
+        const args = rawArgs;
+        let path = getNoteSavePath(plugin.settings, args.path);
+        const normalized = (0, import_obsidian11.normalizePath)(path);
+        if (normalized.includes("..") || normalized.startsWith("/") || normalized.startsWith("\\")) {
+          return "\u041E\u0448\u0438\u0431\u043A\u0430: \u041D\u0435\u0434\u043E\u043F\u0443\u0441\u0442\u0438\u043C\u044B\u0439 \u043F\u0443\u0442\u044C (path traversal \u0437\u0430\u0449\u0438\u0442\u0430)";
+        }
+        let finalPath = normalized;
+        if (!finalPath.endsWith(".md"))
+          finalPath += ".md";
+        const existing = app.vault.getAbstractFileByPath(finalPath);
+        if (existing) {
+          return `\u041E\u0448\u0438\u0431\u043A\u0430: \u0424\u0430\u0439\u043B '${finalPath}' \u0443\u0436\u0435 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u0435\u0442. \u0418\u0441\u043F\u043E\u043B\u044C\u0437\u0443\u0439\u0442\u0435 edit_note.`;
+        }
+        const folderParts = finalPath.split("/");
+        if (folderParts.length > 1) {
+          folderParts.pop();
+          const folderPath = folderParts.join("/");
+          await ensureFolderExists(app, folderPath);
+        }
+        try {
+          const created = await app.vault.create(finalPath, args.content);
+          return `\u0423\u0441\u043F\u0435\u0445: \u0421\u043E\u0437\u0434\u0430\u043D\u0430 \u043D\u043E\u0432\u0430\u044F \u0437\u0430\u043C\u0435\u0442\u043A\u0430 '${created.path}'.`;
+        } catch (e) {
+          const err = e;
+          return `\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u044F \u0437\u0430\u043C\u0435\u0442\u043A\u0438: ${err?.message || String(e)}`;
+        }
+      },
+      edit_note: async (app, rawArgs) => {
+        const args = rawArgs;
+        const file = findFile(app, args.path);
+        if (!file) {
+          return `\u041E\u0448\u0438\u0431\u043A\u0430: \u0424\u0430\u0439\u043B '${args.path}' \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D.`;
+        }
+        try {
+          const currentContent = await app.vault.read(file);
+          let finalContent = args.newContent;
+          if (args.targetText && currentContent.includes(args.targetText)) {
+            finalContent = currentContent.replace(args.targetText, args.newContent);
+          }
+          await app.vault.modify(file, finalContent);
+          return `\u0423\u0441\u043F\u0435\u0448\u043D\u043E \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0430 \u0437\u0430\u043C\u0435\u0442\u043A\u0430 '${file.path}'.`;
+        } catch (e) {
+          const err = e;
+          return `\u041E\u0448\u0438\u0431\u043A\u0430 \u0440\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u044F \u0437\u0430\u043C\u0435\u0442\u043A\u0438 '${args.path}': ${err?.message || String(e)}`;
+        }
+      },
+      rename_note: async (app, rawArgs) => {
+        const args = rawArgs;
+        const file = findFile(app, args.oldPath);
+        if (!file)
+          return `\u041E\u0448\u0438\u0431\u043A\u0430: \u0424\u0430\u0439\u043B '${args.oldPath}' \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D.`;
+        let targetPath = (0, import_obsidian11.normalizePath)(args.newPath);
+        if (!targetPath.endsWith(".md"))
+          targetPath += ".md";
+        try {
+          await app.fileManager.renameFile(file, targetPath);
+          return `\u0423\u0441\u043F\u0435\u0448\u043D\u043E \u043F\u0435\u0440\u0435\u0438\u043C\u0435\u043D\u043E\u0432\u0430\u043D \u0444\u0430\u0439\u043B '${file.path}' -> '${targetPath}'.`;
+        } catch (e) {
+          const err = e;
+          return `\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0435\u0440\u0435\u0438\u043C\u0435\u043D\u043E\u0432\u0430\u043D\u0438\u044F: ${err?.message || String(e)}`;
+        }
+      },
+      delete_note: async (app, rawArgs) => {
+        const args = rawArgs;
+        const file = findFile(app, args.path);
+        if (!file)
+          return `\u041E\u0448\u0438\u0431\u043A\u0430: \u0424\u0430\u0439\u043B '${args.path}' \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D.`;
+        try {
+          await app.fileManager.trashFile(file);
+          return `\u0423\u0441\u043F\u0435\u0448\u043D\u043E \u043F\u043E\u043C\u0435\u0449\u0435\u043D \u0432 \u043A\u043E\u0440\u0437\u0438\u043D\u0443 \u0444\u0430\u0439\u043B '${file.path}'.`;
+        } catch (e) {
+          const err = e;
+          return `\u041E\u0448\u0438\u0431\u043A\u0430 \u0443\u0434\u0430\u043B\u0435\u043D\u0438\u044F: ${err?.message || String(e)}`;
+        }
+      },
+      list_notes: async (app, rawArgs) => {
+        const args = rawArgs;
+        const folder = findFolder(app, args.folderPath || "");
+        if (!folder) {
+          return `\u041E\u0448\u0438\u0431\u043A\u0430: \u041F\u0430\u043F\u043A\u0430 '${args.folderPath}' \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430.`;
+        }
+        const items = [];
+        const collect = (f, prefix = "") => {
+          for (const child of f.children) {
+            const isDir = child instanceof import_obsidian11.TFolder;
+            items.push(`${prefix}- ${isDir ? "\u{1F4C1} \u041F\u0430\u043F\u043A\u0430" : "\u{1F4C4} \u0424\u0430\u0439\u043B"}: ${child.path}`);
+            if (isDir && args.recursive) {
+              collect(child, prefix + "  ");
+            }
+          }
+        };
+        collect(folder);
+        return `\u0421\u043E\u0434\u0435\u0440\u0436\u0438\u043C\u043E\u0435 \u043F\u0430\u043F\u043A\u0438 '${folder.path}':
+` + items.join("\n");
+      },
+      search_notes: async (app, rawArgs) => {
+        const args = rawArgs;
+        const limit = args.maxResults || 10;
+        const queryLower = args.query.toLowerCase();
+        const files = app.vault.getMarkdownFiles();
+        const results = [];
+        for (const file of files) {
+          if (results.length >= limit)
+            break;
+          const nameMatches = file.path.toLowerCase().includes(queryLower);
+          const content = await app.vault.cachedRead(file);
+          const contentMatches = content.toLowerCase().includes(queryLower);
+          if (nameMatches || contentMatches) {
+            let snippet = "";
+            if (contentMatches) {
+              const idx = content.toLowerCase().indexOf(queryLower);
+              const start = Math.max(0, idx - 60);
+              const end = Math.min(content.length, idx + 100);
+              snippet = content.substring(start, end).replace(/\n/g, " ");
+            } else {
+              snippet = content.substring(0, 120).replace(/\n/g, " ");
+            }
+            results.push({ path: file.path, snippet: `...${snippet}...` });
+          }
+        }
+        if (results.length === 0) {
+          return `\u041F\u043E \u0437\u0430\u043F\u0440\u043E\u0441\u0443 '${args.query}' \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u043E \u043D\u0438 \u043E\u0434\u043D\u043E\u0439 \u0437\u0430\u043C\u0435\u0442\u043A\u0438.`;
+        }
+        return `\u0420\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442\u044B \u043F\u043E\u0438\u0441\u043A\u0430 \u043F\u043E '${args.query}':
+` + results.map((r) => `- **${r.path}**: ${r.snippet}`).join("\n");
+      },
+      search_by_tag: async (app, rawArgs) => {
+        const args = rawArgs;
+        const cleanTag = args.tag.startsWith("#") ? args.tag.toLowerCase() : "#" + args.tag.toLowerCase();
+        const files = app.vault.getMarkdownFiles();
+        const matched = [];
+        for (const file of files) {
+          const cache = app.metadataCache.getFileCache(file);
+          const tagsInFile = (cache?.tags || []).map((t2) => t2.tag.toLowerCase());
+          const frontmatterTags = cache?.frontmatter?.tags || [];
+          const normalizedFmTags = Array.isArray(frontmatterTags) ? frontmatterTags.map((t2) => t2.startsWith("#") ? t2.toLowerCase() : "#" + t2.toLowerCase()) : typeof frontmatterTags === "string" ? [frontmatterTags.startsWith("#") ? frontmatterTags.toLowerCase() : "#" + frontmatterTags.toLowerCase()] : [];
+          if (tagsInFile.includes(cleanTag) || normalizedFmTags.includes(cleanTag)) {
+            matched.push(file.path);
+          }
+        }
+        if (matched.length === 0) {
+          return `\u0417\u0430\u043C\u0435\u0442\u043E\u043A \u0441 \u0442\u0435\u0433\u043E\u043C '${cleanTag}' \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u043E.`;
+        }
+        return `\u0417\u0430\u043C\u0435\u0442\u043A\u0438 \u0441 \u0442\u0435\u0433\u043E\u043C '${cleanTag}':
+` + matched.map((p) => `- \u{1F4C4} ${p}`).join("\n");
+      },
+      get_all_tags: async (app) => {
+        const files = app.vault.getMarkdownFiles();
+        const tagMap = {};
+        for (const file of files) {
+          const cache = app.metadataCache.getFileCache(file);
+          const tagsInFile = (cache?.tags || []).map((t2) => t2.tag);
+          for (const t2 of tagsInFile) {
+            tagMap[t2] = (tagMap[t2] || 0) + 1;
+          }
+        }
+        const entries = Object.entries(tagMap).sort((a, b) => b[1] - a[1]);
+        if (entries.length === 0)
+          return "\u0412 \u0412\u0430\u0443\u043B\u0442\u0435 \u043F\u043E\u043A\u0430 \u043D\u0435\u0442 \u0442\u0435\u0433\u043E\u0432.";
+        return "\u0421\u043F\u0438\u0441\u043E\u043A \u0442\u0435\u0433\u043E\u0432 \u0432 \u0412\u0430\u0443\u043B\u0442\u0435:\n" + entries.map(([tag, count]) => `- ${tag} (${count} \u0437\u0430\u043C\u0435\u0442\u043E\u043A)`).join("\n");
+      },
+      diff_note: async (app, rawArgs) => {
+        const args = rawArgs;
+        const file = findFile(app, args.path);
+        let oldContent = "";
+        if (file) {
+          try {
+            oldContent = await app.vault.read(file);
+          } catch {
+          }
+        }
+        return {
+          toolCallId: "diff-" + Date.now(),
+          name: "diff_note",
+          result: `\u0417\u0430\u043F\u0440\u043E\u0448\u0435\u043D\u043E \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043D\u0438\u0435 \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u0439 \u0434\u043B\u044F \u0437\u0430\u043C\u0435\u0442\u043A\u0438 '${args.path}'.`,
+          requiresApproval: true,
+          diffPreview: {
+            filePath: file ? file.path : args.path,
+            oldContent,
+            newContent: args.newContent
+          }
+        };
+      },
+      execute_obsidian_command: async (app, rawArgs, plugin) => {
+        const args = rawArgs;
+        const commandId = args.commandId;
+        if (plugin?.settings?.confirmObsidianCommands) {
+          const allowedCommands = plugin.settings.allowedObsidianCommands || [
+            "editor:toggle-line-wrap",
+            "theme:toggle-dark",
+            "canvas:new-file",
+            "workspace:new-tab",
+            "app:reload"
+          ];
+          if (!allowedCommands.includes(commandId)) {
+            return `\u041E\u0448\u0438\u0431\u043A\u0430: \u041A\u043E\u043C\u0430\u043D\u0434\u0430 '${commandId}' \u043D\u0435 \u0432 whitelist. \u0414\u043E\u0431\u0430\u0432\u044C\u0442\u0435 \u0435\u0435 \u0432 \u043D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0430\u0445 \u0438\u043B\u0438 \u043E\u0431\u0440\u0430\u0442\u0438\u0442\u0435\u0441\u044C \u043A \u0430\u0434\u043C\u0438\u043D\u0438\u0441\u0442\u0440\u0430\u0442\u043E\u0440\u0443.`;
+          }
+        }
+        try {
+          const appCommands = app;
+          const result = appCommands.commands?.executeCommandById(commandId);
+          if (result !== false) {
+            return `\u0423\u0441\u043F\u0435\u0448\u043D\u043E \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u0430 \u043A\u043E\u043C\u0430\u043D\u0434\u0430 Obsidian '${commandId}'.`;
+          } else {
+            return `\u041A\u043E\u043C\u0430\u043D\u0434\u0430 '${args.commandId}' \u043D\u0435 \u0432\u0435\u0440\u043D\u0443\u043B\u0430 \u043F\u043E\u043B\u043E\u0436\u0438\u0442\u0435\u043B\u044C\u043D\u044B\u0439 \u0440\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442 (\u0432\u043E\u0437\u043C\u043E\u0436\u043D\u043E \u043D\u0435 \u0430\u043A\u0442\u0438\u0432\u043D\u0430 \u0432 \u0434\u0430\u043D\u043D\u043E\u043C \u043A\u043E\u043D\u0442\u0435\u043A\u0441\u0442\u0435).`;
+          }
+        } catch (e) {
+          const err = e;
+          return `\u041E\u0448\u0438\u0431\u043A\u0430 \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u0438\u044F \u043A\u043E\u043C\u0430\u043D\u0434\u044B '${args.commandId}': ${err?.message || String(e)}`;
+        }
+      },
+      analyze_vault_graph: async (app, rawArgs) => {
+        const args = rawArgs;
+        const files = app.vault.getMarkdownFiles();
+        let orphanCount = 0;
+        const totalFiles = files.length;
+        const orphanFiles = [];
+        const resolvedLinks = app.metadataCache.resolvedLinks;
+        for (const file of files) {
+          if (args.folderPath && !file.path.startsWith(args.folderPath))
+            continue;
+          const outgoing = Object.keys(resolvedLinks[file.path] || {});
+          let incomingCount = 0;
+          for (const otherFile of files) {
+            if (otherFile.path === file.path)
+              continue;
+            const links = resolvedLinks[otherFile.path] || {};
+            if (links[file.path]) {
+              incomingCount++;
+            }
+          }
+          if (outgoing.length === 0 && incomingCount === 0) {
+            orphanCount++;
+            orphanFiles.push(file.path);
+          }
+        }
+        let report = `=== \u0410\u041D\u0410\u041B\u0418\u0417 \u0413\u0420\u0410\u0424\u0410 \u0421\u0412\u042F\u0417\u0415\u0419 \u0412\u0410\u0423\u041B\u0422\u0410 ===
+`;
+        report += `\u0412\u0441\u0435\u0433\u043E \u043F\u0440\u043E\u0430\u043D\u0430\u043B\u0438\u0437\u0438\u0440\u043E\u0432\u0430\u043D\u043E \u0437\u0430\u043C\u0435\u0442\u043E\u043A: ${totalFiles}
+`;
+        report += `\u0418\u0437\u043E\u043B\u0438\u0440\u043E\u0432\u0430\u043D\u043D\u044B\u0445 \u0437\u0430\u043C\u0435\u0442\u043E\u043A (Orphans, \u0431\u0435\u0437 \u0432\u0445\u043E\u0434\u044F\u0449\u0438\u0445 \u0438 \u0438\u0441\u0445\u043E\u0434\u044F\u0449\u0438\u0445 \u0441\u0441\u044B\u043B\u043E\u043A): ${orphanCount}
+
+`;
+        if (orphanFiles.length > 0) {
+          report += `\u0421\u043F\u0438\u0441\u043E\u043A \u0438\u0437\u043E\u043B\u0438\u0440\u043E\u0432\u0430\u043D\u043D\u044B\u0445 \u0437\u0430\u043C\u0435\u0442\u043E\u043A (\u043F\u0435\u0440\u0432\u044B\u0435 15):
+`;
+          report += orphanFiles.slice(0, 15).map((p) => `- \u{1F4C4} ${p}`).join("\n");
+          if (orphanFiles.length > 15) {
+            report += `
+...\u0438 \u0435\u0449\u0451 ${orphanFiles.length - 15} \u0437\u0430\u043C\u0435\u0442\u043E\u043A.`;
+          }
+        } else {
+          report += `\u0412\u0441\u0435 \u0437\u0430\u043C\u0435\u0442\u043A\u0438 \u0432 \u0412\u0430\u0443\u043B\u0442\u0435 \u0441\u0432\u044F\u0437\u0430\u043D\u044B \u0441\u0441\u044B\u043B\u043A\u0430\u043C\u0438! \u041E\u0442\u043B\u0438\u0447\u043D\u0430\u044F \u0441\u0442\u0440\u0443\u043A\u0442\u0443\u0440\u0430 \u0431\u0430\u0437\u044B \u0437\u043D\u0430\u043D\u0438\u0439.`;
+        }
+        return report;
+      }
+    };
+  }
+});
+
 // main.ts
 var main_exports = {};
 __export(main_exports, {
@@ -24473,19 +25157,16 @@ __export(main_exports, {
   default: () => NeiAiChatPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian15 = require("obsidian");
+var import_obsidian14 = require("obsidian");
 
 // src/views/ChatView.ts
-var import_obsidian10 = require("obsidian");
-var React3 = __toESM(require_react());
+var import_obsidian9 = require("obsidian");
+var React5 = __toESM(require_react());
 var ReactDOM = __toESM(require_client());
 
 // src/components/ChatPanel.tsx
-var React2 = __toESM(require_react());
-var import_obsidian9 = require("obsidian");
-
-// src/services/llm.ts
-var import_obsidian = require("obsidian");
+var React4 = __toESM(require_react());
+var import_obsidian8 = require("obsidian");
 
 // src/services/modelRegistry.ts
 var MODEL_TEMPORAL_REGISTRY = {
@@ -24545,6 +25226,25 @@ function isQueryLikelyStale(query, modelId) {
 }
 
 // src/services/llm.ts
+async function performPostRequest(url, headers, bodyStr) {
+  if (typeof fetch === "function") {
+    const res = await fetch(url, { method: "POST", headers, body: bodyStr });
+    const text = await res.text();
+    let json = {};
+    try {
+      json = JSON.parse(text);
+    } catch {
+    }
+    return { status: res.status, text, json };
+  }
+  try {
+    const obsidian = await import("obsidian");
+    const res = await obsidian.requestUrl({ url, method: "POST", headers, body: bodyStr });
+    return { status: res.status, text: res.text, json: res.json };
+  } catch {
+    throw new Error("HTTP POST request failed");
+  }
+}
 async function sendChatRequest(config, messages, tools) {
   const url = config.endpointUrl.endsWith("/") ? `${config.endpointUrl}chat/completions` : `${config.endpointUrl}/chat/completions`;
   const headers = {
@@ -24585,12 +25285,7 @@ async function sendChatRequest(config, messages, tools) {
     body.tools = tools;
     body.tool_choice = "auto";
   }
-  const response = await (0, import_obsidian.requestUrl)({
-    url,
-    method: "POST",
-    headers,
-    body: JSON.stringify(body)
-  });
+  const response = await performPostRequest(url, headers, JSON.stringify(body));
   if (response.status < 200 || response.status >= 300) {
     const errorText = response.text || "";
     let userFriendlyMsg = `\u041E\u0448\u0438\u0431\u043A\u0430 \u0418\u0418 (${response.status}): ${errorText}`;
@@ -24633,9 +25328,107 @@ async function sendChatRequest(config, messages, tools) {
     usage
   };
 }
+async function sendChatRequestStream(config, messages, tools, onChunk) {
+  const url = config.endpointUrl.endsWith("/") ? `${config.endpointUrl}chat/completions` : `${config.endpointUrl}/chat/completions`;
+  const headers = {
+    "Content-Type": "application/json"
+  };
+  if (config.apiKey && config.provider !== "ollama") {
+    headers["Authorization"] = `Bearer ${config.apiKey}`;
+  }
+  if (config.provider === "openrouter") {
+    headers["HTTP-Referer"] = "https://github.com/GhelgenWhy/NEI";
+    headers["X-Title"] = "NEI AI Assistant Obsidian Plugin";
+  }
+  const cleanMessages = messages.map((m) => {
+    let messageContent = m.content || "";
+    if (m.images && m.images.length > 0) {
+      const parts = [{ type: "text", text: m.content || "" }];
+      for (const img of m.images) {
+        parts.push({
+          type: "image_url",
+          image_url: { url: img }
+        });
+      }
+      messageContent = parts;
+    }
+    return {
+      role: m.role,
+      content: messageContent,
+      ...m.name ? { name: m.name } : {},
+      ...m.tool_call_id ? { tool_call_id: m.tool_call_id } : {},
+      ...m.tool_calls ? { tool_calls: m.tool_calls } : {}
+    };
+  });
+  const body = {
+    model: config.model,
+    messages: cleanMessages,
+    stream: true
+  };
+  if (tools && tools.length > 0) {
+    body.tools = tools;
+    body.tool_choice = "auto";
+  }
+  try {
+    if (typeof fetch === "function") {
+      const res = await fetch(url, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(body)
+      });
+      if (!res.ok) {
+        return sendChatRequest(config, messages, tools);
+      }
+      const reader = res.body?.getReader();
+      if (!reader) {
+        return sendChatRequest(config, messages, tools);
+      }
+      const decoder = new TextDecoder();
+      let accumulatedContent = "";
+      let buffer = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done)
+          break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed || trimmed.startsWith(":"))
+            continue;
+          if (trimmed.startsWith("data: ")) {
+            const dataStr = trimmed.slice(6);
+            if (dataStr === "[DONE]")
+              break;
+            try {
+              const parsed = JSON.parse(dataStr);
+              const delta = parsed.choices?.[0]?.delta?.content;
+              if (delta) {
+                accumulatedContent += delta;
+                if (onChunk)
+                  onChunk(delta);
+              }
+            } catch {
+            }
+          }
+        }
+      }
+      if (accumulatedContent) {
+        return { content: accumulatedContent };
+      }
+    }
+  } catch {
+  }
+  const fallbackRes = await sendChatRequest(config, messages, tools);
+  if (fallbackRes.content && onChunk) {
+    onChunk(fallbackRes.content);
+  }
+  return fallbackRes;
+}
 
 // src/services/memory/memoryStore.ts
-var import_obsidian2 = require("obsidian");
+var import_obsidian = require("obsidian");
 var DEFAULT_MEMORY = {
   userPreferences: {},
   projectContexts: {},
@@ -24659,7 +25452,7 @@ var MemoryStore = class {
     try {
       const memoryPath = this.getMemoryPath(settings);
       const file = app.vault.getAbstractFileByPath(memoryPath);
-      if (file instanceof import_obsidian2.TFile) {
+      if (file instanceof import_obsidian.TFile) {
         const content = await app.vault.read(file);
         const parsed = JSON.parse(content);
         return Object.assign({}, DEFAULT_MEMORY, parsed);
@@ -24680,7 +25473,7 @@ var MemoryStore = class {
         await this.ensureFolder(app, parts.join("/"));
       }
       const file = app.vault.getAbstractFileByPath(memoryPath);
-      if (file instanceof import_obsidian2.TFile) {
+      if (file instanceof import_obsidian.TFile) {
         await app.vault.modify(file, content);
       } else {
         await app.vault.create(memoryPath, content);
@@ -24700,7 +25493,7 @@ var MemoryStore = class {
     try {
       const rulesPath = this.getAgentsRulesPath(settings);
       const file = app.vault.getAbstractFileByPath(rulesPath);
-      if (file instanceof import_obsidian2.TFile) {
+      if (file instanceof import_obsidian.TFile) {
         return await app.vault.read(file);
       }
     } catch {
@@ -24708,7 +25501,7 @@ var MemoryStore = class {
     return "";
   }
   static async ensureFolder(app, path) {
-    const normalized = (0, import_obsidian2.normalizePath)(path);
+    const normalized = (0, import_obsidian.normalizePath)(path);
     const folder = app.vault.getAbstractFileByPath(normalized);
     if (!folder) {
       await app.vault.createFolder(normalized);
@@ -24717,7 +25510,7 @@ var MemoryStore = class {
 };
 
 // src/services/skills/skillsLoader.ts
-var import_obsidian3 = require("obsidian");
+var import_obsidian2 = require("obsidian");
 var SkillsLoader = class {
   static getSkillsRoot(settings) {
     return settings.skillsFolder || ".nei/skills";
@@ -24726,13 +25519,13 @@ var SkillsLoader = class {
     const skills = [];
     const rootPath = this.getSkillsRoot(settings);
     const root = app.vault.getAbstractFileByPath(rootPath);
-    if (!(root instanceof import_obsidian3.TFolder)) {
+    if (!(root instanceof import_obsidian2.TFolder)) {
       return skills;
     }
     for (const child of root.children) {
-      if (child instanceof import_obsidian3.TFolder) {
+      if (child instanceof import_obsidian2.TFolder) {
         const skillFile = app.vault.getAbstractFileByPath(`${child.path}/SKILL.md`);
-        if (skillFile instanceof import_obsidian3.TFile) {
+        if (skillFile instanceof import_obsidian2.TFile) {
           try {
             const content = await app.vault.read(skillFile);
             const parsed = this.parseSkillMarkdown(content, child.name, skillFile.path);
@@ -24771,10 +25564,10 @@ var SkillsLoader = class {
 };
 
 // src/services/context.ts
-var import_obsidian5 = require("obsidian");
+var import_obsidian4 = require("obsidian");
 
 // src/services/rag.ts
-var import_obsidian4 = require("obsidian");
+var import_obsidian3 = require("obsidian");
 var STOP_WORDS = /* @__PURE__ */ new Set([
   // Russian
   "\u0438",
@@ -24937,7 +25730,7 @@ async function resolveContext(app, query, useRag, limitRag = 3) {
   const activeFile = app.workspace.getActiveFile();
   let activeNoteTitle = "";
   let activeNoteContent = "";
-  if (activeFile instanceof import_obsidian5.TFile) {
+  if (activeFile instanceof import_obsidian4.TFile) {
     activeNoteTitle = activeFile.basename;
     try {
       activeNoteContent = await app.vault.cachedRead(activeFile);
@@ -25113,20 +25906,79 @@ var baseEn = {
   ragPrefetchTitle: "Indexed notes via RAG: {count}",
   ragPrefetchDetail: "Relevant notes found: {count}",
   chatsFolderLabel: "Chats folder path:",
+  chatsFolderDesc: "Folder relative to Vault root where conversation histories are saved.",
   memoryFileLabel: "Memory file path:",
+  memoryFileDesc: "JSON file path relative to Vault root for long-term facts & user preferences.",
   skillsFolderLabel: "Agent skills folder path:",
+  skillsFolderDesc: "Folder path relative to Vault root containing agent SKILL.md definition files.",
   maxAgentIterationsLabel: "Max agent iterations:",
+  maxAgentIterationsDesc: "Maximum multi-turn tool execution steps per request before returning final answer.",
   maxPrefetchedNotesLabel: "Max prefetched notes:",
+  maxPrefetchedNotesDesc: "Maximum vault notes automatically loaded and injected into context.",
   prefetchSnippetLengthLabel: "Prefetch snippet length:",
+  prefetchSnippetLengthDesc: "Maximum character length for each prefetched vault note snippet.",
   ragResultLimitLabel: "RAG result limit:",
+  ragResultLimitDesc: "Maximum number of notes retrieved via RAG search.",
   ragSnippetLengthLabel: "RAG snippet length:",
+  ragSnippetLengthDesc: "Maximum snippet length per note retrieved via RAG search.",
   confirmObsidianCommandsLabel: "Require confirmation for Obsidian commands:",
-  enableTemporalAwarenessLabel: "Enable temporal awareness (cutoff dates, freshness directives):",
-  enableAdaptivePrefetchLabel: "Adaptive prefetch (RAG vault notes only when vault is needed):",
-  enableFreshnessSuggestionsLabel: "Suggest web search for time-sensitive queries in Quick mode:",
-  enableSmartToolFilteringLabel: "Smart tool filtering (pass only relevant category tools):",
+  confirmObsidianCommandsDesc: "Prompt user before executing potentially destructive Obsidian commands.",
+  enableTemporalAwarenessLabel: "Enable temporal awareness:",
+  enableTemporalAwarenessDesc: "Inject knowledge cutoff dates and freshness warnings into model system prompt.",
+  enableAdaptivePrefetchLabel: "Adaptive prefetch:",
+  enableAdaptivePrefetchDesc: "Only search and prefetch vault notes when vault intent is detected.",
+  enableFreshnessSuggestionsLabel: "Suggest web search in Quick mode:",
+  enableFreshnessSuggestionsDesc: "Display proactive banner when a time-sensitive query is asked in Quick mode.",
+  enableSmartToolFilteringLabel: "Smart tool filtering:",
+  enableSmartToolFilteringDesc: "Pass only relevant tool categories (web, vault) to reduce prompt tokens.",
   intentStaleQueryWeightLabel: "Stale query routing weight:",
-  intentFreshnessWeightLabel: "Freshness marker routing weight:"
+  intentStaleQueryWeightDesc: "Weight added towards Agent mode when a query is detected as time-sensitive.",
+  intentFreshnessWeightLabel: "Freshness marker routing weight:",
+  intentFreshnessWeightDesc: "Weight added towards Agent mode when freshness keywords ('today', 'latest') are present.",
+  intentRoutingThresholdLabel: "Routing threshold:",
+  intentRoutingThresholdDesc: "Score threshold above which Quick mode switches automatically to Agent mode.",
+  intentVaultKeywordWeightLabel: "Vault keyword weight:",
+  intentVaultKeywordWeightDesc: "Weight applied when vault terms ('note', 'folder') are detected.",
+  intentCreationWeightLabel: "Creation pattern weight:",
+  intentCreationWeightDesc: "Weight applied for creation patterns ('create note', 'save').",
+  intentDeletionWeightLabel: "Deletion pattern weight:",
+  intentDeletionWeightDesc: "Weight applied for deletion patterns ('delete file', 'remove').",
+  intentAnalysisWeightLabel: "Analysis pattern weight:",
+  intentAnalysisWeightDesc: "Weight applied for analysis patterns ('analyze', 'compare notes').",
+  intentSearchWeightLabel: "Search pattern weight:",
+  intentSearchWeightDesc: "Weight applied for search patterns ('find in vault', 'search').",
+  intentModifyWeightLabel: "Modification pattern weight:",
+  intentModifyWeightDesc: "Weight applied for edit/rename patterns.",
+  intentQuestionWeightLabel: "Question pattern weight:",
+  intentQuestionWeightDesc: "Weight (usually negative) favoring Quick mode for general Q&A.",
+  intentCodeWeightLabel: "Code pattern weight:",
+  intentCodeWeightDesc: "Weight (usually negative) favoring Quick mode for simple coding questions.",
+  intentLengthWeightLabel: "Query length weight:",
+  intentLengthWeightDesc: "Weight multiplier applied per character of user query length.",
+  intentHistoryWeightLabel: "History turn weight:",
+  intentHistoryWeightDesc: "Weight applied when recent turns in chat history used agent tools.",
+  intentAttachmentWeightLabel: "Attachment weight:",
+  intentAttachmentWeightDesc: "Weight added to score when images or files are attached.",
+  enableSemanticRagLabel: "Enable hybrid semantic RAG:",
+  enableSemanticRagDesc: "Combine lexical (TF-IDF) and vector embedding search for notes.",
+  embeddingProviderLabel: "Embedding provider:",
+  embeddingModelLabel: "Embedding model:",
+  exportSettings: "Export Settings",
+  importSettings: "Import Settings",
+  settingsExported: "Settings exported to JSON file!",
+  settingsImported: "Settings imported successfully!",
+  welcomeStep1Title: "Welcome to NEI AI Chat",
+  welcomeStep1Desc: "Your intelligent agentic co-pilot for Obsidian vault analysis, note creation, and knowledge retrieval.",
+  welcomeStep2Title: "Zero Hardcoding & Smart Routing",
+  welcomeStep2Desc: "Automatically detects whether to answer directly (Quick Mode) or use vault tools and web search (Agent Mode).",
+  welcomeStep3Title: "Temporal Awareness & Hybrid RAG",
+  welcomeStep3Desc: "Stays aware of model knowledge cutoffs, performs live web searches, and indexes vault notes via hybrid search.",
+  welcomeStep4Title: "Custom Skills & MCP Tools",
+  welcomeStep4Desc: "Extend AI capabilities with custom markdown skills and Model Context Protocol (MCP) external tools.",
+  startTour: "Start Guided Tour",
+  skip: "Skip",
+  next: "Next",
+  back: "Back"
 };
 var baseRu = {
   ...baseEn,
@@ -25252,14 +26104,79 @@ var baseRu = {
   ragPrefetchTitle: "\u0418\u043D\u0434\u0435\u043A\u0441\u0438\u0440\u043E\u0432\u0430\u043D\u043E \u0437\u0430\u043C\u0435\u0442\u043E\u043A \u0447\u0435\u0440\u0435\u0437 RAG: {count}",
   ragPrefetchDetail: "\u041D\u0430\u0439\u0434\u0435\u043D\u043E \u0440\u0435\u043B\u0435\u0432\u0430\u043D\u0442\u043D\u044B\u0445: {count}",
   chatsFolderLabel: "\u041F\u0430\u043F\u043A\u0430 \u0445\u0440\u0430\u043D\u0435\u043D\u0438\u044F \u0447\u0430\u0442\u043E\u0432:",
+  chatsFolderDesc: "\u041F\u0430\u043F\u043A\u0430 \u043E\u0442\u043D\u043E\u0441\u0438\u0442\u0435\u043B\u044C\u043D\u043E \u043A\u043E\u0440\u043D\u044F Vault, \u0432 \u043A\u043E\u0442\u043E\u0440\u043E\u0439 \u0441\u043E\u0445\u0440\u0430\u043D\u044F\u0435\u0442\u0441\u044F \u0438\u0441\u0442\u043E\u0440\u0438\u044F \u0434\u0438\u0430\u043B\u043E\u0433\u043E\u0432.",
   memoryFileLabel: "\u0424\u0430\u0439\u043B \u0434\u043E\u043B\u0433\u043E\u0441\u0440\u043E\u0447\u043D\u043E\u0439 \u043F\u0430\u043C\u044F\u0442\u0438:",
+  memoryFileDesc: "\u041F\u0443\u0442\u044C \u043A JSON \u0444\u0430\u0439\u043B\u0443 \u0434\u043E\u043B\u0433\u043E\u0441\u0440\u043E\u0447\u043D\u043E\u0439 \u043F\u0430\u043C\u044F\u0442\u0438 \u0441 \u0444\u0430\u043A\u0442\u0430\u043C\u0438 \u0438 \u043F\u0440\u0435\u0434\u043F\u043E\u0447\u0442\u0435\u043D\u0438\u044F\u043C\u0438.",
   skillsFolderLabel: "\u041F\u0430\u043F\u043A\u0430 \u0441\u043A\u0438\u043B\u043B\u043E\u0432 \u0430\u0433\u0435\u043D\u0442\u0430:",
+  skillsFolderDesc: "\u041F\u0430\u043F\u043A\u0430 \u0441 \u0444\u0430\u0439\u043B\u0430\u043C\u0438 SKILL.md, \u043E\u043F\u0440\u0435\u0434\u0435\u043B\u044F\u044E\u0449\u0438\u043C\u0438 \u043D\u0430\u0432\u044B\u043A\u0438 \u0418\u0418-\u0430\u0433\u0435\u043D\u0442\u0430.",
   maxAgentIterationsLabel: "\u041C\u0430\u043A\u0441. \u0438\u0442\u0435\u0440\u0430\u0446\u0438\u0439 \u0430\u0433\u0435\u043D\u0442\u0430:",
+  maxAgentIterationsDesc: "\u041C\u0430\u043A\u0441\u0438\u043C\u0430\u043B\u044C\u043D\u043E\u0435 \u043A\u043E\u043B\u0438\u0447\u0435\u0441\u0442\u0432\u043E \u0448\u0430\u0433\u043E\u0432 \u0432\u044B\u0437\u043E\u0432\u0430 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u043E\u0432 \u0437\u0430 \u043E\u0434\u0438\u043D \u0437\u0430\u043F\u0440\u043E\u0441.",
   maxPrefetchedNotesLabel: "\u041C\u0430\u043A\u0441. \u043F\u0440\u0435\u0444\u0435\u0442\u0447 \u0437\u0430\u043C\u0435\u0442\u043E\u043A:",
+  maxPrefetchedNotesDesc: "\u041C\u0430\u043A\u0441\u0438\u043C\u0430\u043B\u044C\u043D\u043E\u0435 \u0447\u0438\u0441\u043B\u043E \u0437\u0430\u043C\u0435\u0442\u043E\u043A, \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438 \u0437\u0430\u0433\u0440\u0443\u0436\u0430\u0435\u043C\u044B\u0445 \u0432 \u043A\u043E\u043D\u0442\u0435\u043A\u0441\u0442.",
   prefetchSnippetLengthLabel: "\u0414\u043B\u0438\u043D\u0430 \u0441\u043D\u0438\u043F\u043F\u0435\u0442\u0430 \u043F\u0440\u0435\u0444\u0435\u0442\u0447\u0430:",
+  prefetchSnippetLengthDesc: "\u041C\u0430\u043A\u0441\u0438\u043C\u0430\u043B\u044C\u043D\u0430\u044F \u0434\u043B\u0438\u043D\u0430 \u0442\u0435\u043A\u0441\u0442\u0430 \u043A\u0430\u0436\u0434\u043E\u0439 \u0437\u0430\u0433\u0440\u0443\u0436\u0430\u0435\u043C\u043E\u0439 \u0437\u0430\u043C\u0435\u0442\u043A\u0438.",
   ragResultLimitLabel: "\u041B\u0438\u043C\u0438\u0442 RAG \u0437\u0430\u043C\u0435\u0442\u043E\u043A:",
+  ragResultLimitDesc: "\u041C\u0430\u043A\u0441\u0438\u043C\u0430\u043B\u044C\u043D\u043E\u0435 \u043A\u043E\u043B\u0438\u0447\u0435\u0441\u0442\u0432\u043E \u0437\u0430\u043C\u0435\u0442\u043E\u043A, \u043F\u043E\u043B\u0443\u0447\u0430\u0435\u043C\u044B\u0445 \u0447\u0435\u0440\u0435\u0437 RAG \u043F\u043E\u0438\u0441\u043A.",
   ragSnippetLengthLabel: "\u0414\u043B\u0438\u043D\u0430 \u0441\u043D\u0438\u043F\u043F\u0435\u0442\u0430 RAG:",
-  confirmObsidianCommandsLabel: "\u0417\u0430\u043F\u0440\u0430\u0448\u0438\u0432\u0430\u0442\u044C \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043D\u0438\u0435 \u043A\u043E\u043C\u0430\u043D\u0434 Obsidian:"
+  ragSnippetLengthDesc: "\u041C\u0430\u043A\u0441\u0438\u043C\u0430\u043B\u044C\u043D\u0430\u044F \u0434\u043B\u0438\u043D\u0430 \u0441\u043D\u0438\u043F\u043F\u0435\u0442\u0430 \u0434\u043B\u044F RAG \u0437\u0430\u043C\u0435\u0442\u043E\u043A.",
+  confirmObsidianCommandsLabel: "\u0417\u0430\u043F\u0440\u0430\u0448\u0438\u0432\u0430\u0442\u044C \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043D\u0438\u0435 \u043A\u043E\u043C\u0430\u043D\u0434 Obsidian:",
+  confirmObsidianCommandsDesc: "\u0421\u043F\u0440\u0430\u0448\u0438\u0432\u0430\u0442\u044C \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043D\u0438\u0435 \u043F\u0435\u0440\u0435\u0434 \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u0438\u0435\u043C \u043A\u043E\u043C\u0430\u043D\u0434 Obsidian.",
+  enableTemporalAwarenessLabel: "\u0412\u043A\u043B\u044E\u0447\u0438\u0442\u044C \u0432\u0440\u0435\u043C\u0435\u043D\u043D\u0443\u044E \u043E\u0441\u0432\u0435\u0434\u043E\u043C\u043B\u0435\u043D\u043D\u043E\u0441\u0442\u044C:",
+  enableTemporalAwarenessDesc: "\u041F\u0435\u0440\u0435\u0434\u0430\u0432\u0430\u0442\u044C \u043C\u043E\u0434\u0435\u043B\u0438 \u0434\u0430\u0442\u044B cutoff \u0438 \u043F\u0440\u0435\u0434\u0443\u043F\u0440\u0435\u0436\u0434\u0435\u043D\u0438\u044F \u043E \u0441\u0432\u0435\u0436\u0435\u0441\u0442\u0438 \u0434\u0430\u043D\u043D\u044B\u0445.",
+  enableAdaptivePrefetchLabel: "\u0410\u0434\u0430\u043F\u0442\u0438\u0432\u043D\u044B\u0439 \u043F\u0440\u0435\u0444\u0435\u0442\u0447:",
+  enableAdaptivePrefetchDesc: "\u0417\u0430\u0433\u0440\u0443\u0436\u0430\u0442\u044C \u0437\u0430\u043C\u0435\u0442\u043A\u0438 \u0442\u043E\u043B\u044C\u043A\u043E \u043A\u043E\u0433\u0434\u0430 \u043E\u0431\u043D\u0430\u0440\u0443\u0436\u0435\u043D \u0437\u0430\u043F\u0440\u043E\u0441 \u043A \u0445\u0440\u0430\u043D\u0438\u043B\u0438\u0449\u0443.",
+  enableFreshnessSuggestionsLabel: "\u041F\u0440\u0435\u0434\u043B\u0430\u0433\u0430\u0442\u044C \u0432\u0435\u0431-\u043F\u043E\u0438\u0441\u043A \u0432 \u0411\u044B\u0441\u0442\u0440\u043E\u043C \u0440\u0435\u0436\u0438\u043C\u0435:",
+  enableFreshnessSuggestionsDesc: "\u041F\u043E\u043A\u0430\u0437\u044B\u0432\u0430\u0442\u044C \u0431\u0430\u043D\u043D\u0435\u0440 \u0441 \u043F\u0440\u0435\u0434\u043B\u043E\u0436\u0435\u043D\u0438\u0435\u043C \u0432\u043A\u043B\u044E\u0447\u0438\u0442\u044C \u0432\u0435\u0431-\u043F\u043E\u0438\u0441\u043A \u0434\u043B\u044F \u0430\u043A\u0442\u0443\u0430\u043B\u044C\u043D\u044B\u0445 \u0434\u0430\u043D\u043D\u044B\u0445.",
+  enableSmartToolFilteringLabel: "\u0423\u043C\u043D\u0430\u044F \u0444\u0438\u043B\u044C\u0442\u0440\u0430\u0446\u0438\u044F \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u043E\u0432:",
+  enableSmartToolFilteringDesc: "\u041F\u0435\u0440\u0435\u0434\u0430\u0432\u0430\u0442\u044C \u0442\u043E\u043B\u044C\u043A\u043E \u043D\u0443\u0436\u043D\u044B\u0435 \u043A\u0430\u0442\u0435\u0433\u043E\u0440\u0438\u0438 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u043E\u0432 \u0434\u043B\u044F \u044D\u043A\u043E\u043D\u043E\u043C\u0438\u0438 \u0442\u043E\u043A\u0435\u043D\u043E\u0432.",
+  intentStaleQueryWeightLabel: "\u0412\u0435\u0441 \u0443\u0441\u0442\u0430\u0440\u0435\u0432\u0448\u0435\u0433\u043E \u0437\u0430\u043F\u0440\u043E\u0441\u0430:",
+  intentStaleQueryWeightDesc: "\u0414\u043E\u043F\u043E\u043B\u043D\u0438\u0442\u0435\u043B\u044C\u043D\u044B\u0439 \u0432\u0435\u0441 \u043A Agent \u0440\u0435\u0436\u0438\u043C\u0443, \u0435\u0441\u043B\u0438 \u0437\u0430\u043F\u0440\u043E\u0441 \u0442\u0440\u0435\u0431\u0443\u0435\u0442 \u0441\u0432\u0435\u0436\u0438\u0445 \u0434\u0430\u043D\u043D\u044B\u0445.",
+  intentFreshnessWeightLabel: "\u0412\u0435\u0441 \u043C\u0430\u0440\u043A\u0435\u0440\u043E\u0432 \u0441\u0432\u0435\u0436\u0435\u0441\u0442\u0438:",
+  intentFreshnessWeightDesc: "\u0412\u0435\u0441 \u043F\u0440\u0438 \u043D\u0430\u043B\u0438\u0447\u0438\u0438 \u0441\u043B\u043E\u0432 '\u0441\u0435\u0433\u043E\u0434\u043D\u044F', '\u0441\u0435\u0439\u0447\u0430\u0441', '\u043A\u0443\u0440\u0441'.",
+  intentRoutingThresholdLabel: "\u041F\u043E\u0440\u043E\u0433 \u0440\u043E\u0443\u0442\u0438\u043D\u0433\u0430:",
+  intentRoutingThresholdDesc: "\u041F\u043E\u0440\u043E\u0433 \u0431\u0430\u043B\u043B\u043E\u0432, \u043F\u0440\u0438 \u043F\u0440\u0435\u0432\u044B\u0448\u0435\u043D\u0438\u0438 \u043A\u043E\u0442\u043E\u0440\u043E\u0433\u043E \u0432\u043A\u043B\u044E\u0447\u0430\u0435\u0442\u0441\u044F Agent \u0440\u0435\u0436\u0438\u043C.",
+  intentVaultKeywordWeightLabel: "\u0412\u0435\u0441 \u043A\u043B\u044E\u0447\u0435\u0432\u044B\u0445 \u0441\u043B\u043E\u0432 Vault:",
+  intentVaultKeywordWeightDesc: "\u0412\u0435\u0441 \u043F\u0440\u0438 \u043E\u0431\u043D\u0430\u0440\u0443\u0436\u0435\u043D\u0438\u0438 \u0441\u043B\u043E\u0432 '\u0437\u0430\u043C\u0435\u0442\u043A\u0430', '\u043F\u0430\u043F\u043A\u0430', '\u0445\u0440\u0430\u043D\u0438\u043B\u0438\u0449\u0435'.",
+  intentCreationWeightLabel: "\u0412\u0435\u0441 \u0448\u0430\u0431\u043B\u043E\u043D\u043E\u0432 \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u044F:",
+  intentCreationWeightDesc: "\u0412\u0435\u0441 \u043F\u0440\u0438 \u043F\u0440\u043E\u0441\u044C\u0431\u0430\u0445 \u0441\u043E\u0437\u0434\u0430\u0442\u044C \u0437\u0430\u043C\u0435\u0442\u043A\u0443 \u0438\u043B\u0438 \u0441\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C.",
+  intentDeletionWeightLabel: "\u0412\u0435\u0441 \u0448\u0430\u0431\u043B\u043E\u043D\u043E\u0432 \u0443\u0434\u0430\u043B\u0435\u043D\u0438\u044F:",
+  intentDeletionWeightDesc: "\u0412\u0435\u0441 \u043F\u0440\u0438 \u0437\u0430\u043F\u0440\u043E\u0441\u0430\u0445 \u043D\u0430 \u0443\u0434\u0430\u043B\u0435\u043D\u0438\u0435 \u0444\u0430\u0439\u043B\u043E\u0432.",
+  intentAnalysisWeightLabel: "\u0412\u0435\u0441 \u0448\u0430\u0431\u043B\u043E\u043D\u043E\u0432 \u0430\u043D\u0430\u043B\u0438\u0437\u0430:",
+  intentAnalysisWeightDesc: "\u0412\u0435\u0441 \u043F\u0440\u0438 \u043F\u0440\u043E\u0441\u044C\u0431\u0430\u0445 \u043F\u0440\u043E\u0430\u043D\u0430\u043B\u0438\u0437\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u0438\u043B\u0438 \u0441\u0440\u0430\u0432\u043D\u0438\u0442\u044C \u0437\u0430\u043C\u0435\u0442\u043A\u0438.",
+  intentSearchWeightLabel: "\u0412\u0435\u0441 \u0448\u0430\u0431\u043B\u043E\u043D\u043E\u0432 \u043F\u043E\u0438\u0441\u043A\u0430:",
+  intentSearchWeightDesc: "\u0412\u0435\u0441 \u043F\u0440\u0438 \u043F\u043E\u0438\u0441\u043A\u0435 \u043F\u043E \u0437\u0430\u043C\u0435\u0442\u043A\u0430\u043C.",
+  intentModifyWeightLabel: "\u0412\u0435\u0441 \u0448\u0430\u0431\u043B\u043E\u043D\u043E\u0432 \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u044F:",
+  intentModifyWeightDesc: "\u0412\u0435\u0441 \u043F\u0440\u0438 \u043F\u0435\u0440\u0435\u0438\u043C\u0435\u043D\u043E\u0432\u0430\u043D\u0438\u0438 \u0438\u043B\u0438 \u043F\u0440\u0430\u0432\u043A\u0435 \u0444\u0430\u0439\u043B\u043E\u0432.",
+  intentQuestionWeightLabel: "\u0412\u0435\u0441 \u043F\u0440\u043E\u0441\u0442\u044B\u0445 \u0432\u043E\u043F\u0440\u043E\u0441\u043E\u0432:",
+  intentQuestionWeightDesc: "\u041E\u0442\u0440\u0438\u0446\u0430\u0442\u0435\u043B\u044C\u043D\u044B\u0439 \u0432\u0435\u0441, \u0441\u043A\u043B\u043E\u043D\u044F\u044E\u0449\u0438\u0439 \u043A \u0411\u044B\u0441\u0442\u0440\u043E\u043C\u0443 \u0440\u0435\u0436\u0438\u043C\u0443 \u0434\u043B\u044F \u043E\u0431\u044B\u0447\u043D\u044B\u0445 \u0432\u043E\u043F\u0440\u043E\u0441\u043E\u0432.",
+  intentCodeWeightLabel: "\u0412\u0435\u0441 \u0432\u043E\u043F\u0440\u043E\u0441\u043E\u0432 \u043F\u043E \u043A\u043E\u0434\u0443:",
+  intentCodeWeightDesc: "\u041E\u0442\u0440\u0438\u0446\u0430\u0442\u0435\u043B\u044C\u043D\u044B\u0439 \u0432\u0435\u0441 \u0434\u043B\u044F \u043F\u0440\u043E\u0441\u0442\u044B\u0445 \u0437\u0430\u043F\u0440\u043E\u0441\u043E\u0432 \u043A\u043E\u0434\u0430.",
+  intentLengthWeightLabel: "\u0412\u0435\u0441 \u0434\u043B\u0438\u043D\u044B \u0437\u0430\u043F\u0440\u043E\u0441\u0430:",
+  intentLengthWeightDesc: "\u041C\u043D\u043E\u0436\u0438\u0442\u0435\u043B\u044C \u0432\u0435\u0441\u0430 \u0437\u0430 \u043A\u0430\u0436\u0434\u044B\u0439 \u0441\u0438\u043C\u0432\u043E\u043B \u0434\u043B\u0438\u043D\u044B \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u044F.",
+  intentHistoryWeightLabel: "\u0412\u0435\u0441 \u0438\u0441\u0442\u043E\u0440\u0438\u0438 \u0434\u0438\u0430\u043B\u043E\u0433\u0430:",
+  intentHistoryWeightDesc: "\u0412\u0435\u0441 \u043F\u0440\u0438 \u043D\u0430\u043B\u0438\u0447\u0438\u0438 \u0430\u0433\u0435\u043D\u0442\u043D\u044B\u0445 \u0448\u0430\u0433\u043E\u0432 \u0432 \u043D\u0435\u0434\u0430\u0432\u043D\u0435\u0439 \u0438\u0441\u0442\u043E\u0440\u0438\u0438.",
+  intentAttachmentWeightLabel: "\u0412\u0435\u0441 \u043F\u0440\u0438\u043A\u0440\u0435\u043F\u043B\u0435\u043D\u043D\u044B\u0445 \u0444\u0430\u0439\u043B\u043E\u0432:",
+  intentAttachmentWeightDesc: "\u041F\u0440\u0438\u0431\u0430\u0432\u043B\u044F\u0435\u043C\u044B\u0439 \u0432\u0435\u0441 \u043F\u0440\u0438 \u043D\u0430\u043B\u0438\u0447\u0438\u0438 \u0438\u0437\u043E\u0431\u0440\u0430\u0436\u0435\u043D\u0438\u0439 \u0438\u043B\u0438 \u0434\u043E\u043A\u0443\u043C\u0435\u043D\u0442\u043E\u0432.",
+  enableSemanticRagLabel: "\u0412\u043A\u043B\u044E\u0447\u0438\u0442\u044C \u0433\u0438\u0431\u0440\u0438\u0434\u043D\u044B\u0439 \u0441\u0435\u043C\u0430\u043D\u0442\u0438\u0447\u0435\u0441\u043A\u0438\u0439 RAG:",
+  enableSemanticRagDesc: "\u041A\u043E\u043C\u0431\u0438\u043D\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u043B\u0435\u043A\u0441\u0438\u0447\u0435\u0441\u043A\u0438\u0439 (TF-IDF) \u0438 \u0432\u0435\u043A\u0442\u043E\u0440\u043D\u044B\u0439 \u044D\u043C\u0431\u0435\u0434\u0434\u0438\u043D\u0433 \u043F\u043E\u0438\u0441\u043A \u043F\u043E \u0437\u0430\u043C\u0435\u0442\u043A\u0430\u043C.",
+  embeddingProviderLabel: "\u041F\u0440\u043E\u0432\u0430\u0439\u0434\u0435\u0440 \u044D\u043C\u0431\u0435\u0434\u0434\u0438\u043D\u0433\u043E\u0432:",
+  embeddingModelLabel: "\u041C\u043E\u0434\u0435\u043B\u044C \u044D\u043C\u0431\u0435\u0434\u0434\u0438\u043D\u0433\u043E\u0432:",
+  exportSettings: "\u042D\u043A\u0441\u043F\u043E\u0440\u0442 \u043D\u0430\u0441\u0442\u0440\u043E\u0435\u043A",
+  importSettings: "\u0418\u043C\u043F\u043E\u0440\u0442 \u043D\u0430\u0441\u0442\u0440\u043E\u0435\u043A",
+  settingsExported: "\u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438 \u0443\u0441\u043F\u0435\u0448\u043D\u043E \u044D\u043A\u0441\u043F\u043E\u0440\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u044B \u0432 JSON \u0444\u0430\u0439\u043B!",
+  settingsImported: "\u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438 \u0443\u0441\u043F\u0435\u0448\u043D\u043E \u0438\u043C\u043F\u043E\u0440\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u044B!",
+  welcomeStep1Title: "\u0414\u043E\u0431\u0440\u043E \u043F\u043E\u0436\u0430\u043B\u043E\u0432\u0430\u0442\u044C \u0432 NEI AI Chat",
+  welcomeStep1Desc: "\u0412\u0430\u0448 \u0438\u043D\u0442\u0435\u043B\u043B\u0435\u043A\u0442\u0443\u0430\u043B\u044C\u043D\u044B\u0439 \u0418\u0418-\u043A\u043E\u043F\u0438\u043B\u043E\u0442 \u0434\u043B\u044F \u0430\u043D\u0430\u043B\u0438\u0437\u0430 Vault, \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u044F \u0437\u0430\u043C\u0435\u0442\u043E\u043A \u0438 \u0438\u0437\u0432\u043B\u0435\u0447\u0435\u043D\u0438\u044F \u0437\u043D\u0430\u043D\u0438\u0439.",
+  welcomeStep2Title: "\u0423\u043C\u043D\u044B\u0439 \u0440\u043E\u0443\u0442\u0438\u043D\u0433 \u0431\u0435\u0437 \u0445\u0430\u0440\u0434\u043A\u043E\u0434\u0430",
+  welcomeStep2Desc: "\u0410\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438 \u043E\u043F\u0440\u0435\u0434\u0435\u043B\u044F\u0435\u0442, \u043E\u0442\u0432\u0435\u0442\u0438\u0442\u044C \u043D\u0430\u043F\u0440\u044F\u043C\u0443\u044E (\u0411\u044B\u0441\u0442\u0440\u044B\u0439) \u0438\u043B\u0438 \u043F\u0440\u0438\u043C\u0435\u043D\u0438\u0442\u044C \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u044B \u0432\u0430\u0443\u043B\u0442\u0430 \u0438 \u0432\u0435\u0431-\u043F\u043E\u0438\u0441\u043A (\u0410\u0433\u0435\u043D\u0442).",
+  welcomeStep3Title: "\u0412\u0440\u0435\u043C\u0435\u043D\u043D\u0430\u044F \u043E\u0441\u0432\u0435\u0434\u043E\u043C\u043B\u0435\u043D\u043D\u043E\u0441\u0442\u044C \u0438 \u0433\u0438\u0431\u0440\u0438\u0434\u043D\u044B\u0439 RAG",
+  welcomeStep3Desc: "\u0423\u0447\u0438\u0442\u044B\u0432\u0430\u0435\u0442 \u0434\u0430\u0442\u044B cutoff \u043C\u043E\u0434\u0435\u043B\u0435\u0439, \u0438\u0449\u0435\u0442 \u0441\u0432\u0435\u0436\u0438\u0435 \u0434\u0430\u043D\u043D\u044B\u0435 \u0432 \u0438\u043D\u0442\u0435\u0440\u043D\u0435\u0442\u0435 \u0438 \u0438\u043D\u0434\u0435\u043A\u0441\u0438\u0440\u0443\u0435\u0442 \u0437\u0430\u043C\u0435\u0442\u043A\u0438.",
+  welcomeStep4Title: "\u041F\u0435\u0440\u0441\u043E\u043D\u0430\u043B\u044C\u043D\u044B\u0435 \u0441\u043A\u0438\u043B\u043B\u044B \u0438 MCP \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u044B",
+  welcomeStep4Desc: "\u0420\u0430\u0441\u0448\u0438\u0440\u044F\u0439\u0442\u0435 \u0432\u043E\u0437\u043C\u043E\u0436\u043D\u043E\u0441\u0442\u0438 \u0430\u0433\u0435\u043D\u0442\u0430 \u0441\u043E\u0431\u0441\u0442\u0432\u0435\u043D\u043D\u044B\u043C\u0438 markdown \u0441\u043A\u0438\u043B\u043B\u0430\u043C\u0438 \u0438 \u0432\u043D\u0435\u0448\u043D\u0438\u043C\u0438 MCP \u0441\u0435\u0440\u0432\u0435\u0440\u0430\u043C\u0438.",
+  startTour: "\u041D\u0430\u0447\u0430\u0442\u044C \u0442\u0443\u0440",
+  skip: "\u041F\u0440\u043E\u043F\u0443\u0441\u0442\u0438\u0442\u044C",
+  next: "\u0414\u0430\u043B\u0435\u0435",
+  back: "\u041D\u0430\u0437\u0430\u0434"
 };
 var translations = {
   ru: baseRu,
@@ -25305,6 +26222,180 @@ function t(key, lang, params) {
     }
   }
   return str;
+}
+
+// src/services/rag/embeddings.ts
+async function httpPostJson(url, body, headers = {}) {
+  if (typeof fetch === "function") {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...headers },
+      body: JSON.stringify(body)
+    });
+    return await res.json();
+  }
+  try {
+    const obsidian = await import("obsidian");
+    const res = await obsidian.requestUrl({
+      url,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...headers },
+      body: JSON.stringify(body)
+    });
+    return res.json;
+  } catch {
+    throw new Error("HTTP request failed");
+  }
+}
+var OllamaEmbeddingProvider = class {
+  constructor(endpoint = "http://localhost:11434", model = "nomic-embed-text") {
+    this.endpoint = endpoint;
+    this.model = model;
+    this.name = "ollama";
+  }
+  async embed(texts) {
+    const results = [];
+    const url = this.endpoint.endsWith("/") ? `${this.endpoint}api/embeddings` : `${this.endpoint}/api/embeddings`;
+    for (const text of texts) {
+      try {
+        const data = await httpPostJson(url, { model: this.model, prompt: text });
+        results.push(data.embedding || []);
+      } catch {
+        results.push([]);
+      }
+    }
+    return results;
+  }
+};
+var OpenRouterEmbeddingProvider = class {
+  constructor(endpoint = "https://openrouter.ai/api/v1", apiKey = "", model = "openai/text-embedding-3-small") {
+    this.endpoint = endpoint;
+    this.apiKey = apiKey;
+    this.model = model;
+    this.name = "openrouter";
+  }
+  async embed(texts) {
+    const url = this.endpoint.endsWith("/") ? `${this.endpoint}embeddings` : `${this.endpoint}/embeddings`;
+    const headers = {};
+    if (this.apiKey) {
+      headers["Authorization"] = `Bearer ${this.apiKey}`;
+    }
+    try {
+      const data = await httpPostJson(url, { model: this.model, input: texts }, headers);
+      return (data.data || []).map((item) => item.embedding);
+    } catch {
+      return [];
+    }
+  }
+};
+function cosineSimilarity(vecA, vecB) {
+  if (!vecA.length || !vecB.length || vecA.length !== vecB.length)
+    return 0;
+  let dot = 0;
+  let normA = 0;
+  let normB = 0;
+  for (let i = 0; i < vecA.length; i++) {
+    dot += vecA[i] * vecB[i];
+    normA += vecA[i] * vecA[i];
+    normB += vecB[i] * vecB[i];
+  }
+  if (normA === 0 || normB === 0)
+    return 0;
+  return dot / (Math.sqrt(normA) * Math.sqrt(normB));
+}
+
+// src/services/rag/vectorIndex.ts
+var VectorIndex = class {
+  constructor() {
+    this.chunks = [];
+  }
+  async indexVault(app, provider, limit = 25) {
+    const files = app.vault.getMarkdownFiles().slice(0, limit);
+    this.chunks = [];
+    const fileTexts = [];
+    for (const file of files) {
+      try {
+        const content = await app.vault.read(file);
+        if (content.trim()) {
+          fileTexts.push({ file, text: content.substring(0, 1e3) });
+        }
+      } catch {
+      }
+    }
+    if (fileTexts.length === 0)
+      return;
+    try {
+      const embeddings = await provider.embed(fileTexts.map((ft) => ft.text));
+      for (let i = 0; i < fileTexts.length; i++) {
+        if (embeddings[i] && embeddings[i].length > 0) {
+          this.chunks.push({
+            file: fileTexts[i].file,
+            content: fileTexts[i].text,
+            embedding: embeddings[i]
+          });
+        }
+      }
+    } catch {
+    }
+  }
+  async search(provider, query, topK = 5) {
+    if (this.chunks.length === 0 || !query.trim())
+      return [];
+    try {
+      const queryEmbeddings = await provider.embed([query]);
+      const qVec = queryEmbeddings[0];
+      if (!qVec || !qVec.length)
+        return [];
+      const scored = this.chunks.map((chunk) => ({
+        file: chunk.file,
+        content: chunk.content,
+        score: cosineSimilarity(qVec, chunk.embedding)
+      }));
+      scored.sort((a, b) => b.score - a.score);
+      return scored.slice(0, topK);
+    } catch {
+      return [];
+    }
+  }
+};
+async function searchVaultHybrid(app, query, settings, limit = 5) {
+  const lexicalResults = await searchVaultLexical(app, query, limit, settings.ragSnippetLength);
+  if (!settings.enableSemanticRag) {
+    return lexicalResults;
+  }
+  let provider;
+  if (settings.embeddingProvider === "ollama") {
+    provider = new OllamaEmbeddingProvider(settings.embeddingEndpoint, settings.embeddingModel);
+  } else {
+    provider = new OpenRouterEmbeddingProvider(settings.endpointUrl, settings.apiKey, settings.embeddingModel);
+  }
+  const vectorIndex = new VectorIndex();
+  await vectorIndex.indexVault(app, provider, 20);
+  const vectorResults = await vectorIndex.search(provider, query, limit);
+  const scoreMap = /* @__PURE__ */ new Map();
+  const k = 60;
+  lexicalResults.forEach((res, rank) => {
+    const path = res.file.path;
+    const rrf = 1 / (k + (rank + 1));
+    scoreMap.set(path, { file: res.file, content: res.content, rrfScore: rrf });
+  });
+  vectorResults.forEach((res, rank) => {
+    const path = res.file.path;
+    const rrf = 1 / (k + (rank + 1));
+    const existing = scoreMap.get(path);
+    if (existing) {
+      existing.rrfScore += rrf;
+    } else {
+      scoreMap.set(path, { file: res.file, content: res.content, rrfScore: rrf });
+    }
+  });
+  const combined = Array.from(scoreMap.values()).map((item) => ({
+    file: item.file,
+    content: item.content,
+    score: item.rrfScore
+  }));
+  combined.sort((a, b) => b.score - a.score);
+  return combined.slice(0, limit);
 }
 
 // src/services/agent/intentRouter.ts
@@ -25705,6 +26796,7 @@ ${s.description}`).join("\n")}
       executionMode = "auto",
       onStepUpdate,
       onConfirmationRequired,
+      onStreamChunk,
       maxIterations,
       toolRegistry,
       language = "auto",
@@ -25732,7 +26824,8 @@ ${s.description}`).join("\n")}
         type: "thought",
         title: `Mode: ${actualMode === "quick" ? "Quick" : "Agent"}`,
         detail: decision.reason,
-        status: "completed"
+        status: "completed",
+        meta: { confidence: decision.confidence, features }
       });
       notifySteps();
     }
@@ -25743,7 +26836,7 @@ ${s.description}`).join("\n")}
     let prefetchedContext = "";
     const shouldPrefetchVault = settings.enableAdaptivePrefetch ? toolNeeds.needsVaultSearch && actualMode === "agent" : actualMode === "agent";
     if (shouldPrefetchVault) {
-      const searchResults = await searchVaultLexical(app, userQuery, settings.maxPrefetchedNotes, settings.prefetchSnippetLength);
+      const searchResults = settings.enableSemanticRag ? await searchVaultHybrid(app, userQuery, settings, settings.maxPrefetchedNotes) : await searchVaultLexical(app, userQuery, settings.maxPrefetchedNotes, settings.prefetchSnippetLength);
       if (searchResults.length > 0) {
         const prefetchedBlocks = [];
         const matchedFoldersSet = /* @__PURE__ */ new Set();
@@ -25786,7 +26879,7 @@ ${prefetchedBlocks.join("\n\n")}
     ];
     if (actualMode === "quick") {
       try {
-        const response = await sendChatRequest(config, messages);
+        const response = settings.enableStreaming && onStreamChunk ? await sendChatRequestStream(config, messages, void 0, onStreamChunk) : await sendChatRequest(config, messages);
         if (response.usage) {
           totalPromptTokens += response.usage.promptTokens;
           totalCompletionTokens += response.usage.completionTokens;
@@ -26037,7 +27130,7 @@ ${prefetchedBlocks.join("\n\n")}
 AgentLoop.promptCache = /* @__PURE__ */ new Map();
 
 // src/services/chat/chatStore.ts
-var import_obsidian6 = require("obsidian");
+var import_obsidian5 = require("obsidian");
 var ChatStore = class {
   static getChatsFolder(settings) {
     return settings.chatsFolder || ".nei/chats";
@@ -26141,7 +27234,7 @@ var ChatStore = class {
     };
   }
   static async ensureFolder(app, folderPath) {
-    const norm = (0, import_obsidian6.normalizePath)(folderPath);
+    const norm = (0, import_obsidian5.normalizePath)(folderPath);
     if (!await app.vault.adapter.exists(norm)) {
       await app.vault.adapter.mkdir(norm);
     }
@@ -26149,7 +27242,7 @@ var ChatStore = class {
 };
 
 // src/services/openrouter.ts
-var import_obsidian7 = require("obsidian");
+var import_obsidian6 = require("obsidian");
 var OpenRouterService = class {
   /**
    * Fetches details about the user's OpenRouter API key (usage, limits).
@@ -26158,7 +27251,7 @@ var OpenRouterService = class {
     if (!apiKey)
       return null;
     try {
-      const response = await (0, import_obsidian7.requestUrl)({
+      const response = await (0, import_obsidian6.requestUrl)({
         url: "https://openrouter.ai/api/v1/auth/key",
         method: "GET",
         headers: {
@@ -26198,7 +27291,7 @@ var OpenRouterService = class {
       if (apiKey) {
         headers["Authorization"] = `Bearer ${apiKey}`;
       }
-      const response = await (0, import_obsidian7.requestUrl)({
+      const response = await (0, import_obsidian6.requestUrl)({
         url: "https://openrouter.ai/api/v1/models",
         method: "GET",
         headers
@@ -26254,7 +27347,7 @@ OpenRouterService.lastFetchTime = 0;
 
 // src/components/ErrorBoundary.tsx
 var React = __toESM(require_react());
-var import_obsidian8 = require("obsidian");
+var import_obsidian7 = require("obsidian");
 var import_jsx_runtime = __toESM(require_jsx_runtime());
 var ErrorBoundary = class extends React.Component {
   constructor() {
@@ -26269,7 +27362,7 @@ var ErrorBoundary = class extends React.Component {
   }
   componentDidCatch(error, errorInfo) {
     console.error("[NEI Chat ErrorBoundary]", error, errorInfo);
-    new import_obsidian8.Notice(`\u274C NEI Chat Error: ${error.message}`);
+    new import_obsidian7.Notice(`\u274C NEI Chat Error: ${error.message}`);
   }
   render() {
     if (this.state.hasError) {
@@ -26293,16 +27386,220 @@ var ErrorBoundary = class extends React.Component {
   }
 };
 
-// src/components/ChatPanel.tsx
+// src/components/Tooltip.tsx
+var React2 = __toESM(require_react());
 var import_jsx_runtime2 = __toESM(require_jsx_runtime());
-var ObsidianMarkdown = ({ markdown, app }) => {
-  const containerRef = React2.useRef(null);
+var Tooltip = ({
+  children,
+  titleKey,
+  descriptionKey,
+  language,
+  position = "top",
+  showIcon = true
+}) => {
+  const [visible, setVisible] = React2.useState(false);
+  const ref = React2.useRef(null);
+  const title = t(titleKey, language);
+  const description = descriptionKey ? t(descriptionKey, language) : "";
   React2.useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) {
+        setVisible(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+  const isTop = position === "top";
+  const isBottom = position === "bottom";
+  const isLeft = position === "left";
+  return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { ref, className: "nei-tooltip-wrapper", style: { display: "inline-flex", alignItems: "center", position: "relative" }, children: [
+    children,
+    showIcon && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+      "span",
+      {
+        className: "nei-tooltip-trigger",
+        onClick: (e) => {
+          e.stopPropagation();
+          setVisible((v) => !v);
+        },
+        onMouseEnter: () => setVisible(true),
+        onMouseLeave: () => setVisible(false),
+        style: {
+          cursor: "help",
+          marginLeft: "5px",
+          opacity: 0.7,
+          fontSize: "11px",
+          lineHeight: 1,
+          color: "var(--text-muted)",
+          userSelect: "none"
+        },
+        title,
+        children: "\u2753"
+      }
+    ),
+    visible && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(
+      "div",
+      {
+        className: "nei-tooltip-popover",
+        style: {
+          position: "absolute",
+          zIndex: 1e3,
+          ...isTop ? { bottom: "100%", left: "50%", transform: "translateX(-50%)", marginBottom: "6px" } : {},
+          ...isBottom ? { top: "100%", left: "50%", transform: "translateX(-50%)", marginTop: "6px" } : {},
+          ...isLeft ? { right: "100%", top: "50%", transform: "translateY(-50%)", marginRight: "6px" } : {},
+          ...position === "right" ? { left: "100%", top: "50%", transform: "translateY(-50%)", marginLeft: "6px" } : {},
+          padding: "8px 10px",
+          background: "var(--background-primary)",
+          border: "1px solid var(--background-modifier-border)",
+          borderRadius: "6px",
+          boxShadow: "0 4px 14px rgba(0,0,0,0.2)",
+          minWidth: "180px",
+          maxWidth: "280px",
+          fontSize: "11px",
+          lineHeight: "1.4",
+          color: "var(--text-normal)",
+          pointerEvents: "none"
+        },
+        children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { style: { fontWeight: 600, color: "var(--text-normal)", marginBottom: description ? "4px" : "0" }, children: title }),
+          description && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { style: { opacity: 0.85, fontSize: "10px", color: "var(--text-muted)" }, children: description })
+        ]
+      }
+    )
+  ] });
+};
+
+// src/components/WelcomeScreen.tsx
+var React3 = __toESM(require_react());
+var import_jsx_runtime3 = __toESM(require_jsx_runtime());
+var WelcomeScreen = ({ language, onClose }) => {
+  const [step, setStep] = React3.useState(0);
+  const steps = [
+    {
+      title: t("welcomeStep1Title", language),
+      desc: t("welcomeStep1Desc", language),
+      icon: "\u{1F916}"
+    },
+    {
+      title: t("welcomeStep2Title", language),
+      desc: t("welcomeStep2Desc", language),
+      icon: "\u26A1"
+    },
+    {
+      title: t("welcomeStep3Title", language),
+      desc: t("welcomeStep3Desc", language),
+      icon: "\u{1F9E0}"
+    },
+    {
+      title: t("welcomeStep4Title", language),
+      desc: t("welcomeStep4Desc", language),
+      icon: "\u{1F310}"
+    }
+  ];
+  const current = steps[step];
+  return /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "nei-welcome-overlay", style: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1e4,
+    background: "rgba(0, 0, 0, 0.75)",
+    backdropFilter: "blur(4px)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "16px"
+  }, children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "nei-welcome-modal", style: {
+    background: "var(--background-primary)",
+    border: "1px solid var(--background-modifier-border)",
+    borderRadius: "12px",
+    padding: "24px",
+    maxWidth: "460px",
+    width: "100%",
+    boxShadow: "0 20px 40px rgba(0,0,0,0.3)",
+    display: "flex",
+    flexDirection: "column",
+    gap: "16px"
+  }, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { style: { textAlign: "center" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { style: { fontSize: "42px", marginBottom: "8px" }, children: current.icon }),
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("h2", { style: { margin: "0 0 6px 0", fontSize: "18px", color: "var(--text-normal)" }, children: current.title }),
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("p", { style: { margin: 0, fontSize: "13px", color: "var(--text-muted)", lineHeight: "1.5" }, children: current.desc })
+    ] }),
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { style: { display: "flex", justifyContent: "center", gap: "6px", margin: "8px 0" }, children: steps.map((_, i) => /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
+      "div",
+      {
+        onClick: () => setStep(i),
+        style: {
+          width: "8px",
+          height: "8px",
+          borderRadius: "50%",
+          background: i === step ? "var(--interactive-accent)" : "var(--background-modifier-border)",
+          cursor: "pointer",
+          transition: "background 0.2s"
+        }
+      },
+      i
+    )) }),
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center" }, children: [
+      step > 0 ? /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
+        "button",
+        {
+          onClick: () => setStep((s) => s - 1),
+          style: { padding: "6px 12px", background: "transparent", border: "1px solid var(--background-modifier-border)", color: "var(--text-normal)", borderRadius: "6px", cursor: "pointer", fontSize: "12px" },
+          children: [
+            "\u2190 ",
+            t("back", language)
+          ]
+        }
+      ) : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", {}),
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { style: { display: "flex", gap: "8px" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
+          "button",
+          {
+            onClick: onClose,
+            style: { padding: "6px 12px", background: "transparent", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: "12px" },
+            children: t("skip", language)
+          }
+        ),
+        step < steps.length - 1 ? /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
+          "button",
+          {
+            onClick: () => setStep((s) => s + 1),
+            style: { padding: "6px 14px", background: "var(--interactive-accent)", color: "var(--text-on-accent)", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "12px" },
+            children: [
+              t("next", language),
+              " \u2192"
+            ]
+          }
+        ) : /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
+          "button",
+          {
+            onClick: onClose,
+            style: { padding: "6px 14px", background: "var(--interactive-accent)", color: "var(--text-on-accent)", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "12px" },
+            children: [
+              "\u{1F680} ",
+              t("startTour", language)
+            ]
+          }
+        )
+      ] })
+    ] })
+  ] }) });
+};
+
+// src/components/ChatPanel.tsx
+var import_jsx_runtime4 = __toESM(require_jsx_runtime());
+var ObsidianMarkdown = ({ markdown, app }) => {
+  const containerRef = React4.useRef(null);
+  React4.useEffect(() => {
     if (containerRef.current) {
       containerRef.current.empty();
-      const component = new import_obsidian9.Component();
+      const component = new import_obsidian8.Component();
       component.load();
-      void import_obsidian9.MarkdownRenderer.render(
+      void import_obsidian8.MarkdownRenderer.render(
         app,
         markdown,
         containerRef.current,
@@ -26311,7 +27608,7 @@ var ObsidianMarkdown = ({ markdown, app }) => {
       );
     }
   }, [markdown, app]);
-  return /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { ref: containerRef, className: "markdown-preview-view markdown-rendered", style: { background: "transparent", padding: 0 } });
+  return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { ref: containerRef, className: "markdown-preview-view markdown-rendered", style: { background: "transparent", padding: 0 } });
 };
 var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) => {
   const isMainTab = viewLeaf ? viewLeaf.getRoot() === app.workspace.rootSplit : false;
@@ -26337,41 +27634,41 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
       }
     } catch (e) {
       const err = e;
-      new import_obsidian9.Notice(`${t("modeSwitchError", language)} ${err?.message || String(e)}`);
+      new import_obsidian8.Notice(`${t("modeSwitchError", language)} ${err?.message || String(e)}`);
     }
   };
-  const [currentSession, setCurrentSession] = React2.useState(() => ChatStore.createNewSession());
-  const [sessionsList, setSessionsList] = React2.useState([]);
-  const [input, setInput] = React2.useState("");
-  const [attachedImages, setAttachedImages] = React2.useState([]);
-  const [executionMode, setExecutionMode] = React2.useState(settings.executionMode || "auto");
-  const [loading, setLoading] = React2.useState(false);
-  const [activeSteps, setActiveSteps] = React2.useState([]);
-  const [showSessionsDrawer, setShowSessionsDrawer] = React2.useState(false);
-  const [showConfig, setShowConfig] = React2.useState(false);
-  const [showIntentDebug, setShowIntentDebug] = React2.useState(false);
-  const [pendingConfirmation, setPendingConfirmation] = React2.useState(null);
-  const [showFreshnessSuggestion, setShowFreshnessSuggestion] = React2.useState(null);
-  const [editingMsgIdx, setEditingMsgIdx] = React2.useState(null);
-  const [editingText, setEditingText] = React2.useState("");
-  const [endpointUrl, setEndpointUrl] = React2.useState(settings.endpointUrl || "https://openrouter.ai/api/v1");
-  const [apiKey, setApiKey] = React2.useState(settings.apiKey || "");
-  const [model, setModel] = React2.useState(settings.model || "google/gemini-2.5-flash");
-  const [visionModel, setVisionModel] = React2.useState(settings.visionModel || "google/gemini-2.5-flash");
-  const [quickModel, setQuickModel] = React2.useState(settings.quickModel || "google/gemini-2.5-flash");
-  const [customModels, setCustomModels] = React2.useState(settings.customModels || [
+  const [currentSession, setCurrentSession] = React4.useState(() => ChatStore.createNewSession());
+  const [sessionsList, setSessionsList] = React4.useState([]);
+  const [input, setInput] = React4.useState("");
+  const [attachedImages, setAttachedImages] = React4.useState([]);
+  const [executionMode, setExecutionMode] = React4.useState(settings.executionMode || "auto");
+  const [loading, setLoading] = React4.useState(false);
+  const [activeSteps, setActiveSteps] = React4.useState([]);
+  const [showSessionsDrawer, setShowSessionsDrawer] = React4.useState(false);
+  const [showConfig, setShowConfig] = React4.useState(false);
+  const [showIntentDebug, setShowIntentDebug] = React4.useState(false);
+  const [pendingConfirmation, setPendingConfirmation] = React4.useState(null);
+  const [showFreshnessSuggestion, setShowFreshnessSuggestion] = React4.useState(null);
+  const [editingMsgIdx, setEditingMsgIdx] = React4.useState(null);
+  const [editingText, setEditingText] = React4.useState("");
+  const [endpointUrl, setEndpointUrl] = React4.useState(settings.endpointUrl || "https://openrouter.ai/api/v1");
+  const [apiKey, setApiKey] = React4.useState(settings.apiKey || "");
+  const [model, setModel] = React4.useState(settings.model || "google/gemini-2.5-flash");
+  const [visionModel, setVisionModel] = React4.useState(settings.visionModel || "google/gemini-2.5-flash");
+  const [quickModel, setQuickModel] = React4.useState(settings.quickModel || "google/gemini-2.5-flash");
+  const [customModels, setCustomModels] = React4.useState(settings.customModels || [
     "google/gemini-2.5-flash",
     "anthropic/claude-3.5-sonnet",
     "google/gemini-2.5-pro",
     "openai/gpt-4o",
     "deepseek/deepseek-chat"
   ]);
-  const [newModelInput, setNewModelInput] = React2.useState("");
-  const [activeModelDetails, setActiveModelDetails] = React2.useState(null);
-  const [keyInfo, setKeyInfo] = React2.useState(null);
-  const [verifyingModel, setVerifyingModel] = React2.useState(false);
-  const [modelFreshness, setModelFreshness] = React2.useState(null);
-  React2.useEffect(() => {
+  const [newModelInput, setNewModelInput] = React4.useState("");
+  const [activeModelDetails, setActiveModelDetails] = React4.useState(null);
+  const [keyInfo, setKeyInfo] = React4.useState(null);
+  const [verifyingModel, setVerifyingModel] = React4.useState(false);
+  const [modelFreshness, setModelFreshness] = React4.useState(null);
+  React4.useEffect(() => {
     const info = getModelTemporalInfo(model);
     const cutoff = new Date(info.knowledgeCutoff);
     const daysSince = Math.floor((Date.now() - cutoff.getTime()) / (1e3 * 60 * 60 * 24));
@@ -26382,7 +27679,7 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
       isStale: daysSince > 30
     });
   }, [model]);
-  React2.useEffect(() => {
+  React4.useEffect(() => {
     void refreshSessionsList();
     void verifyActiveModel(model, apiKey);
     if (apiKey) {
@@ -26424,14 +27721,14 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
       setCustomModels(updated);
       setModel(trimmed);
       void verifyActiveModel(trimmed, apiKey);
-      new import_obsidian9.Notice(`${t("modelAddedNotice", language)} ${trimmed}`);
+      new import_obsidian8.Notice(`${t("modelAddedNotice", language)} ${trimmed}`);
     }
     setNewModelInput("");
   };
   const handleDeleteModel = (e, targetModel) => {
     e.stopPropagation();
     if (customModels.length <= 1) {
-      new import_obsidian9.Notice(t("cannotDeleteLastModel", language));
+      new import_obsidian8.Notice(t("cannotDeleteLastModel", language));
       return;
     }
     const updated = customModels.filter((m) => m !== targetModel);
@@ -26468,9 +27765,9 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
       handleNewChat();
     }
   };
-  const [confirmingClear, setConfirmingClear] = React2.useState(false);
-  const clearTimerRef = React2.useRef(null);
-  React2.useEffect(() => {
+  const [confirmingClear, setConfirmingClear] = React4.useState(false);
+  const clearTimerRef = React4.useRef(null);
+  React4.useEffect(() => {
     return () => {
       if (clearTimerRef.current)
         clearTimeout(clearTimerRef.current);
@@ -26490,7 +27787,7 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
     await ChatStore.clearAllSessions(app, settings);
     await refreshSessionsList();
     handleNewChat();
-    new import_obsidian9.Notice(t("historyClearedNotice", language));
+    new import_obsidian8.Notice(t("historyClearedNotice", language));
   };
   const handleBranchFromMessage = async (msgIndex) => {
     if (!currentSession)
@@ -26502,34 +27799,34 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
     setCurrentSession(newSession);
     await ChatStore.saveSession(app, settings, newSession);
     await refreshSessionsList();
-    new import_obsidian9.Notice("\u{1F33F} Conversation branched!");
+    new import_obsidian8.Notice("\u{1F33F} Conversation branched!");
   };
-  const [language, setLanguage] = React2.useState(settings.language || "auto");
-  const [defaultNoteFolder, setDefaultNoteFolder] = React2.useState(settings.defaultNoteFolder || "");
-  const [chatsFolder, setChatsFolder] = React2.useState(settings.chatsFolder || ".nei/chats");
-  const [memoryFile, setMemoryFile] = React2.useState(settings.memoryFile || ".nei/memory.json");
-  const [skillsFolder, setSkillsFolder] = React2.useState(settings.skillsFolder || ".nei/skills");
-  const [maxAgentIterations, setMaxAgentIterations] = React2.useState(settings.maxAgentIterations || 10);
-  const [maxPrefetchedNotes, setMaxPrefetchedNotes] = React2.useState(settings.maxPrefetchedNotes || 5);
-  const [prefetchSnippetLength, setPrefetchSnippetLength] = React2.useState(settings.prefetchSnippetLength || 400);
-  const [ragResultLimit, setRagResultLimit] = React2.useState(settings.ragResultLimit || 5);
-  const [ragSnippetLength, setRagSnippetLength] = React2.useState(settings.ragSnippetLength || 1e3);
-  const [confirmObsidianCommands, setConfirmObsidianCommands] = React2.useState(settings.confirmObsidianCommands ?? true);
-  const [enableTemporalAwareness, setEnableTemporalAwareness] = React2.useState(settings.enableTemporalAwareness ?? true);
-  const [enableAdaptivePrefetch, setEnableAdaptivePrefetch] = React2.useState(settings.enableAdaptivePrefetch ?? true);
-  const [enableFreshnessSuggestions, setEnableFreshnessSuggestions] = React2.useState(settings.enableFreshnessSuggestions ?? true);
-  const [enableSmartToolFiltering, setEnableSmartToolFiltering] = React2.useState(settings.enableSmartToolFiltering ?? true);
-  const [intentRoutingThreshold, setIntentRoutingThreshold] = React2.useState(settings.intentRoutingThreshold ?? 2.5);
-  const [intentVaultKeywordWeight, setIntentVaultKeywordWeight] = React2.useState(settings.intentVaultKeywordWeight ?? 2);
-  const [intentCreationWeight, setIntentCreationWeight] = React2.useState(settings.intentCreationWeight ?? 3);
-  const [intentDeletionWeight, setIntentDeletionWeight] = React2.useState(settings.intentDeletionWeight ?? 4);
-  const [intentAnalysisWeight, setIntentAnalysisWeight] = React2.useState(settings.intentAnalysisWeight ?? 2.5);
-  const [intentQuestionWeight, setIntentQuestionWeight] = React2.useState(settings.intentQuestionWeight ?? -1.5);
-  const [intentLengthWeight, setIntentLengthWeight] = React2.useState(settings.intentLengthWeight ?? 5e-3);
-  const [intentHistoryWeight, setIntentHistoryWeight] = React2.useState(settings.intentHistoryWeight ?? 0.3);
-  const [intentStaleQueryWeight, setIntentStaleQueryWeight] = React2.useState(settings.intentStaleQueryWeight ?? 3);
-  const [intentFreshnessWeight, setIntentFreshnessWeight] = React2.useState(settings.intentFreshnessWeight ?? 2);
-  const settingsSaveTimerRef = React2.useRef(null);
+  const [language, setLanguage] = React4.useState(settings.language || "auto");
+  const [defaultNoteFolder, setDefaultNoteFolder] = React4.useState(settings.defaultNoteFolder || "");
+  const [chatsFolder, setChatsFolder] = React4.useState(settings.chatsFolder || ".nei/chats");
+  const [memoryFile, setMemoryFile] = React4.useState(settings.memoryFile || ".nei/memory.json");
+  const [skillsFolder, setSkillsFolder] = React4.useState(settings.skillsFolder || ".nei/skills");
+  const [maxAgentIterations, setMaxAgentIterations] = React4.useState(settings.maxAgentIterations || 10);
+  const [maxPrefetchedNotes, setMaxPrefetchedNotes] = React4.useState(settings.maxPrefetchedNotes || 5);
+  const [prefetchSnippetLength, setPrefetchSnippetLength] = React4.useState(settings.prefetchSnippetLength || 400);
+  const [ragResultLimit, setRagResultLimit] = React4.useState(settings.ragResultLimit || 5);
+  const [ragSnippetLength, setRagSnippetLength] = React4.useState(settings.ragSnippetLength || 1e3);
+  const [confirmObsidianCommands, setConfirmObsidianCommands] = React4.useState(settings.confirmObsidianCommands ?? true);
+  const [enableTemporalAwareness, setEnableTemporalAwareness] = React4.useState(settings.enableTemporalAwareness ?? true);
+  const [enableAdaptivePrefetch, setEnableAdaptivePrefetch] = React4.useState(settings.enableAdaptivePrefetch ?? true);
+  const [enableFreshnessSuggestions, setEnableFreshnessSuggestions] = React4.useState(settings.enableFreshnessSuggestions ?? true);
+  const [enableSmartToolFiltering, setEnableSmartToolFiltering] = React4.useState(settings.enableSmartToolFiltering ?? true);
+  const [intentRoutingThreshold, setIntentRoutingThreshold] = React4.useState(settings.intentRoutingThreshold ?? 2.5);
+  const [intentVaultKeywordWeight, setIntentVaultKeywordWeight] = React4.useState(settings.intentVaultKeywordWeight ?? 2);
+  const [intentCreationWeight, setIntentCreationWeight] = React4.useState(settings.intentCreationWeight ?? 3);
+  const [intentDeletionWeight, setIntentDeletionWeight] = React4.useState(settings.intentDeletionWeight ?? 4);
+  const [intentAnalysisWeight, setIntentAnalysisWeight] = React4.useState(settings.intentAnalysisWeight ?? 2.5);
+  const [intentQuestionWeight, setIntentQuestionWeight] = React4.useState(settings.intentQuestionWeight ?? -1.5);
+  const [intentLengthWeight, setIntentLengthWeight] = React4.useState(settings.intentLengthWeight ?? 5e-3);
+  const [intentHistoryWeight, setIntentHistoryWeight] = React4.useState(settings.intentHistoryWeight ?? 0.3);
+  const [intentStaleQueryWeight, setIntentStaleQueryWeight] = React4.useState(settings.intentStaleQueryWeight ?? 3);
+  const [intentFreshnessWeight, setIntentFreshnessWeight] = React4.useState(settings.intentFreshnessWeight ?? 2);
+  const settingsSaveTimerRef = React4.useRef(null);
   const handleSaveConfig = async () => {
     const newSettings = {
       ...settings,
@@ -26569,14 +27866,14 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
     };
     await saveSettings(newSettings);
     setShowConfig(false);
-    new import_obsidian9.Notice(t("saveSettings", language) + "!");
+    new import_obsidian8.Notice(t("saveSettings", language) + "!");
   };
   const handleCopyText = async (text) => {
     try {
       await navigator.clipboard.writeText(text);
-      new import_obsidian9.Notice(t("copied", language));
+      new import_obsidian8.Notice(t("copied", language));
     } catch {
-      new import_obsidian9.Notice(t("copyError", language));
+      new import_obsidian8.Notice(t("copyError", language));
     }
   };
   const handleSaveResponseAsNote = async (content) => {
@@ -26591,21 +27888,55 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
         JSON.stringify({ path: fileName, content })
       );
       if (execResult.isError) {
-        new import_obsidian9.Notice(`${t("noteCreateError", language)} ${execResult.result}`);
+        new import_obsidian8.Notice(`${t("noteCreateError", language)} ${execResult.result}`);
       } else {
         const pathMatch = execResult.result.match(/'([^']+)'/);
         const savedPath = pathMatch ? pathMatch[1] : fileName;
-        new import_obsidian9.Notice(`${t("noteCreatedSuccess", language)} '${savedPath}'`);
+        new import_obsidian8.Notice(`${t("noteCreatedSuccess", language)} '${savedPath}'`);
       }
     } catch (e) {
       const err = e;
-      new import_obsidian9.Notice(`${t("noteCreateError", language)} ${err?.message || String(e)}`);
+      new import_obsidian8.Notice(`${t("noteCreateError", language)} ${err?.message || String(e)}`);
+    }
+  };
+  const [streamingContent, setStreamingContent] = React4.useState("");
+  const [showWelcome, setShowWelcome] = React4.useState(() => !localStorage.getItem("nei_welcome_seen"));
+  const [enableSemanticRag, setEnableSemanticRag] = React4.useState(settings.enableSemanticRag ?? false);
+  const fileInputRef = React4.useRef(null);
+  const handleExportSettings = () => {
+    try {
+      const dataStr = JSON.stringify(settings, null, 2);
+      const blob = new Blob([dataStr], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `nei-settings-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      new import_obsidian8.Notice(t("settingsExported", language));
+    } catch (e) {
+      new import_obsidian8.Notice(`Export error: ${e?.message || String(e)}`);
+    }
+  };
+  const handleImportSettings = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file)
+      return;
+    try {
+      const text = await file.text();
+      const imported = JSON.parse(text);
+      const newSettings = { ...settings, ...imported };
+      await saveSettings(newSettings);
+      new import_obsidian8.Notice(t("settingsImported", language));
+    } catch (err) {
+      new import_obsidian8.Notice(`Import error: ${err?.message || String(err)}`);
     }
   };
   const executeQuery = async (queryText, historySlice, imagesPayload) => {
     setLoading(true);
     setActiveSteps([]);
     setEditingMsgIdx(null);
+    setStreamingContent("");
     const currentImages = imagesPayload || attachedImages;
     const userMsg = {
       role: "user",
@@ -26643,10 +27974,14 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
             setPendingConfirmation({ toolName, argsStr, resolve });
           });
         },
+        onStreamChunk: (chunk) => {
+          setStreamingContent((prev) => prev + chunk);
+        },
         toolRegistry,
         language,
         settings
       });
+      setStreamingContent("");
       const assistantMsg = {
         role: "assistant",
         content: result.responseText,
@@ -26723,10 +28058,10 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
       reader.readAsDataURL(file);
     }
   };
-  return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "nei-chat-panel-container", children: [
-    /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "nei-chat-header", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: "6px" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(
+  return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "nei-chat-panel-container", children: [
+    /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "nei-chat-header", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: "6px" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(
           "button",
           {
             onClick: () => setShowSessionsDrawer(!showSessionsDrawer),
@@ -26735,7 +28070,7 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
             children: [
               "\u{1F4C2} ",
               formatSessionTitle(currentSession.title),
-              /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("span", { style: { fontSize: "10px", opacity: 0.7, marginLeft: "4px" }, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("span", { style: { fontSize: "10px", opacity: 0.7, marginLeft: "4px" }, children: [
                 "(",
                 currentSession.messages.length,
                 ")"
@@ -26743,7 +28078,7 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
             ]
           }
         ),
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
           "button",
           {
             onClick: () => {
@@ -26754,7 +28089,7 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
             children: t("newChat", language)
           }
         ),
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
           "button",
           {
             onClick: () => {
@@ -26766,8 +28101,8 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
           }
         )
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: "4px" }, children: [
-        modelFreshness && enableTemporalAwareness && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: "4px" }, children: [
+        modelFreshness && enableTemporalAwareness && /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(
           "div",
           {
             className: "nei-freshness-indicator",
@@ -26785,11 +28120,11 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
             },
             children: [
               modelFreshness.supportsWeb ? "\u{1F310}" : "\u{1F512}",
-              /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { children: modelFreshness.cutoff })
+              /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { children: modelFreshness.cutoff })
             ]
           }
         ),
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(
           "select",
           {
             value: executionMode,
@@ -26801,13 +28136,13 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
             title: t("modeAutoTitle", language),
             className: "nei-select-mode",
             children: [
-              /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("option", { value: "auto", children: t("modeAuto", language) }),
-              /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("option", { value: "quick", children: t("modeQuick", language) }),
-              /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("option", { value: "agent", children: t("modeAgent", language) })
+              /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("option", { value: "auto", children: t("modeAuto", language) }),
+              /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("option", { value: "quick", children: t("modeQuick", language) }),
+              /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("option", { value: "agent", children: t("modeAgent", language) })
             ]
           }
         ),
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
           "button",
           {
             onClick: () => setShowConfig(!showConfig),
@@ -26818,10 +28153,10 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
         )
       ] })
     ] }),
-    showSessionsDrawer && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { position: "absolute", top: "45px", left: "10px", right: "10px", zIndex: 100, background: "var(--background-primary)", border: "1px solid var(--background-modifier-border)", borderRadius: "8px", boxShadow: "0 4px 12px rgba(0,0,0,0.25)", maxHeight: "280px", overflowY: "auto", padding: "8px" }, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px", paddingBottom: "4px", borderBottom: "1px solid var(--background-modifier-border)" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { style: { fontWeight: "bold", fontSize: "12px", color: "var(--text-muted)" }, children: t("historyTitle", language) }),
-        sessionsList.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+    showSessionsDrawer && /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { position: "absolute", top: "45px", left: "10px", right: "10px", zIndex: 100, background: "var(--background-primary)", border: "1px solid var(--background-modifier-border)", borderRadius: "8px", boxShadow: "0 4px 12px rgba(0,0,0,0.25)", maxHeight: "280px", overflowY: "auto", padding: "8px" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px", paddingBottom: "4px", borderBottom: "1px solid var(--background-modifier-border)" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { style: { fontWeight: "bold", fontSize: "12px", color: "var(--text-muted)" }, children: t("historyTitle", language) }),
+        sessionsList.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
           "button",
           {
             onClick: () => {
@@ -26833,7 +28168,7 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
           }
         )
       ] }),
-      sessionsList.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { style: { fontSize: "12px", color: "var(--text-muted)", padding: "6px" }, children: t("noSavedChats", language) }) : sessionsList.map((s) => /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(
+      sessionsList.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { style: { fontSize: "12px", color: "var(--text-muted)", padding: "6px" }, children: t("noSavedChats", language) }) : sessionsList.map((s) => /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(
         "div",
         {
           onClick: () => {
@@ -26851,8 +28186,8 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
             marginBottom: "2px"
           },
           children: [
-            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { style: { textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", maxWidth: "80%" }, children: formatSessionTitle(s.title) }),
-            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { style: { textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", maxWidth: "80%" }, children: formatSessionTitle(s.title) }),
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
               "button",
               {
                 onClick: (e) => {
@@ -26868,10 +28203,10 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
         s.id
       ))
     ] }),
-    showConfig && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { flexShrink: 0, maxHeight: "55vh", overflowY: "auto", background: "var(--background-secondary)", padding: "12px", borderRadius: "8px", marginBottom: "12px", fontSize: "12px", display: "flex", flexDirection: "column", gap: "10px" }, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("label", { style: { display: "block", marginBottom: "4px", fontWeight: "500" }, children: "OpenRouter API Key:" }),
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+    showConfig && /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { flexShrink: 0, maxHeight: "55vh", overflowY: "auto", background: "var(--background-secondary)", padding: "12px", borderRadius: "8px", marginBottom: "12px", fontSize: "12px", display: "flex", flexDirection: "column", gap: "10px" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("label", { style: { display: "block", marginBottom: "4px", fontWeight: "500" }, children: "OpenRouter API Key:" }),
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
           "input",
           {
             type: "password",
@@ -26882,9 +28217,9 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
           }
         )
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("label", { style: { display: "block", marginBottom: "4px", fontWeight: "500" }, children: "API Endpoint URL:" }),
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("label", { style: { display: "block", marginBottom: "4px", fontWeight: "500" }, children: "API Endpoint URL:" }),
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
           "input",
           {
             type: "text",
@@ -26895,35 +28230,35 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
           }
         )
       ] }),
-      keyInfo && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { background: "var(--background-primary)", padding: "6px 10px", borderRadius: "6px", fontSize: "11px", display: "flex", justifyContent: "space-between", alignItems: "center" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("span", { children: [
+      keyInfo && /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { background: "var(--background-primary)", padding: "6px 10px", borderRadius: "6px", fontSize: "11px", display: "flex", justifyContent: "space-between", alignItems: "center" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("span", { children: [
           "\u{1F4B0} ",
           t("keyUsage", language),
           " ",
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("strong", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("strong", { children: [
             "$",
             keyInfo.usage.toFixed(4)
           ] })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { children: keyInfo.isFreeTier ? "\u{1F7E2} Free Tier" : "\u{1F4B3} Paid Tier" })
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { children: keyInfo.isFreeTier ? "\u{1F7E2} Free Tier" : "\u{1F4B3} Paid Tier" })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { background: "var(--background-primary)", padding: "8px 10px", borderRadius: "6px", border: "1px solid var(--background-modifier-border)", display: "flex", flexDirection: "column", gap: "6px" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { style: { fontWeight: "bold", fontSize: "11px" }, children: t("modelCategories", language) }),
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("primaryModel", language) }),
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { background: "var(--background-primary)", padding: "8px 10px", borderRadius: "6px", border: "1px solid var(--background-modifier-border)", display: "flex", flexDirection: "column", gap: "6px" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { style: { fontWeight: "bold", fontSize: "11px" }, children: t("modelCategories", language) }),
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("primaryModel", language) }),
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
             "select",
             {
               value: model,
               onChange: (e) => handleSelectModel(e.target.value),
               style: { width: "100%", padding: "4px", borderRadius: "4px", fontSize: "11px", background: "var(--background-secondary)", color: "var(--text-normal)", border: "1px solid var(--background-modifier-border)" },
-              children: customModels.map((m) => /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("option", { value: m, children: m }, m))
+              children: customModels.map((m) => /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("option", { value: m, children: m }, m))
             }
           )
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("visionModel", language) }),
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("visionModel", language) }),
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
             "select",
             {
               value: visionModel,
@@ -26932,13 +28267,13 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
                 void saveSettings({ ...settings, visionModel: e.target.value });
               },
               style: { width: "100%", padding: "4px", borderRadius: "4px", fontSize: "11px", background: "var(--background-secondary)", color: "var(--text-normal)", border: "1px solid var(--background-modifier-border)" },
-              children: customModels.map((m) => /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("option", { value: m, children: m }, m))
+              children: customModels.map((m) => /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("option", { value: m, children: m }, m))
             }
           )
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("quickModel", language) }),
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("quickModel", language) }),
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
             "select",
             {
               value: quickModel,
@@ -26947,16 +28282,16 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
                 void saveSettings({ ...settings, quickModel: e.target.value });
               },
               style: { width: "100%", padding: "4px", borderRadius: "4px", fontSize: "11px", background: "var(--background-secondary)", color: "var(--text-normal)", border: "1px solid var(--background-modifier-border)" },
-              children: customModels.map((m) => /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("option", { value: m, children: m }, m))
+              children: customModels.map((m) => /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("option", { value: m, children: m }, m))
             }
           )
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)", fontWeight: "bold", marginTop: "4px" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)", fontWeight: "bold", marginTop: "4px" }, children: [
             "\u{1F310} ",
             t("languageLabel", language)
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(
             "select",
             {
               value: language,
@@ -26967,29 +28302,29 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
               },
               style: { width: "100%", padding: "4px", borderRadius: "4px", fontSize: "11px", background: "var(--background-secondary)", color: "var(--text-normal)", border: "1px solid var(--background-modifier-border)" },
               children: [
-                /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("option", { value: "auto", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("option", { value: "auto", children: [
                   "\u{1F310} ",
                   t("autoDetect", language)
                 ] }),
-                /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("option", { value: "ru", children: "\u{1F310} RU \u2014 \u0420\u0443\u0441\u0441\u043A\u0438\u0439" }),
-                /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("option", { value: "en", children: "\u{1F310} EN \u2014 English" }),
-                /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("option", { value: "es", children: "\u{1F310} ES \u2014 Espa\xF1ol" }),
-                /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("option", { value: "de", children: "\u{1F310} DE \u2014 Deutsch" }),
-                /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("option", { value: "fr", children: "\u{1F310} FR \u2014 Fran\xE7ais" }),
-                /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("option", { value: "zh", children: "\u{1F310} ZH \u2014 \u4E2D\u6587" }),
-                /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("option", { value: "ja", children: "\u{1F310} JA \u2014 \u65E5\u672C\u8A9E" }),
-                /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("option", { value: "pt", children: "\u{1F310} PT \u2014 Portugu\xEAs" }),
-                /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("option", { value: "ko", children: "\u{1F310} KO \u2014 \uD55C\uAD6D\uC5B4" })
+                /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("option", { value: "ru", children: "\u{1F310} RU \u2014 \u0420\u0443\u0441\u0441\u043A\u0438\u0439" }),
+                /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("option", { value: "en", children: "\u{1F310} EN \u2014 English" }),
+                /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("option", { value: "es", children: "\u{1F310} ES \u2014 Espa\xF1ol" }),
+                /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("option", { value: "de", children: "\u{1F310} DE \u2014 Deutsch" }),
+                /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("option", { value: "fr", children: "\u{1F310} FR \u2014 Fran\xE7ais" }),
+                /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("option", { value: "zh", children: "\u{1F310} ZH \u2014 \u4E2D\u6587" }),
+                /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("option", { value: "ja", children: "\u{1F310} JA \u2014 \u65E5\u672C\u8A9E" }),
+                /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("option", { value: "pt", children: "\u{1F310} PT \u2014 Portugu\xEAs" }),
+                /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("option", { value: "ko", children: "\u{1F310} KO \u2014 \uD55C\uAD6D\uC5B4" })
               ]
             }
           )
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)", fontWeight: "bold", marginTop: "4px" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)", fontWeight: "bold", marginTop: "4px" }, children: [
             "\u{1F4C1} ",
             t("defaultNoteFolderLabel", language)
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
             "input",
             {
               type: "text",
@@ -27009,14 +28344,14 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
           )
         ] })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { background: "var(--background-primary)", padding: "8px 10px", borderRadius: "6px", border: "1px solid var(--background-modifier-border)" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("strong", { style: { fontSize: "11px" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { background: "var(--background-primary)", padding: "8px 10px", borderRadius: "6px", border: "1px solid var(--background-modifier-border)" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("strong", { style: { fontSize: "11px" }, children: [
             t("parameters", language),
             ": ",
             model
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
             "button",
             {
               onClick: () => {
@@ -27027,39 +28362,39 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
             }
           )
         ] }),
-        activeModelDetails ? /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { fontSize: "11px", color: "var(--text-muted)", display: "flex", flexDirection: "column", gap: "2px" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { children: [
+        activeModelDetails ? /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { fontSize: "11px", color: "var(--text-muted)", display: "flex", flexDirection: "column", gap: "2px" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { children: [
             "\u2022 ",
             t("contextLength", language),
             " ",
-            /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("strong", { children: [
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("strong", { children: [
               activeModelDetails.contextLength ? activeModelDetails.contextLength.toLocaleString() : "N/A",
               " ",
               t("tokens", language)
             ] })
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { children: [
             "\u2022 ",
             t("toolCallingSupport", language),
             " ",
             activeModelDetails.supportsTools ? "\u2705" : "\u274C"
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { children: [
             "\u2022 ",
             t("visionSupport", language),
             " ",
             activeModelDetails.supportsVision ? "\u2705" : "\u274C"
           ] })
-        ] }) : /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { style: { fontSize: "11px", color: "var(--text-muted)" }, children: verifyingModel ? t("checkingApi", language) : t("infoUnavailable", language) })
+        ] }) : /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { style: { fontSize: "11px", color: "var(--text-muted)" }, children: verifyingModel ? t("checkingApi", language) : t("infoUnavailable", language) })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { background: "var(--background-primary)", padding: "8px 10px", borderRadius: "6px", border: "1px solid var(--background-modifier-border)" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("label", { style: { display: "block", marginBottom: "6px", fontWeight: "bold", fontSize: "11px" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { background: "var(--background-primary)", padding: "8px 10px", borderRadius: "6px", border: "1px solid var(--background-modifier-border)" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("label", { style: { display: "block", marginBottom: "6px", fontWeight: "bold", fontSize: "11px" }, children: [
           t("modelsList", language),
           ":"
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { style: { display: "flex", flexDirection: "column", gap: "4px", marginBottom: "8px", maxHeight: "120px", overflowY: "auto" }, children: customModels.map((m) => /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "3px 6px", background: "var(--background-secondary)", borderRadius: "4px", fontSize: "11px" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { style: { fontFamily: "monospace", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }, children: m }),
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { style: { display: "flex", flexDirection: "column", gap: "4px", marginBottom: "8px", maxHeight: "120px", overflowY: "auto" }, children: customModels.map((m) => /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "3px 6px", background: "var(--background-secondary)", borderRadius: "4px", fontSize: "11px" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { style: { fontFamily: "monospace", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }, children: m }),
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
             "button",
             {
               onClick: (e) => handleDeleteModel(e, m),
@@ -27069,8 +28404,8 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
             }
           )
         ] }, m)) }),
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { display: "flex", gap: "4px" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { display: "flex", gap: "4px" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
             "input",
             {
               type: "text",
@@ -27080,7 +28415,7 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
               style: { flex: 1, padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-primary)", color: "var(--text-normal)" }
             }
           ),
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
             "button",
             {
               onClick: handleAddModel,
@@ -27090,124 +28425,162 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
           )
         ] })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { background: "var(--background-primary)", padding: "8px 10px", borderRadius: "6px", border: "1px solid var(--background-modifier-border)", display: "flex", flexDirection: "column", gap: "6px" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { style: { fontWeight: "bold", fontSize: "11px" }, children: "\u{1F4C2} Storage Paths & Limits" }),
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("chatsFolderLabel", language) }),
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("input", { type: "text", value: chatsFolder, onChange: (e) => setChatsFolder(e.target.value), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { background: "var(--background-primary)", padding: "8px 10px", borderRadius: "6px", border: "1px solid var(--background-modifier-border)", display: "flex", flexDirection: "column", gap: "6px" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { style: { fontWeight: "bold", fontSize: "11px" }, children: "\u{1F4C2} Storage Paths & Limits" }),
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("chatsFolderLabel", language) }),
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("input", { type: "text", value: chatsFolder, onChange: (e) => setChatsFolder(e.target.value), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("memoryFileLabel", language) }),
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("input", { type: "text", value: memoryFile, onChange: (e) => setMemoryFile(e.target.value), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("memoryFileLabel", language) }),
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("input", { type: "text", value: memoryFile, onChange: (e) => setMemoryFile(e.target.value), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("skillsFolderLabel", language) }),
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("input", { type: "text", value: skillsFolder, onChange: (e) => setSkillsFolder(e.target.value), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("skillsFolderLabel", language) }),
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("input", { type: "text", value: skillsFolder, onChange: (e) => setSkillsFolder(e.target.value), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { display: "flex", gap: "8px" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { flex: 1 }, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("maxAgentIterationsLabel", language) }),
-            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("input", { type: "number", value: maxAgentIterations, onChange: (e) => setMaxAgentIterations(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { display: "flex", gap: "8px" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { flex: 1 }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("maxAgentIterationsLabel", language) }),
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("input", { type: "number", value: maxAgentIterations, onChange: (e) => setMaxAgentIterations(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { flex: 1 }, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("maxPrefetchedNotesLabel", language) }),
-            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("input", { type: "number", value: maxPrefetchedNotes, onChange: (e) => setMaxPrefetchedNotes(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { flex: 1 }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("maxPrefetchedNotesLabel", language) }),
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("input", { type: "number", value: maxPrefetchedNotes, onChange: (e) => setMaxPrefetchedNotes(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
           ] })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { display: "flex", gap: "8px" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { flex: 1 }, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("prefetchSnippetLengthLabel", language) }),
-            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("input", { type: "number", value: prefetchSnippetLength, onChange: (e) => setPrefetchSnippetLength(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { display: "flex", gap: "8px" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { flex: 1 }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("prefetchSnippetLengthLabel", language) }),
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("input", { type: "number", value: prefetchSnippetLength, onChange: (e) => setPrefetchSnippetLength(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { flex: 1 }, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("ragResultLimitLabel", language) }),
-            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("input", { type: "number", value: ragResultLimit, onChange: (e) => setRagResultLimit(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { flex: 1 }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("ragResultLimitLabel", language) }),
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("input", { type: "number", value: ragResultLimit, onChange: (e) => setRagResultLimit(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
           ] })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("label", { style: { fontSize: "11px", display: "flex", alignItems: "center", gap: "6px", color: "var(--text-normal)", cursor: "pointer", marginTop: "4px" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("input", { type: "checkbox", checked: confirmObsidianCommands, onChange: (e) => setConfirmObsidianCommands(e.target.checked) }),
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { children: t("confirmObsidianCommandsLabel", language) })
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { children: /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("label", { style: { fontSize: "11px", display: "flex", alignItems: "center", gap: "6px", color: "var(--text-normal)", cursor: "pointer", marginTop: "4px" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("input", { type: "checkbox", checked: confirmObsidianCommands, onChange: (e) => setConfirmObsidianCommands(e.target.checked) }),
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { children: t("confirmObsidianCommandsLabel", language) })
         ] }) })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { background: "var(--background-primary)", padding: "8px 10px", borderRadius: "6px", border: "1px solid var(--background-modifier-border)", display: "flex", flexDirection: "column", gap: "6px" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { style: { fontWeight: "bold", fontSize: "11px" }, children: "\u{1F9E0} Temporal Intelligence & Smart Routing" }),
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("label", { style: { fontSize: "11px", display: "flex", alignItems: "center", gap: "6px", color: "var(--text-normal)", cursor: "pointer" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("input", { type: "checkbox", checked: enableTemporalAwareness, onChange: (e) => setEnableTemporalAwareness(e.target.checked) }),
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { children: t("enableTemporalAwarenessLabel", language) })
-        ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("label", { style: { fontSize: "11px", display: "flex", alignItems: "center", gap: "6px", color: "var(--text-normal)", cursor: "pointer" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("input", { type: "checkbox", checked: enableAdaptivePrefetch, onChange: (e) => setEnableAdaptivePrefetch(e.target.checked) }),
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { children: t("enableAdaptivePrefetchLabel", language) })
-        ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("label", { style: { fontSize: "11px", display: "flex", alignItems: "center", gap: "6px", color: "var(--text-normal)", cursor: "pointer" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("input", { type: "checkbox", checked: enableFreshnessSuggestions, onChange: (e) => setEnableFreshnessSuggestions(e.target.checked) }),
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { children: t("enableFreshnessSuggestionsLabel", language) })
-        ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("label", { style: { fontSize: "11px", display: "flex", alignItems: "center", gap: "6px", color: "var(--text-normal)", cursor: "pointer" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("input", { type: "checkbox", checked: enableSmartToolFiltering, onChange: (e) => setEnableSmartToolFiltering(e.target.checked) }),
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { children: t("enableSmartToolFilteringLabel", language) })
-        ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { display: "flex", gap: "8px", marginTop: "4px" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { flex: 1 }, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { background: "var(--background-primary)", padding: "8px 10px", borderRadius: "6px", border: "1px solid var(--background-modifier-border)", display: "flex", flexDirection: "column", gap: "6px" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { style: { fontWeight: "bold", fontSize: "11px" }, children: "\u{1F9E0} Temporal Intelligence & Smart Routing" }),
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Tooltip, { titleKey: "enableTemporalAwarenessLabel", descriptionKey: "enableTemporalAwarenessDesc", language, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("label", { style: { fontSize: "11px", display: "flex", alignItems: "center", gap: "6px", color: "var(--text-normal)", cursor: "pointer" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("input", { type: "checkbox", checked: enableTemporalAwareness, onChange: (e) => setEnableTemporalAwareness(e.target.checked) }),
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { children: t("enableTemporalAwarenessLabel", language) })
+        ] }) }),
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Tooltip, { titleKey: "enableAdaptivePrefetchLabel", descriptionKey: "enableAdaptivePrefetchDesc", language, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("label", { style: { fontSize: "11px", display: "flex", alignItems: "center", gap: "6px", color: "var(--text-normal)", cursor: "pointer" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("input", { type: "checkbox", checked: enableAdaptivePrefetch, onChange: (e) => setEnableAdaptivePrefetch(e.target.checked) }),
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { children: t("enableAdaptivePrefetchLabel", language) })
+        ] }) }),
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Tooltip, { titleKey: "enableFreshnessSuggestionsLabel", descriptionKey: "enableFreshnessSuggestionsDesc", language, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("label", { style: { fontSize: "11px", display: "flex", alignItems: "center", gap: "6px", color: "var(--text-normal)", cursor: "pointer" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("input", { type: "checkbox", checked: enableFreshnessSuggestions, onChange: (e) => setEnableFreshnessSuggestions(e.target.checked) }),
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { children: t("enableFreshnessSuggestionsLabel", language) })
+        ] }) }),
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Tooltip, { titleKey: "enableSmartToolFilteringLabel", descriptionKey: "enableSmartToolFilteringDesc", language, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("label", { style: { fontSize: "11px", display: "flex", alignItems: "center", gap: "6px", color: "var(--text-normal)", cursor: "pointer" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("input", { type: "checkbox", checked: enableSmartToolFiltering, onChange: (e) => setEnableSmartToolFiltering(e.target.checked) }),
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { children: t("enableSmartToolFilteringLabel", language) })
+        ] }) }),
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Tooltip, { titleKey: "enableSemanticRagLabel", descriptionKey: "enableSemanticRagDesc", language, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("label", { style: { fontSize: "11px", display: "flex", alignItems: "center", gap: "6px", color: "var(--text-normal)", cursor: "pointer" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("input", { type: "checkbox", checked: enableSemanticRag, onChange: (e) => setEnableSemanticRag(e.target.checked) }),
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { children: t("enableSemanticRagLabel", language) })
+        ] }) }),
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { display: "flex", gap: "8px", marginTop: "4px" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { flex: 1 }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Tooltip, { titleKey: "intentStaleQueryWeightLabel", descriptionKey: "intentStaleQueryWeightDesc", language, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: [
               t("intentStaleQueryWeightLabel", language),
               " (",
               intentStaleQueryWeight,
               ")"
-            ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("input", { type: "number", step: "0.1", value: intentStaleQueryWeight, onChange: (e) => setIntentStaleQueryWeight(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
+            ] }) }),
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("input", { type: "number", step: "0.1", value: intentStaleQueryWeight, onChange: (e) => setIntentStaleQueryWeight(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { flex: 1 }, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { flex: 1 }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Tooltip, { titleKey: "intentFreshnessWeightLabel", descriptionKey: "intentFreshnessWeightDesc", language, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: [
               t("intentFreshnessWeightLabel", language),
               " (",
               intentFreshnessWeight,
               ")"
-            ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("input", { type: "number", step: "0.1", value: intentFreshnessWeight, onChange: (e) => setIntentFreshnessWeight(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
+            ] }) }),
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("input", { type: "number", step: "0.1", value: intentFreshnessWeight, onChange: (e) => setIntentFreshnessWeight(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
           ] })
         ] })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { background: "var(--background-primary)", padding: "8px 10px", borderRadius: "6px", border: "1px solid var(--background-modifier-border)", display: "flex", flexDirection: "column", gap: "6px" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { style: { fontWeight: "bold", fontSize: "11px" }, children: "\u{1F3AF} Intent Router Scoring Weights" }),
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { display: "flex", gap: "8px" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { flex: 1 }, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { background: "var(--background-primary)", padding: "8px 10px", borderRadius: "6px", border: "1px solid var(--background-modifier-border)", display: "flex", flexDirection: "column", gap: "6px" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { style: { fontWeight: "bold", fontSize: "11px" }, children: "\u{1F3AF} Intent Router Scoring Weights" }),
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { display: "flex", gap: "8px" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { flex: 1 }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Tooltip, { titleKey: "intentRoutingThresholdLabel", descriptionKey: "intentRoutingThresholdDesc", language, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: [
               "Threshold (",
               intentRoutingThreshold,
               ")"
-            ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("input", { type: "number", step: "0.1", value: intentRoutingThreshold, onChange: (e) => setIntentRoutingThreshold(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
+            ] }) }),
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("input", { type: "number", step: "0.1", value: intentRoutingThreshold, onChange: (e) => setIntentRoutingThreshold(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { flex: 1 }, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { flex: 1 }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Tooltip, { titleKey: "intentCreationWeightLabel", descriptionKey: "intentCreationWeightDesc", language, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: [
               "Creation Wt (",
               intentCreationWeight,
               ")"
-            ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("input", { type: "number", step: "0.1", value: intentCreationWeight, onChange: (e) => setIntentCreationWeight(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
+            ] }) }),
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("input", { type: "number", step: "0.1", value: intentCreationWeight, onChange: (e) => setIntentCreationWeight(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
           ] })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { display: "flex", gap: "8px" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { flex: 1 }, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { display: "flex", gap: "8px" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { flex: 1 }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Tooltip, { titleKey: "intentDeletionWeightLabel", descriptionKey: "intentDeletionWeightDesc", language, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: [
               "Deletion Wt (",
               intentDeletionWeight,
               ")"
-            ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("input", { type: "number", step: "0.1", value: intentDeletionWeight, onChange: (e) => setIntentDeletionWeight(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
+            ] }) }),
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("input", { type: "number", step: "0.1", value: intentDeletionWeight, onChange: (e) => setIntentDeletionWeight(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { flex: 1 }, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { flex: 1 }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Tooltip, { titleKey: "intentQuestionWeightLabel", descriptionKey: "intentQuestionWeightDesc", language, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: [
               "Question Wt (",
               intentQuestionWeight,
               ")"
-            ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("input", { type: "number", step: "0.1", value: intentQuestionWeight, onChange: (e) => setIntentQuestionWeight(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
+            ] }) }),
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("input", { type: "number", step: "0.1", value: intentQuestionWeight, onChange: (e) => setIntentQuestionWeight(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
           ] })
         ] })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { display: "flex", gap: "8px", marginTop: "4px" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(
+          "button",
+          {
+            onClick: handleExportSettings,
+            style: { flex: 1, padding: "6px", fontSize: "11px", background: "var(--background-secondary)", border: "1px solid var(--background-modifier-border)", borderRadius: "4px", cursor: "pointer", color: "var(--text-normal)" },
+            children: [
+              "\u{1F4E4} ",
+              t("exportSettings", language)
+            ]
+          }
+        ),
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(
+          "button",
+          {
+            onClick: () => fileInputRef.current?.click(),
+            style: { flex: 1, padding: "6px", fontSize: "11px", background: "var(--background-secondary)", border: "1px solid var(--background-modifier-border)", borderRadius: "4px", cursor: "pointer", color: "var(--text-normal)" },
+            children: [
+              "\u{1F4E5} ",
+              t("importSettings", language)
+            ]
+          }
+        ),
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
+          "input",
+          {
+            type: "file",
+            ref: fileInputRef,
+            accept: ".json",
+            style: { display: "none" },
+            onChange: handleImportSettings
+          }
+        )
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
         "button",
         {
           onClick: () => {
@@ -27218,7 +28591,20 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
         }
       )
     ] }),
-    showFreshnessSuggestion && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "nei-suggestion-banner", style: {
+    showWelcome && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
+      WelcomeScreen,
+      {
+        language,
+        onClose: () => {
+          try {
+            localStorage.setItem("nei_welcome_seen", "true");
+          } catch {
+          }
+          setShowWelcome(false);
+        }
+      }
+    ),
+    showFreshnessSuggestion && /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "nei-suggestion-banner", style: {
       background: "var(--background-secondary-alt)",
       border: "1px solid var(--interactive-accent)",
       borderRadius: "6px",
@@ -27229,37 +28615,37 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
       justifyContent: "space-between",
       gap: "8px"
     }, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("span", { style: { fontSize: "11px" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("span", { style: { fontSize: "11px" }, children: [
         "\u26A1 ",
         showFreshnessSuggestion.message
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { display: "flex", gap: "6px" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("button", { onClick: showFreshnessSuggestion.onEnableWeb, style: { fontSize: "11px", padding: "3px 8px", background: "var(--interactive-accent)", color: "var(--text-on-accent)", border: "none", borderRadius: "4px", cursor: "pointer", fontWeight: "bold" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { display: "flex", gap: "6px" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("button", { onClick: showFreshnessSuggestion.onEnableWeb, style: { fontSize: "11px", padding: "3px 8px", background: "var(--interactive-accent)", color: "var(--text-on-accent)", border: "none", borderRadius: "4px", cursor: "pointer", fontWeight: "bold" }, children: [
           "\u{1F310} ",
           t("agentMode", language)
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("button", { onClick: showFreshnessSuggestion.onDismiss, style: { fontSize: "11px", padding: "3px 8px", background: "transparent", border: "1px solid var(--background-modifier-border)", color: "var(--text-muted)", borderRadius: "4px", cursor: "pointer" }, children: "\u2715" })
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("button", { onClick: showFreshnessSuggestion.onDismiss, style: { fontSize: "11px", padding: "3px 8px", background: "transparent", border: "1px solid var(--background-modifier-border)", color: "var(--text-muted)", borderRadius: "4px", cursor: "pointer" }, children: "\u2715" })
       ] })
     ] }),
-    /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "nei-chat-messages-container", children: [
-      currentSession.messages.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { textAlign: "center", color: "var(--text-muted)", marginTop: "24px", padding: "0 12px", fontSize: "13px" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { style: { fontSize: "15px", fontWeight: "bold", marginBottom: "8px", color: "var(--text-normal)" }, children: t("welcomeGreeting", language) }),
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { style: { fontSize: "12px", marginBottom: "16px", opacity: 0.85 }, children: t("welcomeSubText", language) }),
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { textAlign: "left", display: "inline-block", fontSize: "12px", lineHeight: "1.8", background: "var(--background-secondary)", padding: "12px 16px", borderRadius: "10px", border: "1px solid var(--background-modifier-border)", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "nei-chat-messages-container", children: [
+      currentSession.messages.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { textAlign: "center", color: "var(--text-muted)", marginTop: "24px", padding: "0 12px", fontSize: "13px" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { style: { fontSize: "15px", fontWeight: "bold", marginBottom: "8px", color: "var(--text-normal)" }, children: t("welcomeGreeting", language) }),
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { style: { fontSize: "12px", marginBottom: "16px", opacity: 0.85 }, children: t("welcomeSubText", language) }),
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { textAlign: "left", display: "inline-block", fontSize: "12px", lineHeight: "1.8", background: "var(--background-secondary)", padding: "12px 16px", borderRadius: "10px", border: "1px solid var(--background-modifier-border)", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }, children: [
           "\u2022 ",
           t("featureNotes", language),
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("br", {}),
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("br", {}),
           "\u2022 ",
           t("featureRouting", language),
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("br", {}),
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("br", {}),
           "\u2022 ",
           t("featureVision", language),
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("br", {}),
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("br", {}),
           "\u2022 ",
           t("featureTokens", language)
         ] })
       ] }),
-      currentSession.messages.map((msg, idx) => /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+      currentSession.messages.map((msg, idx) => /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
         "div",
         {
           className: "nei-chat-bubble",
@@ -27276,8 +28662,8 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
           },
           children: msg.role === "user" ? editingMsgIdx === idx ? (
             /* Inline Edit Form for User Message */
-            /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { display: "flex", flexDirection: "column", gap: "6px", minWidth: "220px" }, children: [
-              /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { display: "flex", flexDirection: "column", gap: "6px", minWidth: "220px" }, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
                 "textarea",
                 {
                   value: editingText,
@@ -27285,8 +28671,8 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
                   style: { width: "100%", minHeight: "60px", padding: "6px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-primary)", color: "var(--text-normal)", fontSize: "12px" }
                 }
               ),
-              /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { display: "flex", gap: "6px", justifyContent: "flex-end" }, children: [
-                /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+              /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { display: "flex", gap: "6px", justifyContent: "flex-end" }, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
                   "button",
                   {
                     onClick: () => setEditingMsgIdx(null),
@@ -27294,7 +28680,7 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
                     children: t("cancelBtn", language)
                   }
                 ),
-                /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+                /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
                   "button",
                   {
                     onClick: () => handleSaveEdit(idx),
@@ -27306,11 +28692,11 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
             ] })
           ) : (
             /* Standard User Message Display */
-            /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { children: [
-              msg.images && msg.images.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { style: { display: "flex", gap: "4px", marginBottom: "6px", flexWrap: "wrap" }, children: msg.images.map((img, i) => /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("img", { src: img, style: { width: "60px", height: "60px", borderRadius: "4px", objectFit: "cover" } }, i)) }),
-              /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { style: { whiteSpace: "pre-wrap" }, children: msg.content }),
-              /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { display: "flex", gap: "6px", marginTop: "6px", justifyContent: "flex-end", fontSize: "11px", flexWrap: "wrap", maxWidth: "100%", opacity: 0.9 }, children: [
-                /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { children: [
+              msg.images && msg.images.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { style: { display: "flex", gap: "4px", marginBottom: "6px", flexWrap: "wrap" }, children: msg.images.map((img, i) => /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("img", { src: img, style: { width: "60px", height: "60px", borderRadius: "4px", objectFit: "cover" } }, i)) }),
+              /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { style: { whiteSpace: "pre-wrap" }, children: msg.content }),
+              /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { display: "flex", gap: "6px", marginTop: "6px", justifyContent: "flex-end", fontSize: "11px", flexWrap: "wrap", maxWidth: "100%", opacity: 0.9 }, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
                   "button",
                   {
                     onClick: () => {
@@ -27321,7 +28707,7 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
                     children: t("copyText", language)
                   }
                 ),
-                /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+                /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
                   "button",
                   {
                     onClick: () => handleStartEdit(idx, msg.content || ""),
@@ -27330,7 +28716,7 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
                     children: t("editText", language)
                   }
                 ),
-                /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+                /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
                   "button",
                   {
                     onClick: () => handleRetryUserMessage(idx),
@@ -27344,17 +28730,17 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
             ] })
           ) : (
             /* Assistant Message Display */
-            /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { minWidth: 0 }, children: [
-              /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(ObsidianMarkdown, { markdown: msg.content || "", app }),
-              (msg.promptTokens !== void 0 || msg.completionTokens !== void 0) && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { display: "flex", gap: "6px", marginTop: "6px", fontSize: "10px", color: "var(--text-muted)", borderTop: "1px solid var(--background-modifier-border)", paddingTop: "4px", flexWrap: "wrap", maxWidth: "100%" }, children: [
-                /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("span", { style: { background: "var(--background-primary)", padding: "2px 6px", borderRadius: "4px" }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { minWidth: 0 }, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(ObsidianMarkdown, { markdown: msg.content || "", app }),
+              (msg.promptTokens !== void 0 || msg.completionTokens !== void 0) && /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { display: "flex", gap: "6px", marginTop: "6px", fontSize: "10px", color: "var(--text-muted)", borderTop: "1px solid var(--background-modifier-border)", paddingTop: "4px", flexWrap: "wrap", maxWidth: "100%" }, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("span", { style: { background: "var(--background-primary)", padding: "2px 6px", borderRadius: "4px" }, children: [
                   t("inputTokens", language),
                   " ",
                   msg.promptTokens || 0,
                   " ",
                   t("tokens", language)
                 ] }),
-                /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("span", { style: { background: "var(--background-primary)", padding: "2px 6px", borderRadius: "4px" }, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("span", { style: { background: "var(--background-primary)", padding: "2px 6px", borderRadius: "4px" }, children: [
                   t("outputTokens", language),
                   " ",
                   msg.completionTokens || 0,
@@ -27362,8 +28748,8 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
                   t("tokens", language)
                 ] })
               ] }),
-              /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { display: "flex", gap: "6px", marginTop: "8px", alignItems: "center", flexWrap: "wrap", fontSize: "11px", maxWidth: "100%" }, children: [
-                /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+              /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { display: "flex", gap: "6px", marginTop: "8px", alignItems: "center", flexWrap: "wrap", fontSize: "11px", maxWidth: "100%" }, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
                   "button",
                   {
                     onClick: () => {
@@ -27373,7 +28759,7 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
                     children: t("copyText", language)
                   }
                 ),
-                /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+                /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
                   "button",
                   {
                     onClick: () => {
@@ -27384,7 +28770,7 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
                     children: "\u{1F33F} Branch"
                   }
                 ),
-                msg.content && msg.content.length > 50 && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+                msg.content && msg.content.length > 50 && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
                   "button",
                   {
                     onClick: () => {
@@ -27400,32 +28786,40 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
         },
         idx
       )),
-      activeSteps.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { background: "var(--background-secondary-alt)", border: "1px solid var(--background-modifier-border)", borderRadius: "8px", padding: "8px 12px", fontSize: "11px", display: "flex", flexDirection: "column", gap: "4px" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { fontWeight: "bold", color: "var(--text-muted)", marginBottom: "2px" }, children: [
+      activeSteps.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { background: "var(--background-secondary-alt)", border: "1px solid var(--background-modifier-border)", borderRadius: "8px", padding: "8px 12px", fontSize: "11px", display: "flex", flexDirection: "column", gap: "4px" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { fontWeight: "bold", color: "var(--text-muted)", marginBottom: "2px" }, children: [
           "\u26A1 ",
           t("agentReasoningLog", language)
         ] }),
-        activeSteps.map((step) => /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { display: "flex", alignItems: "flex-start", gap: "6px", opacity: step.status === "running" ? 1 : 0.8 }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { children: step.status === "running" ? "\u23F3" : step.status === "completed" ? "\u2705" : "\u274C" }),
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { flex: 1 }, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("strong", { style: { color: "var(--text-normal)" }, children: step.title }),
-            step.detail && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { style: { color: "var(--text-muted)", fontSize: "10px", marginTop: "2px", fontFamily: "monospace", whiteSpace: "pre-wrap", maxHeight: "80px", overflowY: "auto" }, children: step.detail })
-          ] })
+        activeSteps.map((step) => /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("details", { style: { marginBottom: "4px" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("summary", { style: { display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", opacity: step.status === "running" ? 1 : 0.85 }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { children: step.status === "running" ? "\u23F3" : step.status === "completed" ? "\u2705" : "\u274C" }),
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("strong", { style: { color: "var(--text-normal)" }, children: step.title })
+          ] }),
+          step.detail && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { style: { color: "var(--text-muted)", fontSize: "10px", marginTop: "2px", fontFamily: "monospace", whiteSpace: "pre-wrap", maxHeight: "120px", overflowY: "auto", padding: "4px 6px", background: "var(--background-primary)", borderRadius: "4px" }, children: step.detail }),
+          step.meta && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { style: { marginTop: "2px", fontSize: "9px", opacity: 0.75, fontFamily: "monospace" }, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("code", { children: JSON.stringify(step.meta) }) })
         ] }, step.id))
       ] }),
-      pendingConfirmation && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { background: "var(--background-secondary)", border: "2px solid var(--interactive-accent)", borderRadius: "8px", padding: "12px", marginTop: "6px", fontSize: "12px" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { fontWeight: "bold", marginBottom: "6px", color: "var(--text-normal)" }, children: [
+      loading && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { style: { display: "flex", flexDirection: "column", gap: "4px", alignSelf: "flex-start", maxWidth: "92%", padding: "10px 14px", borderRadius: "12px", background: "var(--background-secondary)", fontSize: "13px" }, children: streamingContent ? /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(ObsidianMarkdown, { markdown: streamingContent, app }),
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { className: "nei-streaming-cursor", style: { color: "var(--interactive-accent)", fontWeight: "bold" }, children: " \u258A" })
+      ] }) : /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: "8px", color: "var(--text-muted)" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { className: "nei-spinner", children: "\u27F3" }),
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { children: t("agentRunning", language) })
+      ] }) }),
+      pendingConfirmation && /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { background: "var(--background-secondary)", border: "2px solid var(--interactive-accent)", borderRadius: "8px", padding: "12px", marginTop: "6px", fontSize: "12px" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { fontWeight: "bold", marginBottom: "6px", color: "var(--text-normal)" }, children: [
           "\u26A0\uFE0F ",
           t("actionConfirmation", language)
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { marginBottom: "4px" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { marginBottom: "4px" }, children: [
           t("agentWantsExecute", language),
           ": ",
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("code", { children: pendingConfirmation.toolName })
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("code", { children: pendingConfirmation.toolName })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { style: { background: "var(--background-primary)", padding: "6px", borderRadius: "4px", fontFamily: "monospace", fontSize: "11px", marginBottom: "10px", whiteSpace: "pre-wrap", maxHeight: "100px", overflowY: "auto" }, children: pendingConfirmation.argsStr }),
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { display: "flex", gap: "8px", justifyContent: "flex-end" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { style: { background: "var(--background-primary)", padding: "6px", borderRadius: "4px", fontFamily: "monospace", fontSize: "11px", marginBottom: "10px", whiteSpace: "pre-wrap", maxHeight: "100px", overflowY: "auto" }, children: pendingConfirmation.argsStr }),
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { display: "flex", gap: "8px", justifyContent: "flex-end" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
             "button",
             {
               onClick: () => {
@@ -27436,7 +28830,7 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
               children: t("cancelBtn", language)
             }
           ),
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
             "button",
             {
               onClick: () => {
@@ -27450,9 +28844,9 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
         ] })
       ] })
     ] }),
-    attachedImages.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { style: { flexShrink: 0, display: "flex", gap: "6px", padding: "6px", background: "var(--background-secondary)", borderRadius: "6px", marginBottom: "6px", flexWrap: "wrap" }, children: attachedImages.map((img, idx) => /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { position: "relative" }, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("img", { src: img, style: { width: "48px", height: "48px", objectFit: "cover", borderRadius: "4px" } }),
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+    attachedImages.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { style: { flexShrink: 0, display: "flex", gap: "6px", padding: "6px", background: "var(--background-secondary)", borderRadius: "6px", marginBottom: "6px", flexWrap: "wrap" }, children: attachedImages.map((img, idx) => /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { position: "relative" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("img", { src: img, style: { width: "48px", height: "48px", objectFit: "cover", borderRadius: "4px" } }),
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
         "button",
         {
           onClick: () => setAttachedImages((prev) => prev.filter((_, i) => i !== idx)),
@@ -27461,15 +28855,15 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
         }
       )
     ] }, idx)) }),
-    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "nei-chat-input-container", children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { style: { display: "flex", gap: "6px", alignItems: "flex-end" }, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(
+    /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "nei-chat-input-container", children: /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { style: { display: "flex", gap: "6px", alignItems: "flex-end" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(
         "label",
         {
           title: t("attachTooltip", language),
           style: { padding: "8px 10px", background: "var(--background-secondary)", border: "1px solid var(--background-modifier-border)", borderRadius: "6px", cursor: "pointer", fontSize: "14px", marginBottom: "2px" },
           children: [
             "\u{1F4CE}",
-            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+            /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
               "input",
               {
                 type: "file",
@@ -27482,7 +28876,7 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
           ]
         }
       ),
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
         "textarea",
         {
           value: input,
@@ -27518,7 +28912,7 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
           }
         }
       ),
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
         "button",
         {
           onClick: handleSendMessage,
@@ -27530,11 +28924,11 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
     ] }) })
   ] });
 };
-var ChatPanel = (props) => /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(ErrorBoundary, { children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(ChatPanelInner, { ...props }) });
+var ChatPanel = (props) => /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(ErrorBoundary, { children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(ChatPanelInner, { ...props }) });
 
 // src/views/ChatView.ts
 var VIEW_TYPE_NEI_CHAT = "nei-chat-view";
-var NeiChatView = class extends import_obsidian10.ItemView {
+var NeiChatView = class extends import_obsidian9.ItemView {
   constructor(leaf, plugin) {
     super(leaf);
     this.root = null;
@@ -27556,7 +28950,7 @@ var NeiChatView = class extends import_obsidian10.ItemView {
     const rootEl = container.createDiv({ cls: "nei-chat-view-root" });
     this.root = ReactDOM.createRoot(rootEl);
     this.root.render(
-      React3.createElement(ChatPanel, {
+      React5.createElement(ChatPanel, {
         app: this.app,
         viewLeaf: this.leaf,
         settings: this.plugin.settings,
@@ -27584,672 +28978,11 @@ var NeiChatView = class extends import_obsidian10.ItemView {
   }
 };
 
-// src/services/tools/vaultTools.ts
-var import_obsidian12 = require("obsidian");
-
-// src/utils/pathUtils.ts
-var import_obsidian11 = require("obsidian");
-function getNoteSavePath(settings, requestedPath) {
-  const defaultFolder = settings.defaultNoteFolder.trim();
-  if (defaultFolder && !requestedPath.startsWith(defaultFolder + "/")) {
-    return (0, import_obsidian11.normalizePath)(`${defaultFolder}/${requestedPath}`);
-  }
-  return (0, import_obsidian11.normalizePath)(requestedPath);
-}
-
-// src/services/tools/vaultTools.ts
-var vaultToolDefinitions = [
-  {
-    type: "function",
-    function: {
-      name: "read_note",
-      description: "\u041F\u0440\u043E\u0447\u0438\u0442\u0430\u0442\u044C \u0441\u043E\u0434\u0435\u0440\u0436\u0438\u043C\u043E\u0435 \u0437\u0430\u043C\u0435\u0442\u043A\u0438 Markdown \u043F\u043E \u0435\u0451 \u043E\u0442\u043D\u043E\u0441\u0438\u0442\u0435\u043B\u044C\u043D\u043E\u043C\u0443 \u043F\u0443\u0442\u0438 \u0438\u043B\u0438 \u0438\u043C\u0435\u043D\u0438.",
-      parameters: {
-        type: "object",
-        properties: {
-          path: {
-            type: "string",
-            description: "\u041F\u0443\u0442\u044C \u043A \u0444\u0430\u0439\u043B\u0443 \u0438\u043B\u0438 \u0438\u043C\u044F \u0437\u0430\u043C\u0435\u0442\u043A\u0438 (\u043D\u0430\u043F\u0440\u0438\u043C\u0435\u0440, 'folder/note.md' \u0438\u043B\u0438 'note.md')"
-          }
-        },
-        required: ["path"]
-      }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "read_notes_batch",
-      description: "\u041F\u0430\u043A\u0435\u0442\u043D\u043E\u0435 \u0447\u0442\u0435\u043D\u0438\u0435 \u0441\u0440\u0430\u0437\u0443 \u043D\u0435\u0441\u043A\u043E\u043B\u044C\u043A\u0438\u0445 \u0437\u0430\u043C\u0435\u0442\u043E\u043A \u0412\u0430\u0443\u043B\u0442\u0430 \u0437\u0430 \u043E\u0434\u0438\u043D \u0432\u044B\u0437\u043E\u0432.",
-      parameters: {
-        type: "object",
-        properties: {
-          paths: {
-            type: "string",
-            description: "\u041C\u0430\u0441\u0441\u0438\u0432 \u043F\u0443\u0442\u0435\u0439 \u043A \u0437\u0430\u043C\u0435\u0442\u043A\u0430\u043C"
-          }
-        },
-        required: ["paths"]
-      }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "get_folder_notes",
-      description: "\u041F\u0430\u043A\u0435\u0442\u043D\u043E \u043F\u0440\u043E\u0447\u0438\u0442\u0430\u0442\u044C \u0438 \u043F\u0440\u043E\u0430\u043D\u0430\u043B\u0438\u0437\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u0412\u0421\u0415 \u0437\u0430\u043C\u0435\u0442\u043A\u0438 \u0432 \u0443\u043A\u0430\u0437\u0430\u043D\u043D\u043E\u0439 \u043F\u0430\u043F\u043A\u0435. \u041E\u0442\u043B\u0438\u0447\u043D\u044B\u0439 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442 \u0434\u043B\u044F \u043E\u0431\u0437\u043E\u0440\u0430 \u0441\u0442\u0440\u0443\u043A\u0442\u0443\u0440 \u043F\u0430\u043F\u043E\u043A.",
-      parameters: {
-        type: "object",
-        properties: {
-          folderPath: {
-            type: "string",
-            description: "\u041E\u0442\u043D\u043E\u0441\u0438\u0442\u0435\u043B\u044C\u043D\u044B\u0439 \u043F\u0443\u0442\u044C \u043A \u043F\u0430\u043F\u043A\u0435 \u0432 \u0432\u0430\u0443\u043B\u0442\u0435 (\u043D\u0430\u043F\u0440\u0438\u043C\u0435\u0440, 'Folder/SubFolder' \u0438\u043B\u0438 \u043F\u0443\u0441\u0442\u0430\u044F \u0441\u0442\u0440\u043E\u043A\u0430 \u0434\u043B\u044F \u043A\u043E\u0440\u043D\u044F)"
-          },
-          includeContent: {
-            type: "string",
-            description: "\u0412\u043A\u043B\u044E\u0447\u0430\u0442\u044C \u043B\u0438 \u043F\u043E\u043B\u043D\u043E\u0435 \u0441\u043E\u0434\u0435\u0440\u0436\u0438\u043C\u043E\u0435 \u043A\u0430\u0436\u0434\u043E\u0439 \u0437\u0430\u043C\u0435\u0442\u043A\u0438 (\u043F\u043E \u0443\u043C\u043E\u043B\u0447\u0430\u043D\u0438\u044E true)"
-          }
-        },
-        required: ["folderPath"]
-      }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "create_note",
-      description: "\u0421\u043E\u0437\u0434\u0430\u0442\u044C \u043D\u043E\u0432\u0443\u044E \u0437\u0430\u043C\u0435\u0442\u043A\u0443 Markdown \u0432 \u0432\u0430\u0443\u043B\u0442\u0435 \u0441 \u0441\u043E\u0434\u0435\u0440\u0436\u0438\u043C\u044B\u043C.",
-      parameters: {
-        type: "object",
-        properties: {
-          path: {
-            type: "string",
-            description: "\u041F\u0443\u0442\u044C \u043A \u0441\u043E\u0437\u0434\u0430\u0432\u0430\u0435\u043C\u043E\u0439 \u0437\u0430\u043C\u0435\u0442\u043A\u0435 (\u043D\u0430\u043F\u0440\u0438\u043C\u0435\u0440, 'Folder/NewNote.md')"
-          },
-          content: {
-            type: "string",
-            description: "\u0422\u0435\u043A\u0441\u0442 \u0437\u0430\u043C\u0435\u0442\u043A\u0438 \u0432 \u0444\u043E\u0440\u043C\u0430\u0442\u0435 Markdown"
-          }
-        },
-        required: ["path", "content"]
-      }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "edit_note",
-      description: "\u0420\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044E\u0449\u0443\u044E \u0437\u0430\u043C\u0435\u0442\u043A\u0443 (\u0437\u0430\u043C\u0435\u043D\u0438\u0442\u044C \u0432\u0441\u0451 \u0441\u043E\u0434\u0435\u0440\u0436\u0438\u043C\u043E\u0435 \u0438\u043B\u0438 \u043A\u043E\u043D\u043A\u0440\u0435\u0442\u043D\u0443\u044E \u0444\u0440\u0430\u0433\u043C\u0435\u043D\u0442\u043D\u0443\u044E \u0441\u0442\u0440\u043E\u043A\u0443).",
-      parameters: {
-        type: "object",
-        properties: {
-          path: {
-            type: "string",
-            description: "\u041F\u0443\u0442\u044C \u043A \u0437\u0430\u043C\u0435\u0442\u043A\u0435 \u0434\u043B\u044F \u0440\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u044F"
-          },
-          newContent: {
-            type: "string",
-            description: "\u041D\u043E\u0432\u044B\u0439 \u0442\u0435\u043A\u0441\u0442 \u0434\u043B\u044F \u0432\u0441\u0442\u0430\u0432\u043A\u0438"
-          },
-          targetText: {
-            type: "string",
-            description: "\u041D\u0435\u043E\u0431\u044F\u0437\u0430\u0442\u0435\u043B\u044C\u043D\u043E. \u0415\u0441\u043B\u0438 \u0443\u043A\u0430\u0437\u0430\u043D\u043E, \u0431\u0443\u0434\u0435\u0442 \u0437\u0430\u043C\u0435\u043D\u0435\u043D \u0442\u043E\u043B\u044C\u043A\u043E \u044D\u0442\u043E\u0442 \u0442\u043E\u0447\u043D\u044B\u0439 \u0444\u0440\u0430\u0433\u043C\u0435\u043D\u0442 \u0442\u0435\u043A\u0441\u0442\u0430 \u0432 \u0437\u0430\u043C\u0435\u0442\u043A\u0435."
-          }
-        },
-        required: ["path", "newContent"]
-      }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "rename_note",
-      description: "\u041F\u0435\u0440\u0435\u0438\u043C\u0435\u043D\u043E\u0432\u0430\u0442\u044C \u0438\u043B\u0438 \u043F\u0435\u0440\u0435\u043C\u0435\u0441\u0442\u0438\u0442\u044C \u0437\u0430\u043C\u0435\u0442\u043A\u0443 \u0432 \u043D\u043E\u0432\u0443\u044E \u043F\u0430\u043F\u043A\u0443.",
-      parameters: {
-        type: "object",
-        properties: {
-          oldPath: {
-            type: "string",
-            description: "\u0422\u0435\u043A\u0443\u0449\u0438\u0439 \u043F\u0443\u0442\u044C \u043A \u0437\u0430\u043C\u0435\u0442\u043A\u0435"
-          },
-          newPath: {
-            type: "string",
-            description: "\u041D\u043E\u0432\u044B\u0439 \u043F\u0443\u0442\u044C/\u0438\u043C\u044F \u0434\u043B\u044F \u0437\u0430\u043C\u0435\u0442\u043A\u0438"
-          }
-        },
-        required: ["oldPath", "newPath"]
-      }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "delete_note",
-      description: "\u041F\u043E\u043C\u0435\u0441\u0442\u0438\u0442\u044C \u0437\u0430\u043C\u0435\u0442\u043A\u0443 \u0432 \u043A\u043E\u0440\u0437\u0438\u043D\u0443 (trash).",
-      parameters: {
-        type: "object",
-        properties: {
-          path: {
-            type: "string",
-            description: "\u041F\u0443\u0442\u044C \u043A \u0437\u0430\u043C\u0435\u0442\u043A\u0435"
-          }
-        },
-        required: ["path"]
-      }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "list_notes",
-      description: "\u041F\u043E\u043B\u0443\u0447\u0438\u0442\u044C \u0441\u043F\u0438\u0441\u043E\u043A \u0444\u0430\u0439\u043B\u043E\u0432 \u0438 \u043F\u043E\u0434\u043F\u0430\u043F\u043E\u043A \u0432 \u043A\u043E\u043D\u043A\u0440\u0435\u0442\u043D\u043E\u0439 \u043F\u0430\u043F\u043A\u0435 \u0432\u0430\u0443\u043B\u0442\u0430.",
-      parameters: {
-        type: "object",
-        properties: {
-          folderPath: {
-            type: "string",
-            description: "\u041F\u0443\u0442\u044C \u043A \u043F\u0430\u043F\u043A\u0435 (\u043F\u0443\u0441\u0442\u043E\u0435 \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435 \u0434\u043B\u044F \u043A\u043E\u0440\u043D\u044F \u0412\u0430\u0443\u043B\u0442\u0430)"
-          },
-          recursive: {
-            type: "string",
-            description: "\u0420\u0435\u043A\u0443\u0440\u0441\u0438\u0432\u043D\u044B\u0439 \u043E\u0431\u0445\u043E\u0434 \u043F\u043E\u0434\u043F\u0430\u043F\u043E\u043A"
-          }
-        }
-      }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "search_notes",
-      description: "\u041F\u043E\u0438\u0441\u043A \u043F\u043E \u043A\u043B\u044E\u0447\u0435\u0432\u044B\u043C \u0441\u043B\u043E\u0432\u0430\u043C/\u0442\u0435\u043A\u0441\u0442\u0443 \u0432\u043E \u0432\u0441\u0435\u0445 \u0437\u0430\u043C\u0435\u0442\u043A\u0430\u0445 \u0412\u0430\u0443\u043B\u0442\u0430.",
-      parameters: {
-        type: "object",
-        properties: {
-          query: {
-            type: "string",
-            description: "\u041F\u043E\u0438\u0441\u043A\u043E\u0432\u044B\u0439 \u0437\u0430\u043F\u0440\u043E\u0441"
-          },
-          maxResults: {
-            type: "string",
-            description: "\u041C\u0430\u043A\u0441\u0438\u043C\u0430\u043B\u044C\u043D\u043E\u0435 \u043A\u043E\u043B\u0438\u0447\u0435\u0441\u0442\u0432\u043E \u0440\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442\u043E\u0432 (\u043F\u043E \u0443\u043C\u043E\u043B\u0447\u0430\u043D\u0438\u044E 10)"
-          }
-        },
-        required: ["query"]
-      }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "search_by_tag",
-      description: "\u041D\u0430\u0439\u0442\u0438 \u0432\u0441\u0435 \u0437\u0430\u043C\u0435\u0442\u043A\u0438, \u0441\u043E\u0434\u0435\u0440\u0436\u0430\u0449\u0438\u0435 \u043A\u043E\u043D\u043A\u0440\u0435\u0442\u043D\u044B\u0439 \u0442\u0435\u0433.",
-      parameters: {
-        type: "object",
-        properties: {
-          tag: {
-            type: "string",
-            description: "\u0422\u0435\u0433 \u0434\u043B\u044F \u043F\u043E\u0438\u0441\u043A\u0430 (\u043D\u0430\u043F\u0440\u0438\u043C\u0435\u0440, '#project' \u0438\u043B\u0438 'study')"
-          }
-        },
-        required: ["tag"]
-      }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "get_all_tags",
-      description: "\u041F\u043E\u043B\u0443\u0447\u0438\u0442\u044C \u0441\u043F\u0438\u0441\u043E\u043A \u0432\u0441\u0435\u0445 \u0442\u0435\u0433\u043E\u0432 \u0432\u0430\u0443\u043B\u0442\u0430 \u0441 \u043F\u043E\u0434\u0441\u0447\u0435\u0442\u043E\u043C \u0437\u0430\u043C\u0435\u0442\u043E\u043A.",
-      parameters: {
-        type: "object",
-        properties: {}
-      }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "diff_note",
-      description: "\u041F\u0440\u0435\u0434\u043B\u043E\u0436\u0438\u0442\u044C \u0431\u0435\u0437\u043E\u043F\u0430\u0441\u043D\u043E\u0435 \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u0435 \u0437\u0430\u043C\u0435\u0442\u043A\u0438 \u0441 \u0438\u043D\u0442\u0435\u0440\u0430\u043A\u0442\u0438\u0432\u043D\u044B\u043C \u043F\u0440\u043E\u0441\u043C\u043E\u0442\u0440\u043E\u043C Diff \u043F\u0435\u0440\u0435\u0434 \u043F\u0440\u0438\u043C\u0435\u043D\u0435\u043D\u0438\u0435\u043C.",
-      parameters: {
-        type: "object",
-        properties: {
-          path: {
-            type: "string",
-            description: "\u041F\u0443\u0442\u044C \u043A \u0437\u0430\u043C\u0435\u0442\u043A\u0435"
-          },
-          newContent: {
-            type: "string",
-            description: "\u041F\u0440\u0435\u0434\u043B\u0430\u0433\u0430\u0435\u043C\u043E\u0435 \u043D\u043E\u0432\u043E\u0435 \u0441\u043E\u0434\u0435\u0440\u0436\u0438\u043C\u043E\u0435 \u0437\u0430\u043C\u0435\u0442\u043A\u0438"
-          }
-        },
-        required: ["path", "newContent"]
-      }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "execute_obsidian_command",
-      description: "\u0412\u044B\u043F\u043E\u043B\u043D\u0438\u0442\u044C \u043B\u044E\u0431\u0443\u044E \u0432\u043D\u0443\u0442\u0440\u0435\u043D\u043D\u044E\u044E \u043A\u043E\u043C\u0430\u043D\u0434\u0443 Obsidian \u043F\u043E \u0435\u0451 ID (\u043D\u0430\u043F\u0440\u0438\u043C\u0435\u0440, 'theme:toggle-dark' \u0438\u043B\u0438 'canvas:new-file').",
-      parameters: {
-        type: "object",
-        properties: {
-          commandId: {
-            type: "string",
-            description: "ID \u043A\u043E\u043C\u0430\u043D\u0434\u044B Obsidian"
-          }
-        },
-        required: ["commandId"]
-      }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "analyze_vault_graph",
-      description: "\u041F\u0440\u043E\u0430\u043D\u0430\u043B\u0438\u0437\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u0433\u0440\u0430\u0444 \u0441\u0432\u044F\u0437\u0435\u0439 \u0412\u0430\u0443\u043B\u0442\u0430: \u043D\u0430\u0439\u0442\u0438 \u0438\u0437\u043E\u043B\u0438\u0440\u043E\u0432\u0430\u043D\u043D\u044B\u0435 \u0437\u0430\u043C\u0435\u0442\u043A\u0438 (\u0431\u0435\u0437 \u0432\u0445\u043E\u0434\u044F\u0449\u0438\u0445/\u0438\u0441\u0445\u043E\u0434\u044F\u0449\u0438\u0445 \u0441\u0441\u044B\u043B\u043E\u043A), \u043D\u0430\u0438\u043C\u0435\u043D\u0435\u0435 \u0438 \u043D\u0430\u0438\u0431\u043E\u043B\u0435\u0435 \u0441\u0432\u044F\u0437\u0430\u043D\u043D\u044B\u0435 \u0437\u0430\u043C\u0435\u0442\u043A\u0438.",
-      parameters: {
-        type: "object",
-        properties: {
-          folderPath: {
-            type: "string",
-            description: "\u041D\u0435\u043E\u0431\u044F\u0437\u0430\u0442\u0435\u043B\u044C\u043D\u043E. \u041E\u0433\u0440\u0430\u043D\u0438\u0447\u0438\u0442\u044C \u0430\u043D\u0430\u043B\u0438\u0437 \u043A\u043E\u043D\u043A\u0440\u0435\u0442\u043D\u043E\u0439 \u043F\u0430\u043F\u043A\u043E\u0439."
-          }
-        }
-      }
-    }
-  }
-];
-function findFile(app, rawPath) {
-  let cleanPath = (0, import_obsidian12.normalizePath)(rawPath.trim());
-  if (!cleanPath.endsWith(".md")) {
-    const fileWithMd = app.vault.getFileByPath(cleanPath + ".md");
-    if (fileWithMd)
-      return fileWithMd;
-  }
-  const exact = app.vault.getFileByPath(cleanPath);
-  if (exact)
-    return exact;
-  const files = app.vault.getMarkdownFiles();
-  const cleanLower = cleanPath.toLowerCase();
-  const matched = files.find(
-    (f) => f.basename.toLowerCase() === cleanLower || f.path.toLowerCase() === cleanLower || f.path.toLowerCase().endsWith("/" + cleanLower)
-  );
-  return matched || null;
-}
-function findFolder(app, rawPath) {
-  let cleanPath = (0, import_obsidian12.normalizePath)(rawPath.trim());
-  if (!cleanPath || cleanPath === "/" || cleanPath === ".") {
-    return app.vault.getRoot();
-  }
-  const folder = app.vault.getFolderByPath(cleanPath);
-  if (folder)
-    return folder;
-  const allFolders = app.vault.getAllLoadedFiles().filter((f) => f instanceof import_obsidian12.TFolder);
-  const matched = allFolders.find(
-    (f) => f.name.toLowerCase() === cleanPath.toLowerCase() || f.path.toLowerCase() === cleanPath.toLowerCase() || f.path.toLowerCase().endsWith("/" + cleanPath.toLowerCase())
-  );
-  return matched || null;
-}
-async function ensureFolderExists(app, folderPath) {
-  const cleanPath = (0, import_obsidian12.normalizePath)(folderPath.trim());
-  if (!cleanPath || cleanPath === "." || cleanPath === "/")
-    return;
-  const parts = cleanPath.split("/").filter(Boolean);
-  let currentPath = "";
-  for (const part of parts) {
-    currentPath = currentPath ? `${currentPath}/${part}` : part;
-    const folder = app.vault.getAbstractFileByPath(currentPath);
-    if (!folder) {
-      try {
-        await app.vault.createFolder(currentPath);
-      } catch {
-      }
-    }
-  }
-}
-var vaultExecutors = {
-  read_note: async (app, rawArgs) => {
-    const args = rawArgs;
-    const file = findFile(app, args.path);
-    if (!file) {
-      return `\u041E\u0448\u0438\u0431\u043A\u0430: \u0417\u0430\u043C\u0435\u0442\u043A\u0430 '${args.path}' \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430 \u0432 \u0412\u0430\u0443\u043B\u0442\u0435.`;
-    }
-    try {
-      const content = await app.vault.read(file);
-      return `--- \u0417\u0430\u043C\u0435\u0442\u043A\u0430: ${file.path} ---
-${content}`;
-    } catch (e) {
-      const err = e;
-      return `\u041E\u0448\u0438\u0431\u043A\u0430 \u0447\u0442\u0435\u043D\u0438\u044F \u0437\u0430\u043C\u0435\u0442\u043A\u0438 '${args.path}': ${err?.message || String(e)}`;
-    }
-  },
-  read_notes_batch: async (app, rawArgs) => {
-    const args = rawArgs;
-    if (!args.paths || args.paths.length === 0) {
-      return "\u041E\u0448\u0438\u0431\u043A\u0430: \u041D\u0435 \u043F\u0435\u0440\u0435\u0434\u0430\u043D\u044B \u043F\u0443\u0442\u0438 \u0434\u043B\u044F \u0447\u0442\u0435\u043D\u0438\u044F.";
-    }
-    const results = [];
-    for (const p of args.paths) {
-      const file = findFile(app, p);
-      if (file) {
-        try {
-          const content = await app.vault.read(file);
-          results.push(`=== \u0424\u0410\u0419\u041B: ${file.path} ===
-${content}`);
-        } catch (e) {
-          const err = e;
-          results.push(`=== \u0424\u0410\u0419\u041B: ${p} === (\u041E\u0448\u0438\u0431\u043A\u0430 \u0447\u0442\u0435\u043D\u0438\u044F: ${err?.message || String(e)})`);
-        }
-      } else {
-        results.push(`=== \u0424\u0410\u0419\u041B: ${p} === (\u0424\u0430\u0439\u043B \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D)`);
-      }
-    }
-    return results.join("\n\n");
-  },
-  get_folder_notes: async (app, rawArgs) => {
-    const args = rawArgs;
-    const folder = findFolder(app, args.folderPath);
-    if (!folder) {
-      return `\u041E\u0448\u0438\u0431\u043A\u0430: \u041F\u0430\u043F\u043A\u0430 '${args.folderPath}' \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430 \u0432 \u0412\u0430\u0443\u043B\u0442\u0435.`;
-    }
-    const includeContent = args.includeContent !== false;
-    const markdownFiles = [];
-    const collectFiles = (f) => {
-      for (const child of f.children) {
-        if (child instanceof import_obsidian12.TFile && child.extension === "md") {
-          markdownFiles.push(child);
-        } else if (child instanceof import_obsidian12.TFolder) {
-          collectFiles(child);
-        }
-      }
-    };
-    collectFiles(folder);
-    if (markdownFiles.length === 0) {
-      return `\u0412 \u043F\u0430\u043F\u043A\u0435 '${folder.path}' \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u043E \u043D\u0438 \u043E\u0434\u043D\u043E\u0439 Markdown-\u0437\u0430\u043C\u0435\u0442\u043A\u0438.`;
-    }
-    const output = [`\u041D\u0430\u0439\u0434\u0435\u043D\u043E \u0437\u0430\u043C\u0435\u0442\u043E\u043A \u0432 \u043F\u0430\u043F\u043A\u0435 '${folder.path}': ${markdownFiles.length}
-`];
-    for (const file of markdownFiles) {
-      if (includeContent) {
-        try {
-          const content = await app.vault.read(file);
-          output.push(`--- \u0417\u0410\u041C\u0415\u0422\u041A\u0410: ${file.path} ---
-${content}
-`);
-        } catch {
-          output.push(`--- \u0417\u0410\u041C\u0415\u0422\u041A\u0410: ${file.path} (\u041E\u0448\u0438\u0431\u043A\u0430 \u0447\u0442\u0435\u043D\u0438\u044F) ---
-`);
-        }
-      } else {
-        output.push(`- \u{1F4C4} ${file.path}`);
-      }
-    }
-    return output.join("\n");
-  },
-  create_note: async (app, rawArgs, plugin) => {
-    const args = rawArgs;
-    let path = getNoteSavePath(plugin.settings, args.path);
-    const normalized = (0, import_obsidian12.normalizePath)(path);
-    if (normalized.includes("..") || normalized.startsWith("/") || normalized.startsWith("\\")) {
-      return "\u041E\u0448\u0438\u0431\u043A\u0430: \u041D\u0435\u0434\u043E\u043F\u0443\u0441\u0442\u0438\u043C\u044B\u0439 \u043F\u0443\u0442\u044C (path traversal \u0437\u0430\u0449\u0438\u0442\u0430)";
-    }
-    let finalPath = normalized;
-    if (!finalPath.endsWith(".md"))
-      finalPath += ".md";
-    const existing = app.vault.getAbstractFileByPath(finalPath);
-    if (existing) {
-      return `\u041E\u0448\u0438\u0431\u043A\u0430: \u0424\u0430\u0439\u043B '${finalPath}' \u0443\u0436\u0435 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u0435\u0442. \u0418\u0441\u043F\u043E\u043B\u044C\u0437\u0443\u0439\u0442\u0435 edit_note.`;
-    }
-    const folderParts = finalPath.split("/");
-    if (folderParts.length > 1) {
-      folderParts.pop();
-      const folderPath = folderParts.join("/");
-      await ensureFolderExists(app, folderPath);
-    }
-    try {
-      const created = await app.vault.create(finalPath, args.content);
-      return `\u0423\u0441\u043F\u0435\u0445: \u0421\u043E\u0437\u0434\u0430\u043D\u0430 \u043D\u043E\u0432\u0430\u044F \u0437\u0430\u043C\u0435\u0442\u043A\u0430 '${created.path}'.`;
-    } catch (e) {
-      const err = e;
-      return `\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u044F \u0437\u0430\u043C\u0435\u0442\u043A\u0438: ${err?.message || String(e)}`;
-    }
-  },
-  edit_note: async (app, rawArgs) => {
-    const args = rawArgs;
-    const file = findFile(app, args.path);
-    if (!file) {
-      return `\u041E\u0448\u0438\u0431\u043A\u0430: \u0424\u0430\u0439\u043B '${args.path}' \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D.`;
-    }
-    try {
-      const currentContent = await app.vault.read(file);
-      let finalContent = args.newContent;
-      if (args.targetText && currentContent.includes(args.targetText)) {
-        finalContent = currentContent.replace(args.targetText, args.newContent);
-      }
-      await app.vault.modify(file, finalContent);
-      return `\u0423\u0441\u043F\u0435\u0448\u043D\u043E \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0430 \u0437\u0430\u043C\u0435\u0442\u043A\u0430 '${file.path}'.`;
-    } catch (e) {
-      const err = e;
-      return `\u041E\u0448\u0438\u0431\u043A\u0430 \u0440\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u044F \u0437\u0430\u043C\u0435\u0442\u043A\u0438 '${args.path}': ${err?.message || String(e)}`;
-    }
-  },
-  rename_note: async (app, rawArgs) => {
-    const args = rawArgs;
-    const file = findFile(app, args.oldPath);
-    if (!file)
-      return `\u041E\u0448\u0438\u0431\u043A\u0430: \u0424\u0430\u0439\u043B '${args.oldPath}' \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D.`;
-    let targetPath = (0, import_obsidian12.normalizePath)(args.newPath);
-    if (!targetPath.endsWith(".md"))
-      targetPath += ".md";
-    try {
-      await app.fileManager.renameFile(file, targetPath);
-      return `\u0423\u0441\u043F\u0435\u0448\u043D\u043E \u043F\u0435\u0440\u0435\u0438\u043C\u0435\u043D\u043E\u0432\u0430\u043D \u0444\u0430\u0439\u043B '${file.path}' -> '${targetPath}'.`;
-    } catch (e) {
-      const err = e;
-      return `\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0435\u0440\u0435\u0438\u043C\u0435\u043D\u043E\u0432\u0430\u043D\u0438\u044F: ${err?.message || String(e)}`;
-    }
-  },
-  delete_note: async (app, rawArgs) => {
-    const args = rawArgs;
-    const file = findFile(app, args.path);
-    if (!file)
-      return `\u041E\u0448\u0438\u0431\u043A\u0430: \u0424\u0430\u0439\u043B '${args.path}' \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D.`;
-    try {
-      await app.fileManager.trashFile(file);
-      return `\u0423\u0441\u043F\u0435\u0448\u043D\u043E \u043F\u043E\u043C\u0435\u0449\u0435\u043D \u0432 \u043A\u043E\u0440\u0437\u0438\u043D\u0443 \u0444\u0430\u0439\u043B '${file.path}'.`;
-    } catch (e) {
-      const err = e;
-      return `\u041E\u0448\u0438\u0431\u043A\u0430 \u0443\u0434\u0430\u043B\u0435\u043D\u0438\u044F: ${err?.message || String(e)}`;
-    }
-  },
-  list_notes: async (app, rawArgs) => {
-    const args = rawArgs;
-    const folder = findFolder(app, args.folderPath || "");
-    if (!folder) {
-      return `\u041E\u0448\u0438\u0431\u043A\u0430: \u041F\u0430\u043F\u043A\u0430 '${args.folderPath}' \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430.`;
-    }
-    const items = [];
-    const collect = (f, prefix = "") => {
-      for (const child of f.children) {
-        const isDir = child instanceof import_obsidian12.TFolder;
-        items.push(`${prefix}- ${isDir ? "\u{1F4C1} \u041F\u0430\u043F\u043A\u0430" : "\u{1F4C4} \u0424\u0430\u0439\u043B"}: ${child.path}`);
-        if (isDir && args.recursive) {
-          collect(child, prefix + "  ");
-        }
-      }
-    };
-    collect(folder);
-    return `\u0421\u043E\u0434\u0435\u0440\u0436\u0438\u043C\u043E\u0435 \u043F\u0430\u043F\u043A\u0438 '${folder.path}':
-` + items.join("\n");
-  },
-  search_notes: async (app, rawArgs) => {
-    const args = rawArgs;
-    const limit = args.maxResults || 10;
-    const queryLower = args.query.toLowerCase();
-    const files = app.vault.getMarkdownFiles();
-    const results = [];
-    for (const file of files) {
-      if (results.length >= limit)
-        break;
-      const nameMatches = file.path.toLowerCase().includes(queryLower);
-      const content = await app.vault.cachedRead(file);
-      const contentMatches = content.toLowerCase().includes(queryLower);
-      if (nameMatches || contentMatches) {
-        let snippet = "";
-        if (contentMatches) {
-          const idx = content.toLowerCase().indexOf(queryLower);
-          const start = Math.max(0, idx - 60);
-          const end = Math.min(content.length, idx + 100);
-          snippet = content.substring(start, end).replace(/\n/g, " ");
-        } else {
-          snippet = content.substring(0, 120).replace(/\n/g, " ");
-        }
-        results.push({ path: file.path, snippet: `...${snippet}...` });
-      }
-    }
-    if (results.length === 0) {
-      return `\u041F\u043E \u0437\u0430\u043F\u0440\u043E\u0441\u0443 '${args.query}' \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u043E \u043D\u0438 \u043E\u0434\u043D\u043E\u0439 \u0437\u0430\u043C\u0435\u0442\u043A\u0438.`;
-    }
-    return `\u0420\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442\u044B \u043F\u043E\u0438\u0441\u043A\u0430 \u043F\u043E '${args.query}':
-` + results.map((r) => `- **${r.path}**: ${r.snippet}`).join("\n");
-  },
-  search_by_tag: async (app, rawArgs) => {
-    const args = rawArgs;
-    const cleanTag = args.tag.startsWith("#") ? args.tag.toLowerCase() : "#" + args.tag.toLowerCase();
-    const files = app.vault.getMarkdownFiles();
-    const matched = [];
-    for (const file of files) {
-      const cache = app.metadataCache.getFileCache(file);
-      const tagsInFile = (cache?.tags || []).map((t2) => t2.tag.toLowerCase());
-      const frontmatterTags = cache?.frontmatter?.tags || [];
-      const normalizedFmTags = Array.isArray(frontmatterTags) ? frontmatterTags.map((t2) => t2.startsWith("#") ? t2.toLowerCase() : "#" + t2.toLowerCase()) : typeof frontmatterTags === "string" ? [frontmatterTags.startsWith("#") ? frontmatterTags.toLowerCase() : "#" + frontmatterTags.toLowerCase()] : [];
-      if (tagsInFile.includes(cleanTag) || normalizedFmTags.includes(cleanTag)) {
-        matched.push(file.path);
-      }
-    }
-    if (matched.length === 0) {
-      return `\u0417\u0430\u043C\u0435\u0442\u043E\u043A \u0441 \u0442\u0435\u0433\u043E\u043C '${cleanTag}' \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u043E.`;
-    }
-    return `\u0417\u0430\u043C\u0435\u0442\u043A\u0438 \u0441 \u0442\u0435\u0433\u043E\u043C '${cleanTag}':
-` + matched.map((p) => `- \u{1F4C4} ${p}`).join("\n");
-  },
-  get_all_tags: async (app) => {
-    const files = app.vault.getMarkdownFiles();
-    const tagMap = {};
-    for (const file of files) {
-      const cache = app.metadataCache.getFileCache(file);
-      const tagsInFile = (cache?.tags || []).map((t2) => t2.tag);
-      for (const t2 of tagsInFile) {
-        tagMap[t2] = (tagMap[t2] || 0) + 1;
-      }
-    }
-    const entries = Object.entries(tagMap).sort((a, b) => b[1] - a[1]);
-    if (entries.length === 0)
-      return "\u0412 \u0412\u0430\u0443\u043B\u0442\u0435 \u043F\u043E\u043A\u0430 \u043D\u0435\u0442 \u0442\u0435\u0433\u043E\u0432.";
-    return "\u0421\u043F\u0438\u0441\u043E\u043A \u0442\u0435\u0433\u043E\u0432 \u0432 \u0412\u0430\u0443\u043B\u0442\u0435:\n" + entries.map(([tag, count]) => `- ${tag} (${count} \u0437\u0430\u043C\u0435\u0442\u043E\u043A)`).join("\n");
-  },
-  diff_note: async (app, rawArgs) => {
-    const args = rawArgs;
-    const file = findFile(app, args.path);
-    let oldContent = "";
-    if (file) {
-      try {
-        oldContent = await app.vault.read(file);
-      } catch {
-      }
-    }
-    return {
-      toolCallId: "diff-" + Date.now(),
-      name: "diff_note",
-      result: `\u0417\u0430\u043F\u0440\u043E\u0448\u0435\u043D\u043E \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043D\u0438\u0435 \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u0439 \u0434\u043B\u044F \u0437\u0430\u043C\u0435\u0442\u043A\u0438 '${args.path}'.`,
-      requiresApproval: true,
-      diffPreview: {
-        filePath: file ? file.path : args.path,
-        oldContent,
-        newContent: args.newContent
-      }
-    };
-  },
-  execute_obsidian_command: async (app, rawArgs, plugin) => {
-    const args = rawArgs;
-    const commandId = args.commandId;
-    if (plugin?.settings?.confirmObsidianCommands) {
-      const allowedCommands = plugin.settings.allowedObsidianCommands || [
-        "editor:toggle-line-wrap",
-        "theme:toggle-dark",
-        "canvas:new-file",
-        "workspace:new-tab",
-        "app:reload"
-      ];
-      if (!allowedCommands.includes(commandId)) {
-        return `\u041E\u0448\u0438\u0431\u043A\u0430: \u041A\u043E\u043C\u0430\u043D\u0434\u0430 '${commandId}' \u043D\u0435 \u0432 whitelist. \u0414\u043E\u0431\u0430\u0432\u044C\u0442\u0435 \u0435\u0435 \u0432 \u043D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0430\u0445 \u0438\u043B\u0438 \u043E\u0431\u0440\u0430\u0442\u0438\u0442\u0435\u0441\u044C \u043A \u0430\u0434\u043C\u0438\u043D\u0438\u0441\u0442\u0440\u0430\u0442\u043E\u0440\u0443.`;
-      }
-    }
-    try {
-      const appCommands = app;
-      const result = appCommands.commands?.executeCommandById(commandId);
-      if (result !== false) {
-        return `\u0423\u0441\u043F\u0435\u0448\u043D\u043E \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u0430 \u043A\u043E\u043C\u0430\u043D\u0434\u0430 Obsidian '${commandId}'.`;
-      } else {
-        return `\u041A\u043E\u043C\u0430\u043D\u0434\u0430 '${args.commandId}' \u043D\u0435 \u0432\u0435\u0440\u043D\u0443\u043B\u0430 \u043F\u043E\u043B\u043E\u0436\u0438\u0442\u0435\u043B\u044C\u043D\u044B\u0439 \u0440\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442 (\u0432\u043E\u0437\u043C\u043E\u0436\u043D\u043E \u043D\u0435 \u0430\u043A\u0442\u0438\u0432\u043D\u0430 \u0432 \u0434\u0430\u043D\u043D\u043E\u043C \u043A\u043E\u043D\u0442\u0435\u043A\u0441\u0442\u0435).`;
-      }
-    } catch (e) {
-      const err = e;
-      return `\u041E\u0448\u0438\u0431\u043A\u0430 \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u0438\u044F \u043A\u043E\u043C\u0430\u043D\u0434\u044B '${args.commandId}': ${err?.message || String(e)}`;
-    }
-  },
-  analyze_vault_graph: async (app, rawArgs) => {
-    const args = rawArgs;
-    const files = app.vault.getMarkdownFiles();
-    let orphanCount = 0;
-    const totalFiles = files.length;
-    const orphanFiles = [];
-    const resolvedLinks = app.metadataCache.resolvedLinks;
-    for (const file of files) {
-      if (args.folderPath && !file.path.startsWith(args.folderPath))
-        continue;
-      const outgoing = Object.keys(resolvedLinks[file.path] || {});
-      let incomingCount = 0;
-      for (const otherFile of files) {
-        if (otherFile.path === file.path)
-          continue;
-        const links = resolvedLinks[otherFile.path] || {};
-        if (links[file.path]) {
-          incomingCount++;
-        }
-      }
-      if (outgoing.length === 0 && incomingCount === 0) {
-        orphanCount++;
-        orphanFiles.push(file.path);
-      }
-    }
-    let report = `=== \u0410\u041D\u0410\u041B\u0418\u0417 \u0413\u0420\u0410\u0424\u0410 \u0421\u0412\u042F\u0417\u0415\u0419 \u0412\u0410\u0423\u041B\u0422\u0410 ===
-`;
-    report += `\u0412\u0441\u0435\u0433\u043E \u043F\u0440\u043E\u0430\u043D\u0430\u043B\u0438\u0437\u0438\u0440\u043E\u0432\u0430\u043D\u043E \u0437\u0430\u043C\u0435\u0442\u043E\u043A: ${totalFiles}
-`;
-    report += `\u0418\u0437\u043E\u043B\u0438\u0440\u043E\u0432\u0430\u043D\u043D\u044B\u0445 \u0437\u0430\u043C\u0435\u0442\u043E\u043A (Orphans, \u0431\u0435\u0437 \u0432\u0445\u043E\u0434\u044F\u0449\u0438\u0445 \u0438 \u0438\u0441\u0445\u043E\u0434\u044F\u0449\u0438\u0445 \u0441\u0441\u044B\u043B\u043E\u043A): ${orphanCount}
-
-`;
-    if (orphanFiles.length > 0) {
-      report += `\u0421\u043F\u0438\u0441\u043E\u043A \u0438\u0437\u043E\u043B\u0438\u0440\u043E\u0432\u0430\u043D\u043D\u044B\u0445 \u0437\u0430\u043C\u0435\u0442\u043E\u043A (\u043F\u0435\u0440\u0432\u044B\u0435 15):
-`;
-      report += orphanFiles.slice(0, 15).map((p) => `- \u{1F4C4} ${p}`).join("\n");
-      if (orphanFiles.length > 15) {
-        report += `
-...\u0438 \u0435\u0449\u0451 ${orphanFiles.length - 15} \u0437\u0430\u043C\u0435\u0442\u043E\u043A.`;
-      }
-    } else {
-      report += `\u0412\u0441\u0435 \u0437\u0430\u043C\u0435\u0442\u043A\u0438 \u0432 \u0412\u0430\u0443\u043B\u0442\u0435 \u0441\u0432\u044F\u0437\u0430\u043D\u044B \u0441\u0441\u044B\u043B\u043A\u0430\u043C\u0438! \u041E\u0442\u043B\u0438\u0447\u043D\u0430\u044F \u0441\u0442\u0440\u0443\u043A\u0442\u0443\u0440\u0430 \u0431\u0430\u0437\u044B \u0437\u043D\u0430\u043D\u0438\u0439.`;
-    }
-    return report;
-  }
-};
+// src/services/tools/toolRegistry.ts
+init_vaultTools();
 
 // src/services/tools/systemTools.ts
-var import_obsidian13 = require("obsidian");
+var import_obsidian12 = require("obsidian");
 var systemToolDefinitions = [
   {
     type: "function",
@@ -28308,7 +29041,7 @@ var systemExecutors = {
     const args = rawArgs;
     try {
       const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(args.query)}`;
-      const response = await (0, import_obsidian13.requestUrl)({
+      const response = await (0, import_obsidian12.requestUrl)({
         url: searchUrl,
         method: "GET",
         headers: {
@@ -28347,8 +29080,8 @@ var systemExecutors = {
       const repo = githubRepoMatch[2].replace(/\.git$/, "");
       try {
         const rawReadmeUrl = `https://raw.githubusercontent.com/${owner}/${repo}/main/README.md`;
-        const response = await (0, import_obsidian13.requestUrl)({ url: rawReadmeUrl, method: "GET" }).catch(
-          () => (0, import_obsidian13.requestUrl)({ url: `https://raw.githubusercontent.com/${owner}/${repo}/master/README.md`, method: "GET" })
+        const response = await (0, import_obsidian12.requestUrl)({ url: rawReadmeUrl, method: "GET" }).catch(
+          () => (0, import_obsidian12.requestUrl)({ url: `https://raw.githubusercontent.com/${owner}/${repo}/master/README.md`, method: "GET" })
         );
         if (response.status === 200 && response.text) {
           const text = response.text.length > 3e3 ? response.text.substring(0, 3e3) + "\n...[README \u043E\u0431\u0440\u0435\u0437\u0430\u043D \u0434\u043B\u044F \u044D\u043A\u043E\u043D\u043E\u043C\u0438\u0438 \u0442\u043E\u043A\u0435\u043D\u043E\u0432]" : response.text;
@@ -28359,7 +29092,7 @@ ${text}`;
       }
     }
     try {
-      const response = await (0, import_obsidian13.requestUrl)({
+      const response = await (0, import_obsidian12.requestUrl)({
         url: urlStr,
         method: "GET",
         headers: {
@@ -28390,7 +29123,7 @@ ${truncated}`;
     try {
       let repoMetaInfo = "";
       try {
-        const metaRes = await (0, import_obsidian13.requestUrl)({
+        const metaRes = await (0, import_obsidian12.requestUrl)({
           url: `https://api.github.com/repos/${owner}/${repo}`,
           method: "GET",
           headers: { "User-Agent": "NEI-Obsidian-Plugin" }
@@ -28414,7 +29147,7 @@ ${truncated}`;
           break;
         for (const fname of filenames) {
           try {
-            const res = await (0, import_obsidian13.requestUrl)({
+            const res = await (0, import_obsidian12.requestUrl)({
               url: `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${fname}`,
               method: "GET"
             });
@@ -28440,6 +29173,7 @@ ${cleanReadme}`;
 };
 
 // src/services/tools/memoryTools.ts
+init_vaultTools();
 var memoryToolDefinitions = [
   {
     type: "function",
@@ -28522,6 +29256,188 @@ ${args.instructions}
   }
 };
 
+// src/services/tools/dataviewTools.ts
+var dataviewToolDefinitions = [
+  {
+    type: "function",
+    function: {
+      name: "query_dataview",
+      description: "Executes a Dataview Query (DQL) against the Obsidian vault and returns matching note metadata.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: {
+            type: "string",
+            description: `DQL query string, e.g. 'LIST FROM "folder"' or 'TABLE file.mtime FROM #tag'`
+          }
+        },
+        required: ["query"]
+      }
+    }
+  }
+];
+async function executeDataviewQuery(app, query) {
+  try {
+    const dataviewPlugin = app.plugins?.plugins?.dataview;
+    if (!dataviewPlugin || !dataviewPlugin.api) {
+      return "Dataview plugin is not installed or enabled in this vault.";
+    }
+    const api = dataviewPlugin.api;
+    const result = await api.query(query);
+    if (!result.successful) {
+      return `Dataview query error: ${result.error}`;
+    }
+    const value = result.value;
+    if (value.type === "list") {
+      return `Dataview List Results (${value.values.length}):
+` + value.values.map((v) => `- ${typeof v === "object" ? v.path || JSON.stringify(v) : String(v)}`).join("\n");
+    }
+    if (value.type === "table") {
+      const headers = value.headers.join(" | ");
+      const rows = value.values.map((row) => row.map((cell) => typeof cell === "object" ? cell?.path || JSON.stringify(cell) : String(cell)).join(" | ")).join("\n");
+      return `Dataview Table Results:
+| ${headers} |
+| ${value.headers.map(() => "---").join(" | ")} |
+${rows}`;
+    }
+    return `Dataview Query Success:
+${JSON.stringify(value, null, 2)}`;
+  } catch (e) {
+    return `Error executing Dataview query: ${e?.message || String(e)}`;
+  }
+}
+
+// src/services/tools/templaterTools.ts
+var templaterToolDefinitions = [
+  {
+    type: "function",
+    function: {
+      name: "render_templater",
+      description: "Evaluates and renders Templater template tags (<% tp... %>) in a text snippet.",
+      parameters: {
+        type: "object",
+        properties: {
+          template: {
+            type: "string",
+            description: `Text snippet containing Templater code, e.g. '<% tp.date.now("YYYY-MM-DD") %>'`
+          }
+        },
+        required: ["template"]
+      }
+    }
+  }
+];
+async function executeTemplaterRender(app, template) {
+  try {
+    const templaterPlugin = app.plugins?.plugins?.["templater-obsidian"];
+    if (!templaterPlugin || !templaterPlugin.templater) {
+      let rendered = template;
+      const now = /* @__PURE__ */ new Date();
+      const todayStr = now.toISOString().slice(0, 10);
+      const timeStr = now.toTimeString().slice(0, 8);
+      rendered = rendered.replace(/<%\s*tp\.date\.now\([^)]*\)\s*%>/gi, todayStr);
+      rendered = rendered.replace(/<%\s*tp\.file\.title\s*%>/gi, "Untitled");
+      rendered = rendered.replace(/<%\s*tp\.file\.creation_date\([^)]*\)\s*%>/gi, todayStr);
+      rendered = rendered.replace(/<%\s*tp\.file\.last_modified_date\([^)]*\)\s*%>/gi, `${todayStr} ${timeStr}`);
+      return rendered;
+    }
+    const templater = templaterPlugin.templater;
+    const result = await templater.parse_template({ target_file: null, run_mode: 0 }, template);
+    return result;
+  } catch (e) {
+    return `Error rendering Templater code: ${e?.message || String(e)}`;
+  }
+}
+
+// src/services/tools/canvasTools.ts
+function safeNormalizePath(path) {
+  return path.replace(/\\/g, "/").replace(/\/+/g, "/").replace(/^\//, "");
+}
+var canvasToolDefinitions = [
+  {
+    type: "function",
+    function: {
+      name: "create_canvas",
+      description: "Creates a new Obsidian Canvas (.canvas) file with text nodes and connecting edges.",
+      parameters: {
+        type: "object",
+        properties: {
+          path: {
+            type: "string",
+            description: "File path for canvas file ending in .canvas, e.g. 'folder/my-board.canvas'"
+          },
+          nodes: {
+            type: "array",
+            description: "Array of canvas node objects with id, x, y, width, height, type ('text'), and text content",
+            items: {
+              type: "object",
+              properties: {
+                id: { type: "string" },
+                x: { type: "number" },
+                y: { type: "number" },
+                width: { type: "number" },
+                height: { type: "number" },
+                type: { type: "string" },
+                text: { type: "string" }
+              },
+              required: ["id", "x", "y", "width", "height", "text"]
+            }
+          },
+          edges: {
+            type: "array",
+            description: "Array of canvas edge objects with id, fromNode, toNode",
+            items: {
+              type: "object",
+              properties: {
+                id: { type: "string" },
+                fromNode: { type: "string" },
+                toNode: { type: "string" }
+              },
+              required: ["id", "fromNode", "toNode"]
+            }
+          }
+        },
+        required: ["path", "nodes"]
+      }
+    }
+  }
+];
+async function executeCreateCanvas(app, path, nodes, edges = []) {
+  try {
+    let canvasPath = safeNormalizePath(path);
+    if (!canvasPath.endsWith(".canvas")) {
+      canvasPath += ".canvas";
+    }
+    const { ensureFolderExists: ensureFolderExists2 } = await Promise.resolve().then(() => (init_vaultTools(), vaultTools_exports));
+    await ensureFolderExists2(app, canvasPath);
+    const canvasData = {
+      nodes: nodes.map((n) => ({
+        id: n.id,
+        x: n.x,
+        y: n.y,
+        width: n.width,
+        height: n.height,
+        type: n.type || "text",
+        text: n.text
+      })),
+      edges: edges.map((e) => ({
+        id: e.id,
+        fromNode: e.fromNode,
+        toNode: e.toNode
+      }))
+    };
+    const content = JSON.stringify(canvasData, null, 2);
+    const existing = app.vault.getAbstractFileByPath(canvasPath);
+    if (existing) {
+      return `Canvas file already exists at ${canvasPath}. Choose a different path.`;
+    }
+    await app.vault.create(canvasPath, content);
+    return `Successfully created Obsidian Canvas at: ${canvasPath} (${nodes.length} nodes, ${edges.length} edges)`;
+  } catch (e) {
+    return `Error creating Canvas file: ${e?.message || String(e)}`;
+  }
+}
+
 // src/services/tools/toolRegistry.ts
 var ToolRegistry = class {
   constructor(plugin) {
@@ -28531,6 +29447,20 @@ var ToolRegistry = class {
     this.registerAll(vaultToolDefinitions, vaultExecutors);
     this.registerAll(systemToolDefinitions, systemExecutors);
     this.registerAll(memoryToolDefinitions, memoryExecutors);
+    this.registerAll(dataviewToolDefinitions, {
+      query_dataview: (app, args) => executeDataviewQuery(app, String(args.query || ""))
+    });
+    this.registerAll(templaterToolDefinitions, {
+      render_templater: (app, args) => executeTemplaterRender(app, String(args.template || ""))
+    });
+    this.registerAll(canvasToolDefinitions, {
+      create_canvas: (app, args) => executeCreateCanvas(
+        app,
+        String(args.path || ""),
+        args.nodes || [],
+        args.edges || []
+      )
+    });
   }
   registerAll(defs, execs) {
     for (const def of defs) {
@@ -28595,7 +29525,7 @@ var ToolRegistry = class {
 };
 
 // src/services/mcp/mcpClient.ts
-var import_obsidian14 = require("obsidian");
+var import_obsidian13 = require("obsidian");
 var McpService = class {
   static setServers(servers) {
     this.servers = servers;
@@ -28610,7 +29540,7 @@ var McpService = class {
       if (!server.enabled || !server.endpointUrl)
         continue;
       try {
-        const response = await (0, import_obsidian14.requestUrl)({
+        const response = await (0, import_obsidian13.requestUrl)({
           url: server.endpointUrl.endsWith("/") ? `${server.endpointUrl}tools/list` : `${server.endpointUrl}/tools/list`,
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -28646,7 +29576,7 @@ var McpService = class {
    */
   static async callMcpTool(server, originalToolName, args) {
     try {
-      const response = await (0, import_obsidian14.requestUrl)({
+      const response = await (0, import_obsidian13.requestUrl)({
         url: server.endpointUrl.endsWith("/") ? `${server.endpointUrl}tools/call` : `${server.endpointUrl}/tools/call`,
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -28706,6 +29636,12 @@ var DEFAULT_SETTINGS = {
   // RAG defaults
   ragResultLimit: 5,
   ragSnippetLength: 1e3,
+  // Streaming & RAG v2 defaults
+  enableStreaming: true,
+  enableSemanticRag: false,
+  embeddingProvider: "openrouter",
+  embeddingModel: "openai/text-embedding-3-small",
+  embeddingEndpoint: "https://openrouter.ai/api/v1",
   // Safety default
   confirmObsidianCommands: true,
   allowedObsidianCommands: [
@@ -28737,7 +29673,7 @@ var DEFAULT_SETTINGS = {
   intentStaleQueryWeight: 3,
   intentFreshnessWeight: 2
 };
-var NeiAiChatPlugin = class extends import_obsidian15.Plugin {
+var NeiAiChatPlugin = class extends import_obsidian14.Plugin {
   constructor() {
     super(...arguments);
     this.settings = DEFAULT_SETTINGS;

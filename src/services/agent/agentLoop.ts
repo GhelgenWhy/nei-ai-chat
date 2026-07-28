@@ -1,5 +1,5 @@
 import { App, TFile } from "obsidian";
-import { ChatMessage, LlmConfig, sendChatRequest, getModelTemporalInfo } from "../llm";
+import { ChatMessage, LlmConfig, sendChatRequest, sendChatRequestStream, getModelTemporalInfo } from "../llm";
 import { MemoryStore } from "../memory/memoryStore";
 import { SkillsLoader } from "../skills/skillsLoader";
 import { resolveContext } from "../context";
@@ -7,6 +7,7 @@ import { ToolRegistry } from "../tools/toolRegistry";
 import { SupportedLanguage, t } from "../../i18n/translations";
 import { NeiAiChatSettings } from "../../../main";
 import { searchVaultLexical } from "../rag";
+import { searchVaultHybrid } from "../rag/vectorIndex";
 
 import { IntentRouter, ExecutionMode } from "./intentRouter";
 import { ContextManager } from "./contextManager";
@@ -17,6 +18,7 @@ export interface AgentStep {
     title: string;
     detail?: string;
     status: "running" | "completed" | "failed";
+    meta?: Record<string, unknown>;
 }
 
 export interface AgentLoopOptions {
@@ -28,6 +30,7 @@ export interface AgentLoopOptions {
     executionMode?: ExecutionMode;
     onStepUpdate?: (steps: AgentStep[]) => void;
     onConfirmationRequired?: (toolName: string, argsStr: string) => Promise<boolean>;
+    onStreamChunk?: (chunk: string) => void;
     maxIterations?: number;
     toolRegistry: ToolRegistry;
     language?: SupportedLanguage;
@@ -121,6 +124,7 @@ export class AgentLoop {
             executionMode = "auto", 
             onStepUpdate, 
             onConfirmationRequired,
+            onStreamChunk,
             maxIterations,
             toolRegistry,
             language = "auto",
@@ -152,7 +156,8 @@ export class AgentLoop {
                 type: "thought",
                 title: `Mode: ${actualMode === "quick" ? "Quick" : "Agent"}`,
                 detail: decision.reason,
-                status: "completed"
+                status: "completed",
+                meta: { confidence: decision.confidence, features }
             });
             notifySteps();
         }
@@ -163,14 +168,17 @@ export class AgentLoop {
         const agentsRules = await MemoryStore.loadAgentsRules(app, settings);
         const skills = await SkillsLoader.loadSkills(app, settings);
 
-        // 2. Semantic Folder & Vault Prefetching via RAG (Adaptive)
+        // 2. Semantic Folder & Vault Prefetching via RAG (Adaptive / Hybrid)
         let prefetchedContext = "";
         const shouldPrefetchVault = settings.enableAdaptivePrefetch
             ? (toolNeeds.needsVaultSearch && actualMode === "agent")
             : (actualMode === "agent");
 
         if (shouldPrefetchVault) {
-            const searchResults = await searchVaultLexical(app, userQuery, settings.maxPrefetchedNotes, settings.prefetchSnippetLength);
+            const searchResults = settings.enableSemanticRag
+                ? await searchVaultHybrid(app, userQuery, settings, settings.maxPrefetchedNotes)
+                : await searchVaultLexical(app, userQuery, settings.maxPrefetchedNotes, settings.prefetchSnippetLength);
+
             if (searchResults.length > 0) {
                 const prefetchedBlocks: string[] = [];
                 const matchedFoldersSet = new Set<string>();
@@ -216,10 +224,13 @@ export class AgentLoop {
             userMsg
         ];
 
-        // 5. QUICK MODE (Single Direct Turn)
+        // 5. QUICK MODE (Single Direct Turn with optional Streaming)
         if (actualMode === "quick") {
             try {
-                const response = await sendChatRequest(config, messages);
+                const response = (settings.enableStreaming && onStreamChunk)
+                    ? await sendChatRequestStream(config, messages, undefined, onStreamChunk)
+                    : await sendChatRequest(config, messages);
+
                 if (response.usage) {
                     totalPromptTokens += response.usage.promptTokens;
                     totalCompletionTokens += response.usage.completionTokens;
