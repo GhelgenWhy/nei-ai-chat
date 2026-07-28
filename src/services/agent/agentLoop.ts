@@ -1,4 +1,4 @@
-import { App, TFile } from "obsidian";
+import { App } from "obsidian";
 import { ChatMessage, LlmConfig, sendChatRequest, sendChatRequestStream, getModelTemporalInfo } from "../llm";
 import { MemoryStore } from "../memory/memoryStore";
 import { SkillsLoader } from "../skills/skillsLoader";

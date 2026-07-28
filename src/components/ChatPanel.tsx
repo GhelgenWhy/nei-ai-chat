@@ -4,11 +4,10 @@ import { ChatMessage, getModelTemporalInfo } from "../services/llm";
 import { AgentLoop, AgentStep } from "../services/agent/agentLoop";
 import { ChatStore, ChatSession } from "../services/chat/chatStore";
 import { OpenRouterService, OpenRouterModelInfo, OpenRouterKeyInfo } from "../services/openrouter";
-import { ExecutionMode, IntentRouter } from "../services/agent/intentRouter";
+import { ExecutionMode } from "../services/agent/intentRouter";
 import { t, SupportedLanguage } from "../i18n/translations";
 import { NeiAiChatSettings } from "../../main";
 import { ToolRegistry } from "../services/tools/toolRegistry";
-import { ensureFolderExists } from "../services/tools/vaultTools";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { Tooltip } from "./Tooltip";
 import { WelcomeScreen } from "./WelcomeScreen";
@@ -85,7 +84,6 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
     const [activeSteps, setActiveSteps] = React.useState<AgentStep[]>([]);
     const [showSessionsDrawer, setShowSessionsDrawer] = React.useState(false);
     const [showConfig, setShowConfig] = React.useState(false);
-    const [showIntentDebug, setShowIntentDebug] = React.useState(false);
     const [pendingConfirmation, setPendingConfirmation] = React.useState<{ toolName: string; argsStr: string; resolve: (approved: boolean) => void } | null>(null);
     const [showFreshnessSuggestion, setShowFreshnessSuggestion] = React.useState<{
         message: string;
@@ -230,23 +228,23 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
     };
 
     const [confirmingClear, setConfirmingClear] = React.useState(false);
-    const clearTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+    const clearTimerRef = React.useRef<number | null>(null);
 
     React.useEffect(() => {
         return () => {
-            if (clearTimerRef.current) clearTimeout(clearTimerRef.current);
-            if (settingsSaveTimerRef.current) clearTimeout(settingsSaveTimerRef.current);
+            if (clearTimerRef.current !== null) window.clearTimeout(clearTimerRef.current);
+            if (settingsSaveTimerRef.current !== null) window.clearTimeout(settingsSaveTimerRef.current);
         };
     }, []);
 
     const handleClearAllSessions = async () => {
         if (!confirmingClear) {
             setConfirmingClear(true);
-            clearTimerRef.current = setTimeout(() => setConfirmingClear(false), 4000);
+            clearTimerRef.current = window.setTimeout(() => setConfirmingClear(false), 4000);
             return;
         }
         setConfirmingClear(false);
-        if (clearTimerRef.current) clearTimeout(clearTimerRef.current);
+        if (clearTimerRef.current !== null) window.clearTimeout(clearTimerRef.current);
         await ChatStore.clearAllSessions(app, settings);
         await refreshSessionsList();
         handleNewChat();
@@ -293,7 +291,7 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
     const [intentStaleQueryWeight, setIntentStaleQueryWeight] = React.useState<number>(settings.intentStaleQueryWeight ?? 3.0);
     const [intentFreshnessWeight, setIntentFreshnessWeight] = React.useState<number>(settings.intentFreshnessWeight ?? 2.0);
 
-    const settingsSaveTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+    const settingsSaveTimerRef = React.useRef<number | null>(null);
 
     const handleSaveConfig = async () => {
         const newSettings: NeiAiChatSettings = {
@@ -374,23 +372,25 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
     };
 
     const [streamingContent, setStreamingContent] = React.useState("");
-    const [showWelcome, setShowWelcome] = React.useState<boolean>(() => !localStorage.getItem("nei_welcome_seen"));
+    const [showWelcome, setShowWelcome] = React.useState<boolean>(() => app.loadLocalStorage("nei_welcome_seen") !== true);
     const [enableSemanticRag, setEnableSemanticRag] = React.useState<boolean>(settings.enableSemanticRag ?? false);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
 
     const handleExportSettings = () => {
         try {
             const dataStr = JSON.stringify(settings, null, 2);
+            const doc = typeof activeDocument !== "undefined" ? activeDocument : document;
             const blob = new Blob([dataStr], { type: "application/json" });
             const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
+            const a = doc.createElement("a");
             a.href = url;
             a.download = `nei-settings-${Date.now()}.json`;
             a.click();
             URL.revokeObjectURL(url);
             new Notice(t("settingsExported", language));
-        } catch (e: any) {
-            new Notice(`Export error: ${e?.message || String(e)}`);
+        } catch (e: unknown) {
+            const err = e as { message?: string };
+            new Notice(`Export error: ${err?.message || String(e)}`);
         }
     };
 
@@ -403,8 +403,9 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
             const newSettings = { ...settings, ...imported };
             await saveSettings(newSettings);
             new Notice(t("settingsImported", language));
-        } catch (err: any) {
-            new Notice(`Import error: ${err?.message || String(err)}`);
+        } catch (err: unknown) {
+            const errObj = err as { message?: string };
+            new Notice(`Import error: ${errObj?.message || String(err)}`);
         }
     };
 
@@ -783,8 +784,8 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                                 onChange={(e) => {
                                     const folderVal = e.target.value;
                                     setDefaultNoteFolder(folderVal);
-                                    if (settingsSaveTimerRef.current) clearTimeout(settingsSaveTimerRef.current);
-                                    settingsSaveTimerRef.current = setTimeout(() => {
+                                    if (settingsSaveTimerRef.current !== null) window.clearTimeout(settingsSaveTimerRef.current);
+                                    settingsSaveTimerRef.current = window.setTimeout(() => {
                                         void saveSettings({ ...settings, defaultNoteFolder: folderVal });
                                     }, 300);
                                 }}
@@ -1029,8 +1030,10 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                     language={language}
                     onClose={() => {
                         try {
-                            localStorage.setItem("nei_welcome_seen", "true");
-                        } catch {}
+                            app.saveLocalStorage("nei_welcome_seen", true);
+                        } catch {
+                            /* ignore storage error */
+                        }
                         setShowWelcome(false);
                     }}
                 />

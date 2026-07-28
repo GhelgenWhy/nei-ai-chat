@@ -96,7 +96,8 @@ export async function executeCreateCanvas(
 
         await app.vault.create(canvasPath, content);
         return `Successfully created Obsidian Canvas at: ${canvasPath} (${nodes.length} nodes, ${edges.length} edges)`;
-    } catch (e: any) {
-        return `Error creating Canvas file: ${e?.message || String(e)}`;
+    } catch (e: unknown) {
+        const err = e as { message?: string };
+        return `Error creating Canvas file: ${err?.message || String(e)}`;
     }
 }

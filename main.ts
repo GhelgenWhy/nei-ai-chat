@@ -155,9 +155,6 @@ export default class NeiAiChatPlugin extends Plugin {
             Object.entries(executors).forEach(([name, executor]) =>
                 this.toolRegistry.registerExecutor(name, executor)
             );
-            if (definitions.length > 0) {
-                console.log(`[NEI] Registered ${definitions.length} MCP tools`);
-            }
         } catch (e) {
             console.warn('[NEI] MCP tools discovery failed:', e);
         }

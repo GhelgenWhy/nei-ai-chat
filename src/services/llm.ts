@@ -1,17 +1,21 @@
 import { ToolDefinition, ToolCall } from "./tools/types";
 
-async function performPostRequest(url: string, headers: Record<string, string>, bodyStr: string): Promise<{ status: number; text: string; json: any }> {
+async function performPostRequest(url: string, headers: Record<string, string>, bodyStr: string): Promise<{ status: number; text: string; json: Record<string, unknown> }> {
     if (typeof fetch === 'function') {
         const res = await fetch(url, { method: "POST", headers, body: bodyStr });
         const text = await res.text();
-        let json: any = {};
-        try { json = JSON.parse(text); } catch {}
+        let json: Record<string, unknown> = {};
+        try {
+            json = JSON.parse(text) as Record<string, unknown>;
+        } catch {
+            /* ignore JSON parse error */
+        }
         return { status: res.status, text, json };
     }
     try {
         const obsidian = await import("obsidian");
         const res = await obsidian.requestUrl({ url, method: "POST", headers, body: bodyStr });
-        return { status: res.status, text: res.text, json: res.json };
+        return { status: res.status, text: res.text, json: res.json as Record<string, unknown> };
     } catch {
         throw new Error("HTTP POST request failed");
     }

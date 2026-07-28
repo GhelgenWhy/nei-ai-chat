@@ -1,6 +1,22 @@
 import type { App } from "obsidian";
 import { ToolDefinition } from "./types";
 
+interface DataviewQueryResult {
+    successful: boolean;
+    error?: string;
+    value?: {
+        type: string;
+        headers?: string[];
+        values?: unknown[];
+    };
+}
+
+interface DataviewPlugin {
+    api?: {
+        query: (q: string) => Promise<DataviewQueryResult>;
+    };
+}
+
 export const dataviewToolDefinitions: ToolDefinition[] = [
     {
         type: "function",
@@ -23,7 +39,8 @@ export const dataviewToolDefinitions: ToolDefinition[] = [
 
 export async function executeDataviewQuery(app: App, query: string): Promise<string> {
     try {
-        const dataviewPlugin = (app as any).plugins?.plugins?.dataview;
+        const appWithPlugins = app as unknown as { plugins?: { plugins?: Record<string, DataviewPlugin> } };
+        const dataviewPlugin = appWithPlugins.plugins?.plugins?.dataview;
         if (!dataviewPlugin || !dataviewPlugin.api) {
             return "Dataview plugin is not installed or enabled in this vault.";
         }
@@ -31,22 +48,44 @@ export async function executeDataviewQuery(app: App, query: string): Promise<str
         const api = dataviewPlugin.api;
         const result = await api.query(query);
 
-        if (!result.successful) {
-            return `Dataview query error: ${result.error}`;
+        if (!result.successful || !result.value) {
+            return `Dataview query error: ${result.error || "Unknown query failure"}`;
         }
 
         const value = result.value;
+        const valuesArr = Array.isArray(value.values) ? value.values : [];
+
         if (value.type === "list") {
-            return `Dataview List Results (${value.values.length}):\n` + value.values.map((v: any) => `- ${typeof v === 'object' ? (v.path || JSON.stringify(v)) : String(v)}`).join("\n");
+            const lines = valuesArr.map((v: unknown) => {
+                if (typeof v === "object" && v !== null && "path" in (v as Record<string, unknown>)) {
+                    return `- ${String((v as Record<string, unknown>).path)}`;
+                }
+                return `- ${typeof v === "object" ? JSON.stringify(v) : String(v)}`;
+            });
+            return `Dataview List Results (${valuesArr.length}):\n${lines.join("\n")}`;
         }
+
         if (value.type === "table") {
-            const headers = value.headers.join(" | ");
-            const rows = value.values.map((row: any[]) => row.map(cell => typeof cell === 'object' ? (cell?.path || JSON.stringify(cell)) : String(cell)).join(" | ")).join("\n");
-            return `Dataview Table Results:\n| ${headers} |\n| ${value.headers.map(() => "---").join(" | ")} |\n${rows}`;
+            const headersArr = Array.isArray(value.headers) ? value.headers : [];
+            const headers = headersArr.join(" | ");
+            const rows = valuesArr.map((row: unknown) => {
+                if (Array.isArray(row)) {
+                    return row.map(cell => {
+                        if (typeof cell === "object" && cell !== null && "path" in (cell as Record<string, unknown>)) {
+                            return String((cell as Record<string, unknown>).path);
+                        }
+                        return typeof cell === "object" ? JSON.stringify(cell) : String(cell);
+                    }).join(" | ");
+                }
+                return String(row);
+            }).join("\n");
+
+            return `Dataview Table Results:\n| ${headers} |\n| ${headersArr.map(() => "---").join(" | ")} |\n${rows}`;
         }
 
         return `Dataview Query Success:\n${JSON.stringify(value, null, 2)}`;
-    } catch (e: any) {
-        return `Error executing Dataview query: ${e?.message || String(e)}`;
+    } catch (e: unknown) {
+        const err = e as { message?: string };
+        return `Error executing Dataview query: ${err?.message || String(e)}`;
     }
 }

@@ -30,8 +30,8 @@ export class ToolRegistry {
             create_canvas: (app, args) => executeCreateCanvas(
                 app,
                 String(args.path || ""),
-                (args.nodes || []) as any[],
-                (args.edges || []) as any[]
+                (Array.isArray(args.nodes) ? args.nodes : []) as Array<{ id: string; x: number; y: number; width: number; height: number; type?: string; text: string }>,
+                (Array.isArray(args.edges) ? args.edges : []) as Array<{ id: string; fromNode: string; toNode: string }>
             )
         });
     }

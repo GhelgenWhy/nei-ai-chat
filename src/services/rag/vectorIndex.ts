@@ -1,7 +1,7 @@
 import { App, TFile } from "obsidian";
 import { EmbeddingProvider, cosineSimilarity, OllamaEmbeddingProvider, OpenRouterEmbeddingProvider } from "./embeddings";
 import { NeiAiChatSettings } from "../../../main";
-import { searchVaultLexical, SearchResult } from "../rag";
+import { searchVaultLexical } from "../rag";
 
 export interface VectorChunkResult {
     file: TFile;

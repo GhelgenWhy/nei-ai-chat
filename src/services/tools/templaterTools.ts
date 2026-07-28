@@ -1,6 +1,12 @@
 import type { App } from "obsidian";
 import { ToolDefinition } from "./types";
 
+interface TemplaterPlugin {
+    templater?: {
+        parse_template: (config: { target_file: unknown; run_mode: number }, template: string) => Promise<string>;
+    };
+}
+
 export const templaterToolDefinitions: ToolDefinition[] = [
     {
         type: "function",
@@ -23,7 +29,9 @@ export const templaterToolDefinitions: ToolDefinition[] = [
 
 export async function executeTemplaterRender(app: App, template: string): Promise<string> {
     try {
-        const templaterPlugin = (app as any).plugins?.plugins?.["templater-obsidian"];
+        const appWithPlugins = app as unknown as { plugins?: { plugins?: Record<string, TemplaterPlugin> } };
+        const templaterPlugin = appWithPlugins.plugins?.plugins?.["templater-obsidian"];
+
         if (!templaterPlugin || !templaterPlugin.templater) {
             // Fallback lightweight regex evaluation for simple date tags
             let rendered = template;
@@ -42,7 +50,8 @@ export async function executeTemplaterRender(app: App, template: string): Promis
         const templater = templaterPlugin.templater;
         const result = await templater.parse_template({ target_file: null, run_mode: 0 }, template);
         return result;
-    } catch (e: any) {
-        return `Error rendering Templater code: ${e?.message || String(e)}`;
+    } catch (e: unknown) {
+        const err = e as { message?: string };
+        return `Error rendering Templater code: ${err?.message || String(e)}`;
     }
 }

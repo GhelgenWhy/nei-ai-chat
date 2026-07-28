@@ -3,14 +3,14 @@ export interface EmbeddingProvider {
     embed(texts: string[]): Promise<number[][]>;
 }
 
-async function httpPostJson(url: string, body: Record<string, unknown>, headers: Record<string, string> = {}): Promise<any> {
+async function httpPostJson(url: string, body: Record<string, unknown>, headers: Record<string, string> = {}): Promise<Record<string, unknown>> {
     if (typeof fetch === 'function') {
         const res = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', ...headers },
             body: JSON.stringify(body)
         });
-        return await res.json();
+        return (await res.json()) as Record<string, unknown>;
     }
     try {
         const obsidian = await import("obsidian");
@@ -20,7 +20,7 @@ async function httpPostJson(url: string, body: Record<string, unknown>, headers:
             headers: { 'Content-Type': 'application/json', ...headers },
             body: JSON.stringify(body)
         });
-        return res.json;
+        return res.json as Record<string, unknown>;
     } catch {
         throw new Error("HTTP request failed");
     }
@@ -37,7 +37,8 @@ export class OllamaEmbeddingProvider implements EmbeddingProvider {
         for (const text of texts) {
             try {
                 const data = await httpPostJson(url, { model: this.model, prompt: text });
-                results.push(data.embedding || []);
+                const embedding = Array.isArray(data.embedding) ? (data.embedding as number[]) : [];
+                results.push(embedding);
             } catch {
                 results.push([]);
             }
@@ -63,7 +64,8 @@ export class OpenRouterEmbeddingProvider implements EmbeddingProvider {
         }
         try {
             const data = await httpPostJson(url, { model: this.model, input: texts }, headers);
-            return (data.data || []).map((item: any) => item.embedding);
+            const items = Array.isArray(data.data) ? (data.data as Array<{ embedding?: number[] }>) : [];
+            return items.map(item => (Array.isArray(item.embedding) ? item.embedding : []));
         } catch {
             return [];
         }

@@ -26259,7 +26259,8 @@ var OllamaEmbeddingProvider = class {
     for (const text of texts) {
       try {
         const data = await httpPostJson(url, { model: this.model, prompt: text });
-        results.push(data.embedding || []);
+        const embedding = Array.isArray(data.embedding) ? data.embedding : [];
+        results.push(embedding);
       } catch {
         results.push([]);
       }
@@ -26282,7 +26283,8 @@ var OpenRouterEmbeddingProvider = class {
     }
     try {
       const data = await httpPostJson(url, { model: this.model, input: texts }, headers);
-      return (data.data || []).map((item) => item.embedding);
+      const items = Array.isArray(data.data) ? data.data : [];
+      return items.map((item) => Array.isArray(item.embedding) ? item.embedding : []);
     } catch {
       return [];
     }
@@ -27646,7 +27648,6 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
   const [activeSteps, setActiveSteps] = React4.useState([]);
   const [showSessionsDrawer, setShowSessionsDrawer] = React4.useState(false);
   const [showConfig, setShowConfig] = React4.useState(false);
-  const [showIntentDebug, setShowIntentDebug] = React4.useState(false);
   const [pendingConfirmation, setPendingConfirmation] = React4.useState(null);
   const [showFreshnessSuggestion, setShowFreshnessSuggestion] = React4.useState(null);
   const [editingMsgIdx, setEditingMsgIdx] = React4.useState(null);
@@ -27769,21 +27770,21 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
   const clearTimerRef = React4.useRef(null);
   React4.useEffect(() => {
     return () => {
-      if (clearTimerRef.current)
-        clearTimeout(clearTimerRef.current);
-      if (settingsSaveTimerRef.current)
-        clearTimeout(settingsSaveTimerRef.current);
+      if (clearTimerRef.current !== null)
+        window.clearTimeout(clearTimerRef.current);
+      if (settingsSaveTimerRef.current !== null)
+        window.clearTimeout(settingsSaveTimerRef.current);
     };
   }, []);
   const handleClearAllSessions = async () => {
     if (!confirmingClear) {
       setConfirmingClear(true);
-      clearTimerRef.current = setTimeout(() => setConfirmingClear(false), 4e3);
+      clearTimerRef.current = window.setTimeout(() => setConfirmingClear(false), 4e3);
       return;
     }
     setConfirmingClear(false);
-    if (clearTimerRef.current)
-      clearTimeout(clearTimerRef.current);
+    if (clearTimerRef.current !== null)
+      window.clearTimeout(clearTimerRef.current);
     await ChatStore.clearAllSessions(app, settings);
     await refreshSessionsList();
     handleNewChat();
@@ -27900,22 +27901,24 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
     }
   };
   const [streamingContent, setStreamingContent] = React4.useState("");
-  const [showWelcome, setShowWelcome] = React4.useState(() => !localStorage.getItem("nei_welcome_seen"));
+  const [showWelcome, setShowWelcome] = React4.useState(() => app.loadLocalStorage("nei_welcome_seen") !== true);
   const [enableSemanticRag, setEnableSemanticRag] = React4.useState(settings.enableSemanticRag ?? false);
   const fileInputRef = React4.useRef(null);
   const handleExportSettings = () => {
     try {
       const dataStr = JSON.stringify(settings, null, 2);
+      const doc = typeof activeDocument !== "undefined" ? activeDocument : document;
       const blob = new Blob([dataStr], { type: "application/json" });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
+      const a = doc.createElement("a");
       a.href = url;
       a.download = `nei-settings-${Date.now()}.json`;
       a.click();
       URL.revokeObjectURL(url);
       new import_obsidian8.Notice(t("settingsExported", language));
     } catch (e) {
-      new import_obsidian8.Notice(`Export error: ${e?.message || String(e)}`);
+      const err = e;
+      new import_obsidian8.Notice(`Export error: ${err?.message || String(e)}`);
     }
   };
   const handleImportSettings = async (e) => {
@@ -27929,7 +27932,8 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
       await saveSettings(newSettings);
       new import_obsidian8.Notice(t("settingsImported", language));
     } catch (err) {
-      new import_obsidian8.Notice(`Import error: ${err?.message || String(err)}`);
+      const errObj = err;
+      new import_obsidian8.Notice(`Import error: ${errObj?.message || String(err)}`);
     }
   };
   const executeQuery = async (queryText, historySlice, imagesPayload) => {
@@ -28332,9 +28336,9 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
               onChange: (e) => {
                 const folderVal = e.target.value;
                 setDefaultNoteFolder(folderVal);
-                if (settingsSaveTimerRef.current)
-                  clearTimeout(settingsSaveTimerRef.current);
-                settingsSaveTimerRef.current = setTimeout(() => {
+                if (settingsSaveTimerRef.current !== null)
+                  window.clearTimeout(settingsSaveTimerRef.current);
+                settingsSaveTimerRef.current = window.setTimeout(() => {
                   void saveSettings({ ...settings, defaultNoteFolder: folderVal });
                 }, 300);
               },
@@ -28597,7 +28601,7 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
         language,
         onClose: () => {
           try {
-            localStorage.setItem("nei_welcome_seen", "true");
+            app.saveLocalStorage("nei_welcome_seen", true);
           } catch {
           }
           setShowWelcome(false);
@@ -29278,32 +29282,52 @@ var dataviewToolDefinitions = [
 ];
 async function executeDataviewQuery(app, query) {
   try {
-    const dataviewPlugin = app.plugins?.plugins?.dataview;
+    const appWithPlugins = app;
+    const dataviewPlugin = appWithPlugins.plugins?.plugins?.dataview;
     if (!dataviewPlugin || !dataviewPlugin.api) {
       return "Dataview plugin is not installed or enabled in this vault.";
     }
     const api = dataviewPlugin.api;
     const result = await api.query(query);
-    if (!result.successful) {
-      return `Dataview query error: ${result.error}`;
+    if (!result.successful || !result.value) {
+      return `Dataview query error: ${result.error || "Unknown query failure"}`;
     }
     const value = result.value;
+    const valuesArr = Array.isArray(value.values) ? value.values : [];
     if (value.type === "list") {
-      return `Dataview List Results (${value.values.length}):
-` + value.values.map((v) => `- ${typeof v === "object" ? v.path || JSON.stringify(v) : String(v)}`).join("\n");
+      const lines = valuesArr.map((v) => {
+        if (typeof v === "object" && v !== null && "path" in v) {
+          return `- ${String(v.path)}`;
+        }
+        return `- ${typeof v === "object" ? JSON.stringify(v) : String(v)}`;
+      });
+      return `Dataview List Results (${valuesArr.length}):
+${lines.join("\n")}`;
     }
     if (value.type === "table") {
-      const headers = value.headers.join(" | ");
-      const rows = value.values.map((row) => row.map((cell) => typeof cell === "object" ? cell?.path || JSON.stringify(cell) : String(cell)).join(" | ")).join("\n");
+      const headersArr = Array.isArray(value.headers) ? value.headers : [];
+      const headers = headersArr.join(" | ");
+      const rows = valuesArr.map((row) => {
+        if (Array.isArray(row)) {
+          return row.map((cell) => {
+            if (typeof cell === "object" && cell !== null && "path" in cell) {
+              return String(cell.path);
+            }
+            return typeof cell === "object" ? JSON.stringify(cell) : String(cell);
+          }).join(" | ");
+        }
+        return String(row);
+      }).join("\n");
       return `Dataview Table Results:
 | ${headers} |
-| ${value.headers.map(() => "---").join(" | ")} |
+| ${headersArr.map(() => "---").join(" | ")} |
 ${rows}`;
     }
     return `Dataview Query Success:
 ${JSON.stringify(value, null, 2)}`;
   } catch (e) {
-    return `Error executing Dataview query: ${e?.message || String(e)}`;
+    const err = e;
+    return `Error executing Dataview query: ${err?.message || String(e)}`;
   }
 }
 
@@ -29329,7 +29353,8 @@ var templaterToolDefinitions = [
 ];
 async function executeTemplaterRender(app, template) {
   try {
-    const templaterPlugin = app.plugins?.plugins?.["templater-obsidian"];
+    const appWithPlugins = app;
+    const templaterPlugin = appWithPlugins.plugins?.plugins?.["templater-obsidian"];
     if (!templaterPlugin || !templaterPlugin.templater) {
       let rendered = template;
       const now = /* @__PURE__ */ new Date();
@@ -29345,7 +29370,8 @@ async function executeTemplaterRender(app, template) {
     const result = await templater.parse_template({ target_file: null, run_mode: 0 }, template);
     return result;
   } catch (e) {
-    return `Error rendering Templater code: ${e?.message || String(e)}`;
+    const err = e;
+    return `Error rendering Templater code: ${err?.message || String(e)}`;
   }
 }
 
@@ -29434,7 +29460,8 @@ async function executeCreateCanvas(app, path, nodes, edges = []) {
     await app.vault.create(canvasPath, content);
     return `Successfully created Obsidian Canvas at: ${canvasPath} (${nodes.length} nodes, ${edges.length} edges)`;
   } catch (e) {
-    return `Error creating Canvas file: ${e?.message || String(e)}`;
+    const err = e;
+    return `Error creating Canvas file: ${err?.message || String(e)}`;
   }
 }
 
@@ -29457,8 +29484,8 @@ var ToolRegistry = class {
       create_canvas: (app, args) => executeCreateCanvas(
         app,
         String(args.path || ""),
-        args.nodes || [],
-        args.edges || []
+        Array.isArray(args.nodes) ? args.nodes : [],
+        Array.isArray(args.edges) ? args.edges : []
       )
     });
   }
@@ -29687,9 +29714,6 @@ var NeiAiChatPlugin = class extends import_obsidian14.Plugin {
       Object.entries(executors).forEach(
         ([name, executor]) => this.toolRegistry.registerExecutor(name, executor)
       );
-      if (definitions.length > 0) {
-        console.log(`[NEI] Registered ${definitions.length} MCP tools`);
-      }
     } catch (e) {
       console.warn("[NEI] MCP tools discovery failed:", e);
     }
