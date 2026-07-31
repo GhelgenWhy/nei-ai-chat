@@ -11,6 +11,10 @@ import { ToolRegistry } from "../services/tools/toolRegistry";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { Tooltip } from "./Tooltip";
 import { WelcomeScreen } from "./WelcomeScreen";
+import { ReasoningPanel } from "./ReasoningPanel";
+import { formatTokenCount, formatCost, calculateCost, ModelPricing } from "../utils/cost";
+import { AutoLearner, LearningProposal } from "../services/memory/autoLearner";
+import { MemoryStore } from "../services/memory/memoryStore";
 
 interface ChatPanelProps {
     app: App;
@@ -94,6 +98,25 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
     // Edit message inline state
     const [editingMsgIdx, setEditingMsgIdx] = React.useState<number | null>(null);
     const [editingText, setEditingText] = React.useState("");
+
+    // Session Cost Dashboard state
+    const [sessionMetrics, setSessionMetrics] = React.useState({
+        totalPromptTokens: 0,
+        totalCompletionTokens: 0,
+        totalCost: 0,
+        requestCount: 0
+    });
+    const [pricingMap, setPricingMap] = React.useState<Record<string, ModelPricing>>({});
+
+    // Reasoning Panel state
+    const [showReasoning, setShowReasoning] = React.useState(true);
+
+    // Auto-Learning state
+    const [learningProposal, setLearningProposal] = React.useState<{
+        proposal: LearningProposal;
+        onAccept: () => Promise<void>;
+        onDismiss: () => void;
+    } | null>(null);
 
     // Local Config & OpenRouter Stats State
     const [endpointUrl, setEndpointUrl] = React.useState(settings.endpointUrl || "https://openrouter.ai/api/v1");
@@ -487,6 +510,39 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
             await ChatStore.saveSession(app, settings, finalSession);
             await refreshSessionsList();
 
+            // Update session cost metrics
+            const promptTok = result.promptTokens || 0;
+            const completionTok = result.completionTokens || 0;
+            const cost = calculateCost(promptTok, completionTok, activeModelToUse, pricingMap);
+            setSessionMetrics(prev => ({
+                totalPromptTokens: prev.totalPromptTokens + promptTok,
+                totalCompletionTokens: prev.totalCompletionTokens + completionTok,
+                totalCost: prev.totalCost + cost,
+                requestCount: prev.requestCount + 1
+            }));
+
+            // Auto-Learning: extract facts/skills from conversation
+            if (settings.enableAutoLearning && finalMessages.length >= 4) {
+                void AutoLearner.extractAndPropose(
+                    { provider: "openrouter", endpointUrl, apiKey, model: quickModel },
+                    finalMessages
+                ).then(proposal => {
+                    if (proposal) {
+                        setLearningProposal({
+                            proposal,
+                            onAccept: async () => {
+                                const applied = await AutoLearner.applyProposal(app, settings, proposal);
+                                new Notice(`${t("learningApplied", language)} (${applied})`);
+                                setLearningProposal(null);
+                            },
+                            onDismiss: () => {
+                                setLearningProposal(null);
+                            }
+                        });
+                    }
+                });
+            }
+
             // Refresh key info balance after request
             if (apiKey) {
                 void OpenRouterService.getKeyInfo(apiKey).then(setKeyInfo);
@@ -602,6 +658,30 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                             <span>{modelFreshness.cutoff}</span>
                         </div>
                     )}
+
+                    {/* Session Cost Dashboard */}
+                    {sessionMetrics.requestCount > 0 && (
+                        <div className="nei-session-metrics" style={{
+                            display: 'inline-flex', alignItems: 'center', gap: '6px',
+                            padding: '2px 6px', borderRadius: '4px',
+                            background: 'var(--background-secondary)', border: '1px solid var(--background-modifier-border)',
+                            fontSize: '9px', fontFamily: 'monospace', fontWeight: 500, color: 'var(--text-muted)'
+                        }}>
+                            <span title={t("sessionCostTooltip", language)}>💰 {formatCost(sessionMetrics.totalCost)}</span>
+                            <span style={{ opacity: 0.4 }}>|</span>
+                            <span title={t("sessionTokensInTooltip", language)}>📥 {formatTokenCount(sessionMetrics.totalPromptTokens)}</span>
+                            <span style={{ opacity: 0.4 }}>|</span>
+                            <span title={t("sessionTokensOutTooltip", language)}>📤 {formatTokenCount(sessionMetrics.totalCompletionTokens)}</span>
+                            <span style={{ opacity: 0.4 }}>|</span>
+                            <span title={t("sessionRequestsTooltip", language)}>🔄 {sessionMetrics.requestCount}</span>
+                            <button
+                                onClick={() => setSessionMetrics({ totalPromptTokens: 0, totalCompletionTokens: 0, totalCost: 0, requestCount: 0 })}
+                                style={{ background: 'transparent', border: 'none', cursor: 'pointer', opacity: 0.5, fontSize: '9px', padding: '0 2px', color: 'var(--text-muted)' }}
+                                title={t("resetSessionMetrics", language)}
+                            >↺</button>
+                        </div>
+                    )}
+
                     <select
                         value={executionMode}
                         onChange={(e) => {
@@ -1199,30 +1279,55 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                     </div>
                 ))}
 
-                {/* Active Execution Steps Log Component */}
+                {/* Active Execution Steps — Reasoning Panel */}
                 {activeSteps.length > 0 && (
-                    <div style={{ background: 'var(--background-secondary-alt)', border: '1px solid var(--background-modifier-border)', borderRadius: '8px', padding: '8px 12px', fontSize: '11px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <div style={{ fontWeight: 'bold', color: 'var(--text-muted)', marginBottom: '2px' }}>
-                            ⚡ {t("agentReasoningLog", language)}
+                    <ReasoningPanel
+                        steps={activeSteps}
+                        language={language}
+                        isExpanded={showReasoning}
+                        onToggle={() => setShowReasoning(!showReasoning)}
+                    />
+                )}
+
+                {/* Auto-Learning Proposal Banner */}
+                {learningProposal && (
+                    <div className="nei-learning-proposal" style={{
+                        background: 'var(--background-secondary-alt)', border: '1px solid var(--interactive-accent)',
+                        borderRadius: '8px', padding: '10px 12px', fontSize: '11px'
+                    }}>
+                        <div style={{ fontWeight: 'bold', marginBottom: '6px', color: 'var(--interactive-accent)' }}>
+                            {t("learningProposalTitle", language)}
                         </div>
-                        {activeSteps.map((step) => (
-                            <details key={step.id} style={{ marginBottom: '4px' }}>
-                                <summary style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', opacity: step.status === 'running' ? 1 : 0.85 }}>
-                                    <span>{step.status === 'running' ? '⏳' : step.status === 'completed' ? '✅' : '❌'}</span>
-                                    <strong style={{ color: 'var(--text-normal)' }}>{step.title}</strong>
-                                </summary>
-                                {step.detail && (
-                                    <div style={{ color: 'var(--text-muted)', fontSize: '10px', marginTop: '2px', fontFamily: 'monospace', whiteSpace: 'pre-wrap', maxHeight: '120px', overflowY: 'auto', padding: '4px 6px', background: 'var(--background-primary)', borderRadius: '4px' }}>
-                                        {step.detail}
-                                    </div>
-                                )}
-                                {step.meta && (
-                                    <div style={{ marginTop: '2px', fontSize: '9px', opacity: 0.75, fontFamily: 'monospace' }}>
-                                        <code>{JSON.stringify(step.meta)}</code>
-                                    </div>
-                                )}
-                            </details>
-                        ))}
+                        {learningProposal.proposal.facts.length > 0 && (
+                            <div style={{ marginBottom: '4px' }}>
+                                <div style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '2px' }}>
+                                    {t("learningProposalFacts", language)}
+                                </div>
+                                {learningProposal.proposal.facts.map((f, i) => (
+                                    <div key={i} style={{ padding: '1px 0', color: 'var(--text-normal)' }}>💡 {f}</div>
+                                ))}
+                            </div>
+                        )}
+                        {learningProposal.proposal.skillIdeas.length > 0 && (
+                            <div style={{ marginBottom: '4px' }}>
+                                <div style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '2px' }}>
+                                    {t("learningProposalSkills", language)}
+                                </div>
+                                {learningProposal.proposal.skillIdeas.map((s, i) => (
+                                    <div key={i} style={{ padding: '1px 0', color: 'var(--text-normal)' }}>🛠 {s.name}: {s.description}</div>
+                                ))}
+                            </div>
+                        )}
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '6px' }}>
+                            <button
+                                onClick={learningProposal.onDismiss}
+                                style={{ padding: '3px 10px', fontSize: '10px', borderRadius: '4px', border: '1px solid var(--background-modifier-border)', background: 'var(--background-primary)', cursor: 'pointer', color: 'var(--text-muted)' }}
+                            >{t("dismiss", language)}</button>
+                            <button
+                                onClick={() => void learningProposal.onAccept()}
+                                style={{ padding: '3px 10px', fontSize: '10px', borderRadius: '4px', border: 'none', background: 'var(--interactive-accent)', color: 'var(--text-on-accent)', cursor: 'pointer', fontWeight: 600 }}
+                            >{t("accept", language)}</button>
+                        </div>
                     </div>
                 )}
 

@@ -190,6 +190,57 @@ export interface Translations {
     enableSemanticRagDesc: string;
     embeddingProviderLabel: string;
     embeddingModelLabel: string;
+    embeddingEndpointLabel: string;
+    embeddingEndpointDesc: string;
+
+    // Session Cost Dashboard
+    sessionCostTooltip: string;
+    sessionTokensInTooltip: string;
+    sessionTokensOutTooltip: string;
+    sessionRequestsTooltip: string;
+    resetSessionMetrics: string;
+
+    // Model Picker
+    modelSearchPlaceholder: string;
+    modelFilterAll: string;
+    modelFilterTools: string;
+    modelFilterVision: string;
+    modelFilterReasoning: string;
+    modelSortName: string;
+    modelSortContext: string;
+    modelCutoffLabel: string;
+    modelLiveLabel: string;
+
+    // Auto-Learning
+    enableAutoLearningLabel: string;
+    enableAutoLearningDesc: string;
+    learningProposalTitle: string;
+    learningProposalFacts: string;
+    learningProposalSkills: string;
+    learningApplied: string;
+    learningDismissed: string;
+    accept: string;
+    dismiss: string;
+
+    // Graph Analysis
+    graphOverviewTitle: string;
+    graphIsolatedTitle: string;
+    graphHubsTitle: string;
+    graphNoteContextTitle: string;
+    graphRecommendTitle: string;
+
+    // Reasoning Panel
+    reasoningStepsCount: string;
+    reasoningRunning: string;
+    reasoningCompleted: string;
+
+    // Hybrid RAG
+    hybridRagPrefetchTitle: string;
+    hybridRagPrefetchDetail: string;
+
+    // Canvas read
+    canvasReadSuccess: string;
+    canvasReadError: string;
 
     exportSettings: string;
     importSettings: string;
@@ -399,6 +450,50 @@ const baseEn: Translations = {
     enableSemanticRagDesc: "Combine lexical (TF-IDF) and vector embedding search for notes.",
     embeddingProviderLabel: "Embedding provider:",
     embeddingModelLabel: "Embedding model:",
+    embeddingEndpointLabel: "Embedding endpoint URL:",
+    embeddingEndpointDesc: "API endpoint for computing text embeddings (e.g., Ollama local server or OpenRouter).",
+
+    sessionCostTooltip: "Estimated session cost (based on model pricing)",
+    sessionTokensInTooltip: "Total input (prompt) tokens this session",
+    sessionTokensOutTooltip: "Total output (completion) tokens this session",
+    sessionRequestsTooltip: "Total API requests made this session",
+    resetSessionMetrics: "Reset session metrics",
+
+    modelSearchPlaceholder: "Search models...",
+    modelFilterAll: "All",
+    modelFilterTools: "Tools",
+    modelFilterVision: "Vision",
+    modelFilterReasoning: "Reasoning (32k+)",
+    modelSortName: "Name",
+    modelSortContext: "Context",
+    modelCutoffLabel: "Cutoff:",
+    modelLiveLabel: "Live",
+
+    enableAutoLearningLabel: "Enable auto-learning:",
+    enableAutoLearningDesc: "Automatically extract facts and patterns from conversations to enrich long-term memory.",
+    learningProposalTitle: "\ud83e\udde0 Insights extracted from this conversation",
+    learningProposalFacts: "Discovered facts:",
+    learningProposalSkills: "Skill ideas:",
+    learningApplied: "Learning applied to memory!",
+    learningDismissed: "Learning proposal dismissed.",
+    accept: "Accept",
+    dismiss: "Dismiss",
+
+    graphOverviewTitle: "Vault Graph Overview",
+    graphIsolatedTitle: "Isolated Notes (Orphans)",
+    graphHubsTitle: "Hub Notes (Most Connected)",
+    graphNoteContextTitle: "Note Link Context",
+    graphRecommendTitle: "Recommended Connections",
+
+    reasoningStepsCount: "{completed}/{total} steps",
+    reasoningRunning: "running",
+    reasoningCompleted: "completed",
+
+    hybridRagPrefetchTitle: "Hybrid RAG: {count} notes indexed",
+    hybridRagPrefetchDetail: "Lexical + semantic search combined via RRF",
+
+    canvasReadSuccess: "Canvas loaded: {nodes} nodes, {edges} edges",
+    canvasReadError: "Error reading canvas: {error}",
 
     exportSettings: "Export Settings",
     importSettings: "Import Settings",
@@ -607,6 +702,50 @@ const baseRu: Translations = {
     enableSemanticRagDesc: "Комбинировать лексический (TF-IDF) и векторный эмбеддинг поиск по заметкам.",
     embeddingProviderLabel: "Провайдер эмбеддингов:",
     embeddingModelLabel: "Модель эмбеддингов:",
+    embeddingEndpointLabel: "URL эндпоинта эмбеддингов:",
+    embeddingEndpointDesc: "API-адрес для вычисления текстовых эмбеддингов (локальный Ollama или OpenRouter).",
+
+    sessionCostTooltip: "Расчётная стоимость сессии (по ценам модели)",
+    sessionTokensInTooltip: "Всего входящих (prompt) токенов за сессию",
+    sessionTokensOutTooltip: "Всего исходящих (completion) токенов за сессию",
+    sessionRequestsTooltip: "Всего API-запросов за сессию",
+    resetSessionMetrics: "Сбросить метрики сессии",
+
+    modelSearchPlaceholder: "Поиск моделей...",
+    modelFilterAll: "Все",
+    modelFilterTools: "Инструменты",
+    modelFilterVision: "Зрение",
+    modelFilterReasoning: "Рассуждения (32k+)",
+    modelSortName: "Имя",
+    modelSortContext: "Контекст",
+    modelCutoffLabel: "Данные до:",
+    modelLiveLabel: "Актуально",
+
+    enableAutoLearningLabel: "Включить авто-обучение:",
+    enableAutoLearningDesc: "Автоматически извлекать факты и паттерны из диалогов для обогащения долгосрочной памяти.",
+    learningProposalTitle: "\ud83e\udde0 Извлечено из этого диалога",
+    learningProposalFacts: "Обнаруженные факты:",
+    learningProposalSkills: "Идеи скиллов:",
+    learningApplied: "Знания сохранены в память!",
+    learningDismissed: "Предложение обучения отклонено.",
+    accept: "Применить",
+    dismiss: "Отклонить",
+
+    graphOverviewTitle: "Обзор графа ваулта",
+    graphIsolatedTitle: "Изолированные заметки (сироты)",
+    graphHubsTitle: "Хабы (самые связанные)",
+    graphNoteContextTitle: "Контекст связей заметки",
+    graphRecommendTitle: "Рекомендуемые связи",
+
+    reasoningStepsCount: "{completed}/{total} шагов",
+    reasoningRunning: "выполняется",
+    reasoningCompleted: "завершено",
+
+    hybridRagPrefetchTitle: "Гибридный RAG: {count} заметок проиндексировано",
+    hybridRagPrefetchDetail: "Лексический + семантический поиск через RRF",
+
+    canvasReadSuccess: "Canvas загружен: {nodes} узлов, {edges} связей",
+    canvasReadError: "Ошибка чтения canvas: {error}",
 
     exportSettings: "Экспорт настроек",
     importSettings: "Импорт настроек",

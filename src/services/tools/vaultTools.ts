@@ -254,15 +254,25 @@ export const vaultToolDefinitions: ToolDefinition[] = [
         type: "function",
         function: {
             name: "analyze_vault_graph",
-            description: "Проанализировать граф связей Ваулта: найти изолированные заметки (без входящих/исходящих ссылок), наименее и наиболее связанные заметки.",
+            description: "Analyze the vault link graph structure. Supports multiple analysis modes.",
             parameters: {
                 type: "object",
                 properties: {
-                    folderPath: {
+                    mode: {
                         type: "string",
-                        description: "Необязательно. Ограничить анализ конкретной папкой."
+                        enum: ["overview", "isolated", "hubs", "note_context", "recommend_links"],
+                        description: "Analysis mode: overview (stats), isolated (orphan notes), hubs (most-linked), note_context (links for a specific note), recommend_links (suggest connections)"
+                    },
+                    notePath: {
+                        type: "string",
+                        description: "For note_context mode: path to the note to analyze"
+                    },
+                    minLinks: {
+                        type: "number",
+                        description: "For hubs mode: minimum incoming links threshold (default 3)"
                     }
-                }
+                },
+                required: ["mode"]
             }
         }
     }
@@ -655,48 +665,165 @@ export const vaultExecutors: Record<string, ToolExecutor> = {
     },
 
     analyze_vault_graph: async (app: App, rawArgs: Record<string, unknown>) => {
-        const args = rawArgs as { folderPath?: string };
+        const args = rawArgs as { mode: string; notePath?: string; minLinks?: number };
+        const mode = args.mode || "overview";
         const files = app.vault.getMarkdownFiles();
-        let orphanCount = 0;
-        const totalFiles = files.length;
-        const orphanFiles: string[] = [];
-
+        
         const resolvedLinks = app.metadataCache.resolvedLinks;
-
+        
+        // Count incoming links for all files
+        const incomingLinksCount: Record<string, number> = {};
+        const incomingLinksMap: Record<string, string[]> = {};
         for (const file of files) {
-            if (args.folderPath && !file.path.startsWith(args.folderPath)) continue;
+            incomingLinksCount[file.path] = 0;
+            incomingLinksMap[file.path] = [];
+        }
 
-            const outgoing = Object.keys(resolvedLinks[file.path] || {});
-            let incomingCount = 0;
+        for (const sourcePath in resolvedLinks) {
+            const targets = resolvedLinks[sourcePath];
+            for (const targetPath in targets) {
+                if (incomingLinksCount[targetPath] !== undefined) {
+                    incomingLinksCount[targetPath]++;
+                    incomingLinksMap[targetPath].push(sourcePath);
+                }
+            }
+        }
 
-            for (const otherFile of files) {
-                if (otherFile.path === file.path) continue;
-                const links = resolvedLinks[otherFile.path] || {};
-                if (links[file.path]) {
-                    incomingCount++;
+        if (mode === "overview") {
+            let totalLinks = 0;
+            let orphanCount = 0;
+
+            for (const file of files) {
+                const outgoing = Object.keys(resolvedLinks[file.path] || {});
+                totalLinks += outgoing.length;
+                
+                if (outgoing.length === 0 && incomingLinksCount[file.path] === 0) {
+                    orphanCount++;
                 }
             }
 
-            if (outgoing.length === 0 && incomingCount === 0) {
-                orphanCount++;
-                orphanFiles.push(file.path);
-            }
+            const avgLinks = files.length > 0 ? (totalLinks / files.length).toFixed(2) : "0";
+            
+            return `### Vault Graph Overview\n- **Total Notes**: ${files.length}\n- **Total Links**: ${totalLinks}\n- **Average Links/Note**: ${avgLinks}\n- **Isolated Notes (Orphans)**: ${orphanCount}`;
         }
 
-        let report = `=== АНАЛИЗ ГРАФА СВЯЗЕЙ ВАУЛТА ===\n`;
-        report += `Всего проанализировано заметок: ${totalFiles}\n`;
-        report += `Изолированных заметок (Orphans, без входящих и исходящих ссылок): ${orphanCount}\n\n`;
-
-        if (orphanFiles.length > 0) {
-            report += `Список изолированных заметок (первые 15):\n`;
-            report += orphanFiles.slice(0, 15).map(p => `- 📄 ${p}`).join("\n");
-            if (orphanFiles.length > 15) {
-                report += `\n...и ещё ${orphanFiles.length - 15} заметок.`;
+        if (mode === "isolated") {
+            const orphans: string[] = [];
+            for (const file of files) {
+                const outgoing = Object.keys(resolvedLinks[file.path] || {});
+                if (outgoing.length === 0 && incomingLinksCount[file.path] === 0) {
+                    orphans.push(file.path);
+                }
             }
-        } else {
-            report += `Все заметки в Ваулте связаны ссылками! Отличная структура базы знаний.`;
+            
+            const limit = 30;
+            const shown = orphans.slice(0, limit);
+            let report = `### Isolated Notes (${orphans.length} total)\nNotes with 0 incoming and 0 outgoing links.\n\n`;
+            
+            if (shown.length > 0) {
+                report += shown.map(p => `- ${p}`).join("\n");
+                if (orphans.length > limit) report += `\n...and ${orphans.length - limit} more.`;
+            } else {
+                report += "No isolated notes found!";
+            }
+            return report;
         }
 
-        return report;
+        if (mode === "hubs") {
+            const min = args.minLinks || 3;
+            const hubs = files
+                .map(f => ({ path: f.path, count: incomingLinksCount[f.path] }))
+                .filter(item => item.count >= min)
+                .sort((a, b) => b.count - a.count);
+                
+            const limit = 25;
+            const shown = hubs.slice(0, limit);
+            
+            let report = `### Hub Notes (min. ${min} incoming links)\nFound ${hubs.length} hubs.\n\n`;
+            if (shown.length > 0) {
+                report += shown.map(h => `- **${h.path}**: ${h.count} links`).join("\n");
+                if (hubs.length > limit) report += `\n...and ${hubs.length - limit} more.`;
+            } else {
+                report += "No hubs found matching the criteria.";
+            }
+            return report;
+        }
+
+        if (mode === "note_context") {
+            if (!args.notePath) return "Error: notePath parameter is required for note_context mode.";
+            
+            // Allow loose matching
+            const file = files.find(f => f.path.toLowerCase() === args.notePath?.toLowerCase() || f.path.toLowerCase().endsWith(`/${args.notePath?.toLowerCase()}`));
+            if (!file) return `Error: Note '${args.notePath}' not found.`;
+            
+            const outgoing = Object.keys(resolvedLinks[file.path] || {});
+            const incoming = incomingLinksMap[file.path] || [];
+            
+            let report = `### Link Context for: ${file.path}\n\n`;
+            
+            report += `**Outgoing Links (${outgoing.length}):**\n`;
+            report += outgoing.slice(0, 15).map(p => `- ${p}`).join("\n") || "None";
+            if (outgoing.length > 15) report += `\n...and ${outgoing.length - 15} more.`;
+            
+            report += `\n\n**Incoming Links (${incoming.length}):**\n`;
+            report += incoming.slice(0, 15).map(p => `- ${p}`).join("\n") || "None";
+            if (incoming.length > 15) report += `\n...and ${incoming.length - 15} more.`;
+            
+            return report;
+        }
+
+        if (mode === "recommend_links") {
+            // Find notes that share tags but aren't linked
+            const fileTags: Record<string, string[]> = {};
+            for (const file of files) {
+                const cache = app.metadataCache.getFileCache(file);
+                const tagsInFile = (cache?.tags || []).map(t => t.tag.toLowerCase());
+                const fmTags = cache?.frontmatter?.tags || [];
+                const normFmTags = Array.isArray(fmTags) ? fmTags : [fmTags];
+                const allTags = new Set([...tagsInFile, ...normFmTags.map(t => String(t).startsWith('#') ? String(t).toLowerCase() : `#${String(t).toLowerCase()}`)]);
+                fileTags[file.path] = Array.from(allTags);
+            }
+            
+            const recommendations: { f1: string, f2: string, commonTags: string[] }[] = [];
+            
+            // Very naive approach: limit search to avoid freezing
+            const sampleSize = Math.min(files.length, 200);
+            for (let i = 0; i < sampleSize; i++) {
+                const f1 = files[i].path;
+                const tags1 = fileTags[f1];
+                if (!tags1 || tags1.length === 0) continue;
+                
+                for (let j = i + 1; j < sampleSize; j++) {
+                    const f2 = files[j].path;
+                    const tags2 = fileTags[f2];
+                    if (!tags2 || tags2.length === 0) continue;
+                    
+                    const common = tags1.filter(t => tags2.includes(t));
+                    if (common.length > 0) {
+                        const isLinked = resolvedLinks[f1]?.[f2] || resolvedLinks[f2]?.[f1];
+                        if (!isLinked) {
+                            recommendations.push({ f1, f2, commonTags: common });
+                        }
+                    }
+                }
+            }
+            
+            // Sort by number of common tags
+            recommendations.sort((a, b) => b.commonTags.length - a.commonTags.length);
+            
+            const limit = 15;
+            const shown = recommendations.slice(0, limit);
+            
+            let report = `### Link Recommendations\nBased on shared tags between unlinked notes (from a sample of recent notes).\n\n`;
+            if (shown.length > 0) {
+                report += shown.map(r => `- **${r.f1}** & **${r.f2}** (Shared: ${r.commonTags.join(", ")})`).join("\n");
+            } else {
+                report += "No obvious tag-based recommendations found.";
+            }
+            
+            return report;
+        }
+
+        return `Error: Unknown mode '${mode}'`;
     }
 };

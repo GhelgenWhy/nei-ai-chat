@@ -12,16 +12,31 @@ export interface VectorChunkResult {
 export class VectorIndex {
     private chunks: Array<{ file: TFile; content: string; embedding: number[] }> = [];
 
-    public async indexVault(app: App, provider: EmbeddingProvider, limit: number = 25): Promise<void> {
-        const files = app.vault.getMarkdownFiles().slice(0, limit);
+    private static chunkText(text: string, chunkSize = 500, overlap = 50): string[] {
+        const chunks: string[] = [];
+        for (let i = 0; i < text.length; i += chunkSize - overlap) {
+            chunks.push(text.slice(i, i + chunkSize));
+            if (i + chunkSize >= text.length) break;
+        }
+        return chunks.length > 0 ? chunks : [text.substring(0, chunkSize)];
+    }
+
+    public async indexVault(app: App, provider: EmbeddingProvider, limit: number = 200): Promise<void> {
+        const files = app.vault.getMarkdownFiles();
         this.chunks = [];
 
         const fileTexts: Array<{ file: TFile; text: string }> = [];
+        let fileCount = 0;
         for (const file of files) {
+            if (fileCount >= limit) break;
             try {
                 const content = await app.vault.read(file);
                 if (content.trim()) {
-                    fileTexts.push({ file, text: content.substring(0, 1000) });
+                    const textChunks = VectorIndex.chunkText(content);
+                    for (const chunk of textChunks) {
+                        fileTexts.push({ file, text: chunk });
+                    }
+                    fileCount++;
                 }
             } catch {
                 /* ignore unreadable file */
@@ -102,7 +117,12 @@ export async function searchVaultHybrid(
     lexicalResults.forEach((res, rank) => {
         const path = res.file.path;
         const rrf = 1 / (k + (rank + 1));
-        scoreMap.set(path, { file: res.file, content: res.content, rrfScore: rrf });
+        const existing = scoreMap.get(path);
+        if (existing) {
+            existing.rrfScore += rrf;
+        } else {
+            scoreMap.set(path, { file: res.file, content: res.content, rrfScore: rrf });
+        }
     });
 
     vectorResults.forEach((res, rank) => {

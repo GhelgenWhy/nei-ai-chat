@@ -95,4 +95,33 @@ export class MemoryStore {
             await app.vault.createFolder(normalized);
         }
     }
+
+    static async createAgentSkill(
+        app: App,
+        settings: NeiAiChatSettings,
+        name: string,
+        description: string,
+        instructions: string
+    ): Promise<string> {
+        const skillsFolder = settings.skillsFolder || '.nei/skills';
+        const { ensureFolderExists } = await import('../tools/vaultTools');
+        await ensureFolderExists(app, skillsFolder);
+        
+        const fileName = `${name.replace(/[^a-zA-Z0-9_-]/g, '_')}.md`;
+        const filePath = `${skillsFolder}/${fileName}`;
+        
+        const content = `---\nname: ${name}\ndescription: ${description}\n---\n\n${instructions}`;
+        
+        try {
+            const existing = app.vault.getAbstractFileByPath(filePath);
+            if (existing) {
+                return `Skill '${name}' already exists at ${filePath}`;
+            }
+            await app.vault.create(filePath, content);
+            return `Skill '${name}' created at ${filePath}`;
+        } catch (e: unknown) {
+            const err = e as { message?: string };
+            return `Error creating skill: ${err?.message || String(e)}`;
+        }
+    }
 }

@@ -29,6 +29,10 @@ export const dataviewToolDefinitions: ToolDefinition[] = [
                     query: {
                         type: "string",
                         description: "DQL query string, e.g. 'LIST FROM \"folder\"' or 'TABLE file.mtime FROM #tag'"
+                    },
+                    limit: {
+                        type: "number",
+                        description: "Maximum results to return (default 50)"
                     }
                 },
                 required: ["query"]
@@ -37,7 +41,7 @@ export const dataviewToolDefinitions: ToolDefinition[] = [
     }
 ];
 
-export async function executeDataviewQuery(app: App, query: string): Promise<string> {
+export async function executeDataviewQuery(app: App, query: string, limit: number = 50): Promise<string> {
     try {
         const appWithPlugins = app as unknown as { plugins?: { plugins?: Record<string, DataviewPlugin> } };
         const dataviewPlugin = appWithPlugins.plugins?.plugins?.dataview;
@@ -53,7 +57,14 @@ export async function executeDataviewQuery(app: App, query: string): Promise<str
         }
 
         const value = result.value;
-        const valuesArr = Array.isArray(value.values) ? value.values : [];
+        let valuesArr = Array.isArray(value.values) ? value.values : [];
+        
+        const totalResults = valuesArr.length;
+        if (valuesArr.length > limit) {
+            valuesArr = valuesArr.slice(0, limit);
+        }
+
+        const summary = `Showing ${valuesArr.length} of ${totalResults} results.`;
 
         if (value.type === "list") {
             const lines = valuesArr.map((v: unknown) => {
@@ -62,7 +73,7 @@ export async function executeDataviewQuery(app: App, query: string): Promise<str
                 }
                 return `- ${typeof v === "object" ? JSON.stringify(v) : String(v)}`;
             });
-            return `Dataview List Results (${valuesArr.length}):\n${lines.join("\n")}`;
+            return `Dataview List Results:\n${summary}\n\n${lines.join("\n")}`;
         }
 
         if (value.type === "table") {
@@ -80,10 +91,10 @@ export async function executeDataviewQuery(app: App, query: string): Promise<str
                 return String(row);
             }).join("\n");
 
-            return `Dataview Table Results:\n| ${headers} |\n| ${headersArr.map(() => "---").join(" | ")} |\n${rows}`;
+            return `Dataview Table Results:\n${summary}\n\n| ${headers} |\n| ${headersArr.map(() => "---").join(" | ")} |\n${rows}`;
         }
 
-        return `Dataview Query Success:\n${JSON.stringify(value, null, 2)}`;
+        return `Dataview Query Success:\n${summary}\n${JSON.stringify(value, null, 2)}`;
     } catch (e: unknown) {
         const err = e as { message?: string };
         return `Error executing Dataview query: ${err?.message || String(e)}`;

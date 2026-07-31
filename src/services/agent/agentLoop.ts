@@ -289,7 +289,11 @@ export class AgentLoop {
             const isLastIteration = (iteration === effectiveMaxIterations);
             const activeTools = isLastIteration ? undefined : filteredTools;
 
-            const response = await sendChatRequest(config, messages, activeTools);
+            // Stream the final response in agent mode (last iteration or no tools)
+            const useStreaming = isLastIteration && settings.enableStreaming && onStreamChunk;
+            const response = useStreaming
+                ? await sendChatRequestStream(config, messages, undefined, onStreamChunk)
+                : await sendChatRequest(config, messages, activeTools);
             if (response.usage) {
                 totalPromptTokens += response.usage.promptTokens;
                 totalCompletionTokens += response.usage.completionTokens;

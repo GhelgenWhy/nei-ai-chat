@@ -19,6 +19,10 @@ export const templaterToolDefinitions: ToolDefinition[] = [
                     template: {
                         type: "string",
                         description: "Text snippet containing Templater code, e.g. '<% tp.date.now(\"YYYY-MM-DD\") %>'"
+                    },
+                    context: {
+                        type: "object",
+                        description: "Additional variables to inject into the template context"
                     }
                 },
                 required: ["template"]
@@ -27,7 +31,7 @@ export const templaterToolDefinitions: ToolDefinition[] = [
     }
 ];
 
-export async function executeTemplaterRender(app: App, template: string): Promise<string> {
+export async function executeTemplaterRender(app: App, template: string, context?: Record<string, unknown>): Promise<string> {
     try {
         const appWithPlugins = app as unknown as { plugins?: { plugins?: Record<string, TemplaterPlugin> } };
         const templaterPlugin = appWithPlugins.plugins?.plugins?.["templater-obsidian"];
@@ -43,11 +47,14 @@ export async function executeTemplaterRender(app: App, template: string): Promis
             rendered = rendered.replace(/<%\s*tp\.file\.title\s*%>/gi, "Untitled");
             rendered = rendered.replace(/<%\s*tp\.file\.creation_date\([^)]*\)\s*%>/gi, todayStr);
             rendered = rendered.replace(/<%\s*tp\.file\.last_modified_date\([^)]*\)\s*%>/gi, `${todayStr} ${timeStr}`);
+            rendered = rendered.replace(/<%\s*tp\.file\.folder\([^)]*\)\s*%>/gi, "");
+            rendered = rendered.replace(/<%\s*tp\.system\.prompt\([^)]*\)\s*%>/gi, "");
 
             return rendered;
         }
 
         const templater = templaterPlugin.templater;
+        // In the future, we could potentially inject the `context` into the Templater execution environment
         const result = await templater.parse_template({ target_file: null, run_mode: 0 }, template);
         return result;
     } catch (e: unknown) {

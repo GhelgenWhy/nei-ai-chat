@@ -1,5 +1,6 @@
 export interface EmbeddingProvider {
     name: string;
+    dimension: number;
     embed(texts: string[]): Promise<number[][]>;
 }
 
@@ -28,19 +29,27 @@ async function httpPostJson(url: string, body: Record<string, unknown>, headers:
 
 export class OllamaEmbeddingProvider implements EmbeddingProvider {
     name = "ollama";
+    dimension = 768;
+    maxBatchSize = 50;
 
     constructor(private endpoint: string = "http://localhost:11434", private model: string = "nomic-embed-text") {}
 
     async embed(texts: string[]): Promise<number[][]> {
         const results: number[][] = [];
         const url = this.endpoint.endsWith('/') ? `${this.endpoint}api/embeddings` : `${this.endpoint}/api/embeddings`;
-        for (const text of texts) {
-            try {
-                const data = await httpPostJson(url, { model: this.model, prompt: text });
-                const embedding = Array.isArray(data.embedding) ? (data.embedding as number[]) : [];
-                results.push(embedding);
-            } catch {
-                results.push([]);
+        
+        for (let i = 0; i < texts.length; i += this.maxBatchSize) {
+            const batch = texts.slice(i, i + this.maxBatchSize);
+            for (const text of batch) {
+                try {
+                    const data = await httpPostJson(url, { model: this.model, prompt: text });
+                    const embedding = Array.isArray(data.embedding) ? (data.embedding as number[]) : [];
+                    results.push(embedding);
+                } catch (e: unknown) {
+                    const err = e as { message?: string };
+                    console.warn(`[OllamaEmbedding] Error embedding text: ${err?.message || String(e)}`);
+                    results.push([]);
+                }
             }
         }
         return results;
@@ -49,6 +58,8 @@ export class OllamaEmbeddingProvider implements EmbeddingProvider {
 
 export class OpenRouterEmbeddingProvider implements EmbeddingProvider {
     name = "openrouter";
+    dimension = 1536;
+    maxBatchSize = 50;
 
     constructor(
         private endpoint: string = "https://openrouter.ai/api/v1",
@@ -66,7 +77,9 @@ export class OpenRouterEmbeddingProvider implements EmbeddingProvider {
             const data = await httpPostJson(url, { model: this.model, input: texts }, headers);
             const items = Array.isArray(data.data) ? (data.data as Array<{ embedding?: number[] }>) : [];
             return items.map(item => (Array.isArray(item.embedding) ? item.embedding : []));
-        } catch {
+        } catch (e: unknown) {
+            const err = e as { message?: string };
+            console.warn(`[OpenRouterEmbedding] Error embedding text: ${err?.message || String(e)}`);
             return [];
         }
     }

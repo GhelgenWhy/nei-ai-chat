@@ -5,7 +5,7 @@ import { systemToolDefinitions, systemExecutors } from "./systemTools";
 import { memoryToolDefinitions, memoryExecutors } from "./memoryTools";
 import { dataviewToolDefinitions, executeDataviewQuery } from "./dataviewTools";
 import { templaterToolDefinitions, executeTemplaterRender } from "./templaterTools";
-import { canvasToolDefinitions, executeCreateCanvas } from "./canvasTools";
+import { canvasToolDefinitions, executeCreateCanvas, executeReadCanvas } from "./canvasTools";
 import { NeiAiChatPlugin } from "../../../main";
 
 export class ToolRegistry {
@@ -21,18 +21,19 @@ export class ToolRegistry {
 
         // Ecosystem tools registration
         this.registerAll(dataviewToolDefinitions, {
-            query_dataview: (app, args) => executeDataviewQuery(app, String(args.query || ""))
+            query_dataview: (app, args) => executeDataviewQuery(app, String(args.query || ""), typeof args.limit === "number" ? args.limit : 50)
         });
         this.registerAll(templaterToolDefinitions, {
-            render_templater: (app, args) => executeTemplaterRender(app, String(args.template || ""))
+            render_templater: (app, args) => executeTemplaterRender(app, String(args.template || ""), args.context as Record<string, unknown> | undefined)
         });
         this.registerAll(canvasToolDefinitions, {
             create_canvas: (app, args) => executeCreateCanvas(
                 app,
                 String(args.path || ""),
-                (Array.isArray(args.nodes) ? args.nodes : []) as Array<{ id: string; x: number; y: number; width: number; height: number; type?: string; text: string }>,
-                (Array.isArray(args.edges) ? args.edges : []) as Array<{ id: string; fromNode: string; toNode: string }>
-            )
+                (Array.isArray(args.nodes) ? args.nodes : []) as Array<{ id: string; x: number; y: number; width: number; height: number; type?: string; text?: string; color?: string }>,
+                (Array.isArray(args.edges) ? args.edges : []) as Array<{ id: string; fromNode: string; fromSide?: string; toNode: string; toSide?: string }>
+            ),
+            read_canvas: (app, args) => executeReadCanvas(app, String(args.path || ""))
         });
     }
 

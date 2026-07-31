@@ -63,6 +63,10 @@ export interface NeiAiChatSettings {
     intentAttachmentWeight: number;
     intentStaleQueryWeight: number;
     intentFreshnessWeight: number;
+
+    // Auto-Learning
+    enableAutoLearning: boolean;
+    lastAutoLearnTimestamp: number;
 }
 
 const DEFAULT_SETTINGS: NeiAiChatSettings = {
@@ -136,7 +140,11 @@ const DEFAULT_SETTINGS: NeiAiChatSettings = {
     intentHistoryWeight: 0.3,
     intentAttachmentWeight: 5.0,
     intentStaleQueryWeight: 3.0,
-    intentFreshnessWeight: 2.0
+    intentFreshnessWeight: 2.0,
+
+    // Auto-Learning defaults (opt-in)
+    enableAutoLearning: false,
+    lastAutoLearnTimestamp: 0
 };
 
 export default class NeiAiChatPlugin extends Plugin {
