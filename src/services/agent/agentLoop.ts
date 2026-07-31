@@ -310,7 +310,7 @@ export class AgentLoop {
                 notifySteps();
             }
 
-            // A) Standard OpenAI / OpenRouter Native Tool Calls
+            // A) Standard OpenAI / OpenRouter Native Tool Calls (Parallel Execution - FUNC-03)
             if (response.tool_calls && response.tool_calls.length > 0 && !isLastIteration) {
                 toolCalledCount += response.tool_calls.length;
 
@@ -320,7 +320,7 @@ export class AgentLoop {
                     tool_calls: response.tool_calls
                 });
 
-                for (const toolCall of response.tool_calls) {
+                const toolPromises = response.tool_calls.map(async (toolCall) => {
                     const toolName = toolCall.function.name;
                     const toolArgsStr = toolCall.function.arguments;
                     const callKey = `${toolName}:${toolArgsStr}`;
@@ -372,13 +372,16 @@ export class AgentLoop {
                     }
                     notifySteps();
 
-                    messages.push({
-                        role: "tool",
+                    return {
+                        role: "tool" as const,
                         name: toolName,
                         tool_call_id: toolCall.id,
                         content: trimmedResult
-                    });
-                }
+                    };
+                });
+
+                const toolResponses = await Promise.all(toolPromises);
+                messages.push(...toolResponses);
             } 
             // B) Fallback: Text-based JSON Tool Call Parser
             else if (response.content && this.containsJsonToolCall(response.content) && !isLastIteration) {

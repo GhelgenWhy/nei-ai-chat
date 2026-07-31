@@ -26,4 +26,14 @@ describe('File Handling & Model Capabilities Validation', () => {
         const ext = testFilename.substring(testFilename.lastIndexOf('.')).toLowerCase();
         expect(textExts.includes(ext)).toBe(true);
     });
+
+    it('should expand date queries into multiple standard variants for daily note matching', async () => {
+        const { generateDateVariants } = await import('../src/services/tools/vaultTools');
+        const variants = generateDateVariants('31 июля 2026');
+        expect(variants).toContain('31.07.2026');
+        expect(variants).toContain('2026-07-31');
+        expect(variants).toContain('31-07-2026');
+        expect(variants).toContain('31/07/2026');
+        expect(variants).toContain('31 июля 2026');
+    });
 });

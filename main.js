@@ -23584,9 +23584,76 @@ var init_pathUtils = __esm({
 var vaultTools_exports = {};
 __export(vaultTools_exports, {
   ensureFolderExists: () => ensureFolderExists,
+  generateDateVariants: () => generateDateVariants,
   vaultExecutors: () => vaultExecutors,
   vaultToolDefinitions: () => vaultToolDefinitions
 });
+function generateDateVariants(input) {
+  const variants = /* @__PURE__ */ new Set([input.trim()]);
+  const monthRuNames = ["\u044F\u043D\u0432\u0430\u0440\u044F", "\u0444\u0435\u0432\u0440\u0430\u043B\u044F", "\u043C\u0430\u0440\u0442\u0430", "\u0430\u043F\u0440\u0435\u043B\u044F", "\u043C\u0430\u044F", "\u0438\u044E\u043D\u044F", "\u0438\u044E\u043B\u044F", "\u0430\u0432\u0433\u0443\u0441\u0442\u0430", "\u0441\u0435\u043D\u0442\u044F\u0431\u0440\u044F", "\u043E\u043A\u0442\u044F\u0431\u0440\u044F", "\u043D\u043E\u044F\u0431\u0440\u044F", "\u0434\u0435\u043A\u0430\u0431\u0440\u044F"];
+  const monthEnNames = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
+  const monthEnShort = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+  let day = null;
+  let month = null;
+  let year = null;
+  const lower = input.toLowerCase().trim();
+  const numMatch = lower.match(/^(\d{1,4})[./-](\d{1,2})[./-](\d{1,4})$/);
+  if (numMatch) {
+    const p1 = parseInt(numMatch[1], 10);
+    const p2 = parseInt(numMatch[2], 10);
+    const p3 = parseInt(numMatch[3], 10);
+    if (p1 > 1e3) {
+      year = p1;
+      month = p2;
+      day = p3;
+    } else if (p3 > 1e3) {
+      year = p3;
+      if (p1 <= 12 && p2 > 12) {
+        month = p1;
+        day = p2;
+      } else {
+        day = p1;
+        month = p2;
+      }
+    }
+  }
+  if (!day || !month || !year) {
+    for (let i = 0; i < 12; i++) {
+      const ruName = monthRuNames[i];
+      const enName = monthEnNames[i];
+      const enShort = monthEnShort[i];
+      if (lower.includes(ruName) || lower.includes(enName) || lower.includes(enShort)) {
+        month = i + 1;
+        const dMatch = lower.match(/\b(\d{1,2})\b/);
+        const yMatch = lower.match(/\b(\d{4})\b/);
+        if (dMatch)
+          day = parseInt(dMatch[1], 10);
+        if (yMatch)
+          year = parseInt(yMatch[1], 10);
+        break;
+      }
+    }
+  }
+  if (day && month && year) {
+    const dd = String(day).padStart(2, "0");
+    const mm = String(month).padStart(2, "0");
+    const yyyy = String(year);
+    variants.add(`${dd}.${mm}.${yyyy}`);
+    variants.add(`${yyyy}-${mm}-${dd}`);
+    variants.add(`${dd}-${mm}-${yyyy}`);
+    variants.add(`${dd}/${mm}/${yyyy}`);
+    variants.add(`${mm}/${dd}/${yyyy}`);
+    const ruMonth = monthRuNames[month - 1];
+    const enMonth = monthEnNames[month - 1];
+    const enShort = monthEnShort[month - 1];
+    variants.add(`${day} ${ruMonth} ${yyyy}`);
+    variants.add(`${day} ${ruMonth} ${yyyy} \u0433.`);
+    variants.add(`${enMonth} ${day}, ${yyyy}`);
+    variants.add(`${day} ${enShort} ${yyyy}`);
+    variants.add(`${enShort} ${day}, ${yyyy}`);
+  }
+  return Array.from(variants);
+}
 function findFile(app, rawPath) {
   let cleanPath = (0, import_obsidian2.normalizePath)(rawPath.trim());
   if (!cleanPath.endsWith(".md")) {
@@ -23599,9 +23666,18 @@ function findFile(app, rawPath) {
     return exact;
   const files = app.vault.getMarkdownFiles();
   const cleanLower = cleanPath.toLowerCase();
-  const matched = files.find(
+  let matched = files.find(
     (f) => f.basename.toLowerCase() === cleanLower || f.path.toLowerCase() === cleanLower || f.path.toLowerCase().endsWith("/" + cleanLower)
   );
+  if (matched)
+    return matched;
+  const dateVariants = generateDateVariants(cleanPath).map((v) => v.toLowerCase());
+  if (dateVariants.length > 1) {
+    matched = files.find((f) => {
+      const baseLower = f.basename.toLowerCase();
+      return dateVariants.some((variant) => baseLower.includes(variant));
+    });
+  }
   return matched || null;
 }
 function findFolder(app, rawPath) {
@@ -24094,18 +24170,22 @@ ${content}
         const args = rawArgs;
         const limit = args.maxResults || 10;
         const queryLower = args.query.toLowerCase();
+        const dateVariants = generateDateVariants(args.query).map((v) => v.toLowerCase());
         const files = app.vault.getMarkdownFiles();
         const results = [];
         for (const file of files) {
           if (results.length >= limit)
             break;
-          const nameMatches = file.path.toLowerCase().includes(queryLower);
+          const filePathLower = file.path.toLowerCase();
+          const nameMatches = filePathLower.includes(queryLower) || dateVariants.some((v) => filePathLower.includes(v));
           const content = await app.vault.cachedRead(file);
-          const contentMatches = content.toLowerCase().includes(queryLower);
+          const contentLower = content.toLowerCase();
+          const contentMatches = contentLower.includes(queryLower) || dateVariants.some((v) => contentLower.includes(v));
           if (nameMatches || contentMatches) {
             let snippet = "";
             if (contentMatches) {
-              const idx = content.toLowerCase().indexOf(queryLower);
+              const matchTerm = dateVariants.find((v) => contentLower.includes(v)) || queryLower;
+              const idx = contentLower.indexOf(matchTerm);
               const start = Math.max(0, idx - 60);
               const end = Math.min(content.length, idx + 100);
               snippet = content.substring(start, end).replace(/\n/g, " ");
@@ -26801,7 +26881,15 @@ var IntentRouter = class {
    * Computes raw intent score from extracted features and scoring weights.
    */
   static computeScore(features, weights) {
-    return (features.hasAttachments ? 1 : 0) * weights.attachmentWeight + features.hasVaultKeywords * weights.vaultKeywordWeight + features.hasCreationPatterns * weights.creationPatternWeight + features.hasDeletionPatterns * weights.deletionPatternWeight + features.hasAnalysisPatterns * weights.analysisPatternWeight + features.hasSearchPatterns * weights.searchPatternWeight + features.hasModifyPatterns * weights.modifyPatternWeight + features.hasQuestionPatterns * weights.questionPatternWeight + (features.hasCodePatterns ? 1 : 0) * weights.codePatternWeight + features.queryLength * weights.lengthWeight + (features.recentAgentTurns + features.recentToolCalls * 0.5) * weights.historyWeight + (features.isStaleQuery ? 1 : 0) * weights.staleQueryWeight + (features.isStaleQuery && features.modelSupportsWebSearch ? 1 : 0) * weights.freshnessWeight;
+    const capabilityBonus = features.modelSupportsWebSearch ? 1 : -0.5;
+    const baseScore = (features.hasAttachments ? 1 : 0) * weights.attachmentWeight + features.hasVaultKeywords * weights.vaultKeywordWeight + features.hasCreationPatterns * weights.creationPatternWeight + features.hasDeletionPatterns * weights.deletionPatternWeight + features.hasAnalysisPatterns * weights.analysisPatternWeight + features.hasSearchPatterns * weights.searchPatternWeight + features.hasModifyPatterns * weights.modifyPatternWeight + features.hasQuestionPatterns * weights.questionPatternWeight + (features.hasCodePatterns ? 1 : 0) * weights.codePatternWeight + features.queryLength * weights.lengthWeight + (features.recentAgentTurns + features.recentToolCalls * 0.5) * weights.historyWeight + (features.isStaleQuery ? 1 : 0) * weights.staleQueryWeight + (features.isStaleQuery && features.modelSupportsWebSearch ? 1 : 0) * weights.freshnessWeight;
+    return baseScore + capabilityBonus;
+  }
+  /**
+   * Helper to format debug decision trace for logger.
+   */
+  static explainDecision(query, features) {
+    return `Query: "${query.substring(0, 40)}..." | Attachments: ${features.hasAttachments} | VaultKeywords: ${features.hasVaultKeywords} | Stale: ${features.isStaleQuery} | Complexity: ${features.complexityScore}`;
   }
   /**
    * Sigmoid transfer function mapping raw score minus threshold to [0, 1] confidence range.
@@ -27195,7 +27283,7 @@ ${prefetchedBlocks.join("\n\n")}
           content: response.content || "Executing tool calls...",
           tool_calls: response.tool_calls
         });
-        for (const toolCall of response.tool_calls) {
+        const toolPromises = response.tool_calls.map(async (toolCall) => {
           const toolName = toolCall.function.name;
           const toolArgsStr = toolCall.function.arguments;
           const callKey = `${toolName}:${toolArgsStr}`;
@@ -27240,13 +27328,15 @@ ${prefetchedBlocks.join("\n\n")}
             currentStep.detail = trimmedResult.substring(0, 300);
           }
           notifySteps();
-          messages.push({
+          return {
             role: "tool",
             name: toolName,
             tool_call_id: toolCall.id,
             content: trimmedResult
-          });
-        }
+          };
+        });
+        const toolResponses = await Promise.all(toolPromises);
+        messages.push(...toolResponses);
       } else if (response.content && this.containsJsonToolCall(response.content) && !isLastIteration) {
         const parsedTool = this.extractJsonToolCall(response.content);
         if (parsedTool) {
@@ -28060,13 +28150,13 @@ var ModelCapabilityBar = React5.memo(({
   const maxCtx = modelDetails?.contextLength || contextWindow;
   return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "nei-capability-bar", style: {
     position: "sticky",
-    top: 0,
+    top: "38px",
     zIndex: 10,
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: "8px",
-    padding: "4px 10px",
+    gap: "6px",
+    padding: "3px 8px",
     background: "var(--background-secondary-alt, var(--background-secondary))",
     borderBottom: "1px solid var(--background-modifier-border)",
     fontSize: "11px",
@@ -28075,12 +28165,15 @@ var ModelCapabilityBar = React5.memo(({
     boxSizing: "border-box"
   }, children: [
     /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: "6px", overflow: "hidden", whiteSpace: "nowrap" }, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(
         "span",
         {
           title: modelName,
-          style: { fontWeight: 600, color: "var(--text-normal)", textOverflow: "ellipsis", overflow: "hidden" },
-          children: prettifyName(modelName)
+          style: { fontWeight: 600, color: "var(--text-normal)", textOverflow: "ellipsis", overflow: "hidden", fontSize: "11px" },
+          children: [
+            "Model: ",
+            prettifyName(modelName)
+          ]
         }
       ),
       /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { style: { opacity: 0.4 }, children: "\u2022" }),
@@ -28099,10 +28192,11 @@ var ModelCapabilityBar = React5.memo(({
       whiteSpace: "nowrap",
       flexShrink: 0
     }, children: [
-      "Tokens: ",
+      "Context: ",
       /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("strong", { style: { color: "var(--text-normal)" }, children: formatTokens(totalTokens) }),
-      "/",
-      formatTokens(maxCtx)
+      " / ",
+      formatTokens(maxCtx),
+      " tokens"
     ] })
   ] });
 });
@@ -28343,20 +28437,6 @@ function calculateCost(promptTokens, completionTokens, modelId, pricingMap) {
     return 0;
   return promptTokens / 1e6 * p.prompt + completionTokens / 1e6 * p.completion;
 }
-function formatTokenCount(tokens) {
-  if (tokens >= 1e6)
-    return `${(tokens / 1e6).toFixed(1)}M`;
-  if (tokens >= 1e3)
-    return `${(tokens / 1e3).toFixed(1)}k`;
-  return String(tokens);
-}
-function formatCost(cost) {
-  if (cost < 1e-3)
-    return `$${cost.toFixed(6)}`;
-  if (cost < 0.01)
-    return `$${cost.toFixed(5)}`;
-  return `$${cost.toFixed(4)}`;
-}
 
 // src/services/memory/autoLearner.ts
 var _AutoLearner = class _AutoLearner {
@@ -28443,7 +28523,7 @@ var ObsidianMarkdown = ({ markdown, app }) => {
   }, [markdown, app]);
   return /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { ref: containerRef, className: "markdown-preview-view markdown-rendered", style: { background: "transparent", padding: 0 } });
 };
-var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) => {
+var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onReload }) => {
   const isMainTab = viewLeaf ? viewLeaf.getRoot() === app.workspace.rootSplit : false;
   const handleToggleTabMode = async () => {
     try {
@@ -28784,9 +28864,35 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) =
     try {
       const text = await file.text();
       const imported = JSON.parse(text);
+      if (!imported.settingsVersion || imported.settingsVersion < 1) {
+        imported.settingsVersion = 1;
+        if (!imported.maxAttachmentSizeBytes) {
+          imported.maxAttachmentSizeBytes = 512e3;
+        }
+      }
       const newSettings = { ...settings, ...imported };
       await saveSettings(newSettings);
+      if (newSettings.endpointUrl)
+        setEndpointUrl(newSettings.endpointUrl);
+      if (newSettings.apiKey !== void 0)
+        setApiKey(newSettings.apiKey);
+      if (newSettings.model)
+        setModel(newSettings.model);
+      if (newSettings.visionModel)
+        setVisionModel(newSettings.visionModel);
+      if (newSettings.quickModel)
+        setQuickModel(newSettings.quickModel);
+      if (newSettings.executionMode)
+        setExecutionMode(newSettings.executionMode);
+      if (newSettings.language)
+        setLanguage(newSettings.language);
+      if (newSettings.defaultNoteFolder !== void 0)
+        setDefaultNoteFolder(newSettings.defaultNoteFolder);
+      if (newSettings.customModels)
+        setCustomModels(newSettings.customModels);
       new import_obsidian10.Notice(t("settingsImported", language));
+      if (onReload)
+        onReload();
     } catch (err) {
       const errObj = err;
       new import_obsidian10.Notice(`Import error: ${errObj?.message || String(err)}`);
@@ -29041,19 +29147,8 @@ ${fileContext}` : fileContext;
     }
   };
   return /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "nei-chat-panel-container", children: [
-    /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "nei-chat-header", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "nei-header-group", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
-          "select",
-          {
-            value: model,
-            onChange: (e) => handleSelectModel(e.target.value),
-            title: t("primaryModel", language),
-            "aria-label": t("primaryModel", language),
-            className: "nei-model-select",
-            children: customModels.map((m) => /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("option", { value: m, children: m.split("/").pop() }, m))
-          }
-        ),
+    /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "nei-chat-header", style: { height: "36px", boxSizing: "border-box" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "nei-header-group", style: { flex: 1, minWidth: 0 }, children: [
         /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(
           "button",
           {
@@ -29061,66 +29156,27 @@ ${fileContext}` : fileContext;
             title: t("historyTooltip", language),
             "aria-label": t("historyTooltip", language),
             className: "nei-header-btn",
+            style: { maxWidth: "160px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
             children: [
-              "\u{1F4C2} (",
-              currentSession.messages.length,
-              ")"
+              "\u{1F4C2} ",
+              formatSessionTitle(currentSession.title),
+              " \u25BC"
             ]
           }
         ),
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(
+        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
           "button",
           {
             onClick: () => handleNewChat(),
             title: t("newChatTooltip", language),
             "aria-label": t("newChatTooltip", language),
             className: "nei-header-btn nei-btn-accent",
-            children: [
-              "+ ",
-              t("newChat", language)
-            ]
+            style: { padding: "4px 8px" },
+            children: "\u2795"
           }
         )
       ] }),
       /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "nei-header-group", children: [
-        sessionMetrics.requestCount > 0 && /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "nei-session-metrics", style: {
-          display: "inline-flex",
-          alignItems: "center",
-          gap: "6px",
-          padding: "2px 6px",
-          borderRadius: "4px",
-          background: "var(--background-secondary)",
-          border: "1px solid var(--background-modifier-border)",
-          fontSize: "9px",
-          fontFamily: "monospace",
-          fontWeight: 500,
-          color: "var(--text-muted)"
-        }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("span", { title: t("sessionCostTooltip", language), children: [
-            "\u{1F4B0} ",
-            formatCost(sessionMetrics.totalCost)
-          ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { style: { opacity: 0.4 }, children: "|" }),
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("span", { title: t("sessionTokensInTooltip", language), children: [
-            "\u{1F4E5} ",
-            formatTokenCount(sessionMetrics.totalPromptTokens)
-          ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { style: { opacity: 0.4 }, children: "|" }),
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("span", { title: t("sessionTokensOutTooltip", language), children: [
-            "\u{1F4E4} ",
-            formatTokenCount(sessionMetrics.totalCompletionTokens)
-          ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
-            "button",
-            {
-              onClick: () => setSessionMetrics({ totalPromptTokens: 0, totalCompletionTokens: 0, totalCost: 0, requestCount: 0 }),
-              style: { background: "transparent", border: "none", cursor: "pointer", opacity: 0.5, fontSize: "9px", padding: "0 2px", color: "var(--text-muted)" },
-              title: t("resetSessionMetrics", language),
-              "aria-label": t("resetSessionMetrics", language),
-              children: "\u21BA"
-            }
-          )
-        ] }),
         /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(
           "select",
           {
@@ -29134,9 +29190,9 @@ ${fileContext}` : fileContext;
             "aria-label": t("modeAutoTitle", language),
             className: "nei-select-mode",
             children: [
-              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("option", { value: "auto", children: t("modeAuto", language) }),
-              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("option", { value: "quick", children: t("modeQuick", language) }),
-              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("option", { value: "agent", children: t("modeAgent", language) })
+              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("option", { value: "auto", children: "\u26A1 Auto" }),
+              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("option", { value: "quick", children: "\u{1F680} Quick" }),
+              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("option", { value: "agent", children: "\u{1F9E0} Agent" })
             ]
           }
         ),
@@ -29147,7 +29203,7 @@ ${fileContext}` : fileContext;
             title: isMainTab ? t("moveSidebarTitle", language) : t("moveTabTitle", language),
             "aria-label": isMainTab ? t("moveSidebarTitle", language) : t("moveTabTitle", language),
             className: "nei-header-btn",
-            children: isMainTab ? "\u{1F5D4}" : "\u{1F5D6}"
+            children: isMainTab ? "\u2199\uFE0F" : "\u2197\uFE0F"
           }
         ),
         /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
@@ -30045,7 +30101,10 @@ ${fileContext}` : fileContext;
     ] }) })
   ] });
 };
-var ChatPanel = (props) => /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(ErrorBoundary, { children: /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(ChatPanelInner, { ...props }) });
+var ChatPanel = (props) => {
+  const [panelKey, setPanelKey] = React7.useState(0);
+  return /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(ErrorBoundary, { children: /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(ChatPanelInner, { ...props, onReload: () => setPanelKey((k) => k + 1) }) }, panelKey);
+};
 
 // src/views/ChatView.ts
 var VIEW_TYPE_NEI_CHAT = "nei-chat-view";

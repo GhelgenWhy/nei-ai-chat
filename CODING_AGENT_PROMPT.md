@@ -39,12 +39,38 @@ You are an expert **TypeScript/React/Obsidian Plugin Engineer** specializing in:
 
 ### 🎨 UI/UX — Interface (Priority: Critical/High)
 
-#### UI-01: Move "Last known date" to Model Settings Modal
-**Current:** Freshness indicator (🔒/🌐 + cutoff date) shown in chat header (ChatPanel.tsx:646-660)
-**Target:** Remove from header; add `knowledgeCutoff`/`lastKnownDate` field in model config modal (Settings → Models → specific model)
-**Files:** `ChatPanel.tsx` (remove freshness indicator), `main.ts` (add to settings schema if needed), model picker/modal component
+#### UI-01: Simplify Header to Two Bars (REDESIGN)
+**Current (ChatPanel.tsx:617-708):** Cluttered header with: History drawer button (📂), New Chat (➕ New), Move Tab, Freshness indicator, Cost Dashboard (💰 tokens), Mode Select, Settings (⚙️)
 
-#### UI-02: Fix textarea "jitter" on input (CRITICAL)
+**Target — Two clean bars only:**
+
+**Bar 1 — Functional Controls (top):**
+```
+[📂 Chat Title ▼]  [➕ New Chat]  [⚡ Auto / 🚀 Quick / 🧠 Agent]  [↗️ Tab / ↙️ Sidebar]  [⚙️ Settings]
+```
+- Chat selector shows **actual session title** (not "folder (N)") — use `currentSession.title`
+- New Chat button: **only emoji** `➕` (no "+" text)
+- Mode selector: compact dropdown with icons
+- Move to tab/sidebar: single toggle button with icon
+- Settings: gear icon only
+
+**Bar 2 — Model Info & Context (sticky, under Bar 1):**
+```
+[Model: google/gemini-2.5-flash]  •  🟢 Text  •  🟡 Vision  •  🔴 Audio  •  🔴 Video  •  📄 PDF  •  Context: 12.4k / 128k tokens
+```
+- `position: sticky; top: 44px; z-index: 10;` (below Bar 1)
+- Icons **only for supported modalities** (from `activeModelDetails.supportsVision`, `supportsTools`, custom capabilities)
+- Token counter: `used / max` from context window (`activeModelDetails.contextLength`)
+- Compact: height ~28px, font-size 11px, monospace for tokens
+
+**Removed entirely:**
+- ❌ Cost Dashboard (API spending, prompt/completion tokens, request count)
+- ❌ Freshness indicator (🔒/🌐 + cutoff) — moved to Model Settings modal
+- ❌ Model picker from header — only in Settings modal
+
+**Files:** `ChatPanel.tsx` (header section), `styles.css` (new bar styles)
+
+#### UI-02: Fix Textarea "Jitter" on Input (CRITICAL)
 **Problem:** `textarea` height calculation uses `setCssStyles` which doesn't exist on HTMLElement; height jumps per character
 **Current:** ChatPanel.tsx:1423-1428
 ```tsx
@@ -53,34 +79,17 @@ target.setCssStyles({ height: `${Math.min(target.scrollHeight, 280)}px` });
 **Fix:** Use `target.style.height = ...` with `requestAnimationFrame` debounce. Reset height to `auto` then set to `scrollHeight`. No layout shift on Enter/Backspace.
 **Acceptance:** Instant collapse after send; smooth resize on backspace/delete; no visual glitches.
 
-#### UI-03: Redesign Header Bar (Top Controls)
-**Current:** Buttons scattered: History, New Chat, Move Tab, Freshness, Cost Dashboard, Mode Select, Settings ⚙️
-**Target:** Logical groups: `[Model Picker] | [Context Tools] | [Tools/Mode] | [Settings]`
-- Model picker: dropdown with search (use lucide icons)
-- Context: RAG toggle, Memory, Skills
-- Tools: Web search, Vault, MCP
-- Settings: overflow menu (⋮) on mobile
-- All buttons: `aria-label`, visible focus ring, consistent lucide icons
-**Files:** `ChatPanel.tsx` header section (lines 617-708), `styles.css`
-
-#### UI-04: Pinned Model Capabilities + Token Bar
-**Spec:** Sticky bar under header: `[Model Name] • 🟢 Text • 🟡 Vision • 🔴 Audio • 🔴 Video • 📄 PDF • Tokens: 1.2k/128k`
-- Icons only for supported modalities (from `activeModelDetails`)
-- `position: sticky; top: 0; z-index: 10;` — doesn't scroll with messages
-- Compact: height ~28px, font-size 11px, monospace tokens
-**Files:** `ChatPanel.tsx` (new component), `styles.css`
-
-#### UI-05: Remove Emoji from Language Selector
+#### UI-03: Remove Emoji from Language Selector
 **Current:** Lines 846-855 — flags/emoji (🌐) in `<option>` values
 **Target:** Native names only: `English`, `Русский`, `Deutsch`, `Español`, `Français`, `中文`, `日本語`, `한국어`, `Português`
 **Files:** `ChatPanel.tsx` language `<select>`, `translations.ts` (update `autoDetect`, language labels)
 
-#### UI-06: Textarea Performance >10k chars (CRITICAL)
+#### UI-04: Textarea Performance >10k chars (CRITICAL)
 **Current:** Direct `scrollHeight` on every keystroke causes freezes
 **Fix:** Debounce with `requestAnimationFrame`; cache `textContent` + `scrollHeight`; consider `textContent` measurement instead of `value` for large text
 **Acceptance:** No frame drops on paste/typing 50k+ chars
 
-#### UI-07: Update Tooltips for All Interactive Elements
+#### UI-05: Update Tooltips for All Interactive Elements
 **Current:** Mix of `title` prop and custom `Tooltip` component
 **Target:** Every button/input has:
 - `title` with action + hotkey (e.g., "New Chat (Ctrl+N)")
@@ -91,44 +100,93 @@ target.setCssStyles({ height: `${Math.min(target.scrollHeight, 280)}px` });
 
 ---
 
-### ⚙️ Functionality — Multimedia & Files
+### ⚙️ Functionality — Core Fixes & Intelligence
 
-#### FUNC-01: Text File Support (.txt, .md, .json, .py, …)
-**Current:** `handleFileSelect` only reads images as data URLs (ChatPanel.tsx:597-612)
-**Target:**
-- Drag&Drop / Paste / "Attach" button → read as text
-- Inject into context: `<file name="...">content</file>`
-- Configurable size limit (default 500 KB) in settings
-- Support: `.txt, .md, .json, .js, .ts, .py, .css, .html, .csv, .yaml, .yml`
-**Files:** `ChatPanel.tsx` (file input accept, handleFileSelect), `main.ts` (setting), `llm.ts` (message format)
+#### FUNC-01: Fix Settings Import (CRITICAL)
+**Current:** `handleExportSettings` works (ChatPanel.tsx:402-418), but `handleImportSettings` (420-433) doesn't apply settings — just merges into local state without calling `saveSettings` properly or updating all React state variables.
 
-#### FUNC-02: Audio Support (Whisper / Audio Input Models)
-**Target:**
-- If `model.capabilities.audio` true → enable 🎤 button
-- Microphone recording → base64 / file upload → API
-- Chat placeholder: `[Audio: 0:12]`
-- Use MediaRecorder API; fallback to file input
-**Files:** New `AudioRecorder` component, `ChatPanel.tsx`, `llm.ts` (message format for audio), `openrouter.ts` (capability detection)
+**Root Cause:** Import merges into `settings` object but doesn't update the 30+ individual `useState` hooks (language, model, folders, weights, etc.)
 
-#### FUNC-03: Video Support (Frames / Native Video Models)
-**Target:**
-- If `model.capabilities.video` true → native video upload
-- Else: extract keyframes via `ffmpeg.wasm` (lazy-loaded) → send as images
-- Optional feature (behind setting)
-**Files:** Lazy-loaded `ffmpeg.wasm` chunk, video processor utility, `ChatPanel.tsx`
+**Fix:**
+1. Add `settingsVersion` to `NeiAiChatSettings` in `main.ts`
+2. Export includes version
+3. Import: parse → validate schema → migrate if needed → call `saveSettings(newSettings)` → **force full React re-render** (key prop on ChatPanel or reset all useState)
+4. Show success notice with applied changes summary
 
-#### FUNC-04: PDF Support (Text + Optional Vision)
-**Target:**
-- PDF.js in Web Worker → extract text (configurable `pdfTextLimit` pages)
-- Render first M pages as images for vision (`pdfVisionPages` setting)
-- Drag&Drop PDF → show page count, allow selection
-**Files:** Lazy-loaded `pdfjs-dist` chunk, PDF worker, `ChatPanel.tsx`, settings
+**Files:** `main.ts` (settingsVersion), `ChatPanel.tsx` (handleImportSettings, add key prop to ChatPanelInner)
 
-#### FUNC-05: Model Capability Validation Before Send
-**Target:** If user attaches audio but model lacks audio → modal warning:
-- "Model doesn't support audio. Send as text description?" / "Remove attachment"
-- Check `activeModelDetails.supportsVision`, `supportsTools`, custom `capabilities` object
-**Files:** `ChatPanel.tsx` (pre-send validation), `openrouter.ts` (extend ModelInfo with capabilities)
+#### FUNC-02: Smart Daily Note Detection (INTELLIGENCE UPGRADE)
+**Problem:** Agent searches for "31 июля 2026" but note is "31.07.2026" — fails. User should NOT configure date formats.
+
+**Solution — Multi-strategy Search in Vault Tools:**
+1. **In `search_notes` / `get_folder_notes` / `list_notes`:** When query looks like a date (regex: `\d{1,2}[./-]\d{1,2}[./-]\d{2,4}` or month name), generate **all common variants**:
+   - `31.07.2026`, `31/07/2026`, `31-07-2026`, `2026-07-31`, `31 июля 2026`, `31 июля 2026 г.`, `July 31, 2026`, `31 Jul 2026`
+2. **Fuzzy matching:** Levenshtein distance on filenames (threshold ≤ 2)
+3. **Metadata fallback:** Check `ctime`/`mtime` of notes in daily folder (configurable via `dailyNotesFolder` setting, default: auto-detect from Obsidian core plugin)
+4. **No hardcoded formats** — agent tries all reasonable variants automatically
+
+**Files:** `src/services/tools/vaultTools.ts` (search_notes, get_folder_notes, list_notes), `main.ts` (optional dailyNotesFolder setting)
+
+#### FUNC-03: Upgrade Agent Intelligence & Model Effectiveness
+**Goal:** Make models significantly smarter at task execution through better prompting, context management, and tool orchestration.
+
+**Specific Improvements:**
+
+1. **System Prompt Overhaul (agentLoop.ts:getSystemPrompt):**
+   - Add explicit **reasoning framework**: "Think step by step. Before each tool call, state: WHY this tool, WHAT you expect, HOW it advances the goal."
+   - Add **failure recovery patterns**: "If tool fails, try alternative approach. If search returns nothing, broaden query. If note not found, try date variants."
+   - Add **token budget awareness**: "Context window: {N} tokens. Prioritize recent + relevant. Summarize old history."
+
+2. **Context Pruning (contextManager.ts):**
+   - Current: `pruneHistory(chatHistory, 6)` — too aggressive
+   - New: **Semantic pruning** — keep last 3 turns + any turn with tool calls + turns referenced by current query (via embeddings similarity)
+   - Implement `ContextManager.pruneHistorySmart(history, query, maxTokens, modelContextLength)`
+
+3. **Tool Call Validation & Retry:**
+   - Before tool execution: validate args schema (already have JSON schema in ToolDefinition)
+   - On tool error: auto-retry with corrected args (max 2 retries) using LLM to fix
+   - Track tool success rates per session, adapt tool selection
+
+4. **Parallel Tool Execution:**
+   - When multiple independent tools needed (e.g., search_notes + web_search), batch them in single turn
+   - Modify `agentLoop.ts` to collect all tool_calls from response, execute in `Promise.all`, feed results together
+
+5. **Model-Specific Prompt Tuning:**
+   - In `modelRegistry.ts`, add `promptStyle` per model: `structured` (Claude), `concise` (Gemini), `verbose` (GPT-4)
+   - Adjust system prompt formatting accordingly
+
+**Files:** `src/services/agent/agentLoop.ts`, `src/services/agent/contextManager.ts`, `src/services/modelRegistry.ts`, `src/services/tools/toolRegistry.ts`
+
+#### FUNC-04: Smarter Mode Selection Algorithm (Auto/Quick/Agent)
+**Current:** `intentRouter.ts` uses weighted scoring with hardcoded patterns. Issues: doesn't consider model capabilities, context length, or task complexity well.
+
+**New Algorithm — Multi-factor Decision:**
+```
+Score = Σ(weights × features) + ModelCapabilityBonus + ContextPressure + UserPreference
+```
+
+**Factors:**
+1. **Attachments** (weight: 5.0) → Agent
+2. **Vault keywords** (2.0) → Agent
+3. **Creation/Deletion patterns** (3.0/4.0) → Agent
+4. **Analysis/Search patterns** (2.5/1.5) → Agent
+5. **Question patterns** (-1.5) → Quick
+6. **Code patterns** (-1.0) → Quick
+7. **Query length** (0.005/char) → Agent if long
+8. **History bias** (0.3 × recent agent turns) → Agent
+9. **Stale query** (3.0) → Agent (if model supports web)
+10. **Model capabilities:** If model lacks tools/vision → bias toward Quick
+11. **Context pressure:** If history near context limit → Quick (avoid overflow)
+12. **User preference:** Learn from manual overrides (store in memory)
+
+**Implementation:**
+- Move weights to settings (already there)
+- Add `modelCapabilityBonus` in `computeScore()`: +2 if model has tools+vision, -1 if text-only
+- Add `contextPressure` factor: `historyTokens / modelContextLength > 0.7` → -2
+- Track manual mode switches in `MemoryStore` → adjust threshold per user
+- Expose `IntentRouter.explainDecision(query, features)` for debug UI
+
+**Files:** `src/services/agent/intentRouter.ts`, `src/services/memory/memoryStore.ts`
 
 ---
 
@@ -170,8 +228,8 @@ target.setCssStyles({ height: `${Math.min(target.scrollHeight, 280)}px` });
 
 #### TEST-01: Automated Tests (Vitest + Playwright)
 **Target:** `npm run test:ci` → 100% pass; Coverage ≥ 80% for core modules
-- Unit: `intentRouter`, `cost utils`, `embeddings`, `rag`, `modelRegistry`, `chatStore`
-- E2E: Chat flow, settings save/load, model switching, file attachment
+- Unit: `intentRouter`, `cost utils`, `embeddings`, `rag`, `modelRegistry`, `chatStore`, `vaultTools` (date variants)
+- E2E: Chat flow, settings save/load/import, model switching, file attachment, daily note search
 **Files:** `tests/*.test.ts`, `vitest.config.ts`, `playwright.config.ts`, `package.json` scripts
 
 #### TEST-02: Mobile Manual Testing (iOS Safari / Android Chrome)
@@ -180,13 +238,7 @@ target.setCssStyles({ height: `${Math.min(target.scrollHeight, 280)}px` });
 - 0 critical bugs, ≤ 2 minor
 **Deliverable:** Test report markdown
 
-#### TEST-03: Settings Export/Import (JSON)
-**Current:** `handleExportSettings`/`handleImportSettings` exist (ChatPanel.tsx:402-433) but no versioning/migration
-**Target:**
-- Export includes `settingsVersion`
-- Import validates schema, migrates v0→v1
-- Works on clean profile
-**Files:** `ChatPanel.tsx`, `main.ts` (add `settingsVersion` to settings schema)
+#### TEST-03: Settings Export/Import (JSON) — Already covered in FUNC-01
 
 #### TEST-04: i18n Validation
 **Target:** `npm run i18n:check` script → no missing keys
@@ -219,12 +271,12 @@ target.setCssStyles({ height: `${Math.min(target.scrollHeight, 280)}px` });
 
 | Area | Files |
 |------|-------|
-| Main UI | `src/components/ChatPanel.tsx`, `styles.css` |
+| Main UI (Header, Bars, Textarea) | `src/components/ChatPanel.tsx`, `styles.css` |
 | Settings & Config | `main.ts`, `src/components/ChatPanel.tsx` (config modal) |
 | Translations | `src/i18n/translations.ts` |
 | LLM/API | `src/services/llm.ts`, `src/services/openrouter.ts`, `src/services/modelRegistry.ts` |
-| Agent Logic | `src/services/agent/agentLoop.ts`, `src/services/agent/intentRouter.ts` |
-| Tools | `src/services/tools/*.ts`, `src/services/tools/toolRegistry.ts` |
+| Agent Logic (Loop, Context, Intent) | `src/services/agent/agentLoop.ts`, `src/services/agent/contextManager.ts`, `src/services/agent/intentRouter.ts` |
+| Tools (Vault search, date handling) | `src/services/tools/vaultTools.ts`, `src/services/tools/toolRegistry.ts` |
 | RAG/Memory | `src/services/rag/*.ts`, `src/services/memory/*.ts` |
 | Tests | `tests/`, `vitest.config.ts`, `playwright.config.ts` |
 | Build | `esbuild.config.mjs`, `package.json`, `tsconfig.json` |
@@ -235,10 +287,13 @@ target.setCssStyles({ height: `${Math.min(target.scrollHeight, 280)}px` });
 
 | ID | Must Pass |
 |----|-----------|
+| UI-01 | Two bars only; chat title visible; no cost dashboard; no model picker in header; new chat = ➕ only |
 | UI-02 | Textarea zero-jitter, instant collapse, smooth backspace |
-| UI-04 | Sticky capability bar, correct icons, token counter |
-| FUNC-01 | Text files attach → `<file>` context injection, 500KB limit |
-| FUNC-05 | Capability mismatch → warning modal with choices |
+| UI-04 | No frame drops on 50k+ char paste/typing |
+| FUNC-01 | Settings import works on clean profile; all 30+ settings applied; version migration |
+| FUNC-02 | Agent finds "31.07.2026" when asked "31 июля 2026" without config |
+| FUNC-03 | Measurable improvement: fewer tool errors, better context use, parallel execution |
+| FUNC-04 | Auto mode picks correctly in 90%+ test cases; explains decision |
 | OPT-01 | Bundle gzip < 500KB, no moment/lodash full |
 | OPT-04 | `tsc --noEmit` = 0 errors |
 | TEST-01 | `npm run test:ci` = 100% pass, coverage ≥ 80% |
@@ -248,19 +303,20 @@ target.setCssStyles({ height: `${Math.min(target.scrollHeight, 280)}px` });
 
 ## WORKFLOW INSTRUCTIONS
 
-1. **Start with Critical UI fixes** (UI-02, UI-06) — they block UX
-2. **Then Header/Capability bar** (UI-03, UI-04) — visual foundation
-3. **Then Functionality** (FUNC-01 through FUNC-05) — feature completeness
-4. **Then Optimization** (OPT-01 through OPT-04) — code quality
-5. **Then Testing** (TEST-01 through TEST-04) — verification
-6. **Finally Release** (REL-01 through REL-05) — delivery
+1. **Start with Critical UI** (UI-01, UI-02) — visual foundation & UX blockers
+2. **Then Core Functionality** (FUNC-01, FUNC-02) — import fix + intelligence upgrade
+3. **Then Agent Intelligence** (FUNC-03, FUNC-04) — system prompt, context, mode selection
+4. **Then Polish UI** (UI-03, UI-04, UI-05) — language, perf, tooltips
+5. **Then Optimization** (OPT-01 through OPT-04) — code quality
+6. **Then Testing** (TEST-01 through TEST-04) — verification
+7. **Finally Release** (REL-01 through REL-05) — delivery
 
 **Each task:**
 - Write implementation
 - Run `npm run build` — must compile clean
 - Run `npm run test` — must pass
 - Verify manually in Obsidian (dev vault)
-- Commit with conventional message: `feat(ui): fix textarea jitter (UI-02)`
+- Commit with conventional message: `feat(ui): simplify header to two bars (UI-01)`
 
 **Do NOT:**
 - Hardcode paths (`/Users/...`, `C:\...`, `.nei/` without settings)
@@ -268,6 +324,7 @@ target.setCssStyles({ height: `${Math.min(target.scrollHeight, 280)}px` });
 - Add dependencies without tree-shaking verification
 - Break existing functionality (chat, agent, RAG, tools)
 - Leave console.log/debugger in production code
+- Add user-facing config for things the agent should handle automatically (e.g., date formats)
 
 ---
 
@@ -285,14 +342,14 @@ npm run test         # Vitest
 
 ---
 
-## QUESTIONS FOR CLARIFICATION (if needed)
+## KEY ARCHITECTURAL DECISIONS
 
-Before starting, confirm:
-1. Target Obsidian `minAppVersion` (currently 1.7.0) — any APIs require higher?
-2. Audio/Video: prefer native model support first, ffmpeg.wasm as fallback?
-3. PDF: PDF.js worker setup — use CDN or bundle?
-4. Mobile testing: physical devices or emulators acceptable?
-5. Release timeline: target date for Community Plugin submission?
+1. **No Date Format Setting** — Agent handles all variants internally (FUNC-02)
+2. **Two-Bar Header** — Fixed layout, no scrolling bars (UI-01)
+3. **Settings Import = Full Reset** — Use React `key` prop on ChatPanel to force remount (FUNC-01)
+4. **Parallel Tool Execution** — Batch independent calls in agent loop (FUNC-03)
+5. **Semantic Context Pruning** — Embeddings-based history retention (FUNC-03)
+6. **Learnable Mode Selection** — Track manual overrides in memory (FUNC-04)
 
 ---
 

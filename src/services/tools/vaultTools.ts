@@ -278,6 +278,85 @@ export const vaultToolDefinitions: ToolDefinition[] = [
     }
 ];
 
+export function generateDateVariants(input: string): string[] {
+    const variants: Set<string> = new Set([input.trim()]);
+
+    const monthRuNames = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
+    const monthEnNames = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
+    const monthEnShort = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+
+    let day: number | null = null;
+    let month: number | null = null;
+    let year: number | null = null;
+
+    const lower = input.toLowerCase().trim();
+
+    // 1. Check numeric pattern: 31.07.2026, 31-07-2026, 31/07/2026, 2026-07-31
+    const numMatch = lower.match(/^(\d{1,4})[./-](\d{1,2})[./-](\d{1,4})$/);
+    if (numMatch) {
+        const p1 = parseInt(numMatch[1], 10);
+        const p2 = parseInt(numMatch[2], 10);
+        const p3 = parseInt(numMatch[3], 10);
+
+        if (p1 > 1000) {
+            year = p1;
+            month = p2;
+            day = p3;
+        } else if (p3 > 1000) {
+            year = p3;
+            if (p1 <= 12 && p2 > 12) {
+                month = p1;
+                day = p2;
+            } else {
+                day = p1;
+                month = p2;
+            }
+        }
+    }
+
+    // 2. Check text month pattern: "31 июля 2026", "July 31, 2026", "31 Jul 2026"
+    if (!day || !month || !year) {
+        for (let i = 0; i < 12; i++) {
+            const ruName = monthRuNames[i];
+            const enName = monthEnNames[i];
+            const enShort = monthEnShort[i];
+
+            if (lower.includes(ruName) || lower.includes(enName) || lower.includes(enShort)) {
+                month = i + 1;
+                const dMatch = lower.match(/\b(\d{1,2})\b/);
+                const yMatch = lower.match(/\b(\d{4})\b/);
+                if (dMatch) day = parseInt(dMatch[1], 10);
+                if (yMatch) year = parseInt(yMatch[1], 10);
+                break;
+            }
+        }
+    }
+
+    if (day && month && year) {
+        const dd = String(day).padStart(2, '0');
+        const mm = String(month).padStart(2, '0');
+        const yyyy = String(year);
+
+        variants.add(`${dd}.${mm}.${yyyy}`);
+        variants.add(`${yyyy}-${mm}-${dd}`);
+        variants.add(`${dd}-${mm}-${yyyy}`);
+        variants.add(`${dd}/${mm}/${yyyy}`);
+        variants.add(`${mm}/${dd}/${yyyy}`);
+
+        const ruMonth = monthRuNames[month - 1];
+        const enMonth = monthEnNames[month - 1];
+        const enShort = monthEnShort[month - 1];
+
+        variants.add(`${day} ${ruMonth} ${yyyy}`);
+        variants.add(`${day} ${ruMonth} ${yyyy} г.`);
+        variants.add(`${enMonth} ${day}, ${yyyy}`);
+        variants.add(`${day} ${enShort} ${yyyy}`);
+        variants.add(`${enShort} ${day}, ${yyyy}`);
+    }
+
+    return Array.from(variants);
+}
+
 function findFile(app: App, rawPath: string): TFile | null {
     let cleanPath = normalizePath(rawPath.trim());
     if (!cleanPath.endsWith(".md")) {
@@ -290,11 +369,22 @@ function findFile(app: App, rawPath: string): TFile | null {
     const files = app.vault.getMarkdownFiles();
     const cleanLower = cleanPath.toLowerCase();
 
-    const matched = files.find(f => 
+    // Direct match
+    let matched = files.find(f => 
         f.basename.toLowerCase() === cleanLower || 
         f.path.toLowerCase() === cleanLower ||
         f.path.toLowerCase().endsWith("/" + cleanLower)
     );
+    if (matched) return matched;
+
+    // Multi-strategy date variants match (FUNC-02)
+    const dateVariants = generateDateVariants(cleanPath).map(v => v.toLowerCase());
+    if (dateVariants.length > 1) {
+        matched = files.find(f => {
+            const baseLower = f.basename.toLowerCase();
+            return dateVariants.some(variant => baseLower.includes(variant));
+        });
+    }
 
     return matched || null;
 }
@@ -531,20 +621,24 @@ export const vaultExecutors: Record<string, ToolExecutor> = {
         const args = rawArgs as { query: string; maxResults?: number };
         const limit = args.maxResults || 10;
         const queryLower = args.query.toLowerCase();
+        const dateVariants = generateDateVariants(args.query).map(v => v.toLowerCase());
         const files = app.vault.getMarkdownFiles();
         const results: { path: string; snippet: string }[] = [];
 
         for (const file of files) {
             if (results.length >= limit) break;
 
-            const nameMatches = file.path.toLowerCase().includes(queryLower);
+            const filePathLower = file.path.toLowerCase();
+            const nameMatches = filePathLower.includes(queryLower) || dateVariants.some(v => filePathLower.includes(v));
             const content = await app.vault.cachedRead(file);
-            const contentMatches = content.toLowerCase().includes(queryLower);
+            const contentLower = content.toLowerCase();
+            const contentMatches = contentLower.includes(queryLower) || dateVariants.some(v => contentLower.includes(v));
 
             if (nameMatches || contentMatches) {
                 let snippet = "";
                 if (contentMatches) {
-                    const idx = content.toLowerCase().indexOf(queryLower);
+                    const matchTerm = dateVariants.find(v => contentLower.includes(v)) || queryLower;
+                    const idx = contentLower.indexOf(matchTerm);
                     const start = Math.max(0, idx - 60);
                     const end = Math.min(content.length, idx + 100);
                     snippet = content.substring(start, end).replace(/\n/g, " ");

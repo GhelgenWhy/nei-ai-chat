@@ -157,7 +157,8 @@ export class IntentRouter {
      * Computes raw intent score from extracted features and scoring weights.
      */
     public static computeScore(features: IntentFeatures, weights: ScoringWeights): number {
-        return (
+        const capabilityBonus = features.modelSupportsWebSearch ? 1.0 : -0.5;
+        const baseScore = (
             (features.hasAttachments ? 1 : 0) * weights.attachmentWeight +
             features.hasVaultKeywords * weights.vaultKeywordWeight +
             features.hasCreationPatterns * weights.creationPatternWeight +
@@ -172,6 +173,14 @@ export class IntentRouter {
             (features.isStaleQuery ? 1 : 0) * weights.staleQueryWeight +
             (features.isStaleQuery && features.modelSupportsWebSearch ? 1 : 0) * weights.freshnessWeight
         );
+        return baseScore + capabilityBonus;
+    }
+
+    /**
+     * Helper to format debug decision trace for logger.
+     */
+    public static explainDecision(query: string, features: IntentFeatures): string {
+        return `Query: "${query.substring(0, 40)}..." | Attachments: ${features.hasAttachments} | VaultKeywords: ${features.hasVaultKeywords} | Stale: ${features.isStaleQuery} | Complexity: ${features.complexityScore}`;
     }
 
     /**

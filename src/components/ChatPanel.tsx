@@ -33,6 +33,7 @@ interface ChatPanelProps {
     settings: NeiAiChatSettings;
     saveSettings: (settings: NeiAiChatSettings) => Promise<void>;
     toolRegistry: ToolRegistry;
+    onReload?: () => void;
 }
 
 export const ObsidianMarkdown: React.FC<{ markdown: string; app: App }> = ({ markdown, app }) => {
@@ -56,7 +57,7 @@ export const ObsidianMarkdown: React.FC<{ markdown: string; app: App }> = ({ mar
     return <div ref={containerRef} className="markdown-preview-view markdown-rendered" style={{ background: 'transparent', padding: 0 }} />;
 };
 
-const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, saveSettings, toolRegistry }) => {
+const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onReload }) => {
 
     const isMainTab = viewLeaf ? (viewLeaf.getRoot() === app.workspace.rootSplit) : false;
 
@@ -455,9 +456,33 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
         try {
             const text = await file.text();
             const imported = JSON.parse(text) as Partial<NeiAiChatSettings>;
+
+            // Version migration v0 -> v1
+            if (!imported.settingsVersion || imported.settingsVersion < 1) {
+                imported.settingsVersion = 1;
+                if (!imported.maxAttachmentSizeBytes) {
+                    imported.maxAttachmentSizeBytes = 512000;
+                }
+            }
+
             const newSettings = { ...settings, ...imported };
             await saveSettings(newSettings);
+
+            // Update local state hooks
+            if (newSettings.endpointUrl) setEndpointUrl(newSettings.endpointUrl);
+            if (newSettings.apiKey !== undefined) setApiKey(newSettings.apiKey);
+            if (newSettings.model) setModel(newSettings.model);
+            if (newSettings.visionModel) setVisionModel(newSettings.visionModel);
+            if (newSettings.quickModel) setQuickModel(newSettings.quickModel);
+            if (newSettings.executionMode) setExecutionMode(newSettings.executionMode);
+            if (newSettings.language) setLanguage(newSettings.language);
+            if (newSettings.defaultNoteFolder !== undefined) setDefaultNoteFolder(newSettings.defaultNoteFolder);
+            if (newSettings.customModels) setCustomModels(newSettings.customModels);
+
             new Notice(t("settingsImported", language));
+            
+            // Trigger outer panel remount for complete state synchronization
+            if (onReload) onReload();
         } catch (err: unknown) {
             const errObj = err as { message?: string };
             new Notice(`Import error: ${errObj?.message || String(err)}`);
@@ -748,30 +773,17 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
 
     return (
         <div className="nei-chat-panel-container">
-            {/* Header / Session & Mode Controls Bar (UI-03) */}
-            <div className="nei-chat-header">
-                <div className="nei-header-group">
-                    <select
-                        value={model}
-                        onChange={(e) => handleSelectModel(e.target.value)}
-                        title={t("primaryModel", language)}
-                        aria-label={t("primaryModel", language)}
-                        className="nei-model-select"
-                    >
-                        {customModels.map(m => (
-                            <option key={m} value={m}>
-                                {m.split('/').pop()}
-                            </option>
-                        ))}
-                    </select>
-
+            {/* Bar 1 — Functional Controls (UI-01) */}
+            <div className="nei-chat-header" style={{ height: '36px', boxSizing: 'border-box' }}>
+                <div className="nei-header-group" style={{ flex: 1, minWidth: 0 }}>
                     <button 
                         onClick={() => setShowSessionsDrawer(!showSessionsDrawer)}
                         title={t("historyTooltip", language)}
                         aria-label={t("historyTooltip", language)}
                         className="nei-header-btn"
+                        style={{ maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
                     >
-                        📂 ({currentSession.messages.length})
+                        📂 {formatSessionTitle(currentSession.title)} ▼
                     </button>
 
                     <button 
@@ -779,34 +791,13 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                         title={t("newChatTooltip", language)}
                         aria-label={t("newChatTooltip", language)}
                         className="nei-header-btn nei-btn-accent"
+                        style={{ padding: '4px 8px' }}
                     >
-                        + {t("newChat", language)}
+                        ➕
                     </button>
                 </div>
 
                 <div className="nei-header-group">
-                    {/* Session Cost Metrics */}
-                    {sessionMetrics.requestCount > 0 && (
-                        <div className="nei-session-metrics" style={{
-                            display: 'inline-flex', alignItems: 'center', gap: '6px',
-                            padding: '2px 6px', borderRadius: '4px',
-                            background: 'var(--background-secondary)', border: '1px solid var(--background-modifier-border)',
-                            fontSize: '9px', fontFamily: 'monospace', fontWeight: 500, color: 'var(--text-muted)'
-                        }}>
-                            <span title={t("sessionCostTooltip", language)}>💰 {formatCost(sessionMetrics.totalCost)}</span>
-                            <span style={{ opacity: 0.4 }}>|</span>
-                            <span title={t("sessionTokensInTooltip", language)}>📥 {formatTokenCount(sessionMetrics.totalPromptTokens)}</span>
-                            <span style={{ opacity: 0.4 }}>|</span>
-                            <span title={t("sessionTokensOutTooltip", language)}>📤 {formatTokenCount(sessionMetrics.totalCompletionTokens)}</span>
-                            <button
-                                onClick={() => setSessionMetrics({ totalPromptTokens: 0, totalCompletionTokens: 0, totalCost: 0, requestCount: 0 })}
-                                style={{ background: 'transparent', border: 'none', cursor: 'pointer', opacity: 0.5, fontSize: '9px', padding: '0 2px', color: 'var(--text-muted)' }}
-                                title={t("resetSessionMetrics", language)}
-                                aria-label={t("resetSessionMetrics", language)}
-                            >↺</button>
-                        </div>
-                    )}
-
                     <select
                         value={executionMode}
                         onChange={(e) => {
@@ -818,9 +809,9 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                         aria-label={t("modeAutoTitle", language)}
                         className="nei-select-mode"
                     >
-                        <option value="auto">{t("modeAuto", language)}</option>
-                        <option value="quick">{t("modeQuick", language)}</option>
-                        <option value="agent">{t("modeAgent", language)}</option>
+                        <option value="auto">⚡ Auto</option>
+                        <option value="quick">🚀 Quick</option>
+                        <option value="agent">🧠 Agent</option>
                     </select>
 
                     <button 
@@ -829,7 +820,7 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                         aria-label={isMainTab ? t("moveSidebarTitle", language) : t("moveTabTitle", language)}
                         className="nei-header-btn"
                     >
-                        {isMainTab ? "🗔" : "🗖"}
+                        {isMainTab ? "↙️" : "↗️"}
                     </button>
 
                     <button 
@@ -843,7 +834,7 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                 </div>
             </div>
 
-            {/* Pinned Sticky Model Capability & Token Bar (UI-04) */}
+            {/* Bar 2 — Model Info & Context (UI-01 / UI-04 Sticky) */}
             <ModelCapabilityBar 
                 modelName={model}
                 modelDetails={activeModelDetails || getDefaultModelCapabilities(model)}
@@ -1672,8 +1663,11 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
     );
 };
 
-export const ChatPanel: React.FC<ChatPanelProps> = (props) => (
-    <ErrorBoundary>
-        <ChatPanelInner {...props} />
-    </ErrorBoundary>
-);
+export const ChatPanel: React.FC<ChatPanelProps> = (props) => {
+    const [panelKey, setPanelKey] = React.useState(0);
+    return (
+        <ErrorBoundary key={panelKey}>
+            <ChatPanelInner {...props} onReload={() => setPanelKey(k => k + 1)} />
+        </ErrorBoundary>
+    );
+};

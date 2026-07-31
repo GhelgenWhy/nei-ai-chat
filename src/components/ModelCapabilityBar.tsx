@@ -42,13 +42,13 @@ export const ModelCapabilityBar: React.FC<ModelCapabilityBarProps> = React.memo(
     return (
         <div className="nei-capability-bar" style={{
             position: 'sticky',
-            top: 0,
+            top: '38px',
             zIndex: 10,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: '8px',
-            padding: '4px 10px',
+            gap: '6px',
+            padding: '3px 8px',
             background: 'var(--background-secondary-alt, var(--background-secondary))',
             borderBottom: '1px solid var(--background-modifier-border)',
             fontSize: '11px',
@@ -59,9 +59,9 @@ export const ModelCapabilityBar: React.FC<ModelCapabilityBarProps> = React.memo(
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                 <span 
                     title={modelName}
-                    style={{ fontWeight: 600, color: 'var(--text-normal)', textOverflow: 'ellipsis', overflow: 'hidden' }}
+                    style={{ fontWeight: 600, color: 'var(--text-normal)', textOverflow: 'ellipsis', overflow: 'hidden', fontSize: '11px' }}
                 >
-                    {prettifyName(modelName)}
+                    Model: {prettifyName(modelName)}
                 </span>
                 
                 <span style={{ opacity: 0.4 }}>•</span>
@@ -96,7 +96,7 @@ export const ModelCapabilityBar: React.FC<ModelCapabilityBarProps> = React.memo(
                 whiteSpace: 'nowrap',
                 flexShrink: 0
             }}>
-                Tokens: <strong style={{ color: 'var(--text-normal)' }}>{formatTokens(totalTokens)}</strong>/{formatTokens(maxCtx)}
+                Context: <strong style={{ color: 'var(--text-normal)' }}>{formatTokens(totalTokens)}</strong> / {formatTokens(maxCtx)} tokens
             </div>
         </div>
     );
