@@ -7,8 +7,8 @@ async function performPostRequest(
     bodyStr: string,
     signal?: AbortSignal
 ): Promise<{ status: number; text: string; json: Record<string, unknown> }> {
-    const res = await requestUrl({ url, method: "POST", headers, body: bodyStr });
-    return { status: res.status, text: res.text, json: res.json as Record<string, unknown> };
+    const res = await requestUrl({ url, method: "POST", headers, body: bodyStr }) as unknown as { status: number; text: string; json: Record<string, unknown> };
+    return { status: res.status, text: res.text, json: res.json };
 }
 
 export interface ChatMessage {

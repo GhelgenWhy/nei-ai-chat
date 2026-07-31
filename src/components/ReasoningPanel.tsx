@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React, { FC, memo } from 'react';
 import { t, SupportedLanguage } from '../i18n/translations';
 
 export interface ReasoningStep {
@@ -17,7 +17,7 @@ interface ReasoningPanelProps {
     onToggle: () => void;
 }
 
-export const ReasoningPanel: React.FC<ReasoningPanelProps> = React.memo(({ steps, language, isExpanded, onToggle }) => {
+export const ReasoningPanel: FC<ReasoningPanelProps> = memo(({ steps, language, isExpanded, onToggle }) => {
     if (steps.length === 0) return null;
 
     const getStepIcon = (type: string, status: string) => {

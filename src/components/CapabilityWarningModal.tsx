@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React, { FC } from 'react';
 
 export interface CapabilityWarningModalProps {
     unsupportedTypes: string[];
@@ -8,7 +8,7 @@ export interface CapabilityWarningModalProps {
     onCancel: () => void;
 }
 
-export const CapabilityWarningModal: React.FC<CapabilityWarningModalProps> = ({
+export const CapabilityWarningModal: FC<CapabilityWarningModalProps> = ({
     unsupportedTypes,
     modelName,
     onProceedTextOnly,

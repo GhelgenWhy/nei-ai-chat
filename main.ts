@@ -208,12 +208,13 @@ export default class NeiAiChatPlugin extends Plugin {
         let leaf: WorkspaceLeaf | null = null;
         const leaves = workspace.getLeavesOfType(VIEW_TYPE_NEI_CHAT);
 
-        if (leaves.length > 0) {
+        if (leaves.length > 0 && leaves[0]) {
             leaf = leaves[0];
         } else {
             // Open in right sidebar
-            leaf = workspace.getRightLeaf(false);
-            if (leaf) {
+            const rightLeaf = workspace.getRightLeaf(false);
+            if (rightLeaf) {
+                leaf = rightLeaf;
                 await leaf.setViewState({ type: VIEW_TYPE_NEI_CHAT, active: true });
             }
         }
@@ -224,7 +225,8 @@ export default class NeiAiChatPlugin extends Plugin {
     }
 
     async loadSettings() {
-        const loadedData = (await this.loadData()) as Partial<NeiAiChatSettings> & { settingsVersion?: number } | null;
+        const rawData: unknown = await this.loadData();
+        const loadedData = rawData as (Partial<NeiAiChatSettings> & { settingsVersion?: number }) | null;
         const vaultCrypto = this.app.vault as unknown as VaultWithCrypto;
         if (loadedData?.apiKey && typeof vaultCrypto.decrypt === 'function') {
             try {
@@ -249,7 +251,7 @@ export default class NeiAiChatPlugin extends Plugin {
     }
 
     async saveSettings() {
-        const dataToSave = { ...this.settings };
+        const dataToSave: NeiAiChatSettings = { ...this.settings };
         const vaultCrypto = this.app.vault as unknown as VaultWithCrypto;
         if (dataToSave.apiKey && typeof vaultCrypto.encrypt === 'function') {
             try {

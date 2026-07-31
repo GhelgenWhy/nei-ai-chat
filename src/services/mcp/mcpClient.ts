@@ -68,10 +68,10 @@ export class McpService {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ jsonrpc: "2.0", method: "tools/list", id: "1" })
-                });
+                }) as unknown as { status: number; json: RawMcpListResponse };
 
                 if (response.status === 200 && response.json) {
-                    const json = response.json as RawMcpListResponse;
+                    const json = response.json;
                     const tools = json.result?.tools || [];
 
                     for (const tool of tools) {
@@ -115,10 +115,10 @@ export class McpService {
                     params: { name: originalToolName, arguments: args },
                     id: "2"
                 })
-            });
+            }) as unknown as { status: number; json: RawMcpCallResponse };
 
             if (response.status === 200 && response.json) {
-                const json = response.json as RawMcpCallResponse;
+                const json = response.json;
                 if (json.error) {
                     return `Ошибка MCP инструмента '${originalToolName}': ${json.error.message || JSON.stringify(json.error)}`;
                 }

@@ -1,4 +1,4 @@
-import * as React from "react";
+import React, { FC, useState, memo } from 'react';
 import { t, SupportedLanguage } from "../i18n/translations";
 
 export interface WelcomeScreenProps {
@@ -6,8 +6,8 @@ export interface WelcomeScreenProps {
     onClose: () => void;
 }
 
-export const WelcomeScreen: React.FC<WelcomeScreenProps> = React.memo(({ language, onClose }) => {
-    const [step, setStep] = React.useState(0);
+export const WelcomeScreen: FC<WelcomeScreenProps> = memo(({ language, onClose }) => {
+    const [step, setStep] = useState<number>(0);
 
     const steps = [
         {

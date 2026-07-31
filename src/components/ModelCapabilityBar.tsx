@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React, { FC, memo } from 'react';
 import { OpenRouterModelInfo } from '../services/openrouter';
 
 export interface ModelCapabilityBarProps {
@@ -23,7 +23,7 @@ function prettifyName(id: string): string {
     return parts[parts.length - 1] || id;
 }
 
-export const ModelCapabilityBar: React.FC<ModelCapabilityBarProps> = React.memo(({
+export const ModelCapabilityBar: FC<ModelCapabilityBarProps> = memo(({
     modelName,
     modelDetails,
     totalTokens,

@@ -33,3 +33,8 @@ This plugin (`NEI AI Chat`) is an **open-source Obsidian community plugin** inte
 - **i18n (Internationalization)**: Support UI strings in multi-language translations (`translations.ts`).
 - **Modularity**: Maintain clean separation between UI components (`src/components`), Services (`src/services`), Tools (`src/services/tools`), and Views (`src/views`).
 - **Testing & Verification**: Ensure `npm run build` (esbuild) runs cleanly without TypeScript errors after any modification.
+
+---
+
+## 4. Git Commit Requirement
+- **Automatic Commits**: After completing all requested code changes and verifying that builds (`npm run build`) and tests (`npx vitest run`) pass, ALWAYS make a git commit to the repository summarizing the changes.

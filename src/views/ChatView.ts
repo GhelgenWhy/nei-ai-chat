@@ -27,7 +27,7 @@ export class NeiChatView extends ItemView {
         return "bot";
     }
 
-    async onOpen() {
+    async onOpen(): Promise<void> {
         const container = this.contentEl;
         container.empty();
         container.addClass("nei-chat-view-container");
@@ -48,9 +48,10 @@ export class NeiChatView extends ItemView {
         );
     }
 
-    async onClose() {
+    async onClose(): Promise<void> {
         if (this.root) {
             this.root.unmount();
+            this.root = null;
         }
 
         // If closing a main tab and no other NEI chat view remains open, automatically return chat to right sidebar

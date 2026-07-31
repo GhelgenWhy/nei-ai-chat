@@ -1,20 +1,20 @@
-import * as React from 'react';
+import React, { useState, useRef, useEffect, FC } from 'react';
 
 export interface AudioRecorderProps {
     onAudioCaptured: (audioDataUrl: string, durationSeconds: number) => void;
     onCancel: () => void;
 }
 
-export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onAudioCaptured, onCancel }) => {
-    const [isRecording, setIsRecording] = React.useState(false);
-    const [seconds, setSeconds] = React.useState(0);
-    const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
+export const AudioRecorder: FC<AudioRecorderProps> = ({ onAudioCaptured, onCancel }) => {
+    const [isRecording, setIsRecording] = useState<boolean>(false);
+    const [seconds, setSeconds] = useState<number>(0);
+    const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-    const mediaRecorderRef = React.useRef<MediaRecorder | null>(null);
-    const audioChunksRef = React.useRef<Blob[]>([]);
-    const timerRef = React.useRef<number | null>(null);
+    const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+    const audioChunksRef = useRef<Blob[]>([]);
+    const timerRef = useRef<number | null>(null);
 
-    const startRecording = async () => {
+    const startRecording = async (): Promise<void> => {
         setErrorMsg(null);
         audioChunksRef.current = [];
         try {
@@ -39,7 +39,7 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onAudioCaptured, o
                 reader.readAsDataURL(blob);
                 
                 // Stop audio tracks
-                stream.getTracks().forEach(track => track.stop());
+                stream.getTracks().forEach((track: MediaStreamTrack) => track.stop());
             };
 
             recorder.start();
@@ -47,7 +47,7 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onAudioCaptured, o
             setSeconds(0);
 
             timerRef.current = window.setInterval(() => {
-                setSeconds(prev => prev + 1);
+                setSeconds((prev: number) => prev + 1);
             }, 1000);
         } catch (err: unknown) {
             console.error('[AudioRecorder] Access denied or failed:', err);
@@ -55,7 +55,7 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onAudioCaptured, o
         }
     };
 
-    const stopRecording = () => {
+    const stopRecording = (): void => {
         if (timerRef.current !== null) {
             window.clearInterval(timerRef.current);
             timerRef.current = null;
@@ -66,7 +66,7 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onAudioCaptured, o
         setIsRecording(false);
     };
 
-    React.useEffect(() => {
+    useEffect(() => {
         void startRecording();
         return () => {
             if (timerRef.current !== null) {
@@ -78,7 +78,7 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onAudioCaptured, o
         };
     }, []);
 
-    const formatTime = (totalSec: number) => {
+    const formatTime = (totalSec: number): string => {
         const mins = Math.floor(totalSec / 60);
         const secs = totalSec % 60;
         return `${mins}:${secs < 10 ? '0' : ''}${secs}`;

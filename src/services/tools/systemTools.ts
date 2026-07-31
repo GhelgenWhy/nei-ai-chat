@@ -66,13 +66,13 @@ export const systemExecutors: Record<string, ToolExecutor> = {
                 headers: {
                     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
                 }
-            });
+            }) as unknown as { status: number; text: string };
 
             const html = response.text;
             const matches: string[] = [];
             const resultRegex = /<a class="result__url" href="([^"]+)".*?>[\s\S]*?<a class="result__snippet".*?>([\s\S]*?)<\/a>/g;
             
-            let m;
+            let m: RegExpExecArray | null;
             let count = 0;
             while ((m = resultRegex.exec(html)) !== null && count < 5) {
                 const rawUrl = m[1].trim();
@@ -104,8 +104,8 @@ export const systemExecutors: Record<string, ToolExecutor> = {
             try {
                 // Try fetching raw README directly
                 const rawReadmeUrl = `https://raw.githubusercontent.com/${owner}/${repo}/main/README.md`;
-                const response = await requestUrl({ url: rawReadmeUrl, method: "GET" }).catch(() => 
-                    requestUrl({ url: `https://raw.githubusercontent.com/${owner}/${repo}/master/README.md`, method: "GET" })
+                const response = await (requestUrl({ url: rawReadmeUrl, method: "GET" }) as Promise<unknown> as Promise<{ status: number; text: string }>).catch(() => 
+                    requestUrl({ url: `https://raw.githubusercontent.com/${owner}/${repo}/master/README.md`, method: "GET" }) as unknown as Promise<{ status: number; text: string }>
                 );
 
                 if (response.status === 200 && response.text) {
@@ -125,7 +125,7 @@ export const systemExecutors: Record<string, ToolExecutor> = {
                 headers: {
                     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
                 }
-            });
+            }) as unknown as { status: number; text: string };
 
             let text = response.text;
             text = text.replace(/<script[\s\S]*?<\/script>/gi, "");
@@ -158,7 +158,7 @@ export const systemExecutors: Record<string, ToolExecutor> = {
                     url: `https://api.github.com/repos/${owner}/${repo}`,
                     method: "GET",
                     headers: { "User-Agent": "NEI-Obsidian-Plugin" }
-                });
+                }) as unknown as { status: number; json: Record<string, unknown> };
                 if (metaRes.status === 200 && metaRes.json) {
                     const j = metaRes.json as {
                         full_name?: string;
@@ -189,7 +189,7 @@ export const systemExecutors: Record<string, ToolExecutor> = {
                         const res = await requestUrl({
                             url: `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${fname}`,
                             method: "GET"
-                        });
+                        }) as unknown as { status: number; text: string };
                         if (res.status === 200 && res.text) {
                             readmeText = res.text;
                             break;

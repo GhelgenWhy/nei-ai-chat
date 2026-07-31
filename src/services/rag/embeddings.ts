@@ -12,8 +12,8 @@ async function httpPostJson(url: string, body: Record<string, unknown>, headers:
         method: "POST",
         headers: { 'Content-Type': 'application/json', ...headers },
         body: JSON.stringify(body)
-    });
-    return res.json as Record<string, unknown>;
+    }) as unknown as { json: Record<string, unknown> };
+    return res.json;
 }
 
 export class OllamaEmbeddingProvider implements EmbeddingProvider {

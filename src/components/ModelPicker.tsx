@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React, { FC, useState, useMemo, ChangeEvent, MouseEvent } from 'react';
 import { getModelTemporalInfo } from '../services/modelRegistry';
 import { SupportedLanguage } from '../i18n/translations';
 
@@ -19,7 +19,7 @@ function prettifyModelName(modelId: string): string {
         .replace(/\b\w/g, c => c.toUpperCase());
 }
 
-export const ModelPicker: React.FC<ModelPickerProps> = ({
+export const ModelPicker: FC<ModelPickerProps> = ({
     models,
     selectedModel,
     onSelect,
@@ -27,9 +27,9 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({
     apiKey,
     endpointUrl
 }) => {
-    const [searchQuery, setSearchQuery] = React.useState('');
+    const [searchQuery, setSearchQuery] = useState<string>('');
 
-    const filteredModels = React.useMemo(() => {
+    const filteredModels = useMemo<string[]>(() => {
         const query = searchQuery.toLowerCase();
         return models.filter(m => 
             m.toLowerCase().includes(query) || 
@@ -43,7 +43,7 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({
                 type="text"
                 placeholder="Search models..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
                 style={{
                     width: '100%',
                     padding: '6px 10px',
@@ -78,7 +78,7 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({
                         return (
                             <button
                                 key={modelId}
-                                onClick={(e) => {
+                                onClick={(e: MouseEvent<HTMLButtonElement>) => {
                                     e.preventDefault();
                                     onSelect(modelId);
                                 }}

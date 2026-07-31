@@ -78,10 +78,10 @@ export class OpenRouterService {
                 headers: {
                     "Authorization": `Bearer ${apiKey}`
                 }
-            });
+            }) as unknown as { status: number; json: RawKeyInfoResponse };
 
             if (response.status === 200 && response.json) {
-                const json = response.json as RawKeyInfoResponse;
+                const json = response.json;
                 if (json.data) {
                     const data = json.data;
                     return {
@@ -121,13 +121,13 @@ export class OpenRouterService {
                 url: "https://openrouter.ai/api/v1/models",
                 method: "GET",
                 headers
-            });
+            }) as unknown as { status: number; json: RawModelsResponse };
 
             if (response.status !== 200) {
                 throw new Error(`OpenRouter API status: ${response.status}`);
             }
 
-            const json = response.json as RawModelsResponse;
+            const json = response.json;
             const modelsData = json.data || [];
             const result: OpenRouterModelInfo[] = [];
 

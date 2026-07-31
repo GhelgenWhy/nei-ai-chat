@@ -1,4 +1,4 @@
-import * as React from "react";
+import React, { FC, useState, useRef, useEffect } from 'react';
 import { t, SupportedLanguage, Translations } from "../i18n/translations";
 
 export interface TooltipProps {
@@ -10,7 +10,7 @@ export interface TooltipProps {
     showIcon?: boolean;
 }
 
-export const Tooltip: React.FC<TooltipProps> = ({
+export const Tooltip: FC<TooltipProps> = ({
     children,
     titleKey,
     descriptionKey,
@@ -18,8 +18,8 @@ export const Tooltip: React.FC<TooltipProps> = ({
     position = 'top',
     showIcon = true
 }) => {
-    const [visible, setVisible] = React.useState(false);
-    const ref = React.useRef<HTMLDivElement>(null);
+    const [visible, setVisible] = useState<boolean>(false);
+    const ref = useRef<HTMLDivElement | null>(null);
 
     const title = t(titleKey, language);
     const description = descriptionKey ? t(descriptionKey, language) : '';

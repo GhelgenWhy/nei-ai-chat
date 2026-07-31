@@ -826,7 +826,7 @@ export const vaultExecutors: Record<string, ToolExecutor> = {
         if (mode === "hubs") {
             const min = args.minLinks || 3;
             const hubs = files
-                .map(f => ({ path: f.path, count: incomingLinksCount[f.path] }))
+                .map(f => ({ path: f.path, count: incomingLinksCount[f.path] || 0 }))
                 .filter(item => item.count >= min)
                 .sort((a, b) => b.count - a.count);
                 
@@ -847,7 +847,8 @@ export const vaultExecutors: Record<string, ToolExecutor> = {
             if (!args.notePath) return "Error: notePath parameter is required for note_context mode.";
             
             // Allow loose matching
-            const file = files.find(f => f.path.toLowerCase() === args.notePath?.toLowerCase() || f.path.toLowerCase().endsWith(`/${args.notePath?.toLowerCase()}`));
+            const targetPath = args.notePath.toLowerCase();
+            const file = files.find(f => f.path.toLowerCase() === targetPath || f.path.toLowerCase().endsWith(`/${targetPath}`));
             if (!file) return `Error: Note '${args.notePath}' not found.`;
             
             const outgoing = Object.keys(resolvedLinks[file.path] || {});
@@ -872,8 +873,8 @@ export const vaultExecutors: Record<string, ToolExecutor> = {
             for (const file of files) {
                 const cache = app.metadataCache.getFileCache(file);
                 const tagsInFile = (cache?.tags || []).map(t => t.tag.toLowerCase());
-                const fmTags = cache?.frontmatter?.tags || [];
-                const normFmTags = Array.isArray(fmTags) ? fmTags : [fmTags];
+                const rawFmTags: unknown = cache?.frontmatter?.tags || [];
+                const normFmTags = Array.isArray(rawFmTags) ? rawFmTags : [rawFmTags];
                 const allTags = new Set([...tagsInFile, ...normFmTags.map(t => String(t).startsWith('#') ? String(t).toLowerCase() : `#${String(t).toLowerCase()}`)]);
                 fileTags[file.path] = Array.from(allTags);
             }
@@ -894,7 +895,7 @@ export const vaultExecutors: Record<string, ToolExecutor> = {
                     
                     const common = tags1.filter(t => tags2.includes(t));
                     if (common.length > 0) {
-                        const isLinked = resolvedLinks[f1]?.[f2] || resolvedLinks[f2]?.[f1];
+                        const isLinked = Boolean(resolvedLinks[f1]?.[f2] || resolvedLinks[f2]?.[f1]);
                         if (!isLinked) {
                             recommendations.push({ f1, f2, commonTags: common });
                         }

@@ -122,12 +122,11 @@ export async function fetchEmbedding(
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({ model, prompt: text })
-        });
+        }) as unknown as { status: number; json: { embedding: number[] } };
         if (response.status < 200 || response.status >= 300) {
             throw new Error(`Ollama embedding error status ${response.status}`);
         }
-        const data = response.json as { embedding: number[] };
-        return data.embedding;
+        return response.json.embedding;
     } else {
         // OpenAI / OpenRouter embedding format
         const response = await requestUrl({
@@ -138,11 +137,10 @@ export async function fetchEmbedding(
                 "Authorization": `Bearer ${apiKey}`
             },
             body: JSON.stringify({ model, input: text })
-        });
+        }) as unknown as { status: number; json: { data: Array<{ embedding: number[] }> } };
         if (response.status < 200 || response.status >= 300) {
             throw new Error(`API embedding error status ${response.status}`);
         }
-        const data = response.json as { data: Array<{ embedding: number[] }> };
-        return data.data[0].embedding;
+        return response.json.data[0].embedding;
     }
 }

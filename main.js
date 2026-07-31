@@ -1124,7 +1124,7 @@ var require_react_development = __commonJS({
           var dispatcher = resolveDispatcher();
           return dispatcher.useCallback(callback, deps);
         }
-        function useMemo(create, deps) {
+        function useMemo2(create, deps) {
           var dispatcher = resolveDispatcher();
           return dispatcher.useMemo(create, deps);
         }
@@ -1896,7 +1896,7 @@ var require_react_development = __commonJS({
         exports.useImperativeHandle = useImperativeHandle;
         exports.useInsertionEffect = useInsertionEffect;
         exports.useLayoutEffect = useLayoutEffect;
-        exports.useMemo = useMemo;
+        exports.useMemo = useMemo2;
         exports.useReducer = useReducer;
         exports.useRef = useRef4;
         exports.useState = useState5;
@@ -24349,7 +24349,7 @@ Notes with 0 incoming and 0 outgoing links.
         }
         if (mode === "hubs") {
           const min = args.minLinks || 3;
-          const hubs = files.map((f) => ({ path: f.path, count: incomingLinksCount[f.path] })).filter((item) => item.count >= min).sort((a, b) => b.count - a.count);
+          const hubs = files.map((f) => ({ path: f.path, count: incomingLinksCount[f.path] || 0 })).filter((item) => item.count >= min).sort((a, b) => b.count - a.count);
           const limit = 25;
           const shown = hubs.slice(0, limit);
           let report = `### Hub Notes (min. ${min} incoming links)
@@ -24369,7 +24369,8 @@ Found ${hubs.length} hubs.
         if (mode === "note_context") {
           if (!args.notePath)
             return "Error: notePath parameter is required for note_context mode.";
-          const file = files.find((f) => f.path.toLowerCase() === args.notePath?.toLowerCase() || f.path.toLowerCase().endsWith(`/${args.notePath?.toLowerCase()}`));
+          const targetPath = args.notePath.toLowerCase();
+          const file = files.find((f) => f.path.toLowerCase() === targetPath || f.path.toLowerCase().endsWith(`/${targetPath}`));
           if (!file)
             return `Error: Note '${args.notePath}' not found.`;
           const outgoing = Object.keys(resolvedLinks[file.path] || {});
@@ -24398,8 +24399,8 @@ Found ${hubs.length} hubs.
           for (const file of files) {
             const cache = app.metadataCache.getFileCache(file);
             const tagsInFile = (cache?.tags || []).map((t2) => t2.tag.toLowerCase());
-            const fmTags = cache?.frontmatter?.tags || [];
-            const normFmTags = Array.isArray(fmTags) ? fmTags : [fmTags];
+            const rawFmTags = cache?.frontmatter?.tags || [];
+            const normFmTags = Array.isArray(rawFmTags) ? rawFmTags : [rawFmTags];
             const allTags = /* @__PURE__ */ new Set([...tagsInFile, ...normFmTags.map((t2) => String(t2).startsWith("#") ? String(t2).toLowerCase() : `#${String(t2).toLowerCase()}`)]);
             fileTags[file.path] = Array.from(allTags);
           }
@@ -24417,7 +24418,7 @@ Found ${hubs.length} hubs.
                 continue;
               const common = tags1.filter((t2) => tags2.includes(t2));
               if (common.length > 0) {
-                const isLinked = resolvedLinks[f1]?.[f2] || resolvedLinks[f2]?.[f1];
+                const isLinked = Boolean(resolvedLinks[f1]?.[f2] || resolvedLinks[f2]?.[f1]);
                 if (!isLinked) {
                   recommendations.push({ f1, f2, commonTags: common });
                 }
@@ -25364,7 +25365,7 @@ var React8 = __toESM(require_react());
 var import_client = __toESM(require_client());
 
 // src/components/ChatPanel.tsx
-var React7 = __toESM(require_react());
+var import_react7 = __toESM(require_react());
 var import_obsidian12 = require("obsidian");
 
 // src/services/llm.ts
@@ -27922,10 +27923,10 @@ var ChatStore = class {
 };
 
 // src/components/ErrorBoundary.tsx
-var React = __toESM(require_react());
+var import_react = __toESM(require_react());
 var import_obsidian11 = require("obsidian");
 var import_jsx_runtime = __toESM(require_jsx_runtime());
-var ErrorBoundary = class extends React.Component {
+var ErrorBoundary = class extends import_react.Component {
   constructor() {
     super(...arguments);
     this.state = {
@@ -27963,7 +27964,7 @@ var ErrorBoundary = class extends React.Component {
 };
 
 // src/components/Tooltip.tsx
-var React2 = __toESM(require_react());
+var import_react2 = __toESM(require_react());
 var import_jsx_runtime2 = __toESM(require_jsx_runtime());
 var Tooltip = ({
   children,
@@ -27973,11 +27974,11 @@ var Tooltip = ({
   position = "top",
   showIcon = true
 }) => {
-  const [visible, setVisible] = React2.useState(false);
-  const ref = React2.useRef(null);
+  const [visible, setVisible] = (0, import_react2.useState)(false);
+  const ref = (0, import_react2.useRef)(null);
   const title = t(titleKey, language);
   const description = descriptionKey ? t(descriptionKey, language) : "";
-  React2.useEffect(() => {
+  import_react2.default.useEffect(() => {
     const handleClickOutside = (e) => {
       if (ref.current && e.target instanceof Node && !ref.current.contains(e.target)) {
         setVisible(false);
@@ -28047,10 +28048,10 @@ var Tooltip = ({
 };
 
 // src/components/WelcomeScreen.tsx
-var React3 = __toESM(require_react());
+var import_react3 = __toESM(require_react());
 var import_jsx_runtime3 = __toESM(require_jsx_runtime());
-var WelcomeScreen = React3.memo(({ language, onClose }) => {
-  const [step, setStep] = React3.useState(0);
+var WelcomeScreen = (0, import_react3.memo)(({ language, onClose }) => {
+  const [step, setStep] = (0, import_react3.useState)(0);
   const steps = [
     {
       title: t("welcomeStep1Title", language),
@@ -28168,9 +28169,9 @@ var WelcomeScreen = React3.memo(({ language, onClose }) => {
 WelcomeScreen.displayName = "WelcomeScreen";
 
 // src/components/ReasoningPanel.tsx
-var React4 = __toESM(require_react());
+var import_react4 = __toESM(require_react());
 var import_jsx_runtime4 = __toESM(require_jsx_runtime());
-var ReasoningPanel = React4.memo(({ steps, language, isExpanded, onToggle }) => {
+var ReasoningPanel = (0, import_react4.memo)(({ steps, language, isExpanded, onToggle }) => {
   if (steps.length === 0)
     return null;
   const getStepIcon = (type, status) => {
@@ -28300,7 +28301,7 @@ var ReasoningPanel = React4.memo(({ steps, language, isExpanded, onToggle }) => 
 ReasoningPanel.displayName = "ReasoningPanel";
 
 // src/components/ModelCapabilityBar.tsx
-var React5 = __toESM(require_react());
+var import_react5 = __toESM(require_react());
 var import_jsx_runtime5 = __toESM(require_jsx_runtime());
 function formatTokens(count) {
   if (count >= 1e6) {
@@ -28315,7 +28316,7 @@ function prettifyName(id) {
   const parts = id.split("/");
   return parts[parts.length - 1] || id;
 }
-var ModelCapabilityBar = React5.memo(({
+var ModelCapabilityBar = (0, import_react5.memo)(({
   modelName,
   modelDetails,
   totalTokens,
@@ -28384,15 +28385,15 @@ var ModelCapabilityBar = React5.memo(({
 ModelCapabilityBar.displayName = "ModelCapabilityBar";
 
 // src/components/AudioRecorder.tsx
-var React6 = __toESM(require_react());
+var import_react6 = __toESM(require_react());
 var import_jsx_runtime6 = __toESM(require_jsx_runtime());
 var AudioRecorder = ({ onAudioCaptured, onCancel }) => {
-  const [isRecording, setIsRecording] = React6.useState(false);
-  const [seconds, setSeconds] = React6.useState(0);
-  const [errorMsg, setErrorMsg] = React6.useState(null);
-  const mediaRecorderRef = React6.useRef(null);
-  const audioChunksRef = React6.useRef([]);
-  const timerRef = React6.useRef(null);
+  const [isRecording, setIsRecording] = (0, import_react6.useState)(false);
+  const [seconds, setSeconds] = (0, import_react6.useState)(0);
+  const [errorMsg, setErrorMsg] = (0, import_react6.useState)(null);
+  const mediaRecorderRef = (0, import_react6.useRef)(null);
+  const audioChunksRef = (0, import_react6.useRef)([]);
+  const timerRef = (0, import_react6.useRef)(null);
   const startRecording = async () => {
     setErrorMsg(null);
     audioChunksRef.current = [];
@@ -28437,7 +28438,7 @@ var AudioRecorder = ({ onAudioCaptured, onCancel }) => {
     }
     setIsRecording(false);
   };
-  React6.useEffect(() => {
+  (0, import_react6.useEffect)(() => {
     void startRecording();
     return () => {
       if (timerRef.current !== null) {
@@ -28687,16 +28688,17 @@ var AutoLearner = _AutoLearner;
 // src/components/ChatPanel.tsx
 var import_jsx_runtime8 = __toESM(require_jsx_runtime());
 var ObsidianMarkdown = ({ markdown, app }) => {
-  const containerRef = React7.useRef(null);
-  React7.useEffect(() => {
-    if (containerRef.current) {
-      containerRef.current.empty();
+  const containerRef = (0, import_react7.useRef)(null);
+  (0, import_react7.useEffect)(() => {
+    const el = containerRef.current;
+    if (el) {
+      el.empty();
       const component = new import_obsidian12.Component();
       component.load();
       void import_obsidian12.MarkdownRenderer.render(
         app,
         markdown,
-        containerRef.current,
+        el,
         "",
         component
       );
@@ -28731,15 +28733,15 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onR
       new import_obsidian12.Notice(`${t("modeSwitchError", language)} ${err?.message || String(e)}`);
     }
   };
-  const [currentSession, setCurrentSession] = React7.useState(() => ChatStore.createNewSession());
-  const [sessionsList, setSessionsList] = React7.useState([]);
-  const [input, setInput] = React7.useState("");
-  const [attachedImages, setAttachedImages] = React7.useState([]);
-  const [attachedFiles, setAttachedFiles] = React7.useState([]);
-  const [isRecordingAudio, setIsRecordingAudio] = React7.useState(false);
-  const [warningModal, setWarningModal] = React7.useState(null);
-  const textareaRef = React7.useRef(null);
-  const adjustTextareaHeight = React7.useCallback(() => {
+  const [currentSession, setCurrentSession] = import_react7.default.useState(() => ChatStore.createNewSession());
+  const [sessionsList, setSessionsList] = import_react7.default.useState([]);
+  const [input, setInput] = import_react7.default.useState("");
+  const [attachedImages, setAttachedImages] = import_react7.default.useState([]);
+  const [attachedFiles, setAttachedFiles] = import_react7.default.useState([]);
+  const [isRecordingAudio, setIsRecordingAudio] = import_react7.default.useState(false);
+  const [warningModal, setWarningModal] = import_react7.default.useState(null);
+  const textareaRef = import_react7.default.useRef(null);
+  const adjustTextareaHeight = import_react7.default.useCallback(() => {
     if (!textareaRef.current)
       return;
     window.requestAnimationFrame(() => {
@@ -28751,43 +28753,43 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onR
       el.setCssStyles({ height: `${newHeight}px` });
     });
   }, []);
-  const [executionMode, setExecutionMode] = React7.useState(settings.executionMode || "auto");
-  const [loading, setLoading] = React7.useState(false);
-  const [abortController, setAbortController] = React7.useState(null);
-  const [activeSteps, setActiveSteps] = React7.useState([]);
-  const [showSessionsDrawer, setShowSessionsDrawer] = React7.useState(false);
-  const [showConfig, setShowConfig] = React7.useState(false);
-  const [pendingConfirmation, setPendingConfirmation] = React7.useState(null);
-  const [showFreshnessSuggestion, setShowFreshnessSuggestion] = React7.useState(null);
-  const [editingMsgIdx, setEditingMsgIdx] = React7.useState(null);
-  const [editingText, setEditingText] = React7.useState("");
-  const [sessionMetrics, setSessionMetrics] = React7.useState({
+  const [executionMode, setExecutionMode] = import_react7.default.useState(settings.executionMode || "auto");
+  const [loading, setLoading] = import_react7.default.useState(false);
+  const [abortController, setAbortController] = import_react7.default.useState(null);
+  const [activeSteps, setActiveSteps] = import_react7.default.useState([]);
+  const [showSessionsDrawer, setShowSessionsDrawer] = import_react7.default.useState(false);
+  const [showConfig, setShowConfig] = import_react7.default.useState(false);
+  const [pendingConfirmation, setPendingConfirmation] = import_react7.default.useState(null);
+  const [showFreshnessSuggestion, setShowFreshnessSuggestion] = import_react7.default.useState(null);
+  const [editingMsgIdx, setEditingMsgIdx] = import_react7.default.useState(null);
+  const [editingText, setEditingText] = import_react7.default.useState("");
+  const [sessionMetrics, setSessionMetrics] = import_react7.default.useState({
     totalPromptTokens: 0,
     totalCompletionTokens: 0,
     totalCost: 0,
     requestCount: 0
   });
-  const [pricingMap] = React7.useState({});
-  const [showReasoning, setShowReasoning] = React7.useState(true);
-  const [learningProposal, setLearningProposal] = React7.useState(null);
-  const [endpointUrl, setEndpointUrl] = React7.useState(settings.endpointUrl || "https://openrouter.ai/api/v1");
-  const [apiKey, setApiKey] = React7.useState(settings.apiKey || "");
-  const [model, setModel] = React7.useState(settings.model || "google/gemini-2.5-flash");
-  const [visionModel, setVisionModel] = React7.useState(settings.visionModel || "google/gemini-2.5-flash");
-  const [quickModel, setQuickModel] = React7.useState(settings.quickModel || "google/gemini-2.5-flash");
-  const [customModels, setCustomModels] = React7.useState(settings.customModels || [
+  const [pricingMap] = import_react7.default.useState({});
+  const [showReasoning, setShowReasoning] = import_react7.default.useState(true);
+  const [learningProposal, setLearningProposal] = import_react7.default.useState(null);
+  const [endpointUrl, setEndpointUrl] = import_react7.default.useState(settings.endpointUrl || "https://openrouter.ai/api/v1");
+  const [apiKey, setApiKey] = import_react7.default.useState(settings.apiKey || "");
+  const [model, setModel] = import_react7.default.useState(settings.model || "google/gemini-2.5-flash");
+  const [visionModel, setVisionModel] = import_react7.default.useState(settings.visionModel || "google/gemini-2.5-flash");
+  const [quickModel, setQuickModel] = import_react7.default.useState(settings.quickModel || "google/gemini-2.5-flash");
+  const [customModels, setCustomModels] = import_react7.default.useState(settings.customModels || [
     "google/gemini-2.5-flash",
     "anthropic/claude-3.5-sonnet",
     "google/gemini-2.5-pro",
     "openai/gpt-4o",
     "deepseek/deepseek-chat"
   ]);
-  const [newModelInput, setNewModelInput] = React7.useState("");
-  const [activeModelDetails, setActiveModelDetails] = React7.useState(null);
-  const [keyInfo, setKeyInfo] = React7.useState(null);
-  const [verifyingModel, setVerifyingModel] = React7.useState(false);
-  const [modelFreshness, setModelFreshness] = React7.useState(null);
-  React7.useEffect(() => {
+  const [newModelInput, setNewModelInput] = import_react7.default.useState("");
+  const [activeModelDetails, setActiveModelDetails] = import_react7.default.useState(null);
+  const [keyInfo, setKeyInfo] = import_react7.default.useState(null);
+  const [verifyingModel, setVerifyingModel] = import_react7.default.useState(false);
+  const [modelFreshness, setModelFreshness] = import_react7.default.useState(null);
+  import_react7.default.useEffect(() => {
     const info = getModelTemporalInfo(model);
     const cutoff = new Date(info.knowledgeCutoff);
     const daysSince = Math.floor((Date.now() - cutoff.getTime()) / (1e3 * 60 * 60 * 24));
@@ -28798,7 +28800,7 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onR
       isStale: daysSince > 30
     });
   }, [model]);
-  React7.useEffect(() => {
+  import_react7.default.useEffect(() => {
     void refreshSessionsList();
     void verifyActiveModel(model, apiKey);
     if (apiKey) {
@@ -28884,9 +28886,9 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onR
       handleNewChat();
     }
   };
-  const [confirmingClear, setConfirmingClear] = React7.useState(false);
-  const clearTimerRef = React7.useRef(null);
-  React7.useEffect(() => {
+  const [confirmingClear, setConfirmingClear] = import_react7.default.useState(false);
+  const clearTimerRef = import_react7.default.useRef(null);
+  import_react7.default.useEffect(() => {
     return () => {
       if (clearTimerRef.current !== null)
         window.clearTimeout(clearTimerRef.current);
@@ -28920,34 +28922,34 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onR
     await refreshSessionsList();
     new import_obsidian12.Notice("\u{1F33F} Conversation branched!");
   };
-  const [language, setLanguage] = React7.useState(settings.language || "auto");
-  const [defaultNoteFolder, setDefaultNoteFolder] = React7.useState(settings.defaultNoteFolder || "");
-  const [chatsFolder, setChatsFolder] = React7.useState(settings.chatsFolder || ".nei/chats");
-  const [memoryFile, setMemoryFile] = React7.useState(settings.memoryFile || ".nei/memory.json");
-  const [skillsFolder, setSkillsFolder] = React7.useState(settings.skillsFolder || ".nei/skills");
-  const [maxAgentIterations, setMaxAgentIterations] = React7.useState(settings.maxAgentIterations || 10);
-  const [maxPrefetchedNotes, setMaxPrefetchedNotes] = React7.useState(settings.maxPrefetchedNotes || 5);
-  const [prefetchSnippetLength, setPrefetchSnippetLength] = React7.useState(settings.prefetchSnippetLength || 400);
-  const [ragResultLimit, setRagResultLimit] = React7.useState(settings.ragResultLimit || 5);
-  const [ragSnippetLength] = React7.useState(settings.ragSnippetLength || 1e3);
-  const [confirmObsidianCommands, setConfirmObsidianCommands] = React7.useState(settings.confirmObsidianCommands ?? true);
-  const [enableTemporalAwareness, setEnableTemporalAwareness] = React7.useState(settings.enableTemporalAwareness ?? true);
-  const [enableAdaptivePrefetch, setEnableAdaptivePrefetch] = React7.useState(settings.enableAdaptivePrefetch ?? true);
-  const [enableFreshnessSuggestions, setEnableFreshnessSuggestions] = React7.useState(settings.enableFreshnessSuggestions ?? true);
-  const [enableSmartToolFiltering, setEnableSmartToolFiltering] = React7.useState(settings.enableSmartToolFiltering ?? true);
-  const [enableVaultContextDefault, setEnableVaultContextDefault] = React7.useState(settings.enableVaultContextDefault ?? true);
-  const [vaultContextEnabled, setVaultContextEnabled] = React7.useState(settings.enableVaultContextDefault ?? true);
-  const [intentRoutingThreshold, setIntentRoutingThreshold] = React7.useState(settings.intentRoutingThreshold ?? 2.5);
-  const [intentVaultKeywordWeight] = React7.useState(settings.intentVaultKeywordWeight ?? 2);
-  const [intentCreationWeight, setIntentCreationWeight] = React7.useState(settings.intentCreationWeight ?? 3);
-  const [intentDeletionWeight, setIntentDeletionWeight] = React7.useState(settings.intentDeletionWeight ?? 4);
-  const [intentAnalysisWeight] = React7.useState(settings.intentAnalysisWeight ?? 2.5);
-  const [intentQuestionWeight, setIntentQuestionWeight] = React7.useState(settings.intentQuestionWeight ?? -1.5);
-  const [intentLengthWeight] = React7.useState(settings.intentLengthWeight ?? 5e-3);
-  const [intentHistoryWeight] = React7.useState(settings.intentHistoryWeight ?? 0.3);
-  const [intentStaleQueryWeight, setIntentStaleQueryWeight] = React7.useState(settings.intentStaleQueryWeight ?? 3);
-  const [intentFreshnessWeight, setIntentFreshnessWeight] = React7.useState(settings.intentFreshnessWeight ?? 2);
-  const settingsSaveTimerRef = React7.useRef(null);
+  const [language, setLanguage] = import_react7.default.useState(settings.language || "auto");
+  const [defaultNoteFolder, setDefaultNoteFolder] = import_react7.default.useState(settings.defaultNoteFolder || "");
+  const [chatsFolder, setChatsFolder] = import_react7.default.useState(settings.chatsFolder || ".nei/chats");
+  const [memoryFile, setMemoryFile] = import_react7.default.useState(settings.memoryFile || ".nei/memory.json");
+  const [skillsFolder, setSkillsFolder] = import_react7.default.useState(settings.skillsFolder || ".nei/skills");
+  const [maxAgentIterations, setMaxAgentIterations] = import_react7.default.useState(settings.maxAgentIterations || 10);
+  const [maxPrefetchedNotes, setMaxPrefetchedNotes] = import_react7.default.useState(settings.maxPrefetchedNotes || 5);
+  const [prefetchSnippetLength, setPrefetchSnippetLength] = import_react7.default.useState(settings.prefetchSnippetLength || 400);
+  const [ragResultLimit, setRagResultLimit] = import_react7.default.useState(settings.ragResultLimit || 5);
+  const [ragSnippetLength] = import_react7.default.useState(settings.ragSnippetLength || 1e3);
+  const [confirmObsidianCommands, setConfirmObsidianCommands] = import_react7.default.useState(settings.confirmObsidianCommands ?? true);
+  const [enableTemporalAwareness, setEnableTemporalAwareness] = import_react7.default.useState(settings.enableTemporalAwareness ?? true);
+  const [enableAdaptivePrefetch, setEnableAdaptivePrefetch] = import_react7.default.useState(settings.enableAdaptivePrefetch ?? true);
+  const [enableFreshnessSuggestions, setEnableFreshnessSuggestions] = import_react7.default.useState(settings.enableFreshnessSuggestions ?? true);
+  const [enableSmartToolFiltering, setEnableSmartToolFiltering] = import_react7.default.useState(settings.enableSmartToolFiltering ?? true);
+  const [enableVaultContextDefault, setEnableVaultContextDefault] = import_react7.default.useState(settings.enableVaultContextDefault ?? true);
+  const [vaultContextEnabled, setVaultContextEnabled] = import_react7.default.useState(settings.enableVaultContextDefault ?? true);
+  const [intentRoutingThreshold, setIntentRoutingThreshold] = import_react7.default.useState(settings.intentRoutingThreshold ?? 2.5);
+  const [intentVaultKeywordWeight] = import_react7.default.useState(settings.intentVaultKeywordWeight ?? 2);
+  const [intentCreationWeight, setIntentCreationWeight] = import_react7.default.useState(settings.intentCreationWeight ?? 3);
+  const [intentDeletionWeight, setIntentDeletionWeight] = import_react7.default.useState(settings.intentDeletionWeight ?? 4);
+  const [intentAnalysisWeight] = import_react7.default.useState(settings.intentAnalysisWeight ?? 2.5);
+  const [intentQuestionWeight, setIntentQuestionWeight] = import_react7.default.useState(settings.intentQuestionWeight ?? -1.5);
+  const [intentLengthWeight] = import_react7.default.useState(settings.intentLengthWeight ?? 5e-3);
+  const [intentHistoryWeight] = import_react7.default.useState(settings.intentHistoryWeight ?? 0.3);
+  const [intentStaleQueryWeight, setIntentStaleQueryWeight] = import_react7.default.useState(settings.intentStaleQueryWeight ?? 3);
+  const [intentFreshnessWeight, setIntentFreshnessWeight] = import_react7.default.useState(settings.intentFreshnessWeight ?? 2);
+  const settingsSaveTimerRef = import_react7.default.useRef(null);
   const handleSaveConfig = async () => {
     const newSettings = {
       ...settings,
@@ -29021,10 +29023,10 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onR
       new import_obsidian12.Notice(`${t("noteCreateError", language)} ${err?.message || String(e)}`);
     }
   };
-  const [streamingContent, setStreamingContent] = React7.useState("");
-  const [showWelcome, setShowWelcome] = React7.useState(() => app.loadLocalStorage("nei_welcome_seen") !== true);
-  const [enableSemanticRag, setEnableSemanticRag] = React7.useState(settings.enableSemanticRag ?? false);
-  const fileInputRef = React7.useRef(null);
+  const [streamingContent, setStreamingContent] = import_react7.default.useState("");
+  const [showWelcome, setShowWelcome] = import_react7.default.useState(() => app.loadLocalStorage("nei_welcome_seen") !== true);
+  const [enableSemanticRag, setEnableSemanticRag] = import_react7.default.useState(settings.enableSemanticRag ?? false);
+  const fileInputRef = import_react7.default.useRef(null);
   const handleExportSettings = () => {
     try {
       const dataStr = JSON.stringify(settings, null, 2);
@@ -30346,7 +30348,7 @@ ${fileContext}` : fileContext;
   ] });
 };
 var ChatPanel = (props) => {
-  const [panelKey, setPanelKey] = React7.useState(0);
+  const [panelKey, setPanelKey] = import_react7.default.useState(0);
   return /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(ErrorBoundary, { children: /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(ChatPanelInner, { ...props, onReload: () => setPanelKey((k) => k + 1) }) }, panelKey);
 };
 
@@ -30389,6 +30391,7 @@ var NeiChatView = class extends import_obsidian13.ItemView {
   async onClose() {
     if (this.root) {
       this.root.unmount();
+      this.root = null;
     }
     const isMainTab = this.leaf.getRoot() === this.app.workspace.rootSplit;
     if (isMainTab) {
@@ -31237,11 +31240,12 @@ var NeiAiChatPlugin = class extends import_obsidian17.Plugin {
     const { workspace } = this.app;
     let leaf = null;
     const leaves = workspace.getLeavesOfType(VIEW_TYPE_NEI_CHAT);
-    if (leaves.length > 0) {
+    if (leaves.length > 0 && leaves[0]) {
       leaf = leaves[0];
     } else {
-      leaf = workspace.getRightLeaf(false);
-      if (leaf) {
+      const rightLeaf = workspace.getRightLeaf(false);
+      if (rightLeaf) {
+        leaf = rightLeaf;
         await leaf.setViewState({ type: VIEW_TYPE_NEI_CHAT, active: true });
       }
     }
@@ -31250,7 +31254,8 @@ var NeiAiChatPlugin = class extends import_obsidian17.Plugin {
     }
   }
   async loadSettings() {
-    const loadedData = await this.loadData();
+    const rawData = await this.loadData();
+    const loadedData = rawData;
     const vaultCrypto = this.app.vault;
     if (loadedData?.apiKey && typeof vaultCrypto.decrypt === "function") {
       try {

@@ -1,9 +1,9 @@
-import * as React from "react";
+import React, { Component, ReactNode, ErrorInfo } from "react";
 import { Notice } from "obsidian";
 
 interface Props {
-    children: React.ReactNode;
-    fallback?: React.ReactNode;
+    children: ReactNode;
+    fallback?: ReactNode;
 }
 
 interface State {
@@ -11,8 +11,8 @@ interface State {
     error: Error | null;
 }
 
-export class ErrorBoundary extends React.Component<Props, State> {
-    public state: State = {
+export class ErrorBoundary extends Component<Props, State> {
+    public override state: State = {
         hasError: false,
         error: null
     };
@@ -21,7 +21,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
         return { hasError: true, error };
     }
 
-    public componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    public override componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
         console.error("[NEI Chat ErrorBoundary]", error, errorInfo);
         new Notice(`❌ NEI Chat Error: ${error.message}`);
     }

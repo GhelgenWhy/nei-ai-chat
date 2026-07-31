@@ -1,4 +1,4 @@
-import * as React from "react";
+import React, { FC, useState, useRef, useEffect, useMemo, useCallback, ChangeEvent, KeyboardEvent, MouseEvent } from "react";
 import { App, Component, MarkdownRenderer, Notice, WorkspaceLeaf } from "obsidian";
 import { ChatMessage, getModelTemporalInfo } from "../services/llm";
 import { AgentLoop, AgentStep } from "../services/agent/agentLoop";
@@ -35,18 +35,19 @@ interface ChatPanelProps {
     onReload?: () => void;
 }
 
-export const ObsidianMarkdown: React.FC<{ markdown: string; app: App }> = ({ markdown, app }) => {
-    const containerRef = React.useRef<HTMLDivElement>(null);
+export const ObsidianMarkdown: FC<{ markdown: string; app: App }> = ({ markdown, app }) => {
+    const containerRef = useRef<HTMLDivElement | null>(null);
 
-    React.useEffect(() => {
-        if (containerRef.current) {
-            containerRef.current.empty();
+    useEffect(() => {
+        const el = containerRef.current;
+        if (el) {
+            el.empty();
             const component = new Component();
             component.load();
             void MarkdownRenderer.render(
                 app,
                 markdown,
-                containerRef.current,
+                el,
                 "",
                 component
             );
