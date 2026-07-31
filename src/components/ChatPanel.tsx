@@ -1,4 +1,4 @@
-import React, { FC, useState, useRef, useEffect, useMemo, useCallback, ChangeEvent, KeyboardEvent, MouseEvent } from "react";
+import React, { FC, useRef, useEffect } from "react";
 import { App, Component, MarkdownRenderer, Notice, WorkspaceLeaf } from "obsidian";
 import { ChatMessage, getModelTemporalInfo } from "../services/llm";
 import { AgentLoop, AgentStep } from "../services/agent/agentLoop";

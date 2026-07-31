@@ -24,7 +24,7 @@ export const Tooltip: FC<TooltipProps> = ({
     const title = t(titleKey, language);
     const description = descriptionKey ? t(descriptionKey, language) : '';
 
-    React.useEffect(() => {
+    useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
             if (ref.current && e.target instanceof Node && !ref.current.contains(e.target)) {
                 setVisible(false);

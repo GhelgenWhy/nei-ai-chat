@@ -1096,7 +1096,7 @@ var require_react_development = __commonJS({
           }
           return dispatcher.useContext(Context);
         }
-        function useState5(initialState) {
+        function useState4(initialState) {
           var dispatcher = resolveDispatcher();
           return dispatcher.useState(initialState);
         }
@@ -1120,11 +1120,11 @@ var require_react_development = __commonJS({
           var dispatcher = resolveDispatcher();
           return dispatcher.useLayoutEffect(create, deps);
         }
-        function useCallback2(callback, deps) {
+        function useCallback(callback, deps) {
           var dispatcher = resolveDispatcher();
           return dispatcher.useCallback(callback, deps);
         }
-        function useMemo2(create, deps) {
+        function useMemo(create, deps) {
           var dispatcher = resolveDispatcher();
           return dispatcher.useMemo(create, deps);
         }
@@ -1887,7 +1887,7 @@ var require_react_development = __commonJS({
         exports.memo = memo4;
         exports.startTransition = startTransition;
         exports.unstable_act = act;
-        exports.useCallback = useCallback2;
+        exports.useCallback = useCallback;
         exports.useContext = useContext;
         exports.useDebugValue = useDebugValue;
         exports.useDeferredValue = useDeferredValue;
@@ -1896,10 +1896,10 @@ var require_react_development = __commonJS({
         exports.useImperativeHandle = useImperativeHandle;
         exports.useInsertionEffect = useInsertionEffect;
         exports.useLayoutEffect = useLayoutEffect;
-        exports.useMemo = useMemo2;
+        exports.useMemo = useMemo;
         exports.useReducer = useReducer;
         exports.useRef = useRef4;
-        exports.useState = useState5;
+        exports.useState = useState4;
         exports.useSyncExternalStore = useSyncExternalStore;
         exports.useTransition = useTransition;
         exports.version = ReactVersion;
@@ -27978,7 +27978,7 @@ var Tooltip = ({
   const ref = (0, import_react2.useRef)(null);
   const title = t(titleKey, language);
   const description = descriptionKey ? t(descriptionKey, language) : "";
-  import_react2.default.useEffect(() => {
+  (0, import_react2.useEffect)(() => {
     const handleClickOutside = (e) => {
       if (ref.current && e.target instanceof Node && !ref.current.contains(e.target)) {
         setVisible(false);
