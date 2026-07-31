@@ -1,5 +1,5 @@
 import { App } from "obsidian";
-import { ChatMessage, LlmConfig, sendChatRequest, sendChatRequestStream, getModelTemporalInfo } from "../llm";
+import { ChatMessage, LlmConfig, sendChatRequest, sendChatRequestStream, getModelTemporalInfo, LlmResponse } from "../llm";
 import { MemoryStore } from "../memory/memoryStore";
 import { SkillsLoader } from "../skills/skillsLoader";
 import { resolveContext } from "../context";
@@ -8,6 +8,7 @@ import { SupportedLanguage, t } from "../../i18n/translations";
 import { NeiAiChatSettings } from "../../../main";
 import { searchVaultLexical } from "../rag";
 import { searchVaultHybrid } from "../rag/vectorIndex";
+import { OpenRouterModelInfo } from "../openrouter";
 
 import { IntentRouter, ExecutionMode } from "./intentRouter";
 import { ContextManager } from "./contextManager";
@@ -28,6 +29,8 @@ export interface AgentLoopOptions {
     chatHistory: ChatMessage[];
     images?: string[];
     executionMode?: ExecutionMode;
+    useVaultContext?: boolean; // VCTX-01
+    activeModelDetails?: OpenRouterModelInfo | null;
     onStepUpdate?: (steps: AgentStep[]) => void;
     onConfirmationRequired?: (toolName: string, argsStr: string) => Promise<boolean>;
     onStreamChunk?: (chunk: string) => void;
@@ -46,6 +49,14 @@ export interface AgentLoopResult {
 
 export class AgentLoop {
     private static promptCache: Map<string, { prompt: string; timestamp: number }> = new Map();
+
+    private static isResponseValid(response: LlmResponse | null | undefined): boolean {
+        if (!response) return false;
+        const hasContent = Boolean(response.content && response.content.trim().length > 0);
+        const hasTools = Boolean(response.tool_calls && response.tool_calls.length > 0);
+        const hasReasoning = Boolean(response.reasoning && response.reasoning.trim().length > 0);
+        return hasContent || hasTools || hasReasoning;
+    }
 
     private static getSystemPrompt(
         language: SupportedLanguage,
@@ -122,6 +133,8 @@ export class AgentLoop {
             chatHistory, 
             images,
             executionMode = "auto", 
+            useVaultContext = true,
+            activeModelDetails,
             onStepUpdate, 
             onConfirmationRequired,
             onStreamChunk,
@@ -139,102 +152,141 @@ export class AgentLoop {
             if (onStepUpdate) onStepUpdate([...steps]);
         };
 
-        const features = IntentRouter.extractFeatures(userQuery, Boolean(images && images.length > 0), chatHistory, config.model);
-        const toolNeeds = IntentRouter.classifyToolNeeds(userQuery, features, config.model);
+        try {
+            const features = IntentRouter.extractFeatures(
+                userQuery, 
+                Boolean(images && images.length > 0), 
+                chatHistory, 
+                config.model,
+                activeModelDetails || undefined
+            );
+            const toolNeeds = IntentRouter.classifyToolNeeds(userQuery, features, config.model);
 
-        // Determine actual execution mode using IntentRouter if set to 'auto'
-        let actualMode: "quick" | "agent" = "agent";
-        if (executionMode === "quick") {
-            actualMode = "quick";
-        } else if (executionMode === "agent") {
-            actualMode = "agent";
-        } else {
-            const decision = IntentRouter.classifyIntent(userQuery, Boolean(images && images.length > 0), language, chatHistory, settings);
-            actualMode = decision.mode;
-            steps.push({
-                id: "intent-routing-step",
-                type: "thought",
-                title: `Mode: ${actualMode === "quick" ? "Quick" : "Agent"}`,
-                detail: decision.reason,
-                status: "completed",
-                meta: { confidence: decision.confidence, features }
-            });
-            notifySteps();
-        }
-
-        // 1. Resolve Context & Memory
-        const vaultContext = await resolveContext(app, userQuery, true);
-        const memory = await MemoryStore.loadMemory(app, settings);
-        const agentsRules = await MemoryStore.loadAgentsRules(app, settings);
-        const skills = await SkillsLoader.loadSkills(app, settings);
-
-        // 2. Semantic Folder & Vault Prefetching via RAG (Adaptive / Hybrid)
-        let prefetchedContext = "";
-        const shouldPrefetchVault = settings.enableAdaptivePrefetch
-            ? (toolNeeds.needsVaultSearch && actualMode === "agent")
-            : (actualMode === "agent");
-
-        if (shouldPrefetchVault) {
-            const searchResults = settings.enableSemanticRag
-                ? await searchVaultHybrid(app, userQuery, settings, settings.maxPrefetchedNotes)
-                : await searchVaultLexical(app, userQuery, settings.maxPrefetchedNotes, settings.prefetchSnippetLength);
-
-            if (searchResults.length > 0) {
-                const prefetchedBlocks: string[] = [];
-                const matchedFoldersSet = new Set<string>();
-
-                for (const res of searchResults) {
-                    const abstractFile = res.file;
-                    const folderName = abstractFile.parent?.name || "Vault";
-                    if (folderName) {
-                        matchedFoldersSet.add(folderName);
-                    }
-                    const cleanContent = res.content.replace(/^---[\s\S]*?---\n?/, "").trim();
-                    const snippet = cleanContent.length > settings.prefetchSnippetLength ? cleanContent.substring(0, settings.prefetchSnippetLength) + "... [обрезано]" : cleanContent;
-                    prefetchedBlocks.push(`--- NOTE: [[${abstractFile.basename}]] (${abstractFile.path}) ---\n${snippet}`);
-                }
-
-                const matchedFoldersArr = Array.from(matchedFoldersSet);
-                prefetchedContext += `\n${t("autoIndexedVaultNotes", language)}\n${prefetchedBlocks.join("\n\n")}\n`;
+            // Determine actual execution mode using IntentRouter if set to 'auto'
+            let actualMode: "quick" | "agent" = "agent";
+            if (executionMode === "quick") {
+                actualMode = "quick";
+            } else if (executionMode === "agent") {
+                actualMode = "agent";
+            } else {
+                const decision = IntentRouter.classifyIntent(
+                    userQuery, 
+                    Boolean(images && images.length > 0), 
+                    language, 
+                    chatHistory, 
+                    settings,
+                    activeModelDetails || undefined
+                );
+                actualMode = decision.mode;
                 steps.push({
-                    id: "folder-prefetch-step",
-                    type: "tool_result",
-                    title: t("folderPrefetchTitle", language, { folders: matchedFoldersArr.join(", ") || "Vault" }),
-                    detail: t("folderPrefetchDetail", language, { count: matchedFoldersArr.length.toString() }),
-                    status: "completed"
+                    id: "intent-routing-step",
+                    type: "thought",
+                    title: `Mode: ${actualMode === "quick" ? "Quick" : "Agent"}`,
+                    detail: decision.reason,
+                    status: "completed",
+                    meta: { confidence: decision.confidence, features }
                 });
                 notifySteps();
             }
-        }
 
-        // 3. Build User Message (with optional images)
-        const userMsg: ChatMessage = { role: "user", content: userQuery };
-        if (images && images.length > 0) {
-            userMsg.images = images;
-        }
+            // 1. Resolve Context & Memory (Bypass if useVaultContext is false)
+            const vaultContext = useVaultContext ? await resolveContext(app, userQuery, true) : { ragContext: undefined };
+            const memory = await MemoryStore.loadMemory(app, settings);
+            const agentsRules = await MemoryStore.loadAgentsRules(app, settings);
+            const skills = await SkillsLoader.loadSkills(app, settings);
 
-        // 4. Build System Prompt & Prune History (ContextManager)
-        const systemPrompt = this.getSystemPrompt(language, userQuery, vaultContext, agentsRules, memory, skills, prefetchedContext, settings, config.model);
+            // 2. Conditional Vault Prefetching via RAG
+            let prefetchedContext = "";
+            const needsVaultData = toolNeeds.needsVaultSearch || toolNeeds.needsVaultWrite;
+            const shouldPrefetchVault = useVaultContext && (
+                settings.enableAdaptivePrefetch
+                    ? (needsVaultData && actualMode === "agent")
+                    : (actualMode === "agent")
+            );
 
-        const prunedHistory = ContextManager.pruneHistory(chatHistory, 6);
+            if (shouldPrefetchVault) {
+                // TODO: Implement dynamic token budget prefetch using calculateTokenBudget from calc.ts
+                const maxCount = settings.maxPrefetchedNotes || 5;
+                const searchResults = settings.enableSemanticRag
+                    ? await searchVaultHybrid(app, userQuery, settings, maxCount)
+                    : await searchVaultLexical(app, userQuery, maxCount, settings.prefetchSnippetLength);
 
-        const messages: ChatMessage[] = [
-            { role: "system", content: systemPrompt },
-            ...prunedHistory.filter(m => m.role !== "system"),
-            userMsg
-        ];
+                if (searchResults.length > 0) {
+                    const prefetchedBlocks: string[] = [];
+                    const matchedFoldersSet = new Set<string>();
 
-        // 5. QUICK MODE (Single Direct Turn with optional Streaming)
-        if (actualMode === "quick") {
-            try {
-                const response = (settings.enableStreaming && onStreamChunk)
-                    ? await sendChatRequestStream(config, messages, undefined, onStreamChunk)
-                    : await sendChatRequest(config, messages);
+                    for (const res of searchResults) {
+                        const abstractFile = res.file;
+                        const folderName = abstractFile.parent?.name || "Vault";
+                        if (folderName) {
+                            matchedFoldersSet.add(folderName);
+                        }
+                        const cleanContent = res.content.replace(/^---[\s\S]*?---\n?/, "").trim();
+                        const snippet = cleanContent.length > settings.prefetchSnippetLength 
+                            ? cleanContent.substring(0, settings.prefetchSnippetLength) + "... [обрезано]" 
+                            : cleanContent;
+
+                        prefetchedBlocks.push(`--- NOTE: [[${abstractFile.basename}]] (${abstractFile.path}) ---\n${snippet}`);
+                    }
+
+                    if (prefetchedBlocks.length > 0) {
+                        const matchedFoldersArr = Array.from(matchedFoldersSet);
+                        prefetchedContext += `\n${t("autoIndexedVaultNotes", language)}\n${prefetchedBlocks.join("\n\n")}\n`;
+                        steps.push({
+                            id: "folder-prefetch-step",
+                            type: "tool_result",
+                            title: t("folderPrefetchTitle", language, { folders: matchedFoldersArr.join(", ") || "Vault" }),
+                            detail: t("folderPrefetchDetail", language, { count: matchedFoldersArr.length.toString() }),
+                            status: "completed"
+                        });
+                        notifySteps();
+                    }
+                }
+            }
+
+            // 3. Build User Message (with optional images)
+            const userMsg: ChatMessage = { role: "user", content: userQuery };
+            if (images && images.length > 0) {
+                userMsg.images = images;
+            }
+
+            // 4. Build System Prompt & Prune History (ContextManager)
+            const systemPrompt = this.getSystemPrompt(language, userQuery, vaultContext, agentsRules, memory, skills, prefetchedContext, settings, config.model);
+
+            const prunedHistory = ContextManager.pruneHistory(chatHistory, 6);
+
+            const messages: ChatMessage[] = [
+                { role: "system", content: systemPrompt },
+                ...prunedHistory.filter(m => m.role !== "system"),
+                userMsg
+            ];
+
+            // 5. QUICK MODE (Single Direct Turn with optional Streaming)
+            if (actualMode === "quick") {
+                let response: LlmResponse;
+                try {
+                    response = (settings.enableStreaming && onStreamChunk)
+                        ? await sendChatRequestStream(config, messages, undefined, onStreamChunk)
+                        : await sendChatRequest(config, messages, undefined);
+                } catch (e: unknown) {
+                    const err = e as { message?: string };
+                    throw new Error(t("quickLlmError", language, { error: err?.message || String(e) }));
+                }
 
                 if (response.usage) {
                     totalPromptTokens += response.usage.promptTokens;
                     totalCompletionTokens += response.usage.completionTokens;
                 }
+
+                // ADD EMPTY RESPONSE FALLBACK:
+                if (!this.isResponseValid(response)) {
+                    console.warn('[AgentLoop] Quick mode empty response, attempting fallback...');
+                    const fallbackResponse = await sendChatRequest(config, messages, undefined);
+                    if (this.isResponseValid(fallbackResponse)) {
+                        Object.assign(response, fallbackResponse);
+                    }
+                }
+
                 const responseText = response.content || "";
 
                 if (this.shouldAutoCreateNote(userQuery, responseText)) {
@@ -247,222 +299,244 @@ export class AgentLoop {
                     completionTokens: totalCompletionTokens,
                     executionModeUsed: "quick"
                 };
-            } catch (e: unknown) {
-                const err = e as { message?: string };
-                throw new Error(t("quickLlmError", language, { error: err?.message || String(e) }));
-            }
-        }
-
-        // 6. AGENT MODE (Multi-step Tool Execution Loop)
-        const allTools = toolRegistry.getToolDefinitions();
-        let filteredTools = allTools;
-
-        if (settings.enableSmartToolFiltering) {
-            if (toolNeeds.needsWebSearch && !toolNeeds.needsVaultSearch && !toolNeeds.needsVaultWrite) {
-                filteredTools = allTools.filter(t =>
-                    ["web_search", "read_web_page", "analyze_github_repo"].includes(t.function.name)
-                );
-            } else if (!toolNeeds.needsWebSearch && (toolNeeds.needsVaultSearch || toolNeeds.needsVaultWrite)) {
-                filteredTools = allTools.filter(t =>
-                    t.function.name.startsWith("read_") ||
-                    t.function.name.startsWith("get_") ||
-                    t.function.name.startsWith("search_") ||
-                    t.function.name.startsWith("create_") ||
-                    t.function.name.startsWith("edit_") ||
-                    t.function.name.startsWith("rename_") ||
-                    t.function.name.startsWith("delete_") ||
-                    t.function.name.startsWith("list_") ||
-                    t.function.name.startsWith("diff_")
-                );
-            }
-        }
-
-        let iteration = 0;
-        let finalResponseText = "";
-        let toolCalledCount = 0;
-        const executedCallsMap: Record<string, number> = {};
-        const effectiveMaxIterations = maxIterations ?? settings.maxAgentIterations;
-
-        while (iteration < effectiveMaxIterations) {
-            iteration++;
-
-            const isLastIteration = (iteration === effectiveMaxIterations);
-            const activeTools = isLastIteration ? undefined : filteredTools;
-
-            // Stream the final response in agent mode (last iteration or no tools)
-            const useStreaming = isLastIteration && settings.enableStreaming && onStreamChunk;
-            const response = useStreaming
-                ? await sendChatRequestStream(config, messages, undefined, onStreamChunk)
-                : await sendChatRequest(config, messages, activeTools);
-            if (response.usage) {
-                totalPromptTokens += response.usage.promptTokens;
-                totalCompletionTokens += response.usage.completionTokens;
             }
 
-            if (response.reasoning) {
-                steps.push({
-                    id: `reasoning-${iteration}`,
-                    type: "reasoning",
-                    title: `${t("agentReasoningLog", language)} (${iteration})`,
-                    detail: response.reasoning,
-                    status: "completed"
-                });
-                notifySteps();
+            // 6. AGENT MODE (Multi-step Tool Execution Loop)
+            const allTools = toolRegistry.getToolDefinitions();
+            let filteredTools = allTools;
+
+            if (settings.enableSmartToolFiltering) {
+                if (toolNeeds.needsWebSearch && !toolNeeds.needsVaultSearch && !toolNeeds.needsVaultWrite) {
+                    filteredTools = allTools.filter(t =>
+                        ["web_search", "read_web_page", "analyze_github_repo"].includes(t.function.name)
+                    );
+                } else if (!toolNeeds.needsWebSearch && (toolNeeds.needsVaultSearch || toolNeeds.needsVaultWrite)) {
+                    filteredTools = allTools.filter(t =>
+                        t.function.name.startsWith("read_") ||
+                        t.function.name.startsWith("get_") ||
+                        t.function.name.startsWith("search_") ||
+                        t.function.name.startsWith("create_") ||
+                        t.function.name.startsWith("edit_") ||
+                        t.function.name.startsWith("rename_") ||
+                        t.function.name.startsWith("delete_") ||
+                        t.function.name.startsWith("list_") ||
+                        t.function.name.startsWith("diff_")
+                    );
+                }
             }
 
-            // A) Standard OpenAI / OpenRouter Native Tool Calls (Parallel Execution - FUNC-03)
-            if (response.tool_calls && response.tool_calls.length > 0 && !isLastIteration) {
-                toolCalledCount += response.tool_calls.length;
+            let iteration = 0;
+            let finalResponseText = "";
+            let toolCalledCount = 0;
+            const executedCallsMap: Record<string, number> = {};
+            const effectiveMaxIterations = maxIterations ?? settings.maxAgentIterations;
 
-                messages.push({
-                    role: "assistant",
-                    content: response.content || "",
-                    tool_calls: response.tool_calls
-                });
+            while (iteration < effectiveMaxIterations) {
+                iteration++;
 
-                const toolPromises = response.tool_calls.map(async (toolCall) => {
-                    const toolName = toolCall.function.name;
-                    const toolArgsStr = toolCall.function.arguments;
-                    const callKey = `${toolName}:${toolArgsStr}`;
-                    executedCallsMap[callKey] = (executedCallsMap[callKey] || 0) + 1;
+                const isLastIteration = (iteration === effectiveMaxIterations);
+                // Always pass tools; model decides when to stop calling them
+                const activeTools = filteredTools;
 
-                    const stepId = `tool-${toolCall.id}`;
+                // Stream only when: last iteration AND no tools available (model should respond with text)
+                const canStreamFinal = isLastIteration && settings.enableStreaming && onStreamChunk;
+                const response = canStreamFinal
+                    ? await sendChatRequestStream(config, messages, undefined, onStreamChunk)
+                    : await sendChatRequest(config, messages, activeTools);
+                if (response.usage) {
+                    totalPromptTokens += response.usage.promptTokens;
+                    totalCompletionTokens += response.usage.completionTokens;
+                }
+
+                // ADD EMPTY RESPONSE FALLBACK HERE:
+                if (!this.isResponseValid(response)) {
+                    console.warn('[AgentLoop] Empty response, attempting fallback without tools...');
+                    const fallbackResponse = await sendChatRequest(config, [
+                        { role: "system", content: systemPrompt },
+                        userMsg
+                    ], undefined); // No tools
+                    if (this.isResponseValid(fallbackResponse)) {
+                        Object.assign(response, fallbackResponse);
+                    }
+                }
+
+                if (response.reasoning) {
                     steps.push({
-                        id: stepId,
-                        type: "tool_call",
-                        title: `Tool: ${toolName}`,
-                        detail: `Args: ${toolArgsStr}`,
-                        status: "running"
+                        id: `reasoning-${iteration}`,
+                        type: "reasoning",
+                        title: `${t("agentReasoningLog", language)} (${iteration})`,
+                        detail: response.reasoning,
+                        status: "completed"
                     });
                     notifySteps();
+                }
 
-                    let trimmedResult = "";
-                    let isError = false;
-
-                    // Safety check for dangerous Obsidian commands
-                    if (toolName === "execute_obsidian_command" && settings.confirmObsidianCommands && onConfirmationRequired) {
-                        const confirmed = await onConfirmationRequired(toolName, toolArgsStr);
-                        if (!confirmed) {
-                            trimmedResult = "Obsidian command execution denied by user.";
-                            isError = true;
-                        }
-                    }
-
-                    if (!trimmedResult) {
-                        if (executedCallsMap[callKey] > 1) {
-                            trimmedResult = `[NEI SYSTEM WARNING]: Tool (${toolName}) with these exact arguments was already executed in this session and returned results. Do NOT repeat identical tool calls. Formulate your final response based on the results already retrieved or use a different tool.`;
-                            isError = true;
-                        } else {
-                            const execResult = await toolRegistry.executeTool(
-                                app,
-                                toolCall.id,
-                                toolName,
-                                toolArgsStr
-                            );
-                            const rawRes = typeof execResult.result === "string" ? execResult.result : JSON.stringify(execResult.result);
-                            trimmedResult = ContextManager.compactText(rawRes, 12000);
-                            isError = execResult.isError || false;
-                        }
-                    }
-
-                    const currentStep = steps.find(s => s.id === stepId);
-                    if (currentStep) {
-                        currentStep.status = isError ? "failed" : "completed";
-                        currentStep.detail = trimmedResult.substring(0, 300);
-                    }
-                    notifySteps();
-
-                    return {
-                        role: "tool" as const,
-                        name: toolName,
-                        tool_call_id: toolCall.id,
-                        content: trimmedResult
-                    };
-                });
-
-                const toolResponses = await Promise.all(toolPromises);
-                messages.push(...toolResponses);
-            } 
-            // B) Fallback: Text-based JSON Tool Call Parser
-            else if (response.content && this.containsJsonToolCall(response.content) && !isLastIteration) {
-                const parsedTool = this.extractJsonToolCall(response.content);
-                if (parsedTool) {
-                    toolCalledCount++;
-                    const callId = "text_call_" + Date.now();
-                    const callArgsStr = JSON.stringify(parsedTool.args);
-                    const callKey = `${parsedTool.name}:${callArgsStr}`;
-                    executedCallsMap[callKey] = (executedCallsMap[callKey] || 0) + 1;
-
-                    steps.push({
-                        id: callId,
-                        type: "tool_call",
-                        title: `Tool (Fallback JSON): ${parsedTool.name}`,
-                        detail: callArgsStr,
-                        status: "running"
-                    });
-                    notifySteps();
-
-                    let execResultText = "";
-                    let isError = false;
-
-                    if (parsedTool.name === "execute_obsidian_command" && settings.confirmObsidianCommands && onConfirmationRequired) {
-                        const confirmed = await onConfirmationRequired(parsedTool.name, callArgsStr);
-                        if (!confirmed) {
-                            execResultText = "Obsidian command execution denied by user.";
-                            isError = true;
-                        }
-                    }
-
-                    if (!execResultText) {
-                        const execResult = await toolRegistry.executeTool(
-                            app,
-                            callId,
-                            parsedTool.name,
-                            callArgsStr
-                        );
-                        execResultText = String(execResult.result);
-                        isError = execResult.isError || false;
-                    }
-
-                    const currentStep = steps.find(s => s.id === callId);
-                    if (currentStep) {
-                        currentStep.status = isError ? "failed" : "completed";
-                        currentStep.detail = execResultText.substring(0, 300);
-                    }
-                    notifySteps();
+                // A) Standard OpenAI / OpenRouter Native Tool Calls
+                // Execute tools on ANY iteration where model calls them
+                if (response.tool_calls && response.tool_calls.length > 0) {
+                    toolCalledCount += response.tool_calls.length;
 
                     messages.push({
                         role: "assistant",
-                        content: response.content
+                        content: response.content || "",
+                        tool_calls: response.tool_calls
                     });
-                    messages.push({
-                        role: "tool",
-                        name: parsedTool.name,
-                        tool_call_id: callId,
-                        content: execResultText
+
+                    const toolPromises = response.tool_calls.map(async (toolCall) => {
+                        const toolName = toolCall.function.name;
+                        const toolArgsStr = toolCall.function.arguments;
+                        const callKey = `${toolName}:${toolArgsStr}`;
+                        executedCallsMap[callKey] = (executedCallsMap[callKey] || 0) + 1;
+
+                        const stepId = `tool-${toolCall.id}`;
+                        steps.push({
+                            id: stepId,
+                            type: "tool_call",
+                            title: `Tool: ${toolName}`,
+                            detail: `Args: ${toolArgsStr}`,
+                            status: "running"
+                        });
+                        notifySteps();
+
+                        let trimmedResult = "";
+                        let isError = false;
+
+                        // Safety check for dangerous Obsidian commands
+                        if (toolName === "execute_obsidian_command" && settings.confirmObsidianCommands && onConfirmationRequired) {
+                            const confirmed = await onConfirmationRequired(toolName, toolArgsStr);
+                            if (!confirmed) {
+                                trimmedResult = "Obsidian command execution denied by user.";
+                                isError = true;
+                            }
+                        }
+
+                        if (!trimmedResult) {
+                            if (executedCallsMap[callKey] > 1) {
+                                trimmedResult = `[NEI SYSTEM WARNING]: Tool (${toolName}) with these exact arguments was already executed in this session and returned results. Do NOT repeat identical tool calls. Formulate your final response based on the results already retrieved or use a different tool.`;
+                                isError = true;
+                            } else {
+                                const execResult = await toolRegistry.executeTool(
+                                    app,
+                                    toolCall.id,
+                                    toolName,
+                                    toolArgsStr
+                                );
+                                const rawRes = typeof execResult.result === "string" ? execResult.result : JSON.stringify(execResult.result);
+                                trimmedResult = ContextManager.compactText(rawRes, 12000);
+                                isError = execResult.isError || false;
+                            }
+                        }
+
+                        const currentStep = steps.find(s => s.id === stepId);
+                        if (currentStep) {
+                            currentStep.status = isError ? "failed" : "completed";
+                            currentStep.detail = trimmedResult.substring(0, 300);
+                        }
+                        notifySteps();
+
+                        return {
+                            role: "tool" as const,
+                            name: toolName,
+                            tool_call_id: toolCall.id,
+                            content: trimmedResult
+                        };
                     });
-                } else {
-                    finalResponseText = response.content;
+
+                    const toolResponses = await Promise.all(toolPromises);
+                    messages.push(...toolResponses);
+                } 
+                // B) Fallback: Text-based JSON Tool Call Parser
+                else if (response.content && this.containsJsonToolCall(response.content)) {
+                    const parsedTool = this.extractJsonToolCall(response.content);
+                    if (parsedTool) {
+                        toolCalledCount++;
+                        const callId = "text_call_" + Date.now();
+                        const callArgsStr = JSON.stringify(parsedTool.args);
+                        const callKey = `${parsedTool.name}:${callArgsStr}`;
+                        executedCallsMap[callKey] = (executedCallsMap[callKey] || 0) + 1;
+
+                        steps.push({
+                            id: callId,
+                            type: "tool_call",
+                            title: `Tool (Fallback JSON): ${parsedTool.name}`,
+                            detail: callArgsStr,
+                            status: "running"
+                        });
+                        notifySteps();
+
+                        let execResultText = "";
+                        let isError = false;
+
+                        if (parsedTool.name === "execute_obsidian_command" && settings.confirmObsidianCommands && onConfirmationRequired) {
+                            const confirmed = await onConfirmationRequired(parsedTool.name, callArgsStr);
+                            if (!confirmed) {
+                                execResultText = "Obsidian command execution denied by user.";
+                                isError = true;
+                            }
+                        }
+
+                        if (!execResultText) {
+                            const execResult = await toolRegistry.executeTool(
+                                app,
+                                callId,
+                                parsedTool.name,
+                                callArgsStr
+                            );
+                            execResultText = String(execResult.result);
+                            isError = execResult.isError || false;
+                        }
+
+                        const currentStep = steps.find(s => s.id === callId);
+                        if (currentStep) {
+                            currentStep.status = isError ? "failed" : "completed";
+                            currentStep.detail = execResultText.substring(0, 300);
+                        }
+                        notifySteps();
+
+                        messages.push({
+                            role: "assistant",
+                            content: response.content
+                        });
+                        messages.push({
+                            role: "tool",
+                            name: parsedTool.name,
+                            tool_call_id: callId,
+                            content: execResultText
+                        });
+                    } else {
+                        finalResponseText = response.content;
+                        break;
+                    }
+                } 
+                // C) Final Text Response
+                else {
+                    // No tool calls = model is done
+                    finalResponseText = response.content || "";
                     break;
                 }
-            } 
-            // C) Final Text Response
-            else {
-                finalResponseText = response.content || "";
-                break;
             }
-        }
 
-        if (toolCalledCount > 0 && this.shouldAutoCreateNote(userQuery, finalResponseText)) {
-            await this.attemptAutoCreateNote(app, userQuery, finalResponseText, steps, notifySteps, toolRegistry, language);
-        }
+            // Safety: prevent returning raw tool call JSON as final answer
+            if (finalResponseText && this.containsJsonToolCall(finalResponseText)) {
+                console.warn('[AgentLoop] Model returned tool call as final text, stripping');
+                finalResponseText = finalResponseText.replace(/```[\s\S]*?```/g, '').trim()
+                    || t("agentNoOutput", language);
+            }
 
-        return {
-            responseText: finalResponseText || t("agentNoOutput", language),
-            promptTokens: totalPromptTokens,
-            completionTokens: totalCompletionTokens,
-            executionModeUsed: "agent"
-        };
+            if (toolCalledCount > 0 && this.shouldAutoCreateNote(userQuery, finalResponseText)) {
+                await this.attemptAutoCreateNote(app, userQuery, finalResponseText, steps, notifySteps, toolRegistry, language);
+            }
+
+            return {
+                responseText: finalResponseText || t("agentNoOutput", language),
+                promptTokens: totalPromptTokens,
+                completionTokens: totalCompletionTokens,
+                executionModeUsed: "agent"
+            };
+        } catch (e: unknown) {
+            console.error("[NEI Agent Loop Error]", e);
+            throw e;
+        }
     }
 
     private static containsJsonToolCall(text: string): boolean {

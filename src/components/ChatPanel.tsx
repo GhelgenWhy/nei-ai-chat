@@ -4,7 +4,7 @@ import { ChatMessage, getModelTemporalInfo } from "../services/llm";
 import { AgentLoop, AgentStep } from "../services/agent/agentLoop";
 import { ChatStore, ChatSession } from "../services/chat/chatStore";
 import { OpenRouterService, OpenRouterModelInfo, OpenRouterKeyInfo, getDefaultModelCapabilities } from "../services/openrouter";
-import { ExecutionMode } from "../services/agent/intentRouter";
+import { IntentRouter, ExecutionMode } from "../services/agent/intentRouter";
 import { t, SupportedLanguage } from "../i18n/translations";
 import { NeiAiChatSettings } from "../../main";
 import { ToolRegistry } from "../services/tools/toolRegistry";
@@ -336,6 +336,9 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
     const [enableFreshnessSuggestions, setEnableFreshnessSuggestions] = React.useState<boolean>(settings.enableFreshnessSuggestions ?? true);
     const [enableSmartToolFiltering, setEnableSmartToolFiltering] = React.useState<boolean>(settings.enableSmartToolFiltering ?? true);
 
+    const [enableVaultContextDefault, setEnableVaultContextDefault] = React.useState<boolean>(settings.enableVaultContextDefault ?? true);
+    const [vaultContextEnabled, setVaultContextEnabled] = React.useState<boolean>(settings.enableVaultContextDefault ?? true);
+
     const [intentRoutingThreshold, setIntentRoutingThreshold] = React.useState<number>(settings.intentRoutingThreshold ?? 2.5);
     const [intentVaultKeywordWeight, setIntentVaultKeywordWeight] = React.useState<number>(settings.intentVaultKeywordWeight ?? 2.0);
     const [intentCreationWeight, setIntentCreationWeight] = React.useState<number>(settings.intentCreationWeight ?? 3.0);
@@ -375,6 +378,7 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
             enableAdaptivePrefetch,
             enableFreshnessSuggestions,
             enableSmartToolFiltering,
+            enableVaultContextDefault,
             intentRoutingThreshold,
             intentVaultKeywordWeight,
             intentCreationWeight,
@@ -416,7 +420,6 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
             if (execResult.isError) {
                 new Notice(`${t("noteCreateError", language)} ${execResult.result}`);
             } else {
-                // Extract actual path from result like "Успех: Создана новая заметка 'folder/file.md'."
                 const pathMatch = execResult.result.match(/'([^']+)'/);
                 const savedPath = pathMatch ? pathMatch[1] : fileName;
                 new Notice(`${t("noteCreatedSuccess", language)} '${savedPath}'`);
@@ -457,7 +460,6 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
             const text = await file.text();
             const imported = JSON.parse(text) as Partial<NeiAiChatSettings>;
 
-            // Version migration v0 -> v1
             if (!imported.settingsVersion || imported.settingsVersion < 1) {
                 imported.settingsVersion = 1;
                 if (!imported.maxAttachmentSizeBytes) {
@@ -468,7 +470,6 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
             const newSettings = { ...settings, ...imported };
             await saveSettings(newSettings);
 
-            // Update local state hooks
             if (newSettings.endpointUrl) setEndpointUrl(newSettings.endpointUrl);
             if (newSettings.apiKey !== undefined) setApiKey(newSettings.apiKey);
             if (newSettings.model) setModel(newSettings.model);
@@ -481,7 +482,6 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
 
             new Notice(t("settingsImported", language));
             
-            // Trigger outer panel remount for complete state synchronization
             if (onReload) onReload();
         } catch (err: unknown) {
             const errObj = err as { message?: string };
@@ -514,7 +514,6 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
         setAttachedImages([]);
 
         try {
-
             const isVisionRequired = currentImages.length > 0;
             const activeModelToUse = isVisionRequired 
                 ? visionModel 
@@ -532,6 +531,8 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                 chatHistory: historySlice,
                 images: currentImages,
                 executionMode,
+                useVaultContext: vaultContextEnabled,
+                activeModelDetails,
                 onStepUpdate: (steps) => {
                     setActiveSteps(steps);
                 },
@@ -813,6 +814,23 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                         <option value="quick">🚀 Quick</option>
                         <option value="agent">🧠 Agent</option>
                     </select>
+
+                    <button
+                        onClick={() => setVaultContextEnabled(prev => !prev)}
+                        title={t("vaultContextToggleTooltip", language)}
+                        aria-label={t("vaultContextToggleTooltip", language)}
+                        className={`nei-header-btn ${vaultContextEnabled ? "nei-btn-active" : ""}`}
+                        style={{
+                            fontSize: '11px',
+                            padding: '3px 7px',
+                            borderRadius: '4px',
+                            background: vaultContextEnabled ? 'var(--interactive-accent)' : 'var(--background-modifier-border)',
+                            color: vaultContextEnabled ? 'var(--text-on-accent)' : 'var(--text-muted)',
+                            fontWeight: '500'
+                        }}
+                    >
+                        {vaultContextEnabled ? "🧠" : "⚪"} {t("vaultContextToggleLabel", language)}
+                    </button>
 
                     <button 
                         onClick={() => void handleToggleTabMode()}
@@ -1115,7 +1133,14 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                         </div>
 
                         <div>
-                            <label style={{ fontSize: '11px', display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-normal)', cursor: 'pointer', marginTop: '4px' }}>
+                            <label style={{ fontSize: '11px', display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-normal)', cursor: 'pointer', marginTop: '2px' }}>
+                                <input type="checkbox" checked={enableVaultContextDefault} onChange={(e) => setEnableVaultContextDefault(e.target.checked)} />
+                                <span>{t("enableVaultContextDefaultLabel", language)}</span>
+                            </label>
+                        </div>
+
+                        <div>
+                            <label style={{ fontSize: '11px', display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-normal)', cursor: 'pointer', marginTop: '2px' }}>
                                 <input type="checkbox" checked={confirmObsidianCommands} onChange={(e) => setConfirmObsidianCommands(e.target.checked)} />
                                 <span>{t("confirmObsidianCommandsLabel", language)}</span>
                             </label>

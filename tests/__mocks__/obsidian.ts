@@ -11,3 +11,16 @@ export class MarkdownRenderer {
 }
 export class WorkspaceLeaf {}
 export class App {}
+
+export class TFile {
+  path: string = "";
+  basename: string = "";
+}
+
+export class TFolder {
+  name: string = "";
+  children: any[] = [];
+}
+
+export const normalizePath = (path: string) => path;
+

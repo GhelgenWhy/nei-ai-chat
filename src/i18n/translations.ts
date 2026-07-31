@@ -259,6 +259,24 @@ export interface Translations {
     skip: string;
     next: string;
     back: string;
+
+    // VCTX & VPREF & RESP & MODEL keys
+    vaultContextToggleLabel: string;
+    vaultContextToggleTooltip: string;
+    enableVaultContextDefaultLabel: string;
+    enableVaultContextDefaultDesc: string;
+    maxPrefetchCountLabel: string;
+    maxPrefetchCountDesc: string;
+    requestTimeoutSecLabel: string;
+    requestTimeoutSecDesc: string;
+    agentNoEmptyAnswer: string;
+    agentNetworkError: string;
+    modelCapWeightLabel: string;
+    modelCapWeightDesc: string;
+    pressureWeightLabel: string;
+    pressureWeightDesc: string;
+    learnedBiasEnabledLabel: string;
+    learnedBiasEnabledDesc: string;
 }
 
 const baseEn: Translations = {
@@ -511,7 +529,24 @@ const baseEn: Translations = {
     startTour: "Start Guided Tour",
     skip: "Skip",
     next: "Next",
-    back: "Back"
+    back: "Back",
+
+    vaultContextToggleLabel: "Vault Context",
+    vaultContextToggleTooltip: "Toggle vault context injection for this request",
+    enableVaultContextDefaultLabel: "Enable Vault Context by default:",
+    enableVaultContextDefaultDesc: "Default initial state of vault context switch when panel opens.",
+    maxPrefetchCountLabel: "Max prefetch count ceiling:",
+    maxPrefetchCountDesc: "Hard cap on maximum prefetched notes regardless of token budget.",
+    requestTimeoutSecLabel: "API request timeout (sec):",
+    requestTimeoutSecDesc: "Maximum waiting time for AI response before aborting.",
+    agentNoEmptyAnswer: "The model returned an empty response. Please rephrase your prompt.",
+    agentNetworkError: "Network error or timeout while connecting to AI.",
+    modelCapWeightLabel: "Model capability weight:",
+    modelCapWeightDesc: "Weight boosting Agent mode score for models with tool/vision support.",
+    pressureWeightLabel: "Context pressure penalty weight:",
+    pressureWeightDesc: "Penalty favoring Quick mode when context window is >70% full.",
+    learnedBiasEnabledLabel: "Enable learned user preference bias:",
+    learnedBiasEnabledDesc: "Learn and apply user mode overrides for similar query types."
 };
 
 const baseRu: Translations = {
@@ -621,6 +656,23 @@ const baseRu: Translations = {
     autoCreatedNote: "Автоматически создана заметка: {path}",
     quickLlmError: "Ошибка вызова Quick LLM: {error}",
     agentNoOutput: "Агент завершил работу без текстового вывода.",
+
+    vaultContextToggleLabel: "Контекст из хранилища",
+    vaultContextToggleTooltip: "Переключатель контекста заметок хранилища для текущего запроса",
+    enableVaultContextDefaultLabel: "Включить контекст хранилища по умолчанию:",
+    enableVaultContextDefaultDesc: "Начальное состояние переключателя контекста при открытии плагина.",
+    maxPrefetchCountLabel: "Максимальное число загружаемых заметок:",
+    maxPrefetchCountDesc: "Жёсткий лимит количества заметок префетча, независимо от контекстного бюджета.",
+    requestTimeoutSecLabel: "Таймаут API запроса (сек):",
+    requestTimeoutSecDesc: "Максимальное время ожидания ответа от ИИ сервиса перед таймаутом.",
+    agentNoEmptyAnswer: "Модель вернула пустой ответ. Попробуйте перефразировать запрос.",
+    agentNetworkError: "Сетевая ошибка или таймаут при обращении к ИИ.",
+    modelCapWeightLabel: "Вес возможностей модели:",
+    modelCapWeightDesc: "Вес, повышающий балл Агентного режима для моделей с поддержкой инструментов и зрения.",
+    pressureWeightLabel: "Штраф за заполнение контекста:",
+    pressureWeightDesc: "Штраф, склоняющий к Быстрому режиму, если контекстное окно близко к заполнению (>70%).",
+    learnedBiasEnabledLabel: "Включить обученное предпочтение пользователя:",
+    learnedBiasEnabledDesc: "Запоминать ручные переключения режима для аналогичных типов запросов.",
 
     intentAttachmentsReason: "Прикреплены файлы/изображения для анализа",
     intentVaultActionReason: "Обнаружен запрос работы с заметками/ваултом ({keyword})",

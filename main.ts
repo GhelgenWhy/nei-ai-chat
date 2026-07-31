@@ -71,6 +71,9 @@ export interface NeiAiChatSettings {
     // Attachments & Versioning
     maxAttachmentSizeBytes: number;
     settingsVersion: number;
+
+    // Vault Context Toggle default
+    enableVaultContextDefault?: boolean;
 }
 
 const DEFAULT_SETTINGS: NeiAiChatSettings = {
@@ -152,7 +155,10 @@ const DEFAULT_SETTINGS: NeiAiChatSettings = {
 
     // Attachments & Versioning defaults
     maxAttachmentSizeBytes: 512000, // 500 KB
-    settingsVersion: 1
+    settingsVersion: 1,
+
+    // Vault Context Toggle default
+    enableVaultContextDefault: true
 };
 
 export default class NeiAiChatPlugin extends Plugin {

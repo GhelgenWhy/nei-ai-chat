@@ -1,6 +1,7 @@
 import { t, SupportedLanguage } from "../../i18n/translations";
 import { ChatMessage } from "../llm";
 import { getModelTemporalInfo, isQueryLikelyStale } from "../modelRegistry";
+import { getDefaultModelCapabilities } from "../openrouter";
 import { NeiAiChatSettings } from "../../../main";
 
 export type ExecutionMode = 'auto' | 'quick' | 'agent';
@@ -23,6 +24,15 @@ export interface IntentFeatures {
     modelKnowledgeCutoff: string;
     modelSupportsWebSearch: boolean;
     daysSinceCutoff: number;
+
+    // Model capabilities & context pressure (MODEL-01, MODEL-02)
+    supportsTools?: boolean;
+    supportsVision?: boolean;
+    supportsAudio?: boolean;
+    modelContextLength?: number;
+    usedTokensFromHistory?: number;
+    estimatedSystemTokens?: number;
+    featureHash: string;
 }
 
 export interface ScoringWeights {
@@ -39,6 +49,10 @@ export interface ScoringWeights {
     attachmentWeight: number;        // default: 5.0
     staleQueryWeight: number;        // default: 3.0
     freshnessWeight: number;         // default: 2.0
+
+    // Model-aware & Context-pressure weights (MODEL-01, MODEL-02)
+    modelCapWeight?: number;         // default: 0.8
+    pressureWeight?: number;         // default: 1.5
 }
 
 export interface ToolNeeds {
@@ -59,6 +73,20 @@ export interface IntentDecision {
     debug?: { features: IntentFeatures; score: number };
 }
 
+export function computeFeatureHash(features: Partial<IntentFeatures>): string {
+    return [
+        (features.hasVaultKeywords || 0) > 0 ? "V1" : "V0",
+        (features.hasCreationPatterns || 0) > 0 ? "C1" : "C0",
+        (features.hasDeletionPatterns || 0) > 0 ? "D1" : "D0",
+        (features.hasAnalysisPatterns || 0) > 0 ? "A1" : "A0",
+        (features.hasSearchPatterns || 0) > 0 ? "S1" : "S0",
+        (features.hasModifyPatterns || 0) > 0 ? "M1" : "M0",
+        (features.hasQuestionPatterns || 0) > 0 ? "Q1" : "Q0",
+        features.hasCodePatterns ? "K1" : "K0",
+        features.hasAttachments ? "Att1" : "Att0"
+    ].join("_");
+}
+
 export class IntentRouter {
     public static estimateComplexity(query: string): number {
         const lower = query.toLowerCase();
@@ -69,13 +97,14 @@ export class IntentRouter {
     }
 
     /**
-     * Extracts numerical intent features from user query, attachments, recent conversation history, and model temporal metadata.
+     * Extracts numerical intent features from user query, attachments, recent conversation history, and model metadata.
      */
     public static extractFeatures(
         userQuery: string,
         hasAttachments: boolean = false,
         chatHistory: ChatMessage[] = [],
-        modelId: string = "google/gemini-2.5-flash"
+        modelId: string = "google/gemini-2.5-flash",
+        modelDetails?: { supportsTools?: boolean; supportsVision?: boolean; supportsAudio?: boolean; contextLength?: number }
     ): IntentFeatures {
         const queryLower = userQuery.trim().toLowerCase();
 
@@ -132,6 +161,28 @@ export class IntentRouter {
         const cutoffDate = new Date(temporalInfo.knowledgeCutoff);
         const daysSinceCutoff = Math.floor((Date.now() - cutoffDate.getTime()) / (1000 * 60 * 60 * 24));
 
+        // Model capabilities & Context estimation
+        const defaults = getDefaultModelCapabilities(modelId);
+        const supportsTools = modelDetails?.supportsTools ?? defaults.supportsTools;
+        const supportsVision = modelDetails?.supportsVision ?? defaults.supportsVision;
+        const supportsAudio = modelDetails?.supportsAudio ?? defaults.supportsAudio;
+        const modelContextLength = modelDetails?.contextLength || defaults.contextLength || 4096;
+
+        const usedTokensFromHistory = Math.ceil(chatHistory.reduce((acc, m) => acc + (m.content ? m.content.length : 0), 0) / 4);
+        const estimatedSystemTokens = 800;
+
+        const featureHash = computeFeatureHash({
+            hasVaultKeywords,
+            hasCreationPatterns,
+            hasDeletionPatterns,
+            hasAnalysisPatterns,
+            hasSearchPatterns,
+            hasModifyPatterns,
+            hasQuestionPatterns,
+            hasCodePatterns,
+            hasAttachments
+        });
+
         return {
             hasAttachments,
             hasVaultKeywords,
@@ -149,14 +200,28 @@ export class IntentRouter {
             isStaleQuery,
             modelKnowledgeCutoff: temporalInfo.knowledgeCutoff,
             modelSupportsWebSearch: temporalInfo.supportsWebSearch,
-            daysSinceCutoff
+            daysSinceCutoff,
+            supportsTools,
+            supportsVision,
+            supportsAudio,
+            modelContextLength,
+            usedTokensFromHistory,
+            estimatedSystemTokens,
+            featureHash
         };
     }
 
     /**
-     * Computes raw intent score from extracted features and scoring weights.
+     * Computes raw intent score from extracted features, scoring weights, context pressure, and user bias.
      */
-    public static computeScore(features: IntentFeatures, weights: ScoringWeights): number {
+    public static computeScore(
+        features: IntentFeatures, 
+        weights: ScoringWeights
+    ): {
+        totalScore: number;
+        baseScore: number;
+        capabilityBonus: number;
+    } {
         const capabilityBonus = features.modelSupportsWebSearch ? 1.0 : -0.5;
         const baseScore = (
             (features.hasAttachments ? 1 : 0) * weights.attachmentWeight +
@@ -173,14 +238,49 @@ export class IntentRouter {
             (features.isStaleQuery ? 1 : 0) * weights.staleQueryWeight +
             (features.isStaleQuery && features.modelSupportsWebSearch ? 1 : 0) * weights.freshnessWeight
         );
-        return baseScore + capabilityBonus;
+
+        const totalScore = baseScore + capabilityBonus;
+
+        return {
+            totalScore,
+            baseScore,
+            capabilityBonus
+        };
     }
 
     /**
-     * Helper to format debug decision trace for logger.
+     * Helper to format detailed decision breakdown for logger / debugging (MODEL-05).
      */
-    public static explainDecision(query: string, features: IntentFeatures): string {
-        return `Query: "${query.substring(0, 40)}..." | Attachments: ${features.hasAttachments} | VaultKeywords: ${features.hasVaultKeywords} | Stale: ${features.isStaleQuery} | Complexity: ${features.complexityScore}`;
+    public static explainDecision(
+        userQuery: string,
+        features: IntentFeatures,
+        settings?: Partial<NeiAiChatSettings>
+    ): string {
+        const threshold = settings?.intentRoutingThreshold ?? 2.5;
+        const weights: ScoringWeights = {
+            vaultKeywordWeight: settings?.intentVaultKeywordWeight ?? 2.0,
+            creationPatternWeight: settings?.intentCreationWeight ?? 3.0,
+            deletionPatternWeight: settings?.intentDeletionWeight ?? 4.0,
+            analysisPatternWeight: settings?.intentAnalysisWeight ?? 2.5,
+            searchPatternWeight: settings?.intentSearchWeight ?? 1.5,
+            modifyPatternWeight: settings?.intentModifyWeight ?? 1.5,
+            questionPatternWeight: settings?.intentQuestionWeight ?? -1.5,
+            codePatternWeight: settings?.intentCodeWeight ?? -1.0,
+            lengthWeight: settings?.intentLengthWeight ?? 0.005,
+            historyWeight: settings?.intentHistoryWeight ?? 0.3,
+            attachmentWeight: settings?.intentAttachmentWeight ?? 5.0,
+            staleQueryWeight: settings?.intentStaleQueryWeight ?? 3.0,
+            freshnessWeight: settings?.intentFreshnessWeight ?? 2.0
+        };
+
+        const scoreDetails = this.computeScore(features, weights);
+        const mode = scoreDetails.totalScore >= threshold ? 'agent' : 'quick';
+
+        return `[IntentRouter Decision Breakdown]
+Query: "${userQuery.substring(0, 40)}..."
+Chosen Mode: ${mode.toUpperCase()} (Total Score: ${scoreDetails.totalScore.toFixed(2)}, Threshold: ${threshold})
+Base Score: ${scoreDetails.baseScore.toFixed(2)}
+Capability Bonus: ${scoreDetails.capabilityBonus.toFixed(2)}`;
     }
 
     /**
@@ -267,7 +367,8 @@ export class IntentRouter {
         hasAttachments: boolean = false,
         language: SupportedLanguage = "auto",
         chatHistory: ChatMessage[] = [],
-        settings?: Partial<NeiAiChatSettings>
+        settings?: Partial<NeiAiChatSettings>,
+        modelDetails?: { supportsTools?: boolean; supportsVision?: boolean; supportsAudio?: boolean; contextLength?: number }
     ): IntentDecision {
         const threshold = settings?.intentRoutingThreshold ?? 2.5;
         const modelId = settings?.model || "google/gemini-2.5-flash";
@@ -285,11 +386,12 @@ export class IntentRouter {
             historyWeight: settings?.intentHistoryWeight ?? 0.3,
             attachmentWeight: settings?.intentAttachmentWeight ?? 5.0,
             staleQueryWeight: settings?.intentStaleQueryWeight ?? 3.0,
-            freshnessWeight: settings?.intentFreshnessWeight ?? 2.0,
+            freshnessWeight: settings?.intentFreshnessWeight ?? 2.0
         };
 
-        const features = this.extractFeatures(userQuery, hasAttachments, chatHistory, modelId);
-        const score = this.computeScore(features, weights);
+        const features = this.extractFeatures(userQuery, hasAttachments, chatHistory, modelId, modelDetails);
+        const scoreDetails = this.computeScore(features, weights);
+        const score = scoreDetails.totalScore;
         const confidence = this.sigmoid(score - threshold);
 
         const isAgentMode = score >= threshold;
@@ -332,4 +434,5 @@ export class IntentRouter {
         };
     }
 }
+
 

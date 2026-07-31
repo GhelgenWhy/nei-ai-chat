@@ -25440,8 +25440,9 @@ async function performPostRequest(url, headers, bodyStr) {
     const obsidian = await import("obsidian");
     const res = await obsidian.requestUrl({ url, method: "POST", headers, body: bodyStr });
     return { status: res.status, text: res.text, json: res.json };
-  } catch {
-    throw new Error("HTTP POST request failed");
+  } catch (e) {
+    console.error("[NEI] Obsidian requestUrl failed:", e);
+    throw new Error("HTTP POST request failed: both fetch and obsidian.requestUrl unavailable");
   }
 }
 async function sendChatRequest(config, messages, tools) {
@@ -26241,7 +26242,23 @@ var baseEn = {
   startTour: "Start Guided Tour",
   skip: "Skip",
   next: "Next",
-  back: "Back"
+  back: "Back",
+  vaultContextToggleLabel: "Vault Context",
+  vaultContextToggleTooltip: "Toggle vault context injection for this request",
+  enableVaultContextDefaultLabel: "Enable Vault Context by default:",
+  enableVaultContextDefaultDesc: "Default initial state of vault context switch when panel opens.",
+  maxPrefetchCountLabel: "Max prefetch count ceiling:",
+  maxPrefetchCountDesc: "Hard cap on maximum prefetched notes regardless of token budget.",
+  requestTimeoutSecLabel: "API request timeout (sec):",
+  requestTimeoutSecDesc: "Maximum waiting time for AI response before aborting.",
+  agentNoEmptyAnswer: "The model returned an empty response. Please rephrase your prompt.",
+  agentNetworkError: "Network error or timeout while connecting to AI.",
+  modelCapWeightLabel: "Model capability weight:",
+  modelCapWeightDesc: "Weight boosting Agent mode score for models with tool/vision support.",
+  pressureWeightLabel: "Context pressure penalty weight:",
+  pressureWeightDesc: "Penalty favoring Quick mode when context window is >70% full.",
+  learnedBiasEnabledLabel: "Enable learned user preference bias:",
+  learnedBiasEnabledDesc: "Learn and apply user mode overrides for similar query types."
 };
 var baseRu = {
   ...baseEn,
@@ -26349,6 +26366,22 @@ var baseRu = {
   autoCreatedNote: "\u0410\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438 \u0441\u043E\u0437\u0434\u0430\u043D\u0430 \u0437\u0430\u043C\u0435\u0442\u043A\u0430: {path}",
   quickLlmError: "\u041E\u0448\u0438\u0431\u043A\u0430 \u0432\u044B\u0437\u043E\u0432\u0430 Quick LLM: {error}",
   agentNoOutput: "\u0410\u0433\u0435\u043D\u0442 \u0437\u0430\u0432\u0435\u0440\u0448\u0438\u043B \u0440\u0430\u0431\u043E\u0442\u0443 \u0431\u0435\u0437 \u0442\u0435\u043A\u0441\u0442\u043E\u0432\u043E\u0433\u043E \u0432\u044B\u0432\u043E\u0434\u0430.",
+  vaultContextToggleLabel: "\u041A\u043E\u043D\u0442\u0435\u043A\u0441\u0442 \u0438\u0437 \u0445\u0440\u0430\u043D\u0438\u043B\u0438\u0449\u0430",
+  vaultContextToggleTooltip: "\u041F\u0435\u0440\u0435\u043A\u043B\u044E\u0447\u0430\u0442\u0435\u043B\u044C \u043A\u043E\u043D\u0442\u0435\u043A\u0441\u0442\u0430 \u0437\u0430\u043C\u0435\u0442\u043E\u043A \u0445\u0440\u0430\u043D\u0438\u043B\u0438\u0449\u0430 \u0434\u043B\u044F \u0442\u0435\u043A\u0443\u0449\u0435\u0433\u043E \u0437\u0430\u043F\u0440\u043E\u0441\u0430",
+  enableVaultContextDefaultLabel: "\u0412\u043A\u043B\u044E\u0447\u0438\u0442\u044C \u043A\u043E\u043D\u0442\u0435\u043A\u0441\u0442 \u0445\u0440\u0430\u043D\u0438\u043B\u0438\u0449\u0430 \u043F\u043E \u0443\u043C\u043E\u043B\u0447\u0430\u043D\u0438\u044E:",
+  enableVaultContextDefaultDesc: "\u041D\u0430\u0447\u0430\u043B\u044C\u043D\u043E\u0435 \u0441\u043E\u0441\u0442\u043E\u044F\u043D\u0438\u0435 \u043F\u0435\u0440\u0435\u043A\u043B\u044E\u0447\u0430\u0442\u0435\u043B\u044F \u043A\u043E\u043D\u0442\u0435\u043A\u0441\u0442\u0430 \u043F\u0440\u0438 \u043E\u0442\u043A\u0440\u044B\u0442\u0438\u0438 \u043F\u043B\u0430\u0433\u0438\u043D\u0430.",
+  maxPrefetchCountLabel: "\u041C\u0430\u043A\u0441\u0438\u043C\u0430\u043B\u044C\u043D\u043E\u0435 \u0447\u0438\u0441\u043B\u043E \u0437\u0430\u0433\u0440\u0443\u0436\u0430\u0435\u043C\u044B\u0445 \u0437\u0430\u043C\u0435\u0442\u043E\u043A:",
+  maxPrefetchCountDesc: "\u0416\u0451\u0441\u0442\u043A\u0438\u0439 \u043B\u0438\u043C\u0438\u0442 \u043A\u043E\u043B\u0438\u0447\u0435\u0441\u0442\u0432\u0430 \u0437\u0430\u043C\u0435\u0442\u043E\u043A \u043F\u0440\u0435\u0444\u0435\u0442\u0447\u0430, \u043D\u0435\u0437\u0430\u0432\u0438\u0441\u0438\u043C\u043E \u043E\u0442 \u043A\u043E\u043D\u0442\u0435\u043A\u0441\u0442\u043D\u043E\u0433\u043E \u0431\u044E\u0434\u0436\u0435\u0442\u0430.",
+  requestTimeoutSecLabel: "\u0422\u0430\u0439\u043C\u0430\u0443\u0442 API \u0437\u0430\u043F\u0440\u043E\u0441\u0430 (\u0441\u0435\u043A):",
+  requestTimeoutSecDesc: "\u041C\u0430\u043A\u0441\u0438\u043C\u0430\u043B\u044C\u043D\u043E\u0435 \u0432\u0440\u0435\u043C\u044F \u043E\u0436\u0438\u0434\u0430\u043D\u0438\u044F \u043E\u0442\u0432\u0435\u0442\u0430 \u043E\u0442 \u0418\u0418 \u0441\u0435\u0440\u0432\u0438\u0441\u0430 \u043F\u0435\u0440\u0435\u0434 \u0442\u0430\u0439\u043C\u0430\u0443\u0442\u043E\u043C.",
+  agentNoEmptyAnswer: "\u041C\u043E\u0434\u0435\u043B\u044C \u0432\u0435\u0440\u043D\u0443\u043B\u0430 \u043F\u0443\u0441\u0442\u043E\u0439 \u043E\u0442\u0432\u0435\u0442. \u041F\u043E\u043F\u0440\u043E\u0431\u0443\u0439\u0442\u0435 \u043F\u0435\u0440\u0435\u0444\u0440\u0430\u0437\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u0437\u0430\u043F\u0440\u043E\u0441.",
+  agentNetworkError: "\u0421\u0435\u0442\u0435\u0432\u0430\u044F \u043E\u0448\u0438\u0431\u043A\u0430 \u0438\u043B\u0438 \u0442\u0430\u0439\u043C\u0430\u0443\u0442 \u043F\u0440\u0438 \u043E\u0431\u0440\u0430\u0449\u0435\u043D\u0438\u0438 \u043A \u0418\u0418.",
+  modelCapWeightLabel: "\u0412\u0435\u0441 \u0432\u043E\u0437\u043C\u043E\u0436\u043D\u043E\u0441\u0442\u0435\u0439 \u043C\u043E\u0434\u0435\u043B\u0438:",
+  modelCapWeightDesc: "\u0412\u0435\u0441, \u043F\u043E\u0432\u044B\u0448\u0430\u044E\u0449\u0438\u0439 \u0431\u0430\u043B\u043B \u0410\u0433\u0435\u043D\u0442\u043D\u043E\u0433\u043E \u0440\u0435\u0436\u0438\u043C\u0430 \u0434\u043B\u044F \u043C\u043E\u0434\u0435\u043B\u0435\u0439 \u0441 \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u043E\u0439 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u043E\u0432 \u0438 \u0437\u0440\u0435\u043D\u0438\u044F.",
+  pressureWeightLabel: "\u0428\u0442\u0440\u0430\u0444 \u0437\u0430 \u0437\u0430\u043F\u043E\u043B\u043D\u0435\u043D\u0438\u0435 \u043A\u043E\u043D\u0442\u0435\u043A\u0441\u0442\u0430:",
+  pressureWeightDesc: "\u0428\u0442\u0440\u0430\u0444, \u0441\u043A\u043B\u043E\u043D\u044F\u044E\u0449\u0438\u0439 \u043A \u0411\u044B\u0441\u0442\u0440\u043E\u043C\u0443 \u0440\u0435\u0436\u0438\u043C\u0443, \u0435\u0441\u043B\u0438 \u043A\u043E\u043D\u0442\u0435\u043A\u0441\u0442\u043D\u043E\u0435 \u043E\u043A\u043D\u043E \u0431\u043B\u0438\u0437\u043A\u043E \u043A \u0437\u0430\u043F\u043E\u043B\u043D\u0435\u043D\u0438\u044E (>70%).",
+  learnedBiasEnabledLabel: "\u0412\u043A\u043B\u044E\u0447\u0438\u0442\u044C \u043E\u0431\u0443\u0447\u0435\u043D\u043D\u043E\u0435 \u043F\u0440\u0435\u0434\u043F\u043E\u0447\u0442\u0435\u043D\u0438\u0435 \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044F:",
+  learnedBiasEnabledDesc: "\u0417\u0430\u043F\u043E\u043C\u0438\u043D\u0430\u0442\u044C \u0440\u0443\u0447\u043D\u044B\u0435 \u043F\u0435\u0440\u0435\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u044F \u0440\u0435\u0436\u0438\u043C\u0430 \u0434\u043B\u044F \u0430\u043D\u0430\u043B\u043E\u0433\u0438\u0447\u043D\u044B\u0445 \u0442\u0438\u043F\u043E\u0432 \u0437\u0430\u043F\u0440\u043E\u0441\u043E\u0432.",
   intentAttachmentsReason: "\u041F\u0440\u0438\u043A\u0440\u0435\u043F\u043B\u0435\u043D\u044B \u0444\u0430\u0439\u043B\u044B/\u0438\u0437\u043E\u0431\u0440\u0430\u0436\u0435\u043D\u0438\u044F \u0434\u043B\u044F \u0430\u043D\u0430\u043B\u0438\u0437\u0430",
   intentVaultActionReason: "\u041E\u0431\u043D\u0430\u0440\u0443\u0436\u0435\u043D \u0437\u0430\u043F\u0440\u043E\u0441 \u0440\u0430\u0431\u043E\u0442\u044B \u0441 \u0437\u0430\u043C\u0435\u0442\u043A\u0430\u043C\u0438/\u0432\u0430\u0443\u043B\u0442\u043E\u043C ({keyword})",
   intentQuickReason: "\u041F\u0440\u044F\u043C\u043E\u0439 \u0432\u043E\u043F\u0440\u043E\u0441/\u043E\u0442\u0432\u0435\u0442 (\u0431\u0435\u0437 \u0432\u0437\u0430\u0438\u043C\u043E\u0434\u0435\u0439\u0441\u0442\u0432\u0438\u044F \u0441 \u0445\u0440\u0430\u043D\u0438\u043B\u0438\u0449\u0435\u043C)",
@@ -26732,7 +26765,177 @@ async function searchVaultHybrid(app, query, settings, limit = 5) {
   return combined.slice(0, limit);
 }
 
+// src/services/openrouter.ts
+var import_obsidian7 = require("obsidian");
+var OpenRouterService = class {
+  /**
+   * Fetches details about the user's OpenRouter API key (usage, limits).
+   */
+  static async getKeyInfo(apiKey) {
+    if (!apiKey)
+      return null;
+    try {
+      const response = await (0, import_obsidian7.requestUrl)({
+        url: "https://openrouter.ai/api/v1/auth/key",
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${apiKey}`
+        }
+      });
+      if (response.status === 200 && response.json) {
+        const json = response.json;
+        if (json.data) {
+          const data = json.data;
+          return {
+            label: data.label,
+            usage: Number(data.usage || 0),
+            limit: data.limit ? Number(data.limit) : null,
+            isFreeTier: Boolean(data.is_free_tier)
+          };
+        }
+      }
+    } catch (e) {
+      console.error("[OpenRouterService] Error fetching key info:", e);
+    }
+    return null;
+  }
+  /**
+   * Fetches all available models and their capabilities from OpenRouter API.
+   */
+  static async fetchModels(apiKey) {
+    const now = Date.now();
+    if (this.cachedModels.size > 0 && now - this.lastFetchTime < 3e5) {
+      return Array.from(this.cachedModels.values());
+    }
+    try {
+      const headers = {
+        "HTTP-Referer": "https://github.com/GhelgenWhy/NEI",
+        "X-Title": "NEI Obsidian Plugin"
+      };
+      if (apiKey) {
+        headers["Authorization"] = `Bearer ${apiKey}`;
+      }
+      const response = await (0, import_obsidian7.requestUrl)({
+        url: "https://openrouter.ai/api/v1/models",
+        method: "GET",
+        headers
+      });
+      if (response.status !== 200) {
+        throw new Error(`OpenRouter API status: ${response.status}`);
+      }
+      const json = response.json;
+      const modelsData = json.data || [];
+      const result = [];
+      for (const item of modelsData) {
+        const supportedParams = item.supported_parameters || [];
+        const supportsTools = supportedParams.includes("tools") || supportedParams.includes("function_calling");
+        const modalityStr = (item.architecture?.modality || "").toLowerCase();
+        const inputs = (item.architecture?.input_modalities || []).map((m) => m.toLowerCase());
+        const modelIdLower = item.id.toLowerCase();
+        let supportsVision = modalityStr.includes("multimodal") || modalityStr.includes("image") || inputs.includes("image");
+        let supportsAudio = modalityStr.includes("audio") || inputs.includes("audio");
+        let supportsVideo = modalityStr.includes("video") || inputs.includes("video");
+        let supportsPdf = true;
+        if (modelIdLower.includes("gemini")) {
+          supportsVision = true;
+          if (modelIdLower.includes("flash") || modelIdLower.includes("pro")) {
+            supportsAudio = true;
+            supportsVideo = true;
+          }
+        } else if (modelIdLower.includes("gpt-4o")) {
+          supportsVision = true;
+          if (!modelIdLower.includes("mini")) {
+            supportsAudio = true;
+          }
+        } else if (modelIdLower.includes("claude-3")) {
+          supportsVision = true;
+        }
+        const capabilities = {
+          text: true,
+          vision: supportsVision,
+          audio: supportsAudio,
+          video: supportsVideo,
+          pdf: supportsPdf
+        };
+        const info = {
+          id: item.id,
+          name: item.name || item.id,
+          description: item.description,
+          contextLength: item.context_length,
+          supportsTools,
+          supportsVision,
+          supportsAudio,
+          supportsVideo,
+          supportsPdf,
+          capabilities,
+          pricing: item.pricing ? {
+            prompt: item.pricing.prompt,
+            completion: item.pricing.completion
+          } : void 0
+        };
+        this.cachedModels.set(item.id, info);
+        result.push(info);
+      }
+      this.lastFetchTime = now;
+      return result;
+    } catch (e) {
+      console.error("[OpenRouterService] Error fetching models:", e);
+      return Array.from(this.cachedModels.values());
+    }
+  }
+  /**
+   * Get capability details for a specific model ID.
+   */
+  static async getModelDetails(modelId, apiKey) {
+    if (this.cachedModels.has(modelId)) {
+      return this.cachedModels.get(modelId) || null;
+    }
+    const models = await this.fetchModels(apiKey);
+    const found = models.find((m) => m.id === modelId);
+    return found || getDefaultModelCapabilities(modelId);
+  }
+};
+OpenRouterService.cachedModels = /* @__PURE__ */ new Map();
+OpenRouterService.lastFetchTime = 0;
+function getDefaultModelCapabilities(modelId) {
+  const lower = (modelId || "").toLowerCase();
+  const supportsVision = lower.includes("gemini") || lower.includes("gpt-4o") || lower.includes("claude-3") || lower.includes("vision");
+  const supportsAudio = lower.includes("gemini-2.5") || lower.includes("gemini-1.5") || lower.includes("gpt-4o") && !lower.includes("mini") || lower.includes("whisper") || lower.includes("audio");
+  const supportsVideo = lower.includes("gemini");
+  const supportsPdf = true;
+  const supportsTools = true;
+  return {
+    id: modelId,
+    name: modelId,
+    supportsTools,
+    supportsVision,
+    supportsAudio,
+    supportsVideo,
+    supportsPdf,
+    capabilities: {
+      text: true,
+      vision: supportsVision,
+      audio: supportsAudio,
+      video: supportsVideo,
+      pdf: supportsPdf
+    }
+  };
+}
+
 // src/services/agent/intentRouter.ts
+function computeFeatureHash(features) {
+  return [
+    (features.hasVaultKeywords || 0) > 0 ? "V1" : "V0",
+    (features.hasCreationPatterns || 0) > 0 ? "C1" : "C0",
+    (features.hasDeletionPatterns || 0) > 0 ? "D1" : "D0",
+    (features.hasAnalysisPatterns || 0) > 0 ? "A1" : "A0",
+    (features.hasSearchPatterns || 0) > 0 ? "S1" : "S0",
+    (features.hasModifyPatterns || 0) > 0 ? "M1" : "M0",
+    (features.hasQuestionPatterns || 0) > 0 ? "Q1" : "Q0",
+    features.hasCodePatterns ? "K1" : "K0",
+    features.hasAttachments ? "Att1" : "Att0"
+  ].join("_");
+}
 var IntentRouter = class {
   static estimateComplexity(query) {
     const lower = query.toLowerCase();
@@ -26742,9 +26945,9 @@ var IntentRouter = class {
     return matchedVerbs.size * 0.5 + clauses * 0.2;
   }
   /**
-   * Extracts numerical intent features from user query, attachments, recent conversation history, and model temporal metadata.
+   * Extracts numerical intent features from user query, attachments, recent conversation history, and model metadata.
    */
-  static extractFeatures(userQuery, hasAttachments = false, chatHistory = [], modelId = "google/gemini-2.5-flash") {
+  static extractFeatures(userQuery, hasAttachments = false, chatHistory = [], modelId = "google/gemini-2.5-flash", modelDetails) {
     const queryLower = userQuery.trim().toLowerCase();
     const vaultKeywords = [
       "\u0432\u0430\u0443\u043B\u0442",
@@ -26860,6 +27063,24 @@ var IntentRouter = class {
     const isStaleQuery = isQueryLikelyStale(userQuery, modelId);
     const cutoffDate = new Date(temporalInfo.knowledgeCutoff);
     const daysSinceCutoff = Math.floor((Date.now() - cutoffDate.getTime()) / (1e3 * 60 * 60 * 24));
+    const defaults = getDefaultModelCapabilities(modelId);
+    const supportsTools = modelDetails?.supportsTools ?? defaults.supportsTools;
+    const supportsVision = modelDetails?.supportsVision ?? defaults.supportsVision;
+    const supportsAudio = modelDetails?.supportsAudio ?? defaults.supportsAudio;
+    const modelContextLength = modelDetails?.contextLength || defaults.contextLength || 4096;
+    const usedTokensFromHistory = Math.ceil(chatHistory.reduce((acc, m) => acc + (m.content ? m.content.length : 0), 0) / 4);
+    const estimatedSystemTokens = 800;
+    const featureHash = computeFeatureHash({
+      hasVaultKeywords,
+      hasCreationPatterns,
+      hasDeletionPatterns,
+      hasAnalysisPatterns,
+      hasSearchPatterns,
+      hasModifyPatterns,
+      hasQuestionPatterns,
+      hasCodePatterns,
+      hasAttachments
+    });
     return {
       hasAttachments,
       hasVaultKeywords,
@@ -26877,22 +27098,56 @@ var IntentRouter = class {
       isStaleQuery,
       modelKnowledgeCutoff: temporalInfo.knowledgeCutoff,
       modelSupportsWebSearch: temporalInfo.supportsWebSearch,
-      daysSinceCutoff
+      daysSinceCutoff,
+      supportsTools,
+      supportsVision,
+      supportsAudio,
+      modelContextLength,
+      usedTokensFromHistory,
+      estimatedSystemTokens,
+      featureHash
     };
   }
   /**
-   * Computes raw intent score from extracted features and scoring weights.
+   * Computes raw intent score from extracted features, scoring weights, context pressure, and user bias.
    */
   static computeScore(features, weights) {
     const capabilityBonus = features.modelSupportsWebSearch ? 1 : -0.5;
     const baseScore = (features.hasAttachments ? 1 : 0) * weights.attachmentWeight + features.hasVaultKeywords * weights.vaultKeywordWeight + features.hasCreationPatterns * weights.creationPatternWeight + features.hasDeletionPatterns * weights.deletionPatternWeight + features.hasAnalysisPatterns * weights.analysisPatternWeight + features.hasSearchPatterns * weights.searchPatternWeight + features.hasModifyPatterns * weights.modifyPatternWeight + features.hasQuestionPatterns * weights.questionPatternWeight + (features.hasCodePatterns ? 1 : 0) * weights.codePatternWeight + features.queryLength * weights.lengthWeight + (features.recentAgentTurns + features.recentToolCalls * 0.5) * weights.historyWeight + (features.isStaleQuery ? 1 : 0) * weights.staleQueryWeight + (features.isStaleQuery && features.modelSupportsWebSearch ? 1 : 0) * weights.freshnessWeight;
-    return baseScore + capabilityBonus;
+    const totalScore = baseScore + capabilityBonus;
+    return {
+      totalScore,
+      baseScore,
+      capabilityBonus
+    };
   }
   /**
-   * Helper to format debug decision trace for logger.
+   * Helper to format detailed decision breakdown for logger / debugging (MODEL-05).
    */
-  static explainDecision(query, features) {
-    return `Query: "${query.substring(0, 40)}..." | Attachments: ${features.hasAttachments} | VaultKeywords: ${features.hasVaultKeywords} | Stale: ${features.isStaleQuery} | Complexity: ${features.complexityScore}`;
+  static explainDecision(userQuery, features, settings) {
+    const threshold = settings?.intentRoutingThreshold ?? 2.5;
+    const weights = {
+      vaultKeywordWeight: settings?.intentVaultKeywordWeight ?? 2,
+      creationPatternWeight: settings?.intentCreationWeight ?? 3,
+      deletionPatternWeight: settings?.intentDeletionWeight ?? 4,
+      analysisPatternWeight: settings?.intentAnalysisWeight ?? 2.5,
+      searchPatternWeight: settings?.intentSearchWeight ?? 1.5,
+      modifyPatternWeight: settings?.intentModifyWeight ?? 1.5,
+      questionPatternWeight: settings?.intentQuestionWeight ?? -1.5,
+      codePatternWeight: settings?.intentCodeWeight ?? -1,
+      lengthWeight: settings?.intentLengthWeight ?? 5e-3,
+      historyWeight: settings?.intentHistoryWeight ?? 0.3,
+      attachmentWeight: settings?.intentAttachmentWeight ?? 5,
+      staleQueryWeight: settings?.intentStaleQueryWeight ?? 3,
+      freshnessWeight: settings?.intentFreshnessWeight ?? 2
+    };
+    const scoreDetails = this.computeScore(features, weights);
+    const mode = scoreDetails.totalScore >= threshold ? "agent" : "quick";
+    return `[IntentRouter Decision Breakdown]
+Query: "${userQuery.substring(0, 40)}..."
+Chosen Mode: ${mode.toUpperCase()} (Total Score: ${scoreDetails.totalScore.toFixed(2)}, Threshold: ${threshold})
+Base Score: ${scoreDetails.baseScore.toFixed(2)}
+Capability Bonus: ${scoreDetails.capabilityBonus.toFixed(2)}`;
   }
   /**
    * Sigmoid transfer function mapping raw score minus threshold to [0, 1] confidence range.
@@ -26959,7 +27214,7 @@ var IntentRouter = class {
   /**
    * Main entry point for intent classification.
    */
-  static classifyIntent(userQuery, hasAttachments = false, language = "auto", chatHistory = [], settings) {
+  static classifyIntent(userQuery, hasAttachments = false, language = "auto", chatHistory = [], settings, modelDetails) {
     const threshold = settings?.intentRoutingThreshold ?? 2.5;
     const modelId = settings?.model || "google/gemini-2.5-flash";
     const weights = {
@@ -26977,8 +27232,9 @@ var IntentRouter = class {
       staleQueryWeight: settings?.intentStaleQueryWeight ?? 3,
       freshnessWeight: settings?.intentFreshnessWeight ?? 2
     };
-    const features = this.extractFeatures(userQuery, hasAttachments, chatHistory, modelId);
-    const score = this.computeScore(features, weights);
+    const features = this.extractFeatures(userQuery, hasAttachments, chatHistory, modelId, modelDetails);
+    const scoreDetails = this.computeScore(features, weights);
+    const score = scoreDetails.totalScore;
     const confidence = this.sigmoid(score - threshold);
     const isAgentMode = score >= threshold;
     const mode = isAgentMode ? "agent" : "quick";
@@ -27061,6 +27317,14 @@ ${tail}`;
 
 // src/services/agent/agentLoop.ts
 var AgentLoop = class {
+  static isResponseValid(response) {
+    if (!response)
+      return false;
+    const hasContent = Boolean(response.content && response.content.trim().length > 0);
+    const hasTools = Boolean(response.tool_calls && response.tool_calls.length > 0);
+    const hasReasoning = Boolean(response.reasoning && response.reasoning.trim().length > 0);
+    return hasContent || hasTools || hasReasoning;
+  }
   static getSystemPrompt(language, userQuery, vaultContext, agentsRules, memory, skills, prefetchedContext, settings, modelId) {
     const cacheKey = `${language}|${vaultContext.ragContext?.length || 0}|${agentsRules.length}|${memory.learnedFacts.length}|${skills.length}|${prefetchedContext.length}|${settings.memoryFile}|${modelId}`;
     const cached = this.promptCache.get(cacheKey);
@@ -27136,6 +27400,8 @@ ${s.description}`).join("\n")}
       chatHistory,
       images,
       executionMode = "auto",
+      useVaultContext = true,
+      activeModelDetails,
       onStepUpdate,
       onConfirmationRequired,
       onStreamChunk,
@@ -27151,80 +27417,110 @@ ${s.description}`).join("\n")}
       if (onStepUpdate)
         onStepUpdate([...steps]);
     };
-    const features = IntentRouter.extractFeatures(userQuery, Boolean(images && images.length > 0), chatHistory, config.model);
-    const toolNeeds = IntentRouter.classifyToolNeeds(userQuery, features, config.model);
-    let actualMode = "agent";
-    if (executionMode === "quick") {
-      actualMode = "quick";
-    } else if (executionMode === "agent") {
-      actualMode = "agent";
-    } else {
-      const decision = IntentRouter.classifyIntent(userQuery, Boolean(images && images.length > 0), language, chatHistory, settings);
-      actualMode = decision.mode;
-      steps.push({
-        id: "intent-routing-step",
-        type: "thought",
-        title: `Mode: ${actualMode === "quick" ? "Quick" : "Agent"}`,
-        detail: decision.reason,
-        status: "completed",
-        meta: { confidence: decision.confidence, features }
-      });
-      notifySteps();
-    }
-    const vaultContext = await resolveContext(app, userQuery, true);
-    const memory = await MemoryStore.loadMemory(app, settings);
-    const agentsRules = await MemoryStore.loadAgentsRules(app, settings);
-    const skills = await SkillsLoader.loadSkills(app, settings);
-    let prefetchedContext = "";
-    const shouldPrefetchVault = settings.enableAdaptivePrefetch ? toolNeeds.needsVaultSearch && actualMode === "agent" : actualMode === "agent";
-    if (shouldPrefetchVault) {
-      const searchResults = settings.enableSemanticRag ? await searchVaultHybrid(app, userQuery, settings, settings.maxPrefetchedNotes) : await searchVaultLexical(app, userQuery, settings.maxPrefetchedNotes, settings.prefetchSnippetLength);
-      if (searchResults.length > 0) {
-        const prefetchedBlocks = [];
-        const matchedFoldersSet = /* @__PURE__ */ new Set();
-        for (const res of searchResults) {
-          const abstractFile = res.file;
-          const folderName = abstractFile.parent?.name || "Vault";
-          if (folderName) {
-            matchedFoldersSet.add(folderName);
-          }
-          const cleanContent = res.content.replace(/^---[\s\S]*?---\n?/, "").trim();
-          const snippet = cleanContent.length > settings.prefetchSnippetLength ? cleanContent.substring(0, settings.prefetchSnippetLength) + "... [\u043E\u0431\u0440\u0435\u0437\u0430\u043D\u043E]" : cleanContent;
-          prefetchedBlocks.push(`--- NOTE: [[${abstractFile.basename}]] (${abstractFile.path}) ---
-${snippet}`);
-        }
-        const matchedFoldersArr = Array.from(matchedFoldersSet);
-        prefetchedContext += `
-${t("autoIndexedVaultNotes", language)}
-${prefetchedBlocks.join("\n\n")}
-`;
+    try {
+      const features = IntentRouter.extractFeatures(
+        userQuery,
+        Boolean(images && images.length > 0),
+        chatHistory,
+        config.model,
+        activeModelDetails || void 0
+      );
+      const toolNeeds = IntentRouter.classifyToolNeeds(userQuery, features, config.model);
+      let actualMode = "agent";
+      if (executionMode === "quick") {
+        actualMode = "quick";
+      } else if (executionMode === "agent") {
+        actualMode = "agent";
+      } else {
+        const decision = IntentRouter.classifyIntent(
+          userQuery,
+          Boolean(images && images.length > 0),
+          language,
+          chatHistory,
+          settings,
+          activeModelDetails || void 0
+        );
+        actualMode = decision.mode;
         steps.push({
-          id: "folder-prefetch-step",
-          type: "tool_result",
-          title: t("folderPrefetchTitle", language, { folders: matchedFoldersArr.join(", ") || "Vault" }),
-          detail: t("folderPrefetchDetail", language, { count: matchedFoldersArr.length.toString() }),
-          status: "completed"
+          id: "intent-routing-step",
+          type: "thought",
+          title: `Mode: ${actualMode === "quick" ? "Quick" : "Agent"}`,
+          detail: decision.reason,
+          status: "completed",
+          meta: { confidence: decision.confidence, features }
         });
         notifySteps();
       }
-    }
-    const userMsg = { role: "user", content: userQuery };
-    if (images && images.length > 0) {
-      userMsg.images = images;
-    }
-    const systemPrompt = this.getSystemPrompt(language, userQuery, vaultContext, agentsRules, memory, skills, prefetchedContext, settings, config.model);
-    const prunedHistory = ContextManager.pruneHistory(chatHistory, 6);
-    const messages = [
-      { role: "system", content: systemPrompt },
-      ...prunedHistory.filter((m) => m.role !== "system"),
-      userMsg
-    ];
-    if (actualMode === "quick") {
-      try {
-        const response = settings.enableStreaming && onStreamChunk ? await sendChatRequestStream(config, messages, void 0, onStreamChunk) : await sendChatRequest(config, messages);
+      const vaultContext = useVaultContext ? await resolveContext(app, userQuery, true) : { ragContext: void 0 };
+      const memory = await MemoryStore.loadMemory(app, settings);
+      const agentsRules = await MemoryStore.loadAgentsRules(app, settings);
+      const skills = await SkillsLoader.loadSkills(app, settings);
+      let prefetchedContext = "";
+      const needsVaultData = toolNeeds.needsVaultSearch || toolNeeds.needsVaultWrite;
+      const shouldPrefetchVault = useVaultContext && (settings.enableAdaptivePrefetch ? needsVaultData && actualMode === "agent" : actualMode === "agent");
+      if (shouldPrefetchVault) {
+        const maxCount = settings.maxPrefetchedNotes || 5;
+        const searchResults = settings.enableSemanticRag ? await searchVaultHybrid(app, userQuery, settings, maxCount) : await searchVaultLexical(app, userQuery, maxCount, settings.prefetchSnippetLength);
+        if (searchResults.length > 0) {
+          const prefetchedBlocks = [];
+          const matchedFoldersSet = /* @__PURE__ */ new Set();
+          for (const res of searchResults) {
+            const abstractFile = res.file;
+            const folderName = abstractFile.parent?.name || "Vault";
+            if (folderName) {
+              matchedFoldersSet.add(folderName);
+            }
+            const cleanContent = res.content.replace(/^---[\s\S]*?---\n?/, "").trim();
+            const snippet = cleanContent.length > settings.prefetchSnippetLength ? cleanContent.substring(0, settings.prefetchSnippetLength) + "... [\u043E\u0431\u0440\u0435\u0437\u0430\u043D\u043E]" : cleanContent;
+            prefetchedBlocks.push(`--- NOTE: [[${abstractFile.basename}]] (${abstractFile.path}) ---
+${snippet}`);
+          }
+          if (prefetchedBlocks.length > 0) {
+            const matchedFoldersArr = Array.from(matchedFoldersSet);
+            prefetchedContext += `
+${t("autoIndexedVaultNotes", language)}
+${prefetchedBlocks.join("\n\n")}
+`;
+            steps.push({
+              id: "folder-prefetch-step",
+              type: "tool_result",
+              title: t("folderPrefetchTitle", language, { folders: matchedFoldersArr.join(", ") || "Vault" }),
+              detail: t("folderPrefetchDetail", language, { count: matchedFoldersArr.length.toString() }),
+              status: "completed"
+            });
+            notifySteps();
+          }
+        }
+      }
+      const userMsg = { role: "user", content: userQuery };
+      if (images && images.length > 0) {
+        userMsg.images = images;
+      }
+      const systemPrompt = this.getSystemPrompt(language, userQuery, vaultContext, agentsRules, memory, skills, prefetchedContext, settings, config.model);
+      const prunedHistory = ContextManager.pruneHistory(chatHistory, 6);
+      const messages = [
+        { role: "system", content: systemPrompt },
+        ...prunedHistory.filter((m) => m.role !== "system"),
+        userMsg
+      ];
+      if (actualMode === "quick") {
+        let response;
+        try {
+          response = settings.enableStreaming && onStreamChunk ? await sendChatRequestStream(config, messages, void 0, onStreamChunk) : await sendChatRequest(config, messages, void 0);
+        } catch (e) {
+          const err = e;
+          throw new Error(t("quickLlmError", language, { error: err?.message || String(e) }));
+        }
         if (response.usage) {
           totalPromptTokens += response.usage.promptTokens;
           totalCompletionTokens += response.usage.completionTokens;
+        }
+        if (!this.isResponseValid(response)) {
+          console.warn("[AgentLoop] Quick mode empty response, attempting fallback...");
+          const fallbackResponse = await sendChatRequest(config, messages, void 0);
+          if (this.isResponseValid(fallbackResponse)) {
+            Object.assign(response, fallbackResponse);
+          }
         }
         const responseText = response.content || "";
         if (this.shouldAutoCreateNote(userQuery, responseText)) {
@@ -27236,179 +27532,193 @@ ${prefetchedBlocks.join("\n\n")}
           completionTokens: totalCompletionTokens,
           executionModeUsed: "quick"
         };
-      } catch (e) {
-        const err = e;
-        throw new Error(t("quickLlmError", language, { error: err?.message || String(e) }));
       }
-    }
-    const allTools = toolRegistry.getToolDefinitions();
-    let filteredTools = allTools;
-    if (settings.enableSmartToolFiltering) {
-      if (toolNeeds.needsWebSearch && !toolNeeds.needsVaultSearch && !toolNeeds.needsVaultWrite) {
-        filteredTools = allTools.filter(
-          (t2) => ["web_search", "read_web_page", "analyze_github_repo"].includes(t2.function.name)
-        );
-      } else if (!toolNeeds.needsWebSearch && (toolNeeds.needsVaultSearch || toolNeeds.needsVaultWrite)) {
-        filteredTools = allTools.filter(
-          (t2) => t2.function.name.startsWith("read_") || t2.function.name.startsWith("get_") || t2.function.name.startsWith("search_") || t2.function.name.startsWith("create_") || t2.function.name.startsWith("edit_") || t2.function.name.startsWith("rename_") || t2.function.name.startsWith("delete_") || t2.function.name.startsWith("list_") || t2.function.name.startsWith("diff_")
-        );
+      const allTools = toolRegistry.getToolDefinitions();
+      let filteredTools = allTools;
+      if (settings.enableSmartToolFiltering) {
+        if (toolNeeds.needsWebSearch && !toolNeeds.needsVaultSearch && !toolNeeds.needsVaultWrite) {
+          filteredTools = allTools.filter(
+            (t2) => ["web_search", "read_web_page", "analyze_github_repo"].includes(t2.function.name)
+          );
+        } else if (!toolNeeds.needsWebSearch && (toolNeeds.needsVaultSearch || toolNeeds.needsVaultWrite)) {
+          filteredTools = allTools.filter(
+            (t2) => t2.function.name.startsWith("read_") || t2.function.name.startsWith("get_") || t2.function.name.startsWith("search_") || t2.function.name.startsWith("create_") || t2.function.name.startsWith("edit_") || t2.function.name.startsWith("rename_") || t2.function.name.startsWith("delete_") || t2.function.name.startsWith("list_") || t2.function.name.startsWith("diff_")
+          );
+        }
       }
-    }
-    let iteration = 0;
-    let finalResponseText = "";
-    let toolCalledCount = 0;
-    const executedCallsMap = {};
-    const effectiveMaxIterations = maxIterations ?? settings.maxAgentIterations;
-    while (iteration < effectiveMaxIterations) {
-      iteration++;
-      const isLastIteration = iteration === effectiveMaxIterations;
-      const activeTools = isLastIteration ? void 0 : filteredTools;
-      const useStreaming = isLastIteration && settings.enableStreaming && onStreamChunk;
-      const response = useStreaming ? await sendChatRequestStream(config, messages, void 0, onStreamChunk) : await sendChatRequest(config, messages, activeTools);
-      if (response.usage) {
-        totalPromptTokens += response.usage.promptTokens;
-        totalCompletionTokens += response.usage.completionTokens;
-      }
-      if (response.reasoning) {
-        steps.push({
-          id: `reasoning-${iteration}`,
-          type: "reasoning",
-          title: `${t("agentReasoningLog", language)} (${iteration})`,
-          detail: response.reasoning,
-          status: "completed"
-        });
-        notifySteps();
-      }
-      if (response.tool_calls && response.tool_calls.length > 0 && !isLastIteration) {
-        toolCalledCount += response.tool_calls.length;
-        messages.push({
-          role: "assistant",
-          content: response.content || "",
-          tool_calls: response.tool_calls
-        });
-        const toolPromises = response.tool_calls.map(async (toolCall) => {
-          const toolName = toolCall.function.name;
-          const toolArgsStr = toolCall.function.arguments;
-          const callKey = `${toolName}:${toolArgsStr}`;
-          executedCallsMap[callKey] = (executedCallsMap[callKey] || 0) + 1;
-          const stepId = `tool-${toolCall.id}`;
+      let iteration = 0;
+      let finalResponseText = "";
+      let toolCalledCount = 0;
+      const executedCallsMap = {};
+      const effectiveMaxIterations = maxIterations ?? settings.maxAgentIterations;
+      while (iteration < effectiveMaxIterations) {
+        iteration++;
+        const isLastIteration = iteration === effectiveMaxIterations;
+        const activeTools = filteredTools;
+        const canStreamFinal = isLastIteration && settings.enableStreaming && onStreamChunk;
+        const response = canStreamFinal ? await sendChatRequestStream(config, messages, void 0, onStreamChunk) : await sendChatRequest(config, messages, activeTools);
+        if (response.usage) {
+          totalPromptTokens += response.usage.promptTokens;
+          totalCompletionTokens += response.usage.completionTokens;
+        }
+        if (!this.isResponseValid(response)) {
+          console.warn("[AgentLoop] Empty response, attempting fallback without tools...");
+          const fallbackResponse = await sendChatRequest(config, [
+            { role: "system", content: systemPrompt },
+            userMsg
+          ], void 0);
+          if (this.isResponseValid(fallbackResponse)) {
+            Object.assign(response, fallbackResponse);
+          }
+        }
+        if (response.reasoning) {
           steps.push({
-            id: stepId,
-            type: "tool_call",
-            title: `Tool: ${toolName}`,
-            detail: `Args: ${toolArgsStr}`,
-            status: "running"
+            id: `reasoning-${iteration}`,
+            type: "reasoning",
+            title: `${t("agentReasoningLog", language)} (${iteration})`,
+            detail: response.reasoning,
+            status: "completed"
           });
           notifySteps();
-          let trimmedResult = "";
-          let isError = false;
-          if (toolName === "execute_obsidian_command" && settings.confirmObsidianCommands && onConfirmationRequired) {
-            const confirmed = await onConfirmationRequired(toolName, toolArgsStr);
-            if (!confirmed) {
-              trimmedResult = "Obsidian command execution denied by user.";
-              isError = true;
-            }
-          }
-          if (!trimmedResult) {
-            if (executedCallsMap[callKey] > 1) {
-              trimmedResult = `[NEI SYSTEM WARNING]: Tool (${toolName}) with these exact arguments was already executed in this session and returned results. Do NOT repeat identical tool calls. Formulate your final response based on the results already retrieved or use a different tool.`;
-              isError = true;
-            } else {
-              const execResult = await toolRegistry.executeTool(
-                app,
-                toolCall.id,
-                toolName,
-                toolArgsStr
-              );
-              const rawRes = typeof execResult.result === "string" ? execResult.result : JSON.stringify(execResult.result);
-              trimmedResult = ContextManager.compactText(rawRes, 12e3);
-              isError = execResult.isError || false;
-            }
-          }
-          const currentStep = steps.find((s) => s.id === stepId);
-          if (currentStep) {
-            currentStep.status = isError ? "failed" : "completed";
-            currentStep.detail = trimmedResult.substring(0, 300);
-          }
-          notifySteps();
-          return {
-            role: "tool",
-            name: toolName,
-            tool_call_id: toolCall.id,
-            content: trimmedResult
-          };
-        });
-        const toolResponses = await Promise.all(toolPromises);
-        messages.push(...toolResponses);
-      } else if (response.content && this.containsJsonToolCall(response.content) && !isLastIteration) {
-        const parsedTool = this.extractJsonToolCall(response.content);
-        if (parsedTool) {
-          toolCalledCount++;
-          const callId = "text_call_" + Date.now();
-          const callArgsStr = JSON.stringify(parsedTool.args);
-          const callKey = `${parsedTool.name}:${callArgsStr}`;
-          executedCallsMap[callKey] = (executedCallsMap[callKey] || 0) + 1;
-          steps.push({
-            id: callId,
-            type: "tool_call",
-            title: `Tool (Fallback JSON): ${parsedTool.name}`,
-            detail: callArgsStr,
-            status: "running"
-          });
-          notifySteps();
-          let execResultText = "";
-          let isError = false;
-          if (parsedTool.name === "execute_obsidian_command" && settings.confirmObsidianCommands && onConfirmationRequired) {
-            const confirmed = await onConfirmationRequired(parsedTool.name, callArgsStr);
-            if (!confirmed) {
-              execResultText = "Obsidian command execution denied by user.";
-              isError = true;
-            }
-          }
-          if (!execResultText) {
-            const execResult = await toolRegistry.executeTool(
-              app,
-              callId,
-              parsedTool.name,
-              callArgsStr
-            );
-            execResultText = String(execResult.result);
-            isError = execResult.isError || false;
-          }
-          const currentStep = steps.find((s) => s.id === callId);
-          if (currentStep) {
-            currentStep.status = isError ? "failed" : "completed";
-            currentStep.detail = execResultText.substring(0, 300);
-          }
-          notifySteps();
+        }
+        if (response.tool_calls && response.tool_calls.length > 0) {
+          toolCalledCount += response.tool_calls.length;
           messages.push({
             role: "assistant",
-            content: response.content
+            content: response.content || "",
+            tool_calls: response.tool_calls
           });
-          messages.push({
-            role: "tool",
-            name: parsedTool.name,
-            tool_call_id: callId,
-            content: execResultText
+          const toolPromises = response.tool_calls.map(async (toolCall) => {
+            const toolName = toolCall.function.name;
+            const toolArgsStr = toolCall.function.arguments;
+            const callKey = `${toolName}:${toolArgsStr}`;
+            executedCallsMap[callKey] = (executedCallsMap[callKey] || 0) + 1;
+            const stepId = `tool-${toolCall.id}`;
+            steps.push({
+              id: stepId,
+              type: "tool_call",
+              title: `Tool: ${toolName}`,
+              detail: `Args: ${toolArgsStr}`,
+              status: "running"
+            });
+            notifySteps();
+            let trimmedResult = "";
+            let isError = false;
+            if (toolName === "execute_obsidian_command" && settings.confirmObsidianCommands && onConfirmationRequired) {
+              const confirmed = await onConfirmationRequired(toolName, toolArgsStr);
+              if (!confirmed) {
+                trimmedResult = "Obsidian command execution denied by user.";
+                isError = true;
+              }
+            }
+            if (!trimmedResult) {
+              if (executedCallsMap[callKey] > 1) {
+                trimmedResult = `[NEI SYSTEM WARNING]: Tool (${toolName}) with these exact arguments was already executed in this session and returned results. Do NOT repeat identical tool calls. Formulate your final response based on the results already retrieved or use a different tool.`;
+                isError = true;
+              } else {
+                const execResult = await toolRegistry.executeTool(
+                  app,
+                  toolCall.id,
+                  toolName,
+                  toolArgsStr
+                );
+                const rawRes = typeof execResult.result === "string" ? execResult.result : JSON.stringify(execResult.result);
+                trimmedResult = ContextManager.compactText(rawRes, 12e3);
+                isError = execResult.isError || false;
+              }
+            }
+            const currentStep = steps.find((s) => s.id === stepId);
+            if (currentStep) {
+              currentStep.status = isError ? "failed" : "completed";
+              currentStep.detail = trimmedResult.substring(0, 300);
+            }
+            notifySteps();
+            return {
+              role: "tool",
+              name: toolName,
+              tool_call_id: toolCall.id,
+              content: trimmedResult
+            };
           });
+          const toolResponses = await Promise.all(toolPromises);
+          messages.push(...toolResponses);
+        } else if (response.content && this.containsJsonToolCall(response.content)) {
+          const parsedTool = this.extractJsonToolCall(response.content);
+          if (parsedTool) {
+            toolCalledCount++;
+            const callId = "text_call_" + Date.now();
+            const callArgsStr = JSON.stringify(parsedTool.args);
+            const callKey = `${parsedTool.name}:${callArgsStr}`;
+            executedCallsMap[callKey] = (executedCallsMap[callKey] || 0) + 1;
+            steps.push({
+              id: callId,
+              type: "tool_call",
+              title: `Tool (Fallback JSON): ${parsedTool.name}`,
+              detail: callArgsStr,
+              status: "running"
+            });
+            notifySteps();
+            let execResultText = "";
+            let isError = false;
+            if (parsedTool.name === "execute_obsidian_command" && settings.confirmObsidianCommands && onConfirmationRequired) {
+              const confirmed = await onConfirmationRequired(parsedTool.name, callArgsStr);
+              if (!confirmed) {
+                execResultText = "Obsidian command execution denied by user.";
+                isError = true;
+              }
+            }
+            if (!execResultText) {
+              const execResult = await toolRegistry.executeTool(
+                app,
+                callId,
+                parsedTool.name,
+                callArgsStr
+              );
+              execResultText = String(execResult.result);
+              isError = execResult.isError || false;
+            }
+            const currentStep = steps.find((s) => s.id === callId);
+            if (currentStep) {
+              currentStep.status = isError ? "failed" : "completed";
+              currentStep.detail = execResultText.substring(0, 300);
+            }
+            notifySteps();
+            messages.push({
+              role: "assistant",
+              content: response.content
+            });
+            messages.push({
+              role: "tool",
+              name: parsedTool.name,
+              tool_call_id: callId,
+              content: execResultText
+            });
+          } else {
+            finalResponseText = response.content;
+            break;
+          }
         } else {
-          finalResponseText = response.content;
+          finalResponseText = response.content || "";
           break;
         }
-      } else {
-        finalResponseText = response.content || "";
-        break;
       }
+      if (finalResponseText && this.containsJsonToolCall(finalResponseText)) {
+        console.warn("[AgentLoop] Model returned tool call as final text, stripping");
+        finalResponseText = finalResponseText.replace(/```[\s\S]*?```/g, "").trim() || t("agentNoOutput", language);
+      }
+      if (toolCalledCount > 0 && this.shouldAutoCreateNote(userQuery, finalResponseText)) {
+        await this.attemptAutoCreateNote(app, userQuery, finalResponseText, steps, notifySteps, toolRegistry, language);
+      }
+      return {
+        responseText: finalResponseText || t("agentNoOutput", language),
+        promptTokens: totalPromptTokens,
+        completionTokens: totalCompletionTokens,
+        executionModeUsed: "agent"
+      };
+    } catch (e) {
+      console.error("[NEI Agent Loop Error]", e);
+      throw e;
     }
-    if (toolCalledCount > 0 && this.shouldAutoCreateNote(userQuery, finalResponseText)) {
-      await this.attemptAutoCreateNote(app, userQuery, finalResponseText, steps, notifySteps, toolRegistry, language);
-    }
-    return {
-      responseText: finalResponseText || t("agentNoOutput", language),
-      promptTokens: totalPromptTokens,
-      completionTokens: totalCompletionTokens,
-      executionModeUsed: "agent"
-    };
   }
   static containsJsonToolCall(text) {
     return /```(?:json)?\s*\{[\s\S]*?"(?:tool|name|function|action)"\s*:/i.test(text) || /<tool_call>/i.test(text);
@@ -27475,7 +27785,7 @@ ${prefetchedBlocks.join("\n\n")}
 AgentLoop.promptCache = /* @__PURE__ */ new Map();
 
 // src/services/chat/chatStore.ts
-var import_obsidian7 = require("obsidian");
+var import_obsidian8 = require("obsidian");
 var ChatStore = class {
   static getChatsFolder(settings) {
     return settings.chatsFolder || ".nei/chats";
@@ -27579,169 +27889,12 @@ var ChatStore = class {
     };
   }
   static async ensureFolder(app, folderPath) {
-    const norm = (0, import_obsidian7.normalizePath)(folderPath);
+    const norm = (0, import_obsidian8.normalizePath)(folderPath);
     if (!await app.vault.adapter.exists(norm)) {
       await app.vault.adapter.mkdir(norm);
     }
   }
 };
-
-// src/services/openrouter.ts
-var import_obsidian8 = require("obsidian");
-var OpenRouterService = class {
-  /**
-   * Fetches details about the user's OpenRouter API key (usage, limits).
-   */
-  static async getKeyInfo(apiKey) {
-    if (!apiKey)
-      return null;
-    try {
-      const response = await (0, import_obsidian8.requestUrl)({
-        url: "https://openrouter.ai/api/v1/auth/key",
-        method: "GET",
-        headers: {
-          "Authorization": `Bearer ${apiKey}`
-        }
-      });
-      if (response.status === 200 && response.json) {
-        const json = response.json;
-        if (json.data) {
-          const data = json.data;
-          return {
-            label: data.label,
-            usage: Number(data.usage || 0),
-            limit: data.limit ? Number(data.limit) : null,
-            isFreeTier: Boolean(data.is_free_tier)
-          };
-        }
-      }
-    } catch (e) {
-      console.error("[OpenRouterService] Error fetching key info:", e);
-    }
-    return null;
-  }
-  /**
-   * Fetches all available models and their capabilities from OpenRouter API.
-   */
-  static async fetchModels(apiKey) {
-    const now = Date.now();
-    if (this.cachedModels.size > 0 && now - this.lastFetchTime < 3e5) {
-      return Array.from(this.cachedModels.values());
-    }
-    try {
-      const headers = {
-        "HTTP-Referer": "https://github.com/GhelgenWhy/NEI",
-        "X-Title": "NEI Obsidian Plugin"
-      };
-      if (apiKey) {
-        headers["Authorization"] = `Bearer ${apiKey}`;
-      }
-      const response = await (0, import_obsidian8.requestUrl)({
-        url: "https://openrouter.ai/api/v1/models",
-        method: "GET",
-        headers
-      });
-      if (response.status !== 200) {
-        throw new Error(`OpenRouter API status: ${response.status}`);
-      }
-      const json = response.json;
-      const modelsData = json.data || [];
-      const result = [];
-      for (const item of modelsData) {
-        const supportedParams = item.supported_parameters || [];
-        const supportsTools = supportedParams.includes("tools") || supportedParams.includes("function_calling");
-        const modalityStr = (item.architecture?.modality || "").toLowerCase();
-        const inputs = (item.architecture?.input_modalities || []).map((m) => m.toLowerCase());
-        const modelIdLower = item.id.toLowerCase();
-        let supportsVision = modalityStr.includes("multimodal") || modalityStr.includes("image") || inputs.includes("image");
-        let supportsAudio = modalityStr.includes("audio") || inputs.includes("audio");
-        let supportsVideo = modalityStr.includes("video") || inputs.includes("video");
-        let supportsPdf = true;
-        if (modelIdLower.includes("gemini")) {
-          supportsVision = true;
-          if (modelIdLower.includes("flash") || modelIdLower.includes("pro")) {
-            supportsAudio = true;
-            supportsVideo = true;
-          }
-        } else if (modelIdLower.includes("gpt-4o")) {
-          supportsVision = true;
-          if (!modelIdLower.includes("mini")) {
-            supportsAudio = true;
-          }
-        } else if (modelIdLower.includes("claude-3")) {
-          supportsVision = true;
-        }
-        const capabilities = {
-          text: true,
-          vision: supportsVision,
-          audio: supportsAudio,
-          video: supportsVideo,
-          pdf: supportsPdf
-        };
-        const info = {
-          id: item.id,
-          name: item.name || item.id,
-          description: item.description,
-          contextLength: item.context_length,
-          supportsTools,
-          supportsVision,
-          supportsAudio,
-          supportsVideo,
-          supportsPdf,
-          capabilities,
-          pricing: item.pricing ? {
-            prompt: item.pricing.prompt,
-            completion: item.pricing.completion
-          } : void 0
-        };
-        this.cachedModels.set(item.id, info);
-        result.push(info);
-      }
-      this.lastFetchTime = now;
-      return result;
-    } catch (e) {
-      console.error("[OpenRouterService] Error fetching models:", e);
-      return Array.from(this.cachedModels.values());
-    }
-  }
-  /**
-   * Get capability details for a specific model ID.
-   */
-  static async getModelDetails(modelId, apiKey) {
-    if (this.cachedModels.has(modelId)) {
-      return this.cachedModels.get(modelId) || null;
-    }
-    const models = await this.fetchModels(apiKey);
-    const found = models.find((m) => m.id === modelId);
-    return found || getDefaultModelCapabilities(modelId);
-  }
-};
-OpenRouterService.cachedModels = /* @__PURE__ */ new Map();
-OpenRouterService.lastFetchTime = 0;
-function getDefaultModelCapabilities(modelId) {
-  const lower = (modelId || "").toLowerCase();
-  const supportsVision = lower.includes("gemini") || lower.includes("gpt-4o") || lower.includes("claude-3") || lower.includes("vision");
-  const supportsAudio = lower.includes("gemini-2.5") || lower.includes("gemini-1.5") || lower.includes("gpt-4o") && !lower.includes("mini") || lower.includes("whisper") || lower.includes("audio");
-  const supportsVideo = lower.includes("gemini");
-  const supportsPdf = true;
-  const supportsTools = true;
-  return {
-    id: modelId,
-    name: modelId,
-    supportsTools,
-    supportsVision,
-    supportsAudio,
-    supportsVideo,
-    supportsPdf,
-    capabilities: {
-      text: true,
-      vision: supportsVision,
-      audio: supportsAudio,
-      video: supportsVideo,
-      pdf: supportsPdf
-    }
-  };
-}
 
 // src/components/ErrorBoundary.tsx
 var React = __toESM(require_react());
@@ -28756,6 +28909,8 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onR
   const [enableAdaptivePrefetch, setEnableAdaptivePrefetch] = React7.useState(settings.enableAdaptivePrefetch ?? true);
   const [enableFreshnessSuggestions, setEnableFreshnessSuggestions] = React7.useState(settings.enableFreshnessSuggestions ?? true);
   const [enableSmartToolFiltering, setEnableSmartToolFiltering] = React7.useState(settings.enableSmartToolFiltering ?? true);
+  const [enableVaultContextDefault, setEnableVaultContextDefault] = React7.useState(settings.enableVaultContextDefault ?? true);
+  const [vaultContextEnabled, setVaultContextEnabled] = React7.useState(settings.enableVaultContextDefault ?? true);
   const [intentRoutingThreshold, setIntentRoutingThreshold] = React7.useState(settings.intentRoutingThreshold ?? 2.5);
   const [intentVaultKeywordWeight, setIntentVaultKeywordWeight] = React7.useState(settings.intentVaultKeywordWeight ?? 2);
   const [intentCreationWeight, setIntentCreationWeight] = React7.useState(settings.intentCreationWeight ?? 3);
@@ -28793,6 +28948,7 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onR
       enableAdaptivePrefetch,
       enableFreshnessSuggestions,
       enableSmartToolFiltering,
+      enableVaultContextDefault,
       intentRoutingThreshold,
       intentVaultKeywordWeight,
       intentCreationWeight,
@@ -28935,6 +29091,8 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onR
         chatHistory: historySlice,
         images: currentImages,
         executionMode,
+        useVaultContext: vaultContextEnabled,
+        activeModelDetails,
         onStepUpdate: (steps) => {
           setActiveSteps(steps);
         },
@@ -29196,6 +29354,28 @@ ${fileContext}` : fileContext;
               /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("option", { value: "auto", children: "\u26A1 Auto" }),
               /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("option", { value: "quick", children: "\u{1F680} Quick" }),
               /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("option", { value: "agent", children: "\u{1F9E0} Agent" })
+            ]
+          }
+        ),
+        /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(
+          "button",
+          {
+            onClick: () => setVaultContextEnabled((prev) => !prev),
+            title: t("vaultContextToggleTooltip", language),
+            "aria-label": t("vaultContextToggleTooltip", language),
+            className: `nei-header-btn ${vaultContextEnabled ? "nei-btn-active" : ""}`,
+            style: {
+              fontSize: "11px",
+              padding: "3px 7px",
+              borderRadius: "4px",
+              background: vaultContextEnabled ? "var(--interactive-accent)" : "var(--background-modifier-border)",
+              color: vaultContextEnabled ? "var(--text-on-accent)" : "var(--text-muted)",
+              fontWeight: "500"
+            },
+            children: [
+              vaultContextEnabled ? "\u{1F9E0}" : "\u26AA",
+              " ",
+              t("vaultContextToggleLabel", language)
             ]
           }
         ),
@@ -29543,7 +29723,11 @@ ${fileContext}` : fileContext;
             /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("input", { type: "number", value: ragResultLimit, onChange: (e) => setRagResultLimit(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
           ] })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { children: /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("label", { style: { fontSize: "11px", display: "flex", alignItems: "center", gap: "6px", color: "var(--text-normal)", cursor: "pointer", marginTop: "4px" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { children: /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("label", { style: { fontSize: "11px", display: "flex", alignItems: "center", gap: "6px", color: "var(--text-normal)", cursor: "pointer", marginTop: "2px" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("input", { type: "checkbox", checked: enableVaultContextDefault, onChange: (e) => setEnableVaultContextDefault(e.target.checked) }),
+          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { children: t("enableVaultContextDefaultLabel", language) })
+        ] }) }),
+        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { children: /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("label", { style: { fontSize: "11px", display: "flex", alignItems: "center", gap: "6px", color: "var(--text-normal)", cursor: "pointer", marginTop: "2px" }, children: [
           /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("input", { type: "checkbox", checked: confirmObsidianCommands, onChange: (e) => setConfirmObsidianCommands(e.target.checked) }),
           /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { children: t("confirmObsidianCommandsLabel", language) })
         ] }) })
@@ -30963,7 +31147,9 @@ var DEFAULT_SETTINGS = {
   // Attachments & Versioning defaults
   maxAttachmentSizeBytes: 512e3,
   // 500 KB
-  settingsVersion: 1
+  settingsVersion: 1,
+  // Vault Context Toggle default
+  enableVaultContextDefault: true
 };
 var NeiAiChatPlugin = class extends import_obsidian14.Plugin {
   constructor() {

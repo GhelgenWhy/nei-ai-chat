@@ -1,6 +1,10 @@
 import { ToolDefinition, ToolCall } from "./tools/types";
 
-async function performPostRequest(url: string, headers: Record<string, string>, bodyStr: string): Promise<{ status: number; text: string; json: Record<string, unknown> }> {
+async function performPostRequest(
+    url: string, 
+    headers: Record<string, string>, 
+    bodyStr: string
+): Promise<{ status: number; text: string; json: Record<string, unknown> }> {
     if (typeof fetch === 'function') {
         const res = await fetch(url, { method: "POST", headers, body: bodyStr });
         const text = await res.text();
@@ -16,8 +20,9 @@ async function performPostRequest(url: string, headers: Record<string, string>, 
         const obsidian = await import("obsidian");
         const res = await obsidian.requestUrl({ url, method: "POST", headers, body: bodyStr });
         return { status: res.status, text: res.text, json: res.json as Record<string, unknown> };
-    } catch {
-        throw new Error("HTTP POST request failed");
+    } catch (e) {
+        console.error("[NEI] Obsidian requestUrl failed:", e);
+        throw new Error("HTTP POST request failed: both fetch and obsidian.requestUrl unavailable");
     }
 }
 

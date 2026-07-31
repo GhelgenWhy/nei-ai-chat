@@ -33,6 +33,11 @@
 - DuckDuckGo live search integration.
 - Direct web page scraping and raw GitHub README optimization.
 
+### 🧠 Включение/выключение контекста из хранилища и Адаптивный Префетч
+- **Переключатель «Контекст из хранилища»**: Кнопка `🧠 Контекст из хранилища` в верхнем баре управляет инъекцией контекста заметок ваулта для каждого запроса без постоянного изменения глобальных настроек.
+- **Адаптивный контекстный бюджет (Token-Budget Prefetch)**: Количество загружаемых заметок префетча автоматически адаптируется к размеру контекстного окна модели (до 30% свободного окна токенов) с подстраиваемым лимитом `maxPrefetchCount`.
+- **Защита от пустых ответов и сетевых сбоев**: Автоматический фоллбек при пустом выходе модели и встроенный обработчик таймаутов (`requestTimeoutSec`).
+
 ### 📐 Premium UI & Multimodal Intelligence
 - **Pinned Model Capabilities Bar**: Sticky top bar showing model modalities (`Text`, `Vision`, `Audio`, `Video`, `PDF`) and live token consumption (`Tokens: 1.2k/128k`).
 - **Multimodal File Support**: Attach text files (`.txt, .md, .json, .js, .ts, .py, .css, .html, .csv, .yaml, .yml`), PDFs, images, and audio/video files with pre-send model compatibility validation.

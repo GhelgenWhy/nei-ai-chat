@@ -17,6 +17,8 @@ describe("IntentRouter v3 Scoring Model & Temporal Intelligence", () => {
         intentAttachmentWeight: 5.0,
         intentStaleQueryWeight: 3.0,
         intentFreshnessWeight: 2.0,
+        modelCapWeight: 0.0,
+        pressureWeight: 1.5,
     };
 
     test("attachments -> routes to agent mode", () => {
