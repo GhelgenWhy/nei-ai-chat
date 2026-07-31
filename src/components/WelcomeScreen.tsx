@@ -6,7 +6,7 @@ export interface WelcomeScreenProps {
     onClose: () => void;
 }
 
-export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ language, onClose }) => {
+export const WelcomeScreen: React.FC<WelcomeScreenProps> = React.memo(({ language, onClose }) => {
     const [step, setStep] = React.useState(0);
 
     const steps = [
@@ -122,4 +122,6 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ language, onClose 
             </div>
         </div>
     );
-};
+});
+
+WelcomeScreen.displayName = 'WelcomeScreen';

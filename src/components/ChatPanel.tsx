@@ -3,7 +3,7 @@ import { App, Component, MarkdownRenderer, Notice, WorkspaceLeaf } from "obsidia
 import { ChatMessage, getModelTemporalInfo } from "../services/llm";
 import { AgentLoop, AgentStep } from "../services/agent/agentLoop";
 import { ChatStore, ChatSession } from "../services/chat/chatStore";
-import { OpenRouterService, OpenRouterModelInfo, OpenRouterKeyInfo } from "../services/openrouter";
+import { OpenRouterService, OpenRouterModelInfo, OpenRouterKeyInfo, getDefaultModelCapabilities } from "../services/openrouter";
 import { ExecutionMode } from "../services/agent/intentRouter";
 import { t, SupportedLanguage } from "../i18n/translations";
 import { NeiAiChatSettings } from "../../main";
@@ -12,9 +12,20 @@ import { ErrorBoundary } from "./ErrorBoundary";
 import { Tooltip } from "./Tooltip";
 import { WelcomeScreen } from "./WelcomeScreen";
 import { ReasoningPanel } from "./ReasoningPanel";
+import { ModelCapabilityBar } from "./ModelCapabilityBar";
+import { AudioRecorder } from "./AudioRecorder";
+import { CapabilityWarningModal } from "./CapabilityWarningModal";
 import { formatTokenCount, formatCost, calculateCost, ModelPricing } from "../utils/cost";
 import { AutoLearner, LearningProposal } from "../services/memory/autoLearner";
 import { MemoryStore } from "../services/memory/memoryStore";
+
+export interface AttachedFile {
+    id: string;
+    name: string;
+    type: 'image' | 'text' | 'audio' | 'video' | 'pdf';
+    content: string;
+    sizeBytes: number;
+}
 
 interface ChatPanelProps {
     app: App;
@@ -83,6 +94,27 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
     // UI & Mode State
     const [input, setInput] = React.useState("");
     const [attachedImages, setAttachedImages] = React.useState<string[]>([]);
+    const [attachedFiles, setAttachedFiles] = React.useState<AttachedFile[]>([]);
+    const [isRecordingAudio, setIsRecordingAudio] = React.useState(false);
+    const [warningModal, setWarningModal] = React.useState<{
+        unsupportedTypes: string[];
+        onProceedTextOnly: () => void;
+        onRemoveAttachments: () => void;
+    } | null>(null);
+
+    const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+
+    const adjustTextareaHeight = React.useCallback(() => {
+        if (!textareaRef.current) return;
+        requestAnimationFrame(() => {
+            const el = textareaRef.current;
+            if (!el) return;
+            el.style.height = 'auto';
+            const newHeight = Math.min(el.scrollHeight, 280);
+            el.style.height = `${newHeight}px`;
+        });
+    }, []);
+
     const [executionMode, setExecutionMode] = React.useState<ExecutionMode>(settings.executionMode || "auto");
     const [loading, setLoading] = React.useState(false);
     const [activeSteps, setActiveSteps] = React.useState<AgentStep[]>([]);
@@ -564,11 +596,61 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
         }
     };
 
-    const handleSendMessage = () => {
-        if (!input.trim() || loading) return;
-        const queryText = input.trim();
+    const sendWithPreparedContent = (textOnlyFallback: boolean) => {
+        let fullQuery = input.trim();
+
+        // Inject text & pdf files into context: <file name="...">content</file>
+        const textAttachments = attachedFiles.filter(f => f.type === 'text' || f.type === 'pdf' || (textOnlyFallback && (f.type === 'audio' || f.type === 'video')));
+        if (textAttachments.length > 0) {
+            const fileContext = textAttachments.map(f => `<file name="${f.name}">\n${f.content}\n</file>`).join('\n\n');
+            fullQuery = fullQuery ? `${fullQuery}\n\n${fileContext}` : fileContext;
+        }
+
+        const imagesToPass = textOnlyFallback 
+            ? [] 
+            : attachedFiles.filter(f => f.type === 'image').map(f => f.content);
+
         setInput("");
-        void executeQuery(queryText, currentSession.messages);
+        setAttachedFiles([]);
+        setAttachedImages([]);
+        if (textareaRef.current) {
+            textareaRef.current.style.height = 'auto';
+        }
+
+        void executeQuery(fullQuery, currentSession.messages, imagesToPass);
+    };
+
+    const handleSendMessage = () => {
+        if ((!input.trim() && attachedFiles.length === 0) || loading) return;
+
+        // Model capability validation before send (FUNC-05)
+        const modelCaps = activeModelDetails?.capabilities || getDefaultModelCapabilities(model).capabilities;
+        const unsupported: string[] = [];
+
+        attachedFiles.forEach(f => {
+            if (f.type === 'image' && !modelCaps.vision) unsupported.push('vision');
+            if (f.type === 'audio' && !modelCaps.audio) unsupported.push('audio');
+            if (f.type === 'video' && !modelCaps.video) unsupported.push('video');
+        });
+
+        if (unsupported.length > 0) {
+            const uniqueTypes = Array.from(new Set(unsupported));
+            setWarningModal({
+                unsupportedTypes: uniqueTypes,
+                onProceedTextOnly: () => {
+                    setWarningModal(null);
+                    sendWithPreparedContent(true);
+                },
+                onRemoveAttachments: () => {
+                    setAttachedFiles(prev => prev.filter(f => !uniqueTypes.includes(f.type === 'image' ? 'vision' : f.type)));
+                    setWarningModal(null);
+                    sendWithPreparedContent(false);
+                }
+            });
+            return;
+        }
+
+        sendWithPreparedContent(false);
     };
 
     // Retry a user request at index
@@ -594,72 +676,116 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
         void executeQuery(editingText.trim(), historyBefore);
     };
 
+    const isTextFile = (filename: string, mimeType: string) => {
+        const textExts = ['.txt', '.md', '.json', '.js', '.ts', '.py', '.css', '.html', '.csv', '.yaml', '.yml'];
+        const ext = filename.substring(filename.lastIndexOf('.')).toLowerCase();
+        return textExts.includes(ext) || mimeType.startsWith('text/');
+    };
+
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (!files || files.length === 0) return;
 
+        const maxSize = settings.maxAttachmentSizeBytes || 512000;
+
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const res = event.target?.result as string;
-                if (res) {
-                    setAttachedImages(prev => [...prev, res]);
-                }
-            };
-            reader.readAsDataURL(file);
+            if (file.size > maxSize) {
+                new Notice(`File "${file.name}" exceeds maximum size of ${(maxSize / 1024).toFixed(0)} KB.`);
+                continue;
+            }
+
+            const id = Math.random().toString(36).substring(2, 9);
+            const name = file.name;
+            const sizeBytes = file.size;
+
+            if (isTextFile(file.name, file.type)) {
+                const reader = new FileReader();
+                reader.onload = (evt) => {
+                    const content = (evt.target?.result as string) || '';
+                    setAttachedFiles(prev => [...prev, { id, name, type: 'text', content, sizeBytes }]);
+                };
+                reader.readAsText(file);
+            } else if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (evt) => {
+                    const content = (evt.target?.result as string) || '';
+                    setAttachedFiles(prev => [...prev, { id, name, type: 'image', content, sizeBytes }]);
+                    setAttachedImages(prev => [...prev, content]);
+                };
+                reader.readAsDataURL(file);
+            } else if (file.type.startsWith('audio/')) {
+                const reader = new FileReader();
+                reader.onload = (evt) => {
+                    const content = (evt.target?.result as string) || '';
+                    setAttachedFiles(prev => [...prev, { id, name, type: 'audio', content, sizeBytes }]);
+                };
+                reader.readAsDataURL(file);
+            } else if (file.type.startsWith('video/')) {
+                const reader = new FileReader();
+                reader.onload = (evt) => {
+                    const content = (evt.target?.result as string) || '';
+                    setAttachedFiles(prev => [...prev, { id, name, type: 'video', content, sizeBytes }]);
+                };
+                reader.readAsDataURL(file);
+            } else if (file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf') {
+                const reader = new FileReader();
+                reader.onload = (evt) => {
+                    const content = (evt.target?.result as string) || '';
+                    setAttachedFiles(prev => [...prev, { id, name, type: 'pdf', content, sizeBytes }]);
+                };
+                reader.readAsText(file);
+            } else {
+                const reader = new FileReader();
+                reader.onload = (evt) => {
+                    const content = (evt.target?.result as string) || '';
+                    setAttachedFiles(prev => [...prev, { id, name, type: 'text', content, sizeBytes }]);
+                };
+                reader.readAsText(file);
+            }
         }
     };
 
     return (
         <div className="nei-chat-panel-container">
-            {/* Header / Session & Mode Controls Bar */}
+            {/* Header / Session & Mode Controls Bar (UI-03) */}
             <div className="nei-chat-header">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <div className="nei-header-group">
+                    <select
+                        value={model}
+                        onChange={(e) => handleSelectModel(e.target.value)}
+                        title={t("primaryModel", language)}
+                        aria-label={t("primaryModel", language)}
+                        className="nei-model-select"
+                    >
+                        {customModels.map(m => (
+                            <option key={m} value={m}>
+                                {m.split('/').pop()}
+                            </option>
+                        ))}
+                    </select>
+
                     <button 
                         onClick={() => setShowSessionsDrawer(!showSessionsDrawer)}
                         title={t("historyTooltip", language)}
-                        style={{ background: 'var(--background-secondary)', border: '1px solid var(--background-modifier-border)', borderRadius: '4px', cursor: 'pointer', padding: '4px 8px', fontSize: '11px', fontWeight: '500' }}
+                        aria-label={t("historyTooltip", language)}
+                        className="nei-header-btn"
                     >
-                        📂 {formatSessionTitle(currentSession.title)} 
-                        <span style={{ fontSize: '10px', opacity: 0.7, marginLeft: '4px' }}>
-                            ({currentSession.messages.length})
-                        </span>
+                        📂 ({currentSession.messages.length})
                     </button>
+
                     <button 
-                        onClick={() => { handleNewChat(); }}
+                        onClick={() => handleNewChat()}
                         title={t("newChatTooltip", language)}
-                        style={{ background: 'var(--interactive-accent)', color: 'var(--text-on-accent)', border: 'none', borderRadius: '4px', cursor: 'pointer', padding: '4px 8px', fontSize: '11px', fontWeight: 'bold' }}
+                        aria-label={t("newChatTooltip", language)}
+                        className="nei-header-btn nei-btn-accent"
                     >
-                        {t("newChat", language)}
-                    </button>
-                    <button 
-                        onClick={() => { void handleToggleTabMode(); }}
-                        title={isMainTab ? t("moveSidebarTitle", language) : t("moveTabTitle", language)}
-                        style={{ background: 'var(--background-secondary)', border: '1px solid var(--background-modifier-border)', borderRadius: '4px', cursor: 'pointer', padding: '4px 6px', fontSize: '11px' }}
-                    >
-                        {isMainTab ? t("moveSidebar", language) : t("moveTab", language)}
+                        + {t("newChat", language)}
                     </button>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    {modelFreshness && enableTemporalAwareness && (
-                        <div 
-                            className="nei-freshness-indicator" 
-                            title={`Cutoff: ${modelFreshness.cutoff} (${modelFreshness.daysSince}d ago)`}
-                            style={{
-                                display: 'inline-flex', alignItems: 'center', gap: '3px',
-                                padding: '2px 6px', borderRadius: '4px',
-                                background: modelFreshness.isStale ? 'var(--background-modifier-error-hover, #ff444433)' : 'var(--background-modifier-success, #44ff4433)',
-                                fontSize: '10px', fontWeight: 600, color: 'var(--text-normal)'
-                            }}
-                        >
-                            {modelFreshness.supportsWeb ? '🌐' : '🔒'}
-                            <span>{modelFreshness.cutoff}</span>
-                        </div>
-                    )}
-
-                    {/* Session Cost Dashboard */}
+                <div className="nei-header-group">
+                    {/* Session Cost Metrics */}
                     {sessionMetrics.requestCount > 0 && (
                         <div className="nei-session-metrics" style={{
                             display: 'inline-flex', alignItems: 'center', gap: '6px',
@@ -672,12 +798,11 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                             <span title={t("sessionTokensInTooltip", language)}>📥 {formatTokenCount(sessionMetrics.totalPromptTokens)}</span>
                             <span style={{ opacity: 0.4 }}>|</span>
                             <span title={t("sessionTokensOutTooltip", language)}>📤 {formatTokenCount(sessionMetrics.totalCompletionTokens)}</span>
-                            <span style={{ opacity: 0.4 }}>|</span>
-                            <span title={t("sessionRequestsTooltip", language)}>🔄 {sessionMetrics.requestCount}</span>
                             <button
                                 onClick={() => setSessionMetrics({ totalPromptTokens: 0, totalCompletionTokens: 0, totalCost: 0, requestCount: 0 })}
                                 style={{ background: 'transparent', border: 'none', cursor: 'pointer', opacity: 0.5, fontSize: '9px', padding: '0 2px', color: 'var(--text-muted)' }}
                                 title={t("resetSessionMetrics", language)}
+                                aria-label={t("resetSessionMetrics", language)}
                             >↺</button>
                         </div>
                     )}
@@ -690,6 +815,7 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                             void saveSettings({ ...settings, executionMode: val });
                         }}
                         title={t("modeAutoTitle", language)}
+                        aria-label={t("modeAutoTitle", language)}
                         className="nei-select-mode"
                     >
                         <option value="auto">{t("modeAuto", language)}</option>
@@ -698,14 +824,32 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                     </select>
 
                     <button 
+                        onClick={() => void handleToggleTabMode()}
+                        title={isMainTab ? t("moveSidebarTitle", language) : t("moveTabTitle", language)}
+                        aria-label={isMainTab ? t("moveSidebarTitle", language) : t("moveTabTitle", language)}
+                        className="nei-header-btn"
+                    >
+                        {isMainTab ? "🗔" : "🗖"}
+                    </button>
+
+                    <button 
                         onClick={() => setShowConfig(!showConfig)}
-                        style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '12px', color: 'var(--text-muted)' }}
                         title={t("settingsTooltip", language)}
+                        aria-label={t("settingsTooltip", language)}
+                        className="nei-header-btn"
                     >
                         ⚙️
                     </button>
                 </div>
             </div>
+
+            {/* Pinned Sticky Model Capability & Token Bar (UI-04) */}
+            <ModelCapabilityBar 
+                modelName={model}
+                modelDetails={activeModelDetails || getDefaultModelCapabilities(model)}
+                totalTokens={sessionMetrics.totalPromptTokens + sessionMetrics.totalCompletionTokens}
+                contextWindow={activeModelDetails?.contextLength}
+            />
 
             {/* Sessions History Drawer */}
             {showSessionsDrawer && (
@@ -843,16 +987,16 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                                 }}
                                 style={{ width: '100%', padding: '4px', borderRadius: '4px', fontSize: '11px', background: 'var(--background-secondary)', color: 'var(--text-normal)', border: '1px solid var(--background-modifier-border)' }}
                             >
-                                <option value="auto">🌐 {t("autoDetect", language)}</option>
-                                <option value="ru">🌐 RU — Русский</option>
-                                <option value="en">🌐 EN — English</option>
-                                <option value="es">🌐 ES — Español</option>
-                                <option value="de">🌐 DE — Deutsch</option>
-                                <option value="fr">🌐 FR — Français</option>
-                                <option value="zh">🌐 ZH — 中文</option>
-                                <option value="ja">🌐 JA — 日本語</option>
-                                <option value="pt">🌐 PT — Português</option>
-                                <option value="ko">🌐 KO — 한국어</option>
+                                <option value="auto">{t("autoDetect", language)}</option>
+                                <option value="ru">Русский</option>
+                                <option value="en">English</option>
+                                <option value="es">Español</option>
+                                <option value="de">Deutsch</option>
+                                <option value="fr">Français</option>
+                                <option value="zh">中文</option>
+                                <option value="ja">日本語</option>
+                                <option value="pt">Português</option>
+                                <option value="ko">한국어</option>
                             </select>
                         </div>
 
@@ -875,7 +1019,7 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                         </div>
                     </div>
 
-                    {/* Active Model Capabilities Card */}
+                    {/* Active Model Capabilities Card (UI-01) */}
                     <div style={{ background: 'var(--background-primary)', padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--background-modifier-border)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
                             <strong style={{ fontSize: '11px' }}>{t("parameters", language)}: {model}</strong>
@@ -892,6 +1036,9 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                                 <div>• {t("contextLength", language)} <strong>{activeModelDetails.contextLength ? activeModelDetails.contextLength.toLocaleString() : 'N/A'} {t("tokens", language)}</strong></div>
                                 <div>• {t("toolCallingSupport", language)} {activeModelDetails.supportsTools ? '✅' : '❌'}</div>
                                 <div>• {t("visionSupport", language)} {activeModelDetails.supportsVision ? '✅' : '❌'}</div>
+                                {modelFreshness && (
+                                    <div>• {t("modelCutoffLabel", language)} <strong>{modelFreshness.cutoff}</strong> ({modelFreshness.daysSince}d ago) {modelFreshness.supportsWeb ? '🌐' : '🔒'}</div>
+                                )}
                             </div>
                         ) : (
                             <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
@@ -1384,15 +1531,39 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                 )}
             </div>
 
-            {/* Attached Image Previews Bar */}
-            {attachedImages.length > 0 && (
+            {/* Capability Warning Modal (FUNC-05) */}
+            {warningModal && (
+                <CapabilityWarningModal
+                    unsupportedTypes={warningModal.unsupportedTypes}
+                    modelName={model}
+                    onProceedTextOnly={warningModal.onProceedTextOnly}
+                    onRemoveAttachments={warningModal.onRemoveAttachments}
+                    onCancel={() => setWarningModal(null)}
+                />
+            )}
+
+            {/* Attached Files & Images Previews Bar */}
+            {attachedFiles.length > 0 && (
                 <div style={{ flexShrink: 0, display: 'flex', gap: '6px', padding: '6px', background: 'var(--background-secondary)', borderRadius: '6px', marginBottom: '6px', flexWrap: 'wrap' }}>
-                    {attachedImages.map((img, idx) => (
-                        <div key={idx} style={{ position: 'relative' }}>
-                            <img src={img} style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '4px' }} />
+                    {attachedFiles.map((file) => (
+                        <div key={file.id} style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'var(--background-primary)', border: '1px solid var(--background-modifier-border)', borderRadius: '4px', padding: '3px 8px', fontSize: '11px' }}>
+                            {file.type === 'image' && <img src={file.content} style={{ width: '20px', height: '20px', objectFit: 'cover', borderRadius: '2px' }} />}
+                            {file.type === 'text' && <span>📄</span>}
+                            {file.type === 'pdf' && <span>📕</span>}
+                            {file.type === 'audio' && <span>🎤</span>}
+                            {file.type === 'video' && <span>🎥</span>}
+                            <span style={{ fontWeight: 500, maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {file.name}
+                            </span>
+                            <span style={{ fontSize: '9px', opacity: 0.6 }}>({(file.sizeBytes / 1024).toFixed(0)}KB)</span>
                             <button 
-                                onClick={() => setAttachedImages(prev => prev.filter((_, i) => i !== idx))}
-                                style={{ position: 'absolute', top: '-4px', right: '-4px', background: 'var(--text-error, #ff5555)', color: '#fff', border: 'none', borderRadius: '50%', width: '16px', height: '16px', fontSize: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                onClick={() => {
+                                    setAttachedFiles(prev => prev.filter(f => f.id !== file.id));
+                                    if (file.type === 'image') {
+                                        setAttachedImages(prev => prev.filter(img => img !== file.content));
+                                    }
+                                }}
+                                style={{ background: 'transparent', color: 'var(--text-muted)', border: 'none', borderRadius: '50%', width: '14px', height: '14px', fontSize: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                             >
                                 ✕
                             </button>
@@ -1401,31 +1572,65 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                 </div>
             )}
 
+            {/* Audio Recording Active View */}
+            {isRecordingAudio && (
+                <div style={{ marginBottom: '6px' }}>
+                    <AudioRecorder
+                        onAudioCaptured={(audioDataUrl, durationSec) => {
+                            const id = Math.random().toString(36).substring(2, 9);
+                            const name = `audio_${durationSec}s.webm`;
+                            setAttachedFiles(prev => [...prev, { id, name, type: 'audio', content: audioDataUrl, sizeBytes: Math.round(audioDataUrl.length * 0.75) }]);
+                            setIsRecordingAudio(false);
+                        }}
+                        onCancel={() => setIsRecordingAudio(false)}
+                    />
+                </div>
+            )}
+
             {/* Bottom Query Input Box */}
             <div className="nei-chat-input-container">
                 <div style={{ display: 'flex', gap: '6px', alignItems: 'flex-end' }}>
                     <label 
                         title={t("attachTooltip", language)}
+                        aria-label={t("attachTooltip", language)}
                         style={{ padding: '8px 10px', background: 'var(--background-secondary)', border: '1px solid var(--background-modifier-border)', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', marginBottom: '2px' }}
                     >
                         📎
                         <input 
                             type="file" 
-                            accept="image/*,.txt,.md,.json,.js,.ts"
+                            accept="image/*,.txt,.md,.json,.js,.ts,.py,.css,.html,.csv,.yaml,.yml,.pdf,audio/*,video/*"
                             multiple
                             onChange={handleFileSelect}
                             style={{ display: 'none' }} 
                         />
                     </label>
 
+                    {(activeModelDetails?.capabilities?.audio || getDefaultModelCapabilities(model).supportsAudio) && (
+                        <button
+                            onClick={() => setIsRecordingAudio(!isRecordingAudio)}
+                            title="Record Audio Input"
+                            aria-label="Record Audio Input"
+                            style={{
+                                padding: '8px 10px',
+                                background: isRecordingAudio ? 'var(--text-error, #ff5555)' : 'var(--background-secondary)',
+                                color: isRecordingAudio ? '#fff' : 'var(--text-normal)',
+                                border: '1px solid var(--background-modifier-border)',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                fontSize: '14px',
+                                marginBottom: '2px'
+                            }}
+                        >
+                            🎤
+                        </button>
+                    )}
+
                     <textarea
+                        ref={textareaRef}
                         value={input}
                         onChange={(e) => {
                             setInput(e.target.value);
-                            const target = e.target as HTMLElement;
-                            target.setCssStyles({
-                                height: `${Math.min(target.scrollHeight, 280)}px`
-                            });
+                            adjustTextareaHeight();
                         }}
                         onKeyDown={(e) => {
                             if (e.key === 'Enter' && !e.shiftKey) {
@@ -1436,6 +1641,7 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                         placeholder={t("inputPlaceholder", language)}
                         disabled={loading}
                         rows={3}
+                        className="nei-chat-textarea"
                         style={{
                             flex: 1,
                             minHeight: '60px',
@@ -1445,7 +1651,7 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                             border: '1px solid var(--background-modifier-border)',
                             background: 'var(--background-primary)',
                             color: 'var(--text-normal)',
-                            resize: 'vertical',
+                            resize: 'none',
                             fontSize: '13px',
                             lineHeight: '1.4',
                             fontFamily: 'inherit'
@@ -1453,7 +1659,9 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                     />
                     <button
                         onClick={handleSendMessage}
-                        disabled={loading || (!input.trim() && attachedImages.length === 0)}
+                        disabled={loading || (!input.trim() && attachedFiles.length === 0)}
+                        title="Send Message"
+                        aria-label="Send Message"
                         style={{ padding: '0 14px', height: '60px', background: 'var(--interactive-accent)', color: 'var(--text-on-accent)', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', marginBottom: '2px' }}
                     >
                         {loading ? '...' : '➤'}

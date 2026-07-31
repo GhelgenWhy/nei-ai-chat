@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "node esbuild.config.mjs",
     "build": "tsc -noEmit && node esbuild.config.mjs production",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:ci": "vitest run",
+    "i18n:check": "node scripts/check-i18n.mjs"
   },
   "keywords": [],
   "author": "Ghelgen",

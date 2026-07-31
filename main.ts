@@ -67,6 +67,10 @@ export interface NeiAiChatSettings {
     // Auto-Learning
     enableAutoLearning: boolean;
     lastAutoLearnTimestamp: number;
+
+    // Attachments & Versioning
+    maxAttachmentSizeBytes: number;
+    settingsVersion: number;
 }
 
 const DEFAULT_SETTINGS: NeiAiChatSettings = {
@@ -144,7 +148,11 @@ const DEFAULT_SETTINGS: NeiAiChatSettings = {
 
     // Auto-Learning defaults (opt-in)
     enableAutoLearning: false,
-    lastAutoLearnTimestamp: 0
+    lastAutoLearnTimestamp: 0,
+
+    // Attachments & Versioning defaults
+    maxAttachmentSizeBytes: 512000, // 500 KB
+    settingsVersion: 1
 };
 
 export default class NeiAiChatPlugin extends Plugin {
@@ -205,7 +213,7 @@ export default class NeiAiChatPlugin extends Plugin {
     }
 
     async loadSettings() {
-        const loadedData = (await this.loadData()) as Partial<NeiAiChatSettings> | null;
+        const loadedData = (await this.loadData()) as Partial<NeiAiChatSettings> & { settingsVersion?: number } | null;
         if (loadedData?.apiKey && typeof (this.app.vault as unknown as { decrypt?: (s: string) => Promise<string> }).decrypt === 'function') {
             try {
                 loadedData.apiKey = await (this.app.vault as unknown as { decrypt: (s: string) => Promise<string> }).decrypt(loadedData.apiKey);
@@ -213,6 +221,15 @@ export default class NeiAiChatPlugin extends Plugin {
                 // corrupted or unencrypted fallback
             }
         }
+        
+        // Version migration v0 -> v1
+        if (loadedData && (!loadedData.settingsVersion || loadedData.settingsVersion < 1)) {
+            loadedData.settingsVersion = 1;
+            if (!loadedData.maxAttachmentSizeBytes) {
+                loadedData.maxAttachmentSizeBytes = DEFAULT_SETTINGS.maxAttachmentSizeBytes;
+            }
+        }
+
         this.settings = Object.assign({}, DEFAULT_SETTINGS, loadedData || {});
         if (!this.settings.customModels || this.settings.customModels.length === 0) {
             this.settings.customModels = DEFAULT_SETTINGS.customModels;

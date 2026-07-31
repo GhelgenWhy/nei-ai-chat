@@ -33,10 +33,12 @@
 - DuckDuckGo live search integration.
 - Direct web page scraping and raw GitHub README optimization.
 
-### 📐 Resizable & Ergonomic UI
-- Vertical resizable prompt textarea with auto-height adjustment.
-- Multimodal support: Attach images, `.txt`, `.md`, `.js`, `.ts`, `.json` files.
-- Thread management: Multiple chat sessions with index saved in `.nei/chats/`.
+### 📐 Premium UI & Multimodal Intelligence
+- **Pinned Model Capabilities Bar**: Sticky top bar showing model modalities (`Text`, `Vision`, `Audio`, `Video`, `PDF`) and live token consumption (`Tokens: 1.2k/128k`).
+- **Multimodal File Support**: Attach text files (`.txt, .md, .json, .js, .ts, .py, .css, .html, .csv, .yaml, .yml`), PDFs, images, and audio/video files with pre-send model compatibility validation.
+- **Audio Voice Input**: Built-in 🎤 voice recording tool utilizing native `MediaRecorder` API for audio-capable models.
+- **Jitter-Free Textarea**: Smooth auto-resizing input box with zero frame drops on large texts (50k+ characters).
+- **Thread & Session Management**: Save, view, and clear chat sessions stored in `.nei/chats/`.
 
 ---
 

@@ -1,5 +1,13 @@
 import { requestUrl } from "obsidian";
 
+export interface ModelCapabilities {
+    text: boolean;
+    vision: boolean;
+    audio: boolean;
+    video: boolean;
+    pdf: boolean;
+}
+
 export interface OpenRouterModelInfo {
     id: string;
     name: string;
@@ -7,6 +15,10 @@ export interface OpenRouterModelInfo {
     contextLength?: number;
     supportsTools: boolean;
     supportsVision: boolean;
+    supportsAudio: boolean;
+    supportsVideo: boolean;
+    supportsPdf: boolean;
+    capabilities: ModelCapabilities;
     pricing?: {
         prompt: string;
         completion: string;
@@ -37,6 +49,8 @@ interface RawModelItem {
     supported_parameters?: string[];
     architecture?: {
         modality?: string;
+        input_modalities?: string[];
+        output_modalities?: string[];
     };
     pricing?: {
         prompt: string;
@@ -121,10 +135,38 @@ export class OpenRouterService {
                 const supportedParams: string[] = item.supported_parameters || [];
                 const supportsTools = supportedParams.includes("tools") || supportedParams.includes("function_calling");
                 
-                let supportsVision = false;
-                if (item.architecture && item.architecture.modality) {
-                    supportsVision = item.architecture.modality.includes("multimodal") || item.architecture.modality.includes("image");
+                const modalityStr = (item.architecture?.modality || "").toLowerCase();
+                const inputs = (item.architecture?.input_modalities || []).map(m => m.toLowerCase());
+                const modelIdLower = item.id.toLowerCase();
+
+                let supportsVision = modalityStr.includes("multimodal") || modalityStr.includes("image") || inputs.includes("image");
+                let supportsAudio = modalityStr.includes("audio") || inputs.includes("audio");
+                let supportsVideo = modalityStr.includes("video") || inputs.includes("video");
+                let supportsPdf = true; // All models support text/pdf text injection; vision pdf supported if vision is true
+
+                // Model ID specific heuristics fallback
+                if (modelIdLower.includes("gemini")) {
+                    supportsVision = true;
+                    if (modelIdLower.includes("flash") || modelIdLower.includes("pro")) {
+                        supportsAudio = true;
+                        supportsVideo = true;
+                    }
+                } else if (modelIdLower.includes("gpt-4o")) {
+                    supportsVision = true;
+                    if (!modelIdLower.includes("mini")) {
+                        supportsAudio = true;
+                    }
+                } else if (modelIdLower.includes("claude-3")) {
+                    supportsVision = true;
                 }
+
+                const capabilities: ModelCapabilities = {
+                    text: true,
+                    vision: supportsVision,
+                    audio: supportsAudio,
+                    video: supportsVideo,
+                    pdf: supportsPdf
+                };
 
                 const info: OpenRouterModelInfo = {
                     id: item.id,
@@ -133,6 +175,10 @@ export class OpenRouterService {
                     contextLength: item.context_length,
                     supportsTools,
                     supportsVision,
+                    supportsAudio,
+                    supportsVideo,
+                    supportsPdf,
+                    capabilities,
                     pricing: item.pricing ? {
                         prompt: item.pricing.prompt,
                         completion: item.pricing.completion
@@ -159,6 +205,34 @@ export class OpenRouterService {
             return this.cachedModels.get(modelId) || null;
         }
         const models = await this.fetchModels(apiKey);
-        return models.find(m => m.id === modelId) || null;
+        const found = models.find(m => m.id === modelId);
+        return found || getDefaultModelCapabilities(modelId);
     }
 }
+
+export function getDefaultModelCapabilities(modelId: string): OpenRouterModelInfo {
+    const lower = (modelId || "").toLowerCase();
+    const supportsVision = lower.includes("gemini") || lower.includes("gpt-4o") || lower.includes("claude-3") || lower.includes("vision");
+    const supportsAudio = lower.includes("gemini-2.5") || lower.includes("gemini-1.5") || (lower.includes("gpt-4o") && !lower.includes("mini")) || lower.includes("whisper") || lower.includes("audio");
+    const supportsVideo = lower.includes("gemini");
+    const supportsPdf = true;
+    const supportsTools = true;
+
+    return {
+        id: modelId,
+        name: modelId,
+        supportsTools,
+        supportsVision,
+        supportsAudio,
+        supportsVideo,
+        supportsPdf,
+        capabilities: {
+            text: true,
+            vision: supportsVision,
+            audio: supportsAudio,
+            video: supportsVideo,
+            pdf: supportsPdf
+        }
+    };
+}
+

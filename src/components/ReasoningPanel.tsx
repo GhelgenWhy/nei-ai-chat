@@ -17,7 +17,7 @@ interface ReasoningPanelProps {
     onToggle: () => void;
 }
 
-export const ReasoningPanel: React.FC<ReasoningPanelProps> = ({ steps, language, isExpanded, onToggle }) => {
+export const ReasoningPanel: React.FC<ReasoningPanelProps> = React.memo(({ steps, language, isExpanded, onToggle }) => {
     if (steps.length === 0) return null;
 
     const getStepIcon = (type: string, status: string) => {
@@ -142,4 +142,6 @@ export const ReasoningPanel: React.FC<ReasoningPanelProps> = ({ steps, language,
             )}
         </div>
     );
-};
+});
+
+ReasoningPanel.displayName = 'ReasoningPanel';
