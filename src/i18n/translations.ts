@@ -100,7 +100,6 @@ export interface Translations {
     agentWantsExecute: string;
     allowBtn: string;
 
-    // Agent & Router Keys
     folderPrefetchTitle: string;
     folderPrefetchDetail: string;
     autoIndexedVaultNotes: string;
@@ -277,6 +276,9 @@ export interface Translations {
     pressureWeightDesc: string;
     learnedBiasEnabledLabel: string;
     learnedBiasEnabledDesc: string;
+
+    stopBtn: string;
+    stopGeneration: string;
 }
 
 const baseEn: Translations = {
@@ -489,7 +491,7 @@ const baseEn: Translations = {
 
     enableAutoLearningLabel: "Enable auto-learning:",
     enableAutoLearningDesc: "Automatically extract facts and patterns from conversations to enrich long-term memory.",
-    learningProposalTitle: "\ud83e\udde0 Insights extracted from this conversation",
+    learningProposalTitle: "🧠 Insights extracted from this conversation",
     learningProposalFacts: "Discovered facts:",
     learningProposalSkills: "Skill ideas:",
     learningApplied: "Learning applied to memory!",
@@ -546,7 +548,10 @@ const baseEn: Translations = {
     pressureWeightLabel: "Context pressure penalty weight:",
     pressureWeightDesc: "Penalty favoring Quick mode when context window is >70% full.",
     learnedBiasEnabledLabel: "Enable learned user preference bias:",
-    learnedBiasEnabledDesc: "Learn and apply user mode overrides for similar query types."
+    learnedBiasEnabledDesc: "Learn and apply user mode overrides for similar query types.",
+
+    stopBtn: "Stop",
+    stopGeneration: "Stop generation",
 };
 
 const baseRu: Translations = {
@@ -595,6 +600,10 @@ const baseRu: Translations = {
     moveTab: "↗️ Вкладка",
     moveSidebarTitle: "Переместить чат в боковую панель",
     moveTabTitle: "Переместить чат на главную вкладку",
+
+    stopBtn: "Стоп",
+    stopGeneration: "Остановить генерация",
+
     modelCategories: "Категории моделей (Мультимодальность):",
     primaryModel: "1. Текст и инструменты (Primary):",
     visionModel: "2. Файлы и фото (Vision):",
@@ -775,7 +784,7 @@ const baseRu: Translations = {
 
     enableAutoLearningLabel: "Включить авто-обучение:",
     enableAutoLearningDesc: "Автоматически извлекать факты и паттерны из диалогов для обогащения долгосрочной памяти.",
-    learningProposalTitle: "\ud83e\udde0 Извлечено из этого диалога",
+    learningProposalTitle: "🧠 Извлечено из этого диалога",
     learningProposalFacts: "Обнаруженные факты:",
     learningProposalSkills: "Идеи скиллов:",
     learningApplied: "Знания сохранены в память!",
@@ -813,10 +822,10 @@ const baseRu: Translations = {
     welcomeStep4Title: "Персональные скиллы и MCP инструменты",
     welcomeStep4Desc: "Расширяйте возможности агента собственными markdown скиллами и внешними MCP серверами.",
     startTour: "Начать тур",
-    skip: "Пропустить",
-    next: "Далее",
-    back: "Назад"
-};
+        skip: "Пропустить",
+        next: "Далее",
+        back: "Назад"
+    };
 
 export const translations: Record<string, Translations> = {
     ru: baseRu,

@@ -1,3 +1,5 @@
+import { requestUrl } from "obsidian";
+
 export interface EmbeddingProvider {
     name: string;
     dimension: number;
@@ -5,26 +7,13 @@ export interface EmbeddingProvider {
 }
 
 async function httpPostJson(url: string, body: Record<string, unknown>, headers: Record<string, string> = {}): Promise<Record<string, unknown>> {
-    if (typeof fetch === 'function') {
-        const res = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', ...headers },
-            body: JSON.stringify(body)
-        });
-        return (await res.json()) as Record<string, unknown>;
-    }
-    try {
-        const obsidian = await import("obsidian");
-        const res = await obsidian.requestUrl({
-            url,
-            method: "POST",
-            headers: { 'Content-Type': 'application/json', ...headers },
-            body: JSON.stringify(body)
-        });
-        return res.json as Record<string, unknown>;
-    } catch {
-        throw new Error("HTTP request failed");
-    }
+    const res = await requestUrl({
+        url,
+        method: "POST",
+        headers: { 'Content-Type': 'application/json', ...headers },
+        body: JSON.stringify(body)
+    });
+    return res.json as Record<string, unknown>;
 }
 
 export class OllamaEmbeddingProvider implements EmbeddingProvider {

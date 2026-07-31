@@ -370,11 +370,11 @@ function findFile(app: App, rawPath: string): TFile | null {
     const cleanLower = cleanPath.toLowerCase();
 
     // Direct match
-    let matched = files.find(f => 
-        f.basename.toLowerCase() === cleanLower || 
+    let matched: TFile | null = files.find(f =>
+        f.basename.toLowerCase() === cleanLower ||
         f.path.toLowerCase() === cleanLower ||
         f.path.toLowerCase().endsWith("/" + cleanLower)
-    );
+    ) || null;
     if (matched) return matched;
 
     // Multi-strategy date variants match (FUNC-02)
@@ -383,10 +383,10 @@ function findFile(app: App, rawPath: string): TFile | null {
         matched = files.find(f => {
             const baseLower = f.basename.toLowerCase();
             return dateVariants.some(variant => baseLower.includes(variant));
-        });
+        }) || null;
     }
 
-    return matched || null;
+    return matched;
 }
 
 function findFolder(app: App, rawPath: string): TFolder | null {

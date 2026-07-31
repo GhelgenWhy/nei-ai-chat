@@ -4,7 +4,7 @@ import { ChatMessage, getModelTemporalInfo } from "../services/llm";
 import { AgentLoop, AgentStep } from "../services/agent/agentLoop";
 import { ChatStore, ChatSession } from "../services/chat/chatStore";
 import { OpenRouterService, OpenRouterModelInfo, OpenRouterKeyInfo, getDefaultModelCapabilities } from "../services/openrouter";
-import { IntentRouter, ExecutionMode } from "../services/agent/intentRouter";
+import { ExecutionMode } from "../services/agent/intentRouter";
 import { t, SupportedLanguage } from "../i18n/translations";
 import { NeiAiChatSettings } from "../../main";
 import { ToolRegistry } from "../services/tools/toolRegistry";
@@ -15,9 +15,8 @@ import { ReasoningPanel } from "./ReasoningPanel";
 import { ModelCapabilityBar } from "./ModelCapabilityBar";
 import { AudioRecorder } from "./AudioRecorder";
 import { CapabilityWarningModal } from "./CapabilityWarningModal";
-import { formatTokenCount, formatCost, calculateCost, ModelPricing } from "../utils/cost";
+import { calculateCost, formatTokenCount, formatCost, ModelPricing } from "../utils/cost";
 import { AutoLearner, LearningProposal } from "../services/memory/autoLearner";
-import { MemoryStore } from "../services/memory/memoryStore";
 
 export interface AttachedFile {
     id: string;
@@ -107,7 +106,7 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
 
     const adjustTextareaHeight = React.useCallback(() => {
         if (!textareaRef.current) return;
-        requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
             const el = textareaRef.current;
             if (!el) return;
             el.style.height = 'auto';
@@ -118,6 +117,7 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
 
     const [executionMode, setExecutionMode] = React.useState<ExecutionMode>(settings.executionMode || "auto");
     const [loading, setLoading] = React.useState(false);
+    const [abortController, setAbortController] = React.useState<AbortController | null>(null);
     const [activeSteps, setActiveSteps] = React.useState<AgentStep[]>([]);
     const [showSessionsDrawer, setShowSessionsDrawer] = React.useState(false);
     const [showConfig, setShowConfig] = React.useState(false);
@@ -496,6 +496,10 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
         setEditingMsgIdx(null);
         setStreamingContent("");
 
+        // Create abort controller for interruption
+        const abortController = new AbortController();
+        setAbortController(abortController);
+
         const currentImages = imagesPayload || attachedImages;
         const userMsg: ChatMessage = { 
             role: "user", 
@@ -544,6 +548,7 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                 onStreamChunk: (chunk) => {
                     setStreamingContent(prev => prev + chunk);
                 },
+                abortSignal: abortController.signal,
                 toolRegistry,
                 language,
                 settings
@@ -648,6 +653,12 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
 
     const handleSendMessage = () => {
         if ((!input.trim() && attachedFiles.length === 0) || loading) return;
+
+        // If already loading, this acts as interrupt
+        if (loading && abortController) {
+            abortController.abort();
+            return;
+        }
 
         // Model capability validation before send (FUNC-05)
         const modelCaps = activeModelDetails?.capabilities || getDefaultModelCapabilities(model).capabilities;
@@ -782,9 +793,21 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                         title={t("historyTooltip", language)}
                         aria-label={t("historyTooltip", language)}
                         className="nei-header-btn"
-                        style={{ maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                        style={{ 
+                            maxWidth: '200px', 
+                            minWidth: '120px',
+                            padding: '4px 10px',
+                            overflow: 'hidden', 
+                            textOverflow: 'ellipsis', 
+                            whiteSpace: 'nowrap',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            flex: 1
+                        }}
                     >
-                        📂 {formatSessionTitle(currentSession.title)} ▼
+                        <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>📂 {formatSessionTitle(currentSession.title)}</span>
+                        <span style={{ flexShrink: 0 }}>▼</span>
                     </button>
 
                     <button 
@@ -1508,6 +1531,13 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                                 <span>{t("agentRunning", language)}</span>
                             </div>
                         )}
+                        <button 
+                            onClick={() => abortController?.abort()}
+                            title={t("stopGeneration", language)}
+                            style={{ alignSelf: 'flex-end', marginTop: '4px', padding: '2px 8px', fontSize: '11px', background: 'var(--background-modifier-error-hover, #ff444433)', border: '1px solid var(--text-error, #ff5555)', borderRadius: '4px', cursor: 'pointer', color: 'var(--text-error, #ff5555)' }}
+                        >
+                            {t("stopBtn", language)}
+                        </button>
                     </div>
                 )}
 

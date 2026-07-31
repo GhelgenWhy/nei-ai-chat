@@ -1,29 +1,14 @@
 import { ToolDefinition, ToolCall } from "./tools/types";
+import { requestUrl } from "obsidian";
 
 async function performPostRequest(
-    url: string, 
-    headers: Record<string, string>, 
-    bodyStr: string
+    url: string,
+    headers: Record<string, string>,
+    bodyStr: string,
+    signal?: AbortSignal
 ): Promise<{ status: number; text: string; json: Record<string, unknown> }> {
-    if (typeof fetch === 'function') {
-        const res = await fetch(url, { method: "POST", headers, body: bodyStr });
-        const text = await res.text();
-        let json: Record<string, unknown> = {};
-        try {
-            json = JSON.parse(text) as Record<string, unknown>;
-        } catch {
-            /* ignore JSON parse error */
-        }
-        return { status: res.status, text, json };
-    }
-    try {
-        const obsidian = await import("obsidian");
-        const res = await obsidian.requestUrl({ url, method: "POST", headers, body: bodyStr });
-        return { status: res.status, text: res.text, json: res.json as Record<string, unknown> };
-    } catch (e) {
-        console.error("[NEI] Obsidian requestUrl failed:", e);
-        throw new Error("HTTP POST request failed: both fetch and obsidian.requestUrl unavailable");
-    }
+    const res = await requestUrl({ url, method: "POST", headers, body: bodyStr });
+    return { status: res.status, text: res.text, json: res.json as Record<string, unknown> };
 }
 
 export interface ChatMessage {
@@ -70,20 +55,21 @@ export {
 export async function sendChatRequest(
     config: LlmConfig,
     messages: ChatMessage[],
-    tools?: ToolDefinition[]
+    tools?: ToolDefinition[],
+    signal?: AbortSignal
 ): Promise<LlmResponse> {
     const url = config.endpointUrl.endsWith('/')
         ? `${config.endpointUrl}chat/completions`
         : `${config.endpointUrl}/chat/completions`;
-        
+       
     const headers: Record<string, string> = {
         "Content-Type": "application/json"
     };
-    
+   
     if (config.apiKey && config.provider !== 'ollama') {
         headers["Authorization"] = `Bearer ${config.apiKey}`;
     }
-    
+   
     if (config.provider === 'openrouter') {
         headers["HTTP-Referer"] = "https://github.com/GhelgenWhy/NEI";
         headers["X-Title"] = "NEI AI Assistant Obsidian Plugin";
@@ -126,7 +112,7 @@ export async function sendChatRequest(
         body.tool_choice = "auto";
     }
 
-    const response = await performPostRequest(url, headers, JSON.stringify(body));
+    const response = await performPostRequest(url, headers, JSON.stringify(body), signal);
 
     if (response.status < 200 || response.status >= 300) {
         const errorText = response.text || "";
@@ -201,20 +187,21 @@ export async function sendChatRequestStream(
     config: LlmConfig,
     messages: ChatMessage[],
     tools?: ToolDefinition[],
-    onChunk?: (chunk: string) => void
+    onChunk?: (chunk: string) => void,
+    signal?: AbortSignal
 ): Promise<LlmResponse> {
     const url = config.endpointUrl.endsWith('/')
         ? `${config.endpointUrl}chat/completions`
         : `${config.endpointUrl}/chat/completions`;
-        
+       
     const headers: Record<string, string> = {
         "Content-Type": "application/json"
     };
-    
+   
     if (config.apiKey && config.provider !== 'ollama') {
         headers["Authorization"] = `Bearer ${config.apiKey}`;
     }
-    
+   
     if (config.provider === 'openrouter') {
         headers["HTTP-Referer"] = "https://github.com/GhelgenWhy/NEI";
         headers["X-Title"] = "NEI AI Assistant Obsidian Plugin";
@@ -254,67 +241,66 @@ export async function sendChatRequestStream(
     }
 
     try {
-        if (typeof fetch === 'function') {
-            const res = await fetch(url, {
-                method: 'POST',
-                headers,
-                body: JSON.stringify(body)
-            });
+        const res = await requestUrl({
+            url,
+            method: "POST",
+            headers,
+            body: JSON.stringify(body)
+        });
 
-            if (!res.ok) {
-                return sendChatRequest(config, messages, tools);
-            }
+        if (res.status < 200 || res.status >= 300) {
+            return sendChatRequest(config, messages, tools, signal);
+        }
 
-            const reader = res.body?.getReader();
-            if (!reader) {
-                return sendChatRequest(config, messages, tools);
-            }
+        const reader = (res as any).body?.getReader();
+        if (!reader) {
+            return sendChatRequest(config, messages, tools, signal);
+        }
 
-            const decoder = new TextDecoder();
-            let accumulatedContent = "";
-            let buffer = "";
+        const decoder = new TextDecoder();
+        let accumulatedContent = "";
+        let buffer = "";
 
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-                buffer += decoder.decode(value, { stream: true });
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
 
-                const lines = buffer.split("\n");
-                buffer = lines.pop() || "";
+            const lines = buffer.split("\n");
+            buffer = lines.pop() || "";
 
-                for (const line of lines) {
-                    const trimmed = line.trim();
-                    if (!trimmed || trimmed.startsWith(":")) continue;
-                    if (trimmed.startsWith("data: ")) {
-                        const dataStr = trimmed.slice(6);
-                        if (dataStr === "[DONE]") break;
-                        try {
-                            const parsed = JSON.parse(dataStr) as {
-                                choices?: Array<{
-                                    delta?: { content?: string };
-                                }>;
-                            };
-                            const delta = parsed.choices?.[0]?.delta?.content;
-                            if (delta) {
-                                accumulatedContent += delta;
-                                if (onChunk) onChunk(delta);
-                            }
-                        } catch {
-                            /* ignore chunk JSON parse error */
+            for (const line of lines) {
+                const trimmed = line.trim();
+                if (!trimmed || trimmed.startsWith(":")) continue;
+                if (trimmed.startsWith("data: ")) {
+                    const dataStr = trimmed.slice(6);
+                    if (dataStr === "[DONE]") break;
+                    try {
+                        const parsed = JSON.parse(dataStr) as {
+                            choices?: Array<{
+                                delta?: { content?: string };
+                            }>;
+                        };
+                        const delta = parsed.choices?.[0]?.delta?.content;
+                        if (delta) {
+                            accumulatedContent += delta;
+                            if (onChunk) onChunk(delta);
                         }
+                    } catch {
+                        /* ignore chunk JSON parse error */
                     }
                 }
             }
+        }
 
-            if (accumulatedContent) {
-                return { content: accumulatedContent };
-            }
+        if (accumulatedContent) {
+            return { content: accumulatedContent };
         }
     } catch {
         /* fallback to standard non-streaming request */
     }
 
-    const fallbackRes = await sendChatRequest(config, messages, tools);
+    const fallbackRes = await sendChatRequest(config, messages, tools, signal);
     if (fallbackRes.content && onChunk) {
         onChunk(fallbackRes.content);
     }

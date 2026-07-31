@@ -23568,15 +23568,15 @@ var require_client = __commonJS({
 function getNoteSavePath(settings, requestedPath) {
   const defaultFolder = settings.defaultNoteFolder.trim();
   if (defaultFolder && !requestedPath.startsWith(defaultFolder + "/")) {
-    return (0, import_obsidian.normalizePath)(`${defaultFolder}/${requestedPath}`);
+    return (0, import_obsidian2.normalizePath)(`${defaultFolder}/${requestedPath}`);
   }
-  return (0, import_obsidian.normalizePath)(requestedPath);
+  return (0, import_obsidian2.normalizePath)(requestedPath);
 }
-var import_obsidian;
+var import_obsidian2;
 var init_pathUtils = __esm({
   "src/utils/pathUtils.ts"() {
     "use strict";
-    import_obsidian = require("obsidian");
+    import_obsidian2 = require("obsidian");
   }
 });
 
@@ -23655,7 +23655,7 @@ function generateDateVariants(input) {
   return Array.from(variants);
 }
 function findFile(app, rawPath) {
-  let cleanPath = (0, import_obsidian2.normalizePath)(rawPath.trim());
+  let cleanPath = (0, import_obsidian3.normalizePath)(rawPath.trim());
   if (!cleanPath.endsWith(".md")) {
     const fileWithMd = app.vault.getFileByPath(cleanPath + ".md");
     if (fileWithMd)
@@ -23668,7 +23668,7 @@ function findFile(app, rawPath) {
   const cleanLower = cleanPath.toLowerCase();
   let matched = files.find(
     (f) => f.basename.toLowerCase() === cleanLower || f.path.toLowerCase() === cleanLower || f.path.toLowerCase().endsWith("/" + cleanLower)
-  );
+  ) || null;
   if (matched)
     return matched;
   const dateVariants = generateDateVariants(cleanPath).map((v) => v.toLowerCase());
@@ -23676,26 +23676,26 @@ function findFile(app, rawPath) {
     matched = files.find((f) => {
       const baseLower = f.basename.toLowerCase();
       return dateVariants.some((variant) => baseLower.includes(variant));
-    });
+    }) || null;
   }
-  return matched || null;
+  return matched;
 }
 function findFolder(app, rawPath) {
-  let cleanPath = (0, import_obsidian2.normalizePath)(rawPath.trim());
+  let cleanPath = (0, import_obsidian3.normalizePath)(rawPath.trim());
   if (!cleanPath || cleanPath === "/" || cleanPath === ".") {
     return app.vault.getRoot();
   }
   const folder = app.vault.getFolderByPath(cleanPath);
   if (folder)
     return folder;
-  const allFolders = app.vault.getAllLoadedFiles().filter((f) => f instanceof import_obsidian2.TFolder);
+  const allFolders = app.vault.getAllLoadedFiles().filter((f) => f instanceof import_obsidian3.TFolder);
   const matched = allFolders.find(
     (f) => f.name.toLowerCase() === cleanPath.toLowerCase() || f.path.toLowerCase() === cleanPath.toLowerCase() || f.path.toLowerCase().endsWith("/" + cleanPath.toLowerCase())
   );
   return matched || null;
 }
 async function ensureFolderExists(app, folderPath) {
-  const cleanPath = (0, import_obsidian2.normalizePath)(folderPath.trim());
+  const cleanPath = (0, import_obsidian3.normalizePath)(folderPath.trim());
   if (!cleanPath || cleanPath === "." || cleanPath === "/")
     return;
   const parts = cleanPath.split("/").filter(Boolean);
@@ -23711,11 +23711,11 @@ async function ensureFolderExists(app, folderPath) {
     }
   }
 }
-var import_obsidian2, vaultToolDefinitions, vaultExecutors;
+var import_obsidian3, vaultToolDefinitions, vaultExecutors;
 var init_vaultTools = __esm({
   "src/services/tools/vaultTools.ts"() {
     "use strict";
-    import_obsidian2 = require("obsidian");
+    import_obsidian3 = require("obsidian");
     init_pathUtils();
     vaultToolDefinitions = [
       {
@@ -24040,9 +24040,9 @@ ${content}`);
         const markdownFiles = [];
         const collectFiles = (f) => {
           for (const child of f.children) {
-            if (child instanceof import_obsidian2.TFile && child.extension === "md") {
+            if (child instanceof import_obsidian3.TFile && child.extension === "md") {
               markdownFiles.push(child);
-            } else if (child instanceof import_obsidian2.TFolder) {
+            } else if (child instanceof import_obsidian3.TFolder) {
               collectFiles(child);
             }
           }
@@ -24073,7 +24073,7 @@ ${content}
       create_note: async (app, rawArgs, plugin) => {
         const args = rawArgs;
         let path = getNoteSavePath(plugin.settings, args.path);
-        const normalized = (0, import_obsidian2.normalizePath)(path);
+        const normalized = (0, import_obsidian3.normalizePath)(path);
         if (normalized.includes("..") || normalized.startsWith("/") || normalized.startsWith("\\")) {
           return "\u041E\u0448\u0438\u0431\u043A\u0430: \u041D\u0435\u0434\u043E\u043F\u0443\u0441\u0442\u0438\u043C\u044B\u0439 \u043F\u0443\u0442\u044C (path traversal \u0437\u0430\u0449\u0438\u0442\u0430)";
         }
@@ -24122,7 +24122,7 @@ ${content}
         const file = findFile(app, args.oldPath);
         if (!file)
           return `\u041E\u0448\u0438\u0431\u043A\u0430: \u0424\u0430\u0439\u043B '${args.oldPath}' \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D.`;
-        let targetPath = (0, import_obsidian2.normalizePath)(args.newPath);
+        let targetPath = (0, import_obsidian3.normalizePath)(args.newPath);
         if (!targetPath.endsWith(".md"))
           targetPath += ".md";
         try {
@@ -24155,7 +24155,7 @@ ${content}
         const items = [];
         const collect = (f, prefix = "") => {
           for (const child of f.children) {
-            const isDir = child instanceof import_obsidian2.TFolder;
+            const isDir = child instanceof import_obsidian3.TFolder;
             items.push(`${prefix}- ${isDir ? "\u{1F4C1} \u041F\u0430\u043F\u043A\u0430" : "\u{1F4C4} \u0424\u0430\u0439\u043B"}: ${child.path}`);
             if (isDir && args.recursive) {
               collect(child, prefix + "  ");
@@ -25356,16 +25356,19 @@ __export(main_exports, {
   default: () => NeiAiChatPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian14 = require("obsidian");
+var import_obsidian16 = require("obsidian");
 
 // src/views/ChatView.ts
-var import_obsidian11 = require("obsidian");
+var import_obsidian13 = require("obsidian");
 var React8 = __toESM(require_react());
 var ReactDOM = __toESM(require_client());
 
 // src/components/ChatPanel.tsx
 var React7 = __toESM(require_react());
-var import_obsidian10 = require("obsidian");
+var import_obsidian12 = require("obsidian");
+
+// src/services/llm.ts
+var import_obsidian = require("obsidian");
 
 // src/services/modelRegistry.ts
 var MODEL_TEMPORAL_REGISTRY = {
@@ -25425,27 +25428,11 @@ function isQueryLikelyStale(query, modelId) {
 }
 
 // src/services/llm.ts
-async function performPostRequest(url, headers, bodyStr) {
-  if (typeof fetch === "function") {
-    const res = await fetch(url, { method: "POST", headers, body: bodyStr });
-    const text = await res.text();
-    let json = {};
-    try {
-      json = JSON.parse(text);
-    } catch {
-    }
-    return { status: res.status, text, json };
-  }
-  try {
-    const obsidian = await import("obsidian");
-    const res = await obsidian.requestUrl({ url, method: "POST", headers, body: bodyStr });
-    return { status: res.status, text: res.text, json: res.json };
-  } catch (e) {
-    console.error("[NEI] Obsidian requestUrl failed:", e);
-    throw new Error("HTTP POST request failed: both fetch and obsidian.requestUrl unavailable");
-  }
+async function performPostRequest(url, headers, bodyStr, signal) {
+  const res = await (0, import_obsidian.requestUrl)({ url, method: "POST", headers, body: bodyStr });
+  return { status: res.status, text: res.text, json: res.json };
 }
-async function sendChatRequest(config, messages, tools) {
+async function sendChatRequest(config, messages, tools, signal) {
   const url = config.endpointUrl.endsWith("/") ? `${config.endpointUrl}chat/completions` : `${config.endpointUrl}/chat/completions`;
   const headers = {
     "Content-Type": "application/json"
@@ -25488,7 +25475,7 @@ async function sendChatRequest(config, messages, tools) {
     body.tools = tools;
     body.tool_choice = "auto";
   }
-  const response = await performPostRequest(url, headers, JSON.stringify(body));
+  const response = await performPostRequest(url, headers, JSON.stringify(body), signal);
   if (response.status < 200 || response.status >= 300) {
     const errorText = response.text || "";
     let userFriendlyMsg = `\u041E\u0448\u0438\u0431\u043A\u0430 \u0418\u0418 (${response.status}): ${errorText}`;
@@ -25531,7 +25518,7 @@ async function sendChatRequest(config, messages, tools) {
     usage
   };
 }
-async function sendChatRequestStream(config, messages, tools, onChunk) {
+async function sendChatRequestStream(config, messages, tools, onChunk, signal) {
   const url = config.endpointUrl.endsWith("/") ? `${config.endpointUrl}chat/completions` : `${config.endpointUrl}/chat/completions`;
   const headers = {
     "Content-Type": "application/json"
@@ -25573,57 +25560,56 @@ async function sendChatRequestStream(config, messages, tools, onChunk) {
     body.tool_choice = "auto";
   }
   try {
-    if (typeof fetch === "function") {
-      const res = await fetch(url, {
-        method: "POST",
-        headers,
-        body: JSON.stringify(body)
-      });
-      if (!res.ok) {
-        return sendChatRequest(config, messages, tools);
-      }
-      const reader = res.body?.getReader();
-      if (!reader) {
-        return sendChatRequest(config, messages, tools);
-      }
-      const decoder = new TextDecoder();
-      let accumulatedContent = "";
-      let buffer = "";
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done)
-          break;
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n");
-        buffer = lines.pop() || "";
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (!trimmed || trimmed.startsWith(":"))
-            continue;
-          if (trimmed.startsWith("data: ")) {
-            const dataStr = trimmed.slice(6);
-            if (dataStr === "[DONE]")
-              break;
-            try {
-              const parsed = JSON.parse(dataStr);
-              const delta = parsed.choices?.[0]?.delta?.content;
-              if (delta) {
-                accumulatedContent += delta;
-                if (onChunk)
-                  onChunk(delta);
-              }
-            } catch {
+    const res = await (0, import_obsidian.requestUrl)({
+      url,
+      method: "POST",
+      headers,
+      body: JSON.stringify(body)
+    });
+    if (res.status < 200 || res.status >= 300) {
+      return sendChatRequest(config, messages, tools, signal);
+    }
+    const reader = res.body?.getReader();
+    if (!reader) {
+      return sendChatRequest(config, messages, tools, signal);
+    }
+    const decoder = new TextDecoder();
+    let accumulatedContent = "";
+    let buffer = "";
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done)
+        break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || "";
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith(":"))
+          continue;
+        if (trimmed.startsWith("data: ")) {
+          const dataStr = trimmed.slice(6);
+          if (dataStr === "[DONE]")
+            break;
+          try {
+            const parsed = JSON.parse(dataStr);
+            const delta = parsed.choices?.[0]?.delta?.content;
+            if (delta) {
+              accumulatedContent += delta;
+              if (onChunk)
+                onChunk(delta);
             }
+          } catch {
           }
         }
       }
-      if (accumulatedContent) {
-        return { content: accumulatedContent };
-      }
+    }
+    if (accumulatedContent) {
+      return { content: accumulatedContent };
     }
   } catch {
   }
-  const fallbackRes = await sendChatRequest(config, messages, tools);
+  const fallbackRes = await sendChatRequest(config, messages, tools, signal);
   if (fallbackRes.content && onChunk) {
     onChunk(fallbackRes.content);
   }
@@ -25631,7 +25617,7 @@ async function sendChatRequestStream(config, messages, tools, onChunk) {
 }
 
 // src/services/memory/memoryStore.ts
-var import_obsidian3 = require("obsidian");
+var import_obsidian4 = require("obsidian");
 var DEFAULT_MEMORY = {
   userPreferences: {},
   projectContexts: {},
@@ -25655,7 +25641,7 @@ var MemoryStore = class {
     try {
       const memoryPath = this.getMemoryPath(settings);
       const file = app.vault.getAbstractFileByPath(memoryPath);
-      if (file instanceof import_obsidian3.TFile) {
+      if (file instanceof import_obsidian4.TFile) {
         const content = await app.vault.read(file);
         const parsed = JSON.parse(content);
         return Object.assign({}, DEFAULT_MEMORY, parsed);
@@ -25676,7 +25662,7 @@ var MemoryStore = class {
         await this.ensureFolder(app, parts.join("/"));
       }
       const file = app.vault.getAbstractFileByPath(memoryPath);
-      if (file instanceof import_obsidian3.TFile) {
+      if (file instanceof import_obsidian4.TFile) {
         await app.vault.modify(file, content);
       } else {
         await app.vault.create(memoryPath, content);
@@ -25696,7 +25682,7 @@ var MemoryStore = class {
     try {
       const rulesPath = this.getAgentsRulesPath(settings);
       const file = app.vault.getAbstractFileByPath(rulesPath);
-      if (file instanceof import_obsidian3.TFile) {
+      if (file instanceof import_obsidian4.TFile) {
         return await app.vault.read(file);
       }
     } catch {
@@ -25704,7 +25690,7 @@ var MemoryStore = class {
     return "";
   }
   static async ensureFolder(app, path) {
-    const normalized = (0, import_obsidian3.normalizePath)(path);
+    const normalized = (0, import_obsidian4.normalizePath)(path);
     const folder = app.vault.getAbstractFileByPath(normalized);
     if (!folder) {
       await app.vault.createFolder(normalized);
@@ -25737,7 +25723,7 @@ ${instructions}`;
 };
 
 // src/services/skills/skillsLoader.ts
-var import_obsidian4 = require("obsidian");
+var import_obsidian5 = require("obsidian");
 var SkillsLoader = class {
   static getSkillsRoot(settings) {
     return settings.skillsFolder || ".nei/skills";
@@ -25746,13 +25732,13 @@ var SkillsLoader = class {
     const skills = [];
     const rootPath = this.getSkillsRoot(settings);
     const root = app.vault.getAbstractFileByPath(rootPath);
-    if (!(root instanceof import_obsidian4.TFolder)) {
+    if (!(root instanceof import_obsidian5.TFolder)) {
       return skills;
     }
     for (const child of root.children) {
-      if (child instanceof import_obsidian4.TFolder) {
+      if (child instanceof import_obsidian5.TFolder) {
         const skillFile = app.vault.getAbstractFileByPath(`${child.path}/SKILL.md`);
-        if (skillFile instanceof import_obsidian4.TFile) {
+        if (skillFile instanceof import_obsidian5.TFile) {
           try {
             const content = await app.vault.read(skillFile);
             const parsed = this.parseSkillMarkdown(content, child.name, skillFile.path);
@@ -25791,10 +25777,10 @@ var SkillsLoader = class {
 };
 
 // src/services/context.ts
-var import_obsidian6 = require("obsidian");
+var import_obsidian7 = require("obsidian");
 
 // src/services/rag.ts
-var import_obsidian5 = require("obsidian");
+var import_obsidian6 = require("obsidian");
 var STOP_WORDS = /* @__PURE__ */ new Set([
   // Russian
   "\u0438",
@@ -25957,7 +25943,7 @@ async function resolveContext(app, query, useRag, limitRag = 3) {
   const activeFile = app.workspace.getActiveFile();
   let activeNoteTitle = "";
   let activeNoteContent = "";
-  if (activeFile instanceof import_obsidian6.TFile) {
+  if (activeFile instanceof import_obsidian7.TFile) {
     activeNoteTitle = activeFile.basename;
     try {
       activeNoteContent = await app.vault.cachedRead(activeFile);
@@ -26258,7 +26244,9 @@ var baseEn = {
   pressureWeightLabel: "Context pressure penalty weight:",
   pressureWeightDesc: "Penalty favoring Quick mode when context window is >70% full.",
   learnedBiasEnabledLabel: "Enable learned user preference bias:",
-  learnedBiasEnabledDesc: "Learn and apply user mode overrides for similar query types."
+  learnedBiasEnabledDesc: "Learn and apply user mode overrides for similar query types.",
+  stopBtn: "Stop",
+  stopGeneration: "Stop generation"
 };
 var baseRu = {
   ...baseEn,
@@ -26306,6 +26294,8 @@ var baseRu = {
   moveTab: "\u2197\uFE0F \u0412\u043A\u043B\u0430\u0434\u043A\u0430",
   moveSidebarTitle: "\u041F\u0435\u0440\u0435\u043C\u0435\u0441\u0442\u0438\u0442\u044C \u0447\u0430\u0442 \u0432 \u0431\u043E\u043A\u043E\u0432\u0443\u044E \u043F\u0430\u043D\u0435\u043B\u044C",
   moveTabTitle: "\u041F\u0435\u0440\u0435\u043C\u0435\u0441\u0442\u0438\u0442\u044C \u0447\u0430\u0442 \u043D\u0430 \u0433\u043B\u0430\u0432\u043D\u0443\u044E \u0432\u043A\u043B\u0430\u0434\u043A\u0443",
+  stopBtn: "\u0421\u0442\u043E\u043F",
+  stopGeneration: "\u041E\u0441\u0442\u0430\u043D\u043E\u0432\u0438\u0442\u044C \u0433\u0435\u043D\u0435\u0440\u0430\u0446\u0438\u044F",
   modelCategories: "\u041A\u0430\u0442\u0435\u0433\u043E\u0440\u0438\u0438 \u043C\u043E\u0434\u0435\u043B\u0435\u0439 (\u041C\u0443\u043B\u044C\u0442\u0438\u043C\u043E\u0434\u0430\u043B\u044C\u043D\u043E\u0441\u0442\u044C):",
   primaryModel: "1. \u0422\u0435\u043A\u0441\u0442 \u0438 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442\u044B (Primary):",
   visionModel: "2. \u0424\u0430\u0439\u043B\u044B \u0438 \u0444\u043E\u0442\u043E (Vision):",
@@ -26558,27 +26548,15 @@ function t(key, lang, params) {
 }
 
 // src/services/rag/embeddings.ts
+var import_obsidian8 = require("obsidian");
 async function httpPostJson(url, body, headers = {}) {
-  if (typeof fetch === "function") {
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...headers },
-      body: JSON.stringify(body)
-    });
-    return await res.json();
-  }
-  try {
-    const obsidian = await import("obsidian");
-    const res = await obsidian.requestUrl({
-      url,
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...headers },
-      body: JSON.stringify(body)
-    });
-    return res.json;
-  } catch {
-    throw new Error("HTTP request failed");
-  }
+  const res = await (0, import_obsidian8.requestUrl)({
+    url,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...headers },
+    body: JSON.stringify(body)
+  });
+  return res.json;
 }
 var OllamaEmbeddingProvider = class {
   constructor(endpoint = "http://localhost:11434", model = "nomic-embed-text") {
@@ -26766,7 +26744,7 @@ async function searchVaultHybrid(app, query, settings, limit = 5) {
 }
 
 // src/services/openrouter.ts
-var import_obsidian7 = require("obsidian");
+var import_obsidian9 = require("obsidian");
 var OpenRouterService = class {
   /**
    * Fetches details about the user's OpenRouter API key (usage, limits).
@@ -26775,7 +26753,7 @@ var OpenRouterService = class {
     if (!apiKey)
       return null;
     try {
-      const response = await (0, import_obsidian7.requestUrl)({
+      const response = await (0, import_obsidian9.requestUrl)({
         url: "https://openrouter.ai/api/v1/auth/key",
         method: "GET",
         headers: {
@@ -26815,7 +26793,7 @@ var OpenRouterService = class {
       if (apiKey) {
         headers["Authorization"] = `Bearer ${apiKey}`;
       }
-      const response = await (0, import_obsidian7.requestUrl)({
+      const response = await (0, import_obsidian9.requestUrl)({
         url: "https://openrouter.ai/api/v1/models",
         method: "GET",
         headers
@@ -27361,6 +27339,29 @@ var AgentLoop = class {
 `;
       systemPrompt += freshnessDirective;
     }
+    systemPrompt += `
+--- TOOL USAGE RULES ---
+`;
+    systemPrompt += `You are an AGENT with access to tools. You MUST use tools when:
+`;
+    systemPrompt += `1. User asks for current information (prices, news, weather, etc.) - use web_search
+`;
+    systemPrompt += `2. User asks about their vault/notes - use search_notes, read_note, get_folder_notes
+`;
+    systemPrompt += `3. User wants to create/edit/delete notes - use create_note, edit_note, delete_note
+`;
+    systemPrompt += `4. User explicitly asks you to use a tool - you MUST use it
+`;
+    systemPrompt += `5. You need information you don't have - search for it using available tools
+`;
+    systemPrompt += `NEVER say "I cannot access" or "I don't have access" when tools are available.
+`;
+    systemPrompt += `ALWAYS check if a tool can help before answering from memory.
+`;
+    systemPrompt += `If user explicitly requests a tool (e.g., "search for X"), you MUST call that tool.
+`;
+    systemPrompt += `------------------------
+`;
     if (vaultContext.ragContext) {
       systemPrompt += `
 --- VAULT CONTEXT (RAG) ---
@@ -27408,7 +27409,8 @@ ${s.description}`).join("\n")}
       maxIterations,
       toolRegistry,
       language = "auto",
-      settings
+      settings,
+      abortSignal
     } = options;
     const steps = [];
     let totalPromptTokens = 0;
@@ -27506,7 +27508,7 @@ ${prefetchedBlocks.join("\n\n")}
       if (actualMode === "quick") {
         let response;
         try {
-          response = settings.enableStreaming && onStreamChunk ? await sendChatRequestStream(config, messages, void 0, onStreamChunk) : await sendChatRequest(config, messages, void 0);
+          response = settings.enableStreaming && onStreamChunk ? await sendChatRequestStream(config, messages, void 0, onStreamChunk, abortSignal) : await sendChatRequest(config, messages, void 0, abortSignal);
         } catch (e) {
           const err = e;
           throw new Error(t("quickLlmError", language, { error: err?.message || String(e) }));
@@ -27517,7 +27519,7 @@ ${prefetchedBlocks.join("\n\n")}
         }
         if (!this.isResponseValid(response)) {
           console.warn("[AgentLoop] Quick mode empty response, attempting fallback...");
-          const fallbackResponse = await sendChatRequest(config, messages, void 0);
+          const fallbackResponse = await sendChatRequest(config, messages, void 0, abortSignal);
           if (this.isResponseValid(fallbackResponse)) {
             Object.assign(response, fallbackResponse);
           }
@@ -27535,17 +27537,6 @@ ${prefetchedBlocks.join("\n\n")}
       }
       const allTools = toolRegistry.getToolDefinitions();
       let filteredTools = allTools;
-      if (settings.enableSmartToolFiltering) {
-        if (toolNeeds.needsWebSearch && !toolNeeds.needsVaultSearch && !toolNeeds.needsVaultWrite) {
-          filteredTools = allTools.filter(
-            (t2) => ["web_search", "read_web_page", "analyze_github_repo"].includes(t2.function.name)
-          );
-        } else if (!toolNeeds.needsWebSearch && (toolNeeds.needsVaultSearch || toolNeeds.needsVaultWrite)) {
-          filteredTools = allTools.filter(
-            (t2) => t2.function.name.startsWith("read_") || t2.function.name.startsWith("get_") || t2.function.name.startsWith("search_") || t2.function.name.startsWith("create_") || t2.function.name.startsWith("edit_") || t2.function.name.startsWith("rename_") || t2.function.name.startsWith("delete_") || t2.function.name.startsWith("list_") || t2.function.name.startsWith("diff_")
-          );
-        }
-      }
       let iteration = 0;
       let finalResponseText = "";
       let toolCalledCount = 0;
@@ -27553,10 +27544,25 @@ ${prefetchedBlocks.join("\n\n")}
       const effectiveMaxIterations = maxIterations ?? settings.maxAgentIterations;
       while (iteration < effectiveMaxIterations) {
         iteration++;
+        if (settings.enableSmartToolFiltering) {
+          if (iteration === 1) {
+            if (toolNeeds.needsWebSearch && !toolNeeds.needsVaultSearch && !toolNeeds.needsVaultWrite) {
+              filteredTools = allTools.filter(
+                (t2) => ["web_search", "read_web_page", "analyze_github_repo"].includes(t2.function.name)
+              );
+            } else if (!toolNeeds.needsWebSearch && (toolNeeds.needsVaultSearch || toolNeeds.needsVaultWrite)) {
+              filteredTools = allTools.filter(
+                (t2) => t2.function.name.startsWith("read_") || t2.function.name.startsWith("get_") || t2.function.name.startsWith("search_") || t2.function.name.startsWith("create_") || t2.function.name.startsWith("edit_") || t2.function.name.startsWith("rename_") || t2.function.name.startsWith("delete_") || t2.function.name.startsWith("list_") || t2.function.name.startsWith("diff_")
+              );
+            }
+          } else {
+            filteredTools = allTools;
+          }
+        }
         const isLastIteration = iteration === effectiveMaxIterations;
         const activeTools = filteredTools;
         const canStreamFinal = isLastIteration && settings.enableStreaming && onStreamChunk;
-        const response = canStreamFinal ? await sendChatRequestStream(config, messages, void 0, onStreamChunk) : await sendChatRequest(config, messages, activeTools);
+        const response = canStreamFinal ? await sendChatRequestStream(config, messages, void 0, onStreamChunk, abortSignal) : await sendChatRequest(config, messages, activeTools, abortSignal);
         if (response.usage) {
           totalPromptTokens += response.usage.promptTokens;
           totalCompletionTokens += response.usage.completionTokens;
@@ -27566,7 +27572,7 @@ ${prefetchedBlocks.join("\n\n")}
           const fallbackResponse = await sendChatRequest(config, [
             { role: "system", content: systemPrompt },
             userMsg
-          ], void 0);
+          ], void 0, abortSignal);
           if (this.isResponseValid(fallbackResponse)) {
             Object.assign(response, fallbackResponse);
           }
@@ -27785,7 +27791,7 @@ ${prefetchedBlocks.join("\n\n")}
 AgentLoop.promptCache = /* @__PURE__ */ new Map();
 
 // src/services/chat/chatStore.ts
-var import_obsidian8 = require("obsidian");
+var import_obsidian10 = require("obsidian");
 var ChatStore = class {
   static getChatsFolder(settings) {
     return settings.chatsFolder || ".nei/chats";
@@ -27889,7 +27895,7 @@ var ChatStore = class {
     };
   }
   static async ensureFolder(app, folderPath) {
-    const norm = (0, import_obsidian8.normalizePath)(folderPath);
+    const norm = (0, import_obsidian10.normalizePath)(folderPath);
     if (!await app.vault.adapter.exists(norm)) {
       await app.vault.adapter.mkdir(norm);
     }
@@ -27898,7 +27904,7 @@ var ChatStore = class {
 
 // src/components/ErrorBoundary.tsx
 var React = __toESM(require_react());
-var import_obsidian9 = require("obsidian");
+var import_obsidian11 = require("obsidian");
 var import_jsx_runtime = __toESM(require_jsx_runtime());
 var ErrorBoundary = class extends React.Component {
   constructor() {
@@ -27913,7 +27919,7 @@ var ErrorBoundary = class extends React.Component {
   }
   componentDidCatch(error, errorInfo) {
     console.error("[NEI Chat ErrorBoundary]", error, errorInfo);
-    new import_obsidian9.Notice(`\u274C NEI Chat Error: ${error.message}`);
+    new import_obsidian11.Notice(`\u274C NEI Chat Error: ${error.message}`);
   }
   render() {
     if (this.state.hasError) {
@@ -28666,9 +28672,9 @@ var ObsidianMarkdown = ({ markdown, app }) => {
   React7.useEffect(() => {
     if (containerRef.current) {
       containerRef.current.empty();
-      const component = new import_obsidian10.Component();
+      const component = new import_obsidian12.Component();
       component.load();
-      void import_obsidian10.MarkdownRenderer.render(
+      void import_obsidian12.MarkdownRenderer.render(
         app,
         markdown,
         containerRef.current,
@@ -28703,7 +28709,7 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onR
       }
     } catch (e) {
       const err = e;
-      new import_obsidian10.Notice(`${t("modeSwitchError", language)} ${err?.message || String(e)}`);
+      new import_obsidian12.Notice(`${t("modeSwitchError", language)} ${err?.message || String(e)}`);
     }
   };
   const [currentSession, setCurrentSession] = React7.useState(() => ChatStore.createNewSession());
@@ -28717,7 +28723,7 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onR
   const adjustTextareaHeight = React7.useCallback(() => {
     if (!textareaRef.current)
       return;
-    requestAnimationFrame(() => {
+    window.requestAnimationFrame(() => {
       const el = textareaRef.current;
       if (!el)
         return;
@@ -28728,6 +28734,7 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onR
   }, []);
   const [executionMode, setExecutionMode] = React7.useState(settings.executionMode || "auto");
   const [loading, setLoading] = React7.useState(false);
+  const [abortController, setAbortController] = React7.useState(null);
   const [activeSteps, setActiveSteps] = React7.useState([]);
   const [showSessionsDrawer, setShowSessionsDrawer] = React7.useState(false);
   const [showConfig, setShowConfig] = React7.useState(false);
@@ -28814,14 +28821,14 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onR
       setCustomModels(updated);
       setModel(trimmed);
       void verifyActiveModel(trimmed, apiKey);
-      new import_obsidian10.Notice(`${t("modelAddedNotice", language)} ${trimmed}`);
+      new import_obsidian12.Notice(`${t("modelAddedNotice", language)} ${trimmed}`);
     }
     setNewModelInput("");
   };
   const handleDeleteModel = (e, targetModel) => {
     e.stopPropagation();
     if (customModels.length <= 1) {
-      new import_obsidian10.Notice(t("cannotDeleteLastModel", language));
+      new import_obsidian12.Notice(t("cannotDeleteLastModel", language));
       return;
     }
     const updated = customModels.filter((m) => m !== targetModel);
@@ -28880,7 +28887,7 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onR
     await ChatStore.clearAllSessions(app, settings);
     await refreshSessionsList();
     handleNewChat();
-    new import_obsidian10.Notice(t("historyClearedNotice", language));
+    new import_obsidian12.Notice(t("historyClearedNotice", language));
   };
   const handleBranchFromMessage = async (msgIndex) => {
     if (!currentSession)
@@ -28892,7 +28899,7 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onR
     setCurrentSession(newSession);
     await ChatStore.saveSession(app, settings, newSession);
     await refreshSessionsList();
-    new import_obsidian10.Notice("\u{1F33F} Conversation branched!");
+    new import_obsidian12.Notice("\u{1F33F} Conversation branched!");
   };
   const [language, setLanguage] = React7.useState(settings.language || "auto");
   const [defaultNoteFolder, setDefaultNoteFolder] = React7.useState(settings.defaultNoteFolder || "");
@@ -28962,14 +28969,14 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onR
     };
     await saveSettings(newSettings);
     setShowConfig(false);
-    new import_obsidian10.Notice(t("saveSettings", language) + "!");
+    new import_obsidian12.Notice(t("saveSettings", language) + "!");
   };
   const handleCopyText = async (text) => {
     try {
       await navigator.clipboard.writeText(text);
-      new import_obsidian10.Notice(t("copied", language));
+      new import_obsidian12.Notice(t("copied", language));
     } catch {
-      new import_obsidian10.Notice(t("copyError", language));
+      new import_obsidian12.Notice(t("copyError", language));
     }
   };
   const handleSaveResponseAsNote = async (content) => {
@@ -28984,15 +28991,15 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onR
         JSON.stringify({ path: fileName, content })
       );
       if (execResult.isError) {
-        new import_obsidian10.Notice(`${t("noteCreateError", language)} ${execResult.result}`);
+        new import_obsidian12.Notice(`${t("noteCreateError", language)} ${execResult.result}`);
       } else {
         const pathMatch = execResult.result.match(/'([^']+)'/);
         const savedPath = pathMatch ? pathMatch[1] : fileName;
-        new import_obsidian10.Notice(`${t("noteCreatedSuccess", language)} '${savedPath}'`);
+        new import_obsidian12.Notice(`${t("noteCreatedSuccess", language)} '${savedPath}'`);
       }
     } catch (e) {
       const err = e;
-      new import_obsidian10.Notice(`${t("noteCreateError", language)} ${err?.message || String(e)}`);
+      new import_obsidian12.Notice(`${t("noteCreateError", language)} ${err?.message || String(e)}`);
     }
   };
   const [streamingContent, setStreamingContent] = React7.useState("");
@@ -29010,10 +29017,10 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onR
       a.download = `nei-settings-${Date.now()}.json`;
       a.click();
       URL.revokeObjectURL(url);
-      new import_obsidian10.Notice(t("settingsExported", language));
+      new import_obsidian12.Notice(t("settingsExported", language));
     } catch (e) {
       const err = e;
-      new import_obsidian10.Notice(`Export error: ${err?.message || String(e)}`);
+      new import_obsidian12.Notice(`Export error: ${err?.message || String(e)}`);
     }
   };
   const handleImportSettings = async (e) => {
@@ -29049,12 +29056,12 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onR
         setDefaultNoteFolder(newSettings.defaultNoteFolder);
       if (newSettings.customModels)
         setCustomModels(newSettings.customModels);
-      new import_obsidian10.Notice(t("settingsImported", language));
+      new import_obsidian12.Notice(t("settingsImported", language));
       if (onReload)
         onReload();
     } catch (err) {
       const errObj = err;
-      new import_obsidian10.Notice(`Import error: ${errObj?.message || String(err)}`);
+      new import_obsidian12.Notice(`Import error: ${errObj?.message || String(err)}`);
     }
   };
   const executeQuery = async (queryText, historySlice, imagesPayload) => {
@@ -29062,6 +29069,8 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onR
     setActiveSteps([]);
     setEditingMsgIdx(null);
     setStreamingContent("");
+    const abortController2 = new AbortController();
+    setAbortController(abortController2);
     const currentImages = imagesPayload || attachedImages;
     const userMsg = {
       role: "user",
@@ -29104,6 +29113,7 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onR
         onStreamChunk: (chunk) => {
           setStreamingContent((prev) => prev + chunk);
         },
+        abortSignal: abortController2.signal,
         toolRegistry,
         language,
         settings
@@ -29143,7 +29153,7 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onR
               proposal,
               onAccept: async () => {
                 const applied = await AutoLearner.applyProposal(app, settings, proposal);
-                new import_obsidian10.Notice(`${t("learningApplied", language)} (${applied})`);
+                new import_obsidian12.Notice(`${t("learningApplied", language)} (${applied})`);
                 setLearningProposal(null);
               },
               onDismiss: () => {
@@ -29195,6 +29205,10 @@ ${fileContext}` : fileContext;
   const handleSendMessage = () => {
     if (!input.trim() && attachedFiles.length === 0 || loading)
       return;
+    if (loading && abortController) {
+      abortController.abort();
+      return;
+    }
     const modelCaps = activeModelDetails?.capabilities || getDefaultModelCapabilities(model).capabilities;
     const unsupported = [];
     attachedFiles.forEach((f) => {
@@ -29255,7 +29269,7 @@ ${fileContext}` : fileContext;
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       if (file.size > maxSize) {
-        new import_obsidian10.Notice(`File "${file.name}" exceeds maximum size of ${(maxSize / 1024).toFixed(0)} KB.`);
+        new import_obsidian12.Notice(`File "${file.name}" exceeds maximum size of ${(maxSize / 1024).toFixed(0)} KB.`);
         continue;
       }
       const id = Math.random().toString(36).substring(2, 9);
@@ -29317,11 +29331,24 @@ ${fileContext}` : fileContext;
             title: t("historyTooltip", language),
             "aria-label": t("historyTooltip", language),
             className: "nei-header-btn",
-            style: { maxWidth: "160px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+            style: {
+              maxWidth: "200px",
+              minWidth: "120px",
+              padding: "4px 10px",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              flex: 1
+            },
             children: [
-              "\u{1F4C2} ",
-              formatSessionTitle(currentSession.title),
-              " \u25BC"
+              /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("span", { style: { flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }, children: [
+                "\u{1F4C2} ",
+                formatSessionTitle(currentSession.title)
+              ] }),
+              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { style: { flexShrink: 0 }, children: "\u25BC" })
             ]
           }
         ),
@@ -30106,13 +30133,24 @@ ${fileContext}` : fileContext;
           )
         ] })
       ] }),
-      loading && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { style: { display: "flex", flexDirection: "column", gap: "4px", alignSelf: "flex-start", maxWidth: "92%", padding: "10px 14px", borderRadius: "12px", background: "var(--background-secondary)", fontSize: "13px" }, children: streamingContent ? /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(ObsidianMarkdown, { markdown: streamingContent, app }),
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { className: "nei-streaming-cursor", style: { color: "var(--interactive-accent)", fontWeight: "bold" }, children: " \u258A" })
-      ] }) : /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: "8px", color: "var(--text-muted)" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { className: "nei-spinner", children: "\u27F3" }),
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { children: t("agentRunning", language) })
-      ] }) }),
+      loading && /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { display: "flex", flexDirection: "column", gap: "4px", alignSelf: "flex-start", maxWidth: "92%", padding: "10px 14px", borderRadius: "12px", background: "var(--background-secondary)", fontSize: "13px" }, children: [
+        streamingContent ? /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(ObsidianMarkdown, { markdown: streamingContent, app }),
+          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { className: "nei-streaming-cursor", style: { color: "var(--interactive-accent)", fontWeight: "bold" }, children: " \u258A" })
+        ] }) : /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: "8px", color: "var(--text-muted)" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { className: "nei-spinner", children: "\u27F3" }),
+          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { children: t("agentRunning", language) })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+          "button",
+          {
+            onClick: () => abortController?.abort(),
+            title: t("stopGeneration", language),
+            style: { alignSelf: "flex-end", marginTop: "4px", padding: "2px 8px", fontSize: "11px", background: "var(--background-modifier-error-hover, #ff444433)", border: "1px solid var(--text-error, #ff5555)", borderRadius: "4px", cursor: "pointer", color: "var(--text-error, #ff5555)" },
+            children: t("stopBtn", language)
+          }
+        )
+      ] }),
       pendingConfirmation && /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { background: "var(--background-secondary)", border: "2px solid var(--interactive-accent)", borderRadius: "8px", padding: "12px", marginTop: "6px", fontSize: "12px" }, children: [
         /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { fontWeight: "bold", marginBottom: "6px", color: "var(--text-normal)" }, children: [
           "\u26A0\uFE0F ",
@@ -30295,7 +30333,7 @@ var ChatPanel = (props) => {
 
 // src/views/ChatView.ts
 var VIEW_TYPE_NEI_CHAT = "nei-chat-view";
-var NeiChatView = class extends import_obsidian11.ItemView {
+var NeiChatView = class extends import_obsidian13.ItemView {
   constructor(leaf, plugin) {
     super(leaf);
     this.root = null;
@@ -30349,7 +30387,7 @@ var NeiChatView = class extends import_obsidian11.ItemView {
 init_vaultTools();
 
 // src/services/tools/systemTools.ts
-var import_obsidian12 = require("obsidian");
+var import_obsidian14 = require("obsidian");
 var systemToolDefinitions = [
   {
     type: "function",
@@ -30408,7 +30446,7 @@ var systemExecutors = {
     const args = rawArgs;
     try {
       const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(args.query)}`;
-      const response = await (0, import_obsidian12.requestUrl)({
+      const response = await (0, import_obsidian14.requestUrl)({
         url: searchUrl,
         method: "GET",
         headers: {
@@ -30447,8 +30485,8 @@ var systemExecutors = {
       const repo = githubRepoMatch[2].replace(/\.git$/, "");
       try {
         const rawReadmeUrl = `https://raw.githubusercontent.com/${owner}/${repo}/main/README.md`;
-        const response = await (0, import_obsidian12.requestUrl)({ url: rawReadmeUrl, method: "GET" }).catch(
-          () => (0, import_obsidian12.requestUrl)({ url: `https://raw.githubusercontent.com/${owner}/${repo}/master/README.md`, method: "GET" })
+        const response = await (0, import_obsidian14.requestUrl)({ url: rawReadmeUrl, method: "GET" }).catch(
+          () => (0, import_obsidian14.requestUrl)({ url: `https://raw.githubusercontent.com/${owner}/${repo}/master/README.md`, method: "GET" })
         );
         if (response.status === 200 && response.text) {
           const text = response.text.length > 3e3 ? response.text.substring(0, 3e3) + "\n...[README \u043E\u0431\u0440\u0435\u0437\u0430\u043D \u0434\u043B\u044F \u044D\u043A\u043E\u043D\u043E\u043C\u0438\u0438 \u0442\u043E\u043A\u0435\u043D\u043E\u0432]" : response.text;
@@ -30459,7 +30497,7 @@ ${text}`;
       }
     }
     try {
-      const response = await (0, import_obsidian12.requestUrl)({
+      const response = await (0, import_obsidian14.requestUrl)({
         url: urlStr,
         method: "GET",
         headers: {
@@ -30490,7 +30528,7 @@ ${truncated}`;
     try {
       let repoMetaInfo = "";
       try {
-        const metaRes = await (0, import_obsidian12.requestUrl)({
+        const metaRes = await (0, import_obsidian14.requestUrl)({
           url: `https://api.github.com/repos/${owner}/${repo}`,
           method: "GET",
           headers: { "User-Agent": "NEI-Obsidian-Plugin" }
@@ -30514,7 +30552,7 @@ ${truncated}`;
           break;
         for (const fname of filenames) {
           try {
-            const res = await (0, import_obsidian12.requestUrl)({
+            const res = await (0, import_obsidian14.requestUrl)({
               url: `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${fname}`,
               method: "GET"
             });
@@ -30994,7 +31032,7 @@ var ToolRegistry = class {
 };
 
 // src/services/mcp/mcpClient.ts
-var import_obsidian13 = require("obsidian");
+var import_obsidian15 = require("obsidian");
 var McpService = class {
   static setServers(servers) {
     this.servers = servers;
@@ -31009,7 +31047,7 @@ var McpService = class {
       if (!server.enabled || !server.endpointUrl)
         continue;
       try {
-        const response = await (0, import_obsidian13.requestUrl)({
+        const response = await (0, import_obsidian15.requestUrl)({
           url: server.endpointUrl.endsWith("/") ? `${server.endpointUrl}tools/list` : `${server.endpointUrl}/tools/list`,
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -31045,7 +31083,7 @@ var McpService = class {
    */
   static async callMcpTool(server, originalToolName, args) {
     try {
-      const response = await (0, import_obsidian13.requestUrl)({
+      const response = await (0, import_obsidian15.requestUrl)({
         url: server.endpointUrl.endsWith("/") ? `${server.endpointUrl}tools/call` : `${server.endpointUrl}/tools/call`,
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -31151,7 +31189,7 @@ var DEFAULT_SETTINGS = {
   // Vault Context Toggle default
   enableVaultContextDefault: true
 };
-var NeiAiChatPlugin = class extends import_obsidian14.Plugin {
+var NeiAiChatPlugin = class extends import_obsidian16.Plugin {
   constructor() {
     super(...arguments);
     this.settings = DEFAULT_SETTINGS;

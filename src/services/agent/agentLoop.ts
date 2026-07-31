@@ -38,6 +38,7 @@ export interface AgentLoopOptions {
     toolRegistry: ToolRegistry;
     language?: SupportedLanguage;
     settings: NeiAiChatSettings;
+    abortSignal?: AbortSignal;
 }
 
 export interface AgentLoopResult {
@@ -101,6 +102,19 @@ export class AgentLoop {
             systemPrompt += freshnessDirective;
         }
 
+        // TOOL USAGE ENFORCEMENT
+        systemPrompt += `\n--- TOOL USAGE RULES ---\n`;
+        systemPrompt += `You are an AGENT with access to tools. You MUST use tools when:\n`;
+        systemPrompt += `1. User asks for current information (prices, news, weather, etc.) - use web_search\n`;
+        systemPrompt += `2. User asks about their vault/notes - use search_notes, read_note, get_folder_notes\n`;
+        systemPrompt += `3. User wants to create/edit/delete notes - use create_note, edit_note, delete_note\n`;
+        systemPrompt += `4. User explicitly asks you to use a tool - you MUST use it\n`;
+        systemPrompt += `5. You need information you don't have - search for it using available tools\n`;
+        systemPrompt += `NEVER say "I cannot access" or "I don't have access" when tools are available.\n`;
+        systemPrompt += `ALWAYS check if a tool can help before answering from memory.\n`;
+        systemPrompt += `If user explicitly requests a tool (e.g., "search for X"), you MUST call that tool.\n`;
+        systemPrompt += `------------------------\n`;
+
         if (vaultContext.ragContext) {
             systemPrompt += `\n--- VAULT CONTEXT (RAG) ---\n${vaultContext.ragContext}\n`;
         }
@@ -141,7 +155,8 @@ export class AgentLoop {
             maxIterations,
             toolRegistry,
             language = "auto",
-            settings
+            settings,
+            abortSignal
         } = options;
         const steps: AgentStep[] = [];
 
@@ -266,8 +281,8 @@ export class AgentLoop {
                 let response: LlmResponse;
                 try {
                     response = (settings.enableStreaming && onStreamChunk)
-                        ? await sendChatRequestStream(config, messages, undefined, onStreamChunk)
-                        : await sendChatRequest(config, messages, undefined);
+                        ? await sendChatRequestStream(config, messages, undefined, onStreamChunk, abortSignal)
+                        : await sendChatRequest(config, messages, undefined, abortSignal);
                 } catch (e: unknown) {
                     const err = e as { message?: string };
                     throw new Error(t("quickLlmError", language, { error: err?.message || String(e) }));
@@ -281,7 +296,7 @@ export class AgentLoop {
                 // ADD EMPTY RESPONSE FALLBACK:
                 if (!this.isResponseValid(response)) {
                     console.warn('[AgentLoop] Quick mode empty response, attempting fallback...');
-                    const fallbackResponse = await sendChatRequest(config, messages, undefined);
+                    const fallbackResponse = await sendChatRequest(config, messages, undefined, abortSignal);
                     if (this.isResponseValid(fallbackResponse)) {
                         Object.assign(response, fallbackResponse);
                     }
@@ -305,26 +320,6 @@ export class AgentLoop {
             const allTools = toolRegistry.getToolDefinitions();
             let filteredTools = allTools;
 
-            if (settings.enableSmartToolFiltering) {
-                if (toolNeeds.needsWebSearch && !toolNeeds.needsVaultSearch && !toolNeeds.needsVaultWrite) {
-                    filteredTools = allTools.filter(t =>
-                        ["web_search", "read_web_page", "analyze_github_repo"].includes(t.function.name)
-                    );
-                } else if (!toolNeeds.needsWebSearch && (toolNeeds.needsVaultSearch || toolNeeds.needsVaultWrite)) {
-                    filteredTools = allTools.filter(t =>
-                        t.function.name.startsWith("read_") ||
-                        t.function.name.startsWith("get_") ||
-                        t.function.name.startsWith("search_") ||
-                        t.function.name.startsWith("create_") ||
-                        t.function.name.startsWith("edit_") ||
-                        t.function.name.startsWith("rename_") ||
-                        t.function.name.startsWith("delete_") ||
-                        t.function.name.startsWith("list_") ||
-                        t.function.name.startsWith("diff_")
-                    );
-                }
-            }
-
             let iteration = 0;
             let finalResponseText = "";
             let toolCalledCount = 0;
@@ -334,6 +329,33 @@ export class AgentLoop {
             while (iteration < effectiveMaxIterations) {
                 iteration++;
 
+                // Only filter tools for the FIRST turn based on intent classification
+                // After that, always provide all tools so the model can use them as needed
+                if (settings.enableSmartToolFiltering) {
+                    if (iteration === 1) {
+                        if (toolNeeds.needsWebSearch && !toolNeeds.needsVaultSearch && !toolNeeds.needsVaultWrite) {
+                            filteredTools = allTools.filter(t =>
+                                ["web_search", "read_web_page", "analyze_github_repo"].includes(t.function.name)
+                            );
+                        } else if (!toolNeeds.needsWebSearch && (toolNeeds.needsVaultSearch || toolNeeds.needsVaultWrite)) {
+                            filteredTools = allTools.filter(t =>
+                                t.function.name.startsWith("read_") ||
+                                t.function.name.startsWith("get_") ||
+                                t.function.name.startsWith("search_") ||
+                                t.function.name.startsWith("create_") ||
+                                t.function.name.startsWith("edit_") ||
+                                t.function.name.startsWith("rename_") ||
+                                t.function.name.startsWith("delete_") ||
+                                t.function.name.startsWith("list_") ||
+                                t.function.name.startsWith("diff_")
+                            );
+                        }
+                    } else {
+                        // On subsequent iterations, provide ALL tools so the model can use any tool it needs
+                        filteredTools = allTools;
+                    }
+                }
+
                 const isLastIteration = (iteration === effectiveMaxIterations);
                 // Always pass tools; model decides when to stop calling them
                 const activeTools = filteredTools;
@@ -341,8 +363,8 @@ export class AgentLoop {
                 // Stream only when: last iteration AND no tools available (model should respond with text)
                 const canStreamFinal = isLastIteration && settings.enableStreaming && onStreamChunk;
                 const response = canStreamFinal
-                    ? await sendChatRequestStream(config, messages, undefined, onStreamChunk)
-                    : await sendChatRequest(config, messages, activeTools);
+                    ? await sendChatRequestStream(config, messages, undefined, onStreamChunk, abortSignal)
+                    : await sendChatRequest(config, messages, activeTools, abortSignal);
                 if (response.usage) {
                     totalPromptTokens += response.usage.promptTokens;
                     totalCompletionTokens += response.usage.completionTokens;
@@ -354,7 +376,7 @@ export class AgentLoop {
                     const fallbackResponse = await sendChatRequest(config, [
                         { role: "system", content: systemPrompt },
                         userMsg
-                    ], undefined); // No tools
+                    ], undefined, abortSignal); // No tools
                     if (this.isResponseValid(fallbackResponse)) {
                         Object.assign(response, fallbackResponse);
                     }
