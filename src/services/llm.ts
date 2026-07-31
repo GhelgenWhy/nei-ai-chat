@@ -86,7 +86,7 @@ export async function sendChatRequest(
 
     // Clean messages & support image arrays
     const cleanMessages = messages.map(m => {
-        let messageContent: string | Array<Record<string, unknown>> = m.content || "";
+        let messageContent: string | Array<Record<string, unknown>> | null = m.content || "";
         if (m.images && m.images.length > 0) {
             const parts: Array<Record<string, unknown>> = [{ type: "text", text: m.content || "" }];
             for (const img of m.images) {
@@ -96,6 +96,10 @@ export async function sendChatRequest(
                 });
             }
             messageContent = parts;
+        }
+
+        if (m.tool_calls && m.tool_calls.length > 0 && !m.content) {
+            messageContent = null;
         }
 
         return {

@@ -25468,6 +25468,9 @@ async function sendChatRequest(config, messages, tools) {
       }
       messageContent = parts;
     }
+    if (m.tool_calls && m.tool_calls.length > 0 && !m.content) {
+      messageContent = null;
+    }
     return {
       role: m.role,
       content: messageContent,
@@ -27280,7 +27283,7 @@ ${prefetchedBlocks.join("\n\n")}
         toolCalledCount += response.tool_calls.length;
         messages.push({
           role: "assistant",
-          content: response.content || "Executing tool calls...",
+          content: response.content || "",
           tool_calls: response.tool_calls
         });
         const toolPromises = response.tool_calls.map(async (toolCall) => {
@@ -27307,8 +27310,8 @@ ${prefetchedBlocks.join("\n\n")}
             }
           }
           if (!trimmedResult) {
-            if (executedCallsMap[callKey] > 2) {
-              trimmedResult = `[NEI SYSTEM WARNING]: Tool (${toolName}) with these args was called ${executedCallsMap[callKey] - 1} times. Loop prevented.`;
+            if (executedCallsMap[callKey] > 1) {
+              trimmedResult = `[NEI SYSTEM WARNING]: Tool (${toolName}) with these exact arguments was already executed in this session and returned results. Do NOT repeat identical tool calls. Formulate your final response based on the results already retrieved or use a different tool.`;
               isError = true;
             } else {
               const execResult = await toolRegistry.executeTool(

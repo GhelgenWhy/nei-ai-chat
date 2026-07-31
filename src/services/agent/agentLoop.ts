@@ -316,7 +316,7 @@ export class AgentLoop {
 
                 messages.push({
                     role: "assistant",
-                    content: response.content || "Executing tool calls...",
+                    content: response.content || "",
                     tool_calls: response.tool_calls
                 });
 
@@ -349,8 +349,8 @@ export class AgentLoop {
                     }
 
                     if (!trimmedResult) {
-                        if (executedCallsMap[callKey] > 2) {
-                            trimmedResult = `[NEI SYSTEM WARNING]: Tool (${toolName}) with these args was called ${executedCallsMap[callKey] - 1} times. Loop prevented.`;
+                        if (executedCallsMap[callKey] > 1) {
+                            trimmedResult = `[NEI SYSTEM WARNING]: Tool (${toolName}) with these exact arguments was already executed in this session and returned results. Do NOT repeat identical tool calls. Formulate your final response based on the results already retrieved or use a different tool.`;
                             isError = true;
                         } else {
                             const execResult = await toolRegistry.executeTool(
