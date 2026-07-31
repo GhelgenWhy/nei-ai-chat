@@ -3,7 +3,7 @@ import { t, SupportedLanguage } from '../i18n/translations';
 
 export interface ReasoningStep {
     id: string;
-    type: 'reasoning' | 'tool_call' | 'tool_result' | 'thought' | 'prefetch' | string;
+    type: 'reasoning' | 'tool_call' | 'tool_result' | 'thought' | 'prefetch' | (string & {});
     title: string;
     detail?: string;
     status: 'running' | 'completed' | 'failed';

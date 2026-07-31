@@ -1,5 +1,3 @@
-import { NeiAiChatSettings } from '../../main';
-
 export interface ModelPricing {
     prompt: number;      // cost per 1M input tokens
     completion: number;   // cost per 1M output tokens

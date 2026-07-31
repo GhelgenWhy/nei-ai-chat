@@ -23655,14 +23655,14 @@ function generateDateVariants(input) {
   return Array.from(variants);
 }
 function findFile(app, rawPath) {
-  let cleanPath = (0, import_obsidian3.normalizePath)(rawPath.trim());
+  const cleanPath = (0, import_obsidian3.normalizePath)(rawPath.trim());
   if (!cleanPath.endsWith(".md")) {
-    const fileWithMd = app.vault.getFileByPath(cleanPath + ".md");
-    if (fileWithMd)
+    const fileWithMd = app.vault.getAbstractFileByPath(cleanPath + ".md");
+    if (fileWithMd instanceof import_obsidian3.TFile)
       return fileWithMd;
   }
-  const exact = app.vault.getFileByPath(cleanPath);
-  if (exact)
+  const exact = app.vault.getAbstractFileByPath(cleanPath);
+  if (exact instanceof import_obsidian3.TFile)
     return exact;
   const files = app.vault.getMarkdownFiles();
   const cleanLower = cleanPath.toLowerCase();
@@ -23681,12 +23681,12 @@ function findFile(app, rawPath) {
   return matched;
 }
 function findFolder(app, rawPath) {
-  let cleanPath = (0, import_obsidian3.normalizePath)(rawPath.trim());
+  const cleanPath = (0, import_obsidian3.normalizePath)(rawPath.trim());
   if (!cleanPath || cleanPath === "/" || cleanPath === ".") {
     return app.vault.getRoot();
   }
-  const folder = app.vault.getFolderByPath(cleanPath);
-  if (folder)
+  const folder = app.vault.getAbstractFileByPath(cleanPath);
+  if (folder instanceof import_obsidian3.TFolder)
     return folder;
   const allFolders = app.vault.getAllLoadedFiles().filter((f) => f instanceof import_obsidian3.TFolder);
   const matched = allFolders.find(
@@ -25356,12 +25356,12 @@ __export(main_exports, {
   default: () => NeiAiChatPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian16 = require("obsidian");
+var import_obsidian17 = require("obsidian");
 
 // src/views/ChatView.ts
 var import_obsidian13 = require("obsidian");
 var React8 = __toESM(require_react());
-var ReactDOM = __toESM(require_client());
+var import_client = __toESM(require_client());
 
 // src/components/ChatPanel.tsx
 var React7 = __toESM(require_react());
@@ -27710,7 +27710,8 @@ ${prefetchedBlocks.join("\n\n")}
       }
       if (finalResponseText && this.containsJsonToolCall(finalResponseText)) {
         console.warn("[AgentLoop] Model returned tool call as final text, stripping");
-        finalResponseText = finalResponseText.replace(/```[\s\S]*?```/g, "").trim() || t("agentNoOutput", language);
+        finalResponseText = finalResponseText.replace(/```[\s\S]*?```/g, "").trim();
+        finalResponseText = finalResponseText.replace(/<\/?tool_call>/gi, "").trim() || t("agentNoOutput", language);
       }
       if (toolCalledCount > 0 && this.shouldAutoCreateNote(userQuery, finalResponseText)) {
         await this.attemptAutoCreateNote(app, userQuery, finalResponseText, steps, notifySteps, toolRegistry, language);
@@ -27727,22 +27728,40 @@ ${prefetchedBlocks.join("\n\n")}
     }
   }
   static containsJsonToolCall(text) {
-    return /```(?:json)?\s*\{[\s\S]*?"(?:tool|name|function|action)"\s*:/i.test(text) || /<tool_call>/i.test(text);
+    if (/```(?:json)?\s*\{[\s\S]*?"(?:tool|name|function|action)"\s*:/i.test(text)) {
+      return true;
+    }
+    if (/<tool_call>[\s\S]*?<\/tool_call>/i.test(text)) {
+      return true;
+    }
+    if (/<tool_call>/i.test(text) && !/<\/tool_call>/i.test(text)) {
+      console.warn("[AgentLoop] Incomplete tool_call tag detected (streaming artifact), ignoring");
+      return false;
+    }
+    return false;
   }
   static extractJsonToolCall(text) {
     try {
       const xmlMatch = text.match(/<tool_call>\s*([\s\S]*?)\s*<\/tool_call>/i);
-      const rawJson = xmlMatch ? xmlMatch[1] : text;
-      const jsonMatch = rawJson.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/i) || rawJson.match(/(\{[\s\S]*?\})/i);
+      if (xmlMatch) {
+        const rawJson = xmlMatch[1];
+        const jsonMatch2 = rawJson.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/i) || rawJson.match(/(\{[\s\S]*?\})/i);
+        if (jsonMatch2) {
+          const parsed = JSON.parse(jsonMatch2[1]);
+          const toolName = typeof parsed.tool === "string" ? parsed.tool : typeof parsed.name === "string" ? parsed.name : typeof parsed.function === "string" ? parsed.function : typeof parsed.action === "string" ? parsed.action : void 0;
+          if (toolName) {
+            const args = parsed.arguments || parsed.args || parsed.action_input || {};
+            return { name: toolName, args };
+          }
+        }
+      }
+      const jsonMatch = text.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/i) || text.match(/(\{[\s\S]*?\})/i);
       if (jsonMatch) {
         const parsed = JSON.parse(jsonMatch[1]);
         const toolName = typeof parsed.tool === "string" ? parsed.tool : typeof parsed.name === "string" ? parsed.name : typeof parsed.function === "string" ? parsed.function : typeof parsed.action === "string" ? parsed.action : void 0;
         if (toolName) {
           const args = parsed.arguments || parsed.args || parsed.action_input || {};
-          return {
-            name: toolName,
-            args
-          };
+          return { name: toolName, args };
         }
       }
     } catch {
@@ -27960,7 +27979,7 @@ var Tooltip = ({
   const description = descriptionKey ? t(descriptionKey, language) : "";
   React2.useEffect(() => {
     const handleClickOutside = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) {
+      if (ref.current && e.target instanceof Node && !ref.current.contains(e.target)) {
         setVisible(false);
       }
     };
@@ -28410,7 +28429,7 @@ var AudioRecorder = ({ onAudioCaptured, onCancel }) => {
   };
   const stopRecording = () => {
     if (timerRef.current !== null) {
-      clearInterval(timerRef.current);
+      window.clearInterval(timerRef.current);
       timerRef.current = null;
     }
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
@@ -28422,7 +28441,7 @@ var AudioRecorder = ({ onAudioCaptured, onCancel }) => {
     void startRecording();
     return () => {
       if (timerRef.current !== null) {
-        clearInterval(timerRef.current);
+        window.clearInterval(timerRef.current);
       }
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
         mediaRecorderRef.current.stop();
@@ -28459,7 +28478,7 @@ var AudioRecorder = ({ onAudioCaptured, onCancel }) => {
       "\u{1F534} ",
       formatTime(seconds)
     ] }),
-    /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { style: { fontSize: "11px", color: "var(--text-muted)" }, children: "Recording audio..." }),
+    /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { style: { fontSize: "11px", color: "var(--text-muted)" }, children: isRecording ? "Recording audio..." : "Processing audio..." }),
     /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
       "button",
       {
@@ -28727,9 +28746,9 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onR
       const el = textareaRef.current;
       if (!el)
         return;
-      el.style.height = "auto";
+      el.setCssStyles({ height: "auto" });
       const newHeight = Math.min(el.scrollHeight, 280);
-      el.style.height = `${newHeight}px`;
+      el.setCssStyles({ height: `${newHeight}px` });
     });
   }, []);
   const [executionMode, setExecutionMode] = React7.useState(settings.executionMode || "auto");
@@ -28748,7 +28767,7 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onR
     totalCost: 0,
     requestCount: 0
   });
-  const [pricingMap, setPricingMap] = React7.useState({});
+  const [pricingMap] = React7.useState({});
   const [showReasoning, setShowReasoning] = React7.useState(true);
   const [learningProposal, setLearningProposal] = React7.useState(null);
   const [endpointUrl, setEndpointUrl] = React7.useState(settings.endpointUrl || "https://openrouter.ai/api/v1");
@@ -28910,7 +28929,7 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onR
   const [maxPrefetchedNotes, setMaxPrefetchedNotes] = React7.useState(settings.maxPrefetchedNotes || 5);
   const [prefetchSnippetLength, setPrefetchSnippetLength] = React7.useState(settings.prefetchSnippetLength || 400);
   const [ragResultLimit, setRagResultLimit] = React7.useState(settings.ragResultLimit || 5);
-  const [ragSnippetLength, setRagSnippetLength] = React7.useState(settings.ragSnippetLength || 1e3);
+  const [ragSnippetLength] = React7.useState(settings.ragSnippetLength || 1e3);
   const [confirmObsidianCommands, setConfirmObsidianCommands] = React7.useState(settings.confirmObsidianCommands ?? true);
   const [enableTemporalAwareness, setEnableTemporalAwareness] = React7.useState(settings.enableTemporalAwareness ?? true);
   const [enableAdaptivePrefetch, setEnableAdaptivePrefetch] = React7.useState(settings.enableAdaptivePrefetch ?? true);
@@ -28919,13 +28938,13 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onR
   const [enableVaultContextDefault, setEnableVaultContextDefault] = React7.useState(settings.enableVaultContextDefault ?? true);
   const [vaultContextEnabled, setVaultContextEnabled] = React7.useState(settings.enableVaultContextDefault ?? true);
   const [intentRoutingThreshold, setIntentRoutingThreshold] = React7.useState(settings.intentRoutingThreshold ?? 2.5);
-  const [intentVaultKeywordWeight, setIntentVaultKeywordWeight] = React7.useState(settings.intentVaultKeywordWeight ?? 2);
+  const [intentVaultKeywordWeight] = React7.useState(settings.intentVaultKeywordWeight ?? 2);
   const [intentCreationWeight, setIntentCreationWeight] = React7.useState(settings.intentCreationWeight ?? 3);
   const [intentDeletionWeight, setIntentDeletionWeight] = React7.useState(settings.intentDeletionWeight ?? 4);
-  const [intentAnalysisWeight, setIntentAnalysisWeight] = React7.useState(settings.intentAnalysisWeight ?? 2.5);
+  const [intentAnalysisWeight] = React7.useState(settings.intentAnalysisWeight ?? 2.5);
   const [intentQuestionWeight, setIntentQuestionWeight] = React7.useState(settings.intentQuestionWeight ?? -1.5);
-  const [intentLengthWeight, setIntentLengthWeight] = React7.useState(settings.intentLengthWeight ?? 5e-3);
-  const [intentHistoryWeight, setIntentHistoryWeight] = React7.useState(settings.intentHistoryWeight ?? 0.3);
+  const [intentLengthWeight] = React7.useState(settings.intentLengthWeight ?? 5e-3);
+  const [intentHistoryWeight] = React7.useState(settings.intentHistoryWeight ?? 0.3);
   const [intentStaleQueryWeight, setIntentStaleQueryWeight] = React7.useState(settings.intentStaleQueryWeight ?? 3);
   const [intentFreshnessWeight, setIntentFreshnessWeight] = React7.useState(settings.intentFreshnessWeight ?? 2);
   const settingsSaveTimerRef = React7.useRef(null);
@@ -29198,7 +29217,7 @@ ${fileContext}` : fileContext;
     setAttachedFiles([]);
     setAttachedImages([]);
     if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
+      textareaRef.current.setCssStyles({ height: "auto" });
     }
     void executeQuery(fullQuery, currentSession.messages, imagesToPass);
   };
@@ -30353,7 +30372,7 @@ var NeiChatView = class extends import_obsidian13.ItemView {
     container.empty();
     container.addClass("nei-chat-view-container");
     const rootEl = container.createDiv({ cls: "nei-chat-view-root" });
-    this.root = ReactDOM.createRoot(rootEl);
+    this.root = (0, import_client.createRoot)(rootEl);
     this.root.render(
       React8.createElement(ChatPanel, {
         app: this.app,
@@ -30797,6 +30816,7 @@ async function executeTemplaterRender(app, template, context) {
 }
 
 // src/services/tools/canvasTools.ts
+var import_obsidian15 = require("obsidian");
 function safeNormalizePath(path) {
   return path.replace(/\\/g, "/").replace(/\/+/g, "/").replace(/^\//, "");
 }
@@ -30907,8 +30927,8 @@ async function executeCreateCanvas(app, path, nodes, edges = []) {
     await app.vault.create(canvasPath, content);
     return `Successfully created Obsidian Canvas at: ${canvasPath} (${nodes.length} nodes, ${edges.length} edges)`;
   } catch (e) {
-    const err = e;
-    return `Error creating Canvas file: ${err?.message || String(e)}`;
+    const err = e instanceof Error ? e : { message: String(e) };
+    return `Error creating Canvas file: ${err.message || String(e)}`;
   }
 }
 async function executeReadCanvas(app, path) {
@@ -30918,11 +30938,8 @@ async function executeReadCanvas(app, path) {
       canvasPath += ".canvas";
     }
     const file = app.vault.getAbstractFileByPath(canvasPath);
-    if (!file) {
-      return `Error: Canvas file '${canvasPath}' not found.`;
-    }
-    if (!("stat" in file)) {
-      return `Error: Path '${canvasPath}' is not a valid file.`;
+    if (!file || !(file instanceof import_obsidian15.TFile)) {
+      return `Error: Canvas file '${canvasPath}' not found or is not a valid file.`;
     }
     const content = await app.vault.read(file);
     let data;
@@ -30939,8 +30956,8 @@ Edges: ${edgesCount}
 
 ${JSON.stringify(data, null, 2)}`;
   } catch (e) {
-    const err = e;
-    return `Error reading Canvas file: ${err?.message || String(e)}`;
+    const err = e instanceof Error ? e : { message: String(e) };
+    return `Error reading Canvas file: ${err.message || String(e)}`;
   }
 }
 
@@ -31032,7 +31049,7 @@ var ToolRegistry = class {
 };
 
 // src/services/mcp/mcpClient.ts
-var import_obsidian15 = require("obsidian");
+var import_obsidian16 = require("obsidian");
 var McpService = class {
   static setServers(servers) {
     this.servers = servers;
@@ -31047,7 +31064,7 @@ var McpService = class {
       if (!server.enabled || !server.endpointUrl)
         continue;
       try {
-        const response = await (0, import_obsidian15.requestUrl)({
+        const response = await (0, import_obsidian16.requestUrl)({
           url: server.endpointUrl.endsWith("/") ? `${server.endpointUrl}tools/list` : `${server.endpointUrl}/tools/list`,
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -31083,7 +31100,7 @@ var McpService = class {
    */
   static async callMcpTool(server, originalToolName, args) {
     try {
-      const response = await (0, import_obsidian15.requestUrl)({
+      const response = await (0, import_obsidian16.requestUrl)({
         url: server.endpointUrl.endsWith("/") ? `${server.endpointUrl}tools/call` : `${server.endpointUrl}/tools/call`,
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -31189,7 +31206,7 @@ var DEFAULT_SETTINGS = {
   // Vault Context Toggle default
   enableVaultContextDefault: true
 };
-var NeiAiChatPlugin = class extends import_obsidian16.Plugin {
+var NeiAiChatPlugin = class extends import_obsidian17.Plugin {
   constructor() {
     super(...arguments);
     this.settings = DEFAULT_SETTINGS;
@@ -31234,9 +31251,10 @@ var NeiAiChatPlugin = class extends import_obsidian16.Plugin {
   }
   async loadSettings() {
     const loadedData = await this.loadData();
-    if (loadedData?.apiKey && typeof this.app.vault.decrypt === "function") {
+    const vaultCrypto = this.app.vault;
+    if (loadedData?.apiKey && typeof vaultCrypto.decrypt === "function") {
       try {
-        loadedData.apiKey = await this.app.vault.decrypt(loadedData.apiKey);
+        loadedData.apiKey = await vaultCrypto.decrypt(loadedData.apiKey);
       } catch {
       }
     }
@@ -31253,9 +31271,10 @@ var NeiAiChatPlugin = class extends import_obsidian16.Plugin {
   }
   async saveSettings() {
     const dataToSave = { ...this.settings };
-    if (dataToSave.apiKey && typeof this.app.vault.encrypt === "function") {
+    const vaultCrypto = this.app.vault;
+    if (dataToSave.apiKey && typeof vaultCrypto.encrypt === "function") {
       try {
-        dataToSave.apiKey = await this.app.vault.encrypt(dataToSave.apiKey);
+        dataToSave.apiKey = await vaultCrypto.encrypt(dataToSave.apiKey);
       } catch {
       }
     }

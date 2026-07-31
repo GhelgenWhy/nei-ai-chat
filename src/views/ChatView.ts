@@ -1,13 +1,13 @@
 import { ItemView, WorkspaceLeaf } from "obsidian";
 import * as React from "react";
-import * as ReactDOM from "react-dom/client";
+import { createRoot, Root } from "react-dom/client";
 import { ChatPanel } from "../components/ChatPanel";
 import { NeiAiChatPlugin, NeiAiChatSettings } from "../../main";
 
 export const VIEW_TYPE_NEI_CHAT = "nei-chat-view";
 
 export class NeiChatView extends ItemView {
-    root: ReactDOM.Root | null = null;
+    root: Root | null = null;
     plugin: NeiAiChatPlugin;
 
     constructor(leaf: WorkspaceLeaf, plugin: NeiAiChatPlugin) {
@@ -32,7 +32,7 @@ export class NeiChatView extends ItemView {
         container.empty();
         container.addClass("nei-chat-view-container");
         const rootEl = container.createDiv({ cls: "nei-chat-view-root" });
-        this.root = ReactDOM.createRoot(rootEl);
+        this.root = createRoot(rootEl);
         
         this.root.render(
             React.createElement(ChatPanel, {

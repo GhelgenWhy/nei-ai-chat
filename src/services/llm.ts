@@ -49,6 +49,12 @@ export {
     isQueryLikelyStale
 } from "./modelRegistry";
 
+interface StreamResponse {
+    body?: {
+        getReader: () => ReadableStreamDefaultReader<Uint8Array>;
+    };
+}
+
 /**
  * Sends a chat request to OpenRouter or OpenAI-compatible LLM endpoint with Tool Calling support.
  */
@@ -252,7 +258,7 @@ export async function sendChatRequestStream(
             return sendChatRequest(config, messages, tools, signal);
         }
 
-        const reader = (res as any).body?.getReader();
+        const reader = (res as unknown as StreamResponse).body?.getReader();
         if (!reader) {
             return sendChatRequest(config, messages, tools, signal);
         }

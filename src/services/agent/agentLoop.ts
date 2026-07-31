@@ -538,10 +538,13 @@ export class AgentLoop {
                 }
             }
 
-            // Safety: prevent returning raw tool call JSON as final answer
+            // Safety: prevent returning raw tool call JSON/XML as final answer
             if (finalResponseText && this.containsJsonToolCall(finalResponseText)) {
                 console.warn('[AgentLoop] Model returned tool call as final text, stripping');
+                // Remove JSON tool calls in markdown code blocks
                 finalResponseText = finalResponseText.replace(/```[\s\S]*?```/g, '').trim()
+                // Remove incomplete XML tool call tags (streaming artifacts)
+                finalResponseText = finalResponseText.replace(/<\/?tool_call>/gi, '').trim()
                     || t("agentNoOutput", language);
             }
 
@@ -562,16 +565,44 @@ export class AgentLoop {
     }
 
     private static containsJsonToolCall(text: string): boolean {
-        return /```(?:json)?\s*\{[\s\S]*?"(?:tool|name|function|action)"\s*:/i.test(text) ||
-               /<tool_call>/i.test(text);
+        // Check for JSON tool calls in markdown code blocks
+        if (/```(?:json)?\s*\{[\s\S]*?"(?:tool|name|function|action)"\s*:/i.test(text)) {
+            return true;
+        }
+        // Check for XML tool calls - must have both opening and closing tags
+        if (/<tool_call>[\s\S]*?<\/tool_call>/i.test(text)) {
+            return true;
+        }
+        // Check for incomplete XML tool calls (streaming artifacts) - warn but don't process
+        if (/<tool_call>/i.test(text) && !/<\/tool_call>/i.test(text)) {
+            console.warn('[AgentLoop] Incomplete tool_call tag detected (streaming artifact), ignoring');
+            return false;
+        }
+        return false;
     }
 
     private static extractJsonToolCall(text: string): { name: string; args: Record<string, unknown> } | null {
         try {
+            // First try to extract complete XML tool calls
             const xmlMatch = text.match(/<tool_call>\s*([\s\S]*?)\s*<\/tool_call>/i);
-            const rawJson = xmlMatch ? xmlMatch[1] : text;
+            if (xmlMatch) {
+                const rawJson = xmlMatch[1];
+                const jsonMatch = rawJson.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/i) || rawJson.match(/(\{[\s\S]*?\})/i);
+                if (jsonMatch) {
+                    const parsed = JSON.parse(jsonMatch[1]) as Record<string, unknown>;
+                    const toolName = typeof parsed.tool === "string" ? parsed.tool :
+                                     typeof parsed.name === "string" ? parsed.name :
+                                     typeof parsed.function === "string" ? parsed.function :
+                                     typeof parsed.action === "string" ? parsed.action : undefined;
+                    if (toolName) {
+                        const args = (parsed.arguments || parsed.args || parsed.action_input || {}) as Record<string, unknown>;
+                        return { name: toolName, args };
+                    }
+                }
+            }
 
-            const jsonMatch = rawJson.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/i) || rawJson.match(/(\{[\s\S]*?\})/i);
+            // Fallback: try to find JSON in markdown code blocks
+            const jsonMatch = text.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/i) || text.match(/(\{[\s\S]*?\})/i);
             if (jsonMatch) {
                 const parsed = JSON.parse(jsonMatch[1]) as Record<string, unknown>;
                 const toolName = typeof parsed.tool === "string" ? parsed.tool :
@@ -580,10 +611,7 @@ export class AgentLoop {
                                  typeof parsed.action === "string" ? parsed.action : undefined;
                 if (toolName) {
                     const args = (parsed.arguments || parsed.args || parsed.action_input || {}) as Record<string, unknown>;
-                    return {
-                        name: toolName,
-                        args
-                    };
+                    return { name: toolName, args };
                 }
             }
         } catch {

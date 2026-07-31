@@ -358,13 +358,13 @@ export function generateDateVariants(input: string): string[] {
 }
 
 function findFile(app: App, rawPath: string): TFile | null {
-    let cleanPath = normalizePath(rawPath.trim());
+    const cleanPath = normalizePath(rawPath.trim());
     if (!cleanPath.endsWith(".md")) {
-        const fileWithMd = app.vault.getFileByPath(cleanPath + ".md");
-        if (fileWithMd) return fileWithMd;
+        const fileWithMd = app.vault.getAbstractFileByPath(cleanPath + ".md");
+        if (fileWithMd instanceof TFile) return fileWithMd;
     }
-    const exact = app.vault.getFileByPath(cleanPath);
-    if (exact) return exact;
+    const exact = app.vault.getAbstractFileByPath(cleanPath);
+    if (exact instanceof TFile) return exact;
 
     const files = app.vault.getMarkdownFiles();
     const cleanLower = cleanPath.toLowerCase();
@@ -390,12 +390,12 @@ function findFile(app: App, rawPath: string): TFile | null {
 }
 
 function findFolder(app: App, rawPath: string): TFolder | null {
-    let cleanPath = normalizePath(rawPath.trim());
+    const cleanPath = normalizePath(rawPath.trim());
     if (!cleanPath || cleanPath === "/" || cleanPath === ".") {
         return app.vault.getRoot();
     }
-    const folder = app.vault.getFolderByPath(cleanPath);
-    if (folder) return folder;
+    const folder = app.vault.getAbstractFileByPath(cleanPath);
+    if (folder instanceof TFolder) return folder;
 
     const allFolders = app.vault.getAllLoadedFiles().filter((f): f is TFolder => f instanceof TFolder);
     const matched = allFolders.find(f => 

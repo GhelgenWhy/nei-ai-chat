@@ -3,6 +3,11 @@ import { NeiChatView, VIEW_TYPE_NEI_CHAT } from "./src/views/ChatView";
 import { ToolRegistry } from "./src/services/tools/toolRegistry";
 import { McpService } from "./src/services/mcp/mcpClient";
 
+interface VaultWithCrypto {
+    decrypt?: (s: string) => Promise<string>;
+    encrypt?: (s: string) => Promise<string>;
+}
+
 export interface NeiAiChatSettings {
     provider: 'openrouter' | 'ollama' | 'custom';
     endpointUrl: string;
@@ -220,9 +225,10 @@ export default class NeiAiChatPlugin extends Plugin {
 
     async loadSettings() {
         const loadedData = (await this.loadData()) as Partial<NeiAiChatSettings> & { settingsVersion?: number } | null;
-        if (loadedData?.apiKey && typeof (this.app.vault as unknown as { decrypt?: (s: string) => Promise<string> }).decrypt === 'function') {
+        const vaultCrypto = this.app.vault as unknown as VaultWithCrypto;
+        if (loadedData?.apiKey && typeof vaultCrypto.decrypt === 'function') {
             try {
-                loadedData.apiKey = await (this.app.vault as unknown as { decrypt: (s: string) => Promise<string> }).decrypt(loadedData.apiKey);
+                loadedData.apiKey = await vaultCrypto.decrypt(loadedData.apiKey);
             } catch {
                 // corrupted or unencrypted fallback
             }
@@ -244,9 +250,10 @@ export default class NeiAiChatPlugin extends Plugin {
 
     async saveSettings() {
         const dataToSave = { ...this.settings };
-        if (dataToSave.apiKey && typeof (this.app.vault as unknown as { encrypt?: (s: string) => Promise<string> }).encrypt === 'function') {
+        const vaultCrypto = this.app.vault as unknown as VaultWithCrypto;
+        if (dataToSave.apiKey && typeof vaultCrypto.encrypt === 'function') {
             try {
-                dataToSave.apiKey = await (this.app.vault as unknown as { encrypt: (s: string) => Promise<string> }).encrypt(dataToSave.apiKey);
+                dataToSave.apiKey = await vaultCrypto.encrypt(dataToSave.apiKey);
             } catch {
                 // fallback
             }

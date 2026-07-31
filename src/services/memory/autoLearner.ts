@@ -1,6 +1,6 @@
 import { App } from 'obsidian';
 import { ChatMessage, sendChatRequest, LlmConfig } from '../llm';
-import { MemoryStore, NeiMemory } from './memoryStore';
+import { MemoryStore } from './memoryStore';
 import { NeiAiChatSettings } from '../../../main';
 
 export interface LearningProposal {

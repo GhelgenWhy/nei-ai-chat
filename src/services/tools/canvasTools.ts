@@ -1,4 +1,4 @@
-import type { App } from "obsidian";
+import { App, TFile } from "obsidian";
 import { ToolDefinition } from "./types";
 
 function safeNormalizePath(path: string): string {
@@ -123,8 +123,8 @@ export async function executeCreateCanvas(
         await app.vault.create(canvasPath, content);
         return `Successfully created Obsidian Canvas at: ${canvasPath} (${nodes.length} nodes, ${edges.length} edges)`;
     } catch (e: unknown) {
-        const err = e as { message?: string };
-        return `Error creating Canvas file: ${err?.message || String(e)}`;
+        const err = e instanceof Error ? e : { message: String(e) };
+        return `Error creating Canvas file: ${err.message || String(e)}`;
     }
 }
 
@@ -136,20 +136,14 @@ export async function executeReadCanvas(app: App, path: string): Promise<string>
         }
 
         const file = app.vault.getAbstractFileByPath(canvasPath);
-        if (!file) {
-            return `Error: Canvas file '${canvasPath}' not found.`;
+        if (!file || !(file instanceof TFile)) {
+            return `Error: Canvas file '${canvasPath}' not found or is not a valid file.`;
         }
 
-        // We assume it's a TFile if it was returned and isn't a folder (which shouldn't end in .canvas generally)
-        // Check if we can read it:
-        if (!("stat" in file)) {
-            return `Error: Path '${canvasPath}' is not a valid file.`;
-        }
-
-        const content = await app.vault.read(file as import("obsidian").TFile);
-        let data;
+        const content = await app.vault.read(file);
+        let data: { nodes?: unknown[]; edges?: unknown[] };
         try {
-            data = JSON.parse(content);
+            data = JSON.parse(content) as { nodes?: unknown[]; edges?: unknown[] };
         } catch {
             return `Error: Canvas file '${canvasPath}' contains invalid JSON.`;
         }
@@ -159,7 +153,7 @@ export async function executeReadCanvas(app: App, path: string): Promise<string>
 
         return `Canvas File: ${canvasPath}\nNodes: ${nodesCount}\nEdges: ${edgesCount}\n\n${JSON.stringify(data, null, 2)}`;
     } catch (e: unknown) {
-        const err = e as { message?: string };
-        return `Error reading Canvas file: ${err?.message || String(e)}`;
+        const err = e instanceof Error ? e : { message: String(e) };
+        return `Error reading Canvas file: ${err.message || String(e)}`;
     }
 }

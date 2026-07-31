@@ -49,7 +49,7 @@ export const CapabilityWarningModal: React.FC<CapabilityWarningModalProps> = ({
                 <div style={{ color: 'var(--text-normal)', lineHeight: '1.4' }}>
                     The model <strong>{modelName}</strong> does not support the following attached media format(s):
                     <ul style={{ margin: '6px 0 0 16px', padding: 0 }}>
-                        {unsupportedTypes.map(t => (
+                        {unsupportedTypes.map((t: string) => (
                             <li key={t} style={{ fontWeight: 600 }}>{t.toUpperCase()}</li>
                         ))}
                     </ul>

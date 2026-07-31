@@ -15,7 +15,7 @@ import { ReasoningPanel } from "./ReasoningPanel";
 import { ModelCapabilityBar } from "./ModelCapabilityBar";
 import { AudioRecorder } from "./AudioRecorder";
 import { CapabilityWarningModal } from "./CapabilityWarningModal";
-import { calculateCost, formatTokenCount, formatCost, ModelPricing } from "../utils/cost";
+import { calculateCost, ModelPricing } from "../utils/cost";
 import { AutoLearner, LearningProposal } from "../services/memory/autoLearner";
 
 export interface AttachedFile {
@@ -109,9 +109,9 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
         window.requestAnimationFrame(() => {
             const el = textareaRef.current;
             if (!el) return;
-            el.style.height = 'auto';
+            el.setCssStyles({ height: 'auto' });
             const newHeight = Math.min(el.scrollHeight, 280);
-            el.style.height = `${newHeight}px`;
+            el.setCssStyles({ height: `${newHeight}px` });
         });
     }, []);
 
@@ -139,7 +139,7 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
         totalCost: 0,
         requestCount: 0
     });
-    const [pricingMap, setPricingMap] = React.useState<Record<string, ModelPricing>>({});
+    const [pricingMap] = React.useState<Record<string, ModelPricing>>({});
 
     // Reasoning Panel state
     const [showReasoning, setShowReasoning] = React.useState(true);
@@ -328,7 +328,7 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
     const [maxPrefetchedNotes, setMaxPrefetchedNotes] = React.useState<number>(settings.maxPrefetchedNotes || 5);
     const [prefetchSnippetLength, setPrefetchSnippetLength] = React.useState<number>(settings.prefetchSnippetLength || 400);
     const [ragResultLimit, setRagResultLimit] = React.useState<number>(settings.ragResultLimit || 5);
-    const [ragSnippetLength, setRagSnippetLength] = React.useState<number>(settings.ragSnippetLength || 1000);
+    const [ragSnippetLength] = React.useState<number>(settings.ragSnippetLength || 1000);
     const [confirmObsidianCommands, setConfirmObsidianCommands] = React.useState<boolean>(settings.confirmObsidianCommands ?? true);
 
     const [enableTemporalAwareness, setEnableTemporalAwareness] = React.useState<boolean>(settings.enableTemporalAwareness ?? true);
@@ -340,13 +340,13 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
     const [vaultContextEnabled, setVaultContextEnabled] = React.useState<boolean>(settings.enableVaultContextDefault ?? true);
 
     const [intentRoutingThreshold, setIntentRoutingThreshold] = React.useState<number>(settings.intentRoutingThreshold ?? 2.5);
-    const [intentVaultKeywordWeight, setIntentVaultKeywordWeight] = React.useState<number>(settings.intentVaultKeywordWeight ?? 2.0);
+    const [intentVaultKeywordWeight] = React.useState<number>(settings.intentVaultKeywordWeight ?? 2.0);
     const [intentCreationWeight, setIntentCreationWeight] = React.useState<number>(settings.intentCreationWeight ?? 3.0);
     const [intentDeletionWeight, setIntentDeletionWeight] = React.useState<number>(settings.intentDeletionWeight ?? 4.0);
-    const [intentAnalysisWeight, setIntentAnalysisWeight] = React.useState<number>(settings.intentAnalysisWeight ?? 2.5);
+    const [intentAnalysisWeight] = React.useState<number>(settings.intentAnalysisWeight ?? 2.5);
     const [intentQuestionWeight, setIntentQuestionWeight] = React.useState<number>(settings.intentQuestionWeight ?? -1.5);
-    const [intentLengthWeight, setIntentLengthWeight] = React.useState<number>(settings.intentLengthWeight ?? 0.005);
-    const [intentHistoryWeight, setIntentHistoryWeight] = React.useState<number>(settings.intentHistoryWeight ?? 0.3);
+    const [intentLengthWeight] = React.useState<number>(settings.intentLengthWeight ?? 0.005);
+    const [intentHistoryWeight] = React.useState<number>(settings.intentHistoryWeight ?? 0.3);
     const [intentStaleQueryWeight, setIntentStaleQueryWeight] = React.useState<number>(settings.intentStaleQueryWeight ?? 3.0);
     const [intentFreshnessWeight, setIntentFreshnessWeight] = React.useState<number>(settings.intentFreshnessWeight ?? 2.0);
 
@@ -645,7 +645,7 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
         setAttachedFiles([]);
         setAttachedImages([]);
         if (textareaRef.current) {
-            textareaRef.current.style.height = 'auto';
+            textareaRef.current.setCssStyles({ height: 'auto' });
         }
 
         void executeQuery(fullQuery, currentSession.messages, imagesToPass);

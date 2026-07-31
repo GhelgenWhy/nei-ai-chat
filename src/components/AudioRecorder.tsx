@@ -22,7 +22,7 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onAudioCaptured, o
             const recorder = new MediaRecorder(stream);
             mediaRecorderRef.current = recorder;
 
-            recorder.ondataavailable = (event) => {
+            recorder.ondataavailable = (event: BlobEvent) => {
                 if (event.data.size > 0) {
                     audioChunksRef.current.push(event.data);
                 }
@@ -57,7 +57,7 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onAudioCaptured, o
 
     const stopRecording = () => {
         if (timerRef.current !== null) {
-            clearInterval(timerRef.current);
+            window.clearInterval(timerRef.current);
             timerRef.current = null;
         }
         if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
@@ -70,7 +70,7 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onAudioCaptured, o
         void startRecording();
         return () => {
             if (timerRef.current !== null) {
-                clearInterval(timerRef.current);
+                window.clearInterval(timerRef.current);
             }
             if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
                 mediaRecorderRef.current.stop();
@@ -110,7 +110,9 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onAudioCaptured, o
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--text-error, #ff5555)', fontWeight: 'bold' }}>
                         🔴 {formatTime(seconds)}
                     </span>
-                    <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Recording audio...</span>
+                    <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                        {isRecording ? 'Recording audio...' : 'Processing audio...'}
+                    </span>
                     
                     <button
                         onClick={stopRecording}
