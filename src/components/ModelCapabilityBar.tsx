@@ -42,49 +42,73 @@ export const ModelCapabilityBar: FC<ModelCapabilityBarProps> = memo(({
     return (
         <div className="nei-capability-bar" style={{
             position: 'sticky',
-            top: '38px',
+            top: '0',
             zIndex: 10,
             display: 'flex',
             flexWrap: 'wrap',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: '6px',
-            padding: '3px 8px',
+            gap: 'clamp(4px, 1cqi, 8px)',
+            padding: 'clamp(2px, 0.5cqi, 4px) clamp(6px, 1.2cqi, 10px)',
             background: 'var(--background-secondary-alt, var(--background-secondary))',
             borderBottom: '1px solid var(--background-modifier-border)',
-            fontSize: '11px',
-            lineHeight: '1.2',
-            minHeight: '28px',
+            fontSize: 'clamp(9px, 1.5cqi, 11px)',
+            lineHeight: '1.3',
+            minHeight: 'clamp(24px, 4cqi, 32px)',
             boxSizing: 'border-box'
         }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden', flexWrap: 'wrap', minWidth: 0, flex: 1 }}>
+            <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 'clamp(4px, 1cqi, 6px)', 
+                overflow: 'hidden', 
+                flexWrap: 'wrap', 
+                minWidth: 0, 
+                flex: '1 1 auto' 
+            }}>
                 <span 
                     title={modelName}
-                    style={{ fontWeight: 600, color: 'var(--text-normal)', textOverflow: 'ellipsis', overflow: 'hidden', fontSize: '11px', whiteSpace: 'nowrap', flexShrink: 1 }}
+                    style={{ 
+                        fontWeight: 600, 
+                        color: 'var(--text-normal)', 
+                        textOverflow: 'ellipsis', 
+                        overflow: 'hidden', 
+                        fontSize: 'clamp(9px, 1.5cqi, 11px)', 
+                        whiteSpace: 'nowrap', 
+                        flexShrink: 1,
+                        maxWidth: 'clamp(120px, 30cqi, 200px)'
+                    }}
                 >
                     Model: {prettifyName(modelName)}
                 </span>
                 
+                {/* Separator dot - only show when there's room or on wide containers */}
                 <span style={{ opacity: 0.4, flexShrink: 0 }}>•</span>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
-                    <span title="Text Support" style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', fontSize: '10px', flexShrink: 0 }}>
+                <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: 'clamp(2px, 0.5cqi, 4px)', 
+                    flexWrap: 'wrap',
+                    minWidth: 0
+                }}>
+                    <span title="Text Support" style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', fontSize: 'clamp(8px, 1.2cqi, 10px)', flexShrink: 0, whiteSpace: 'nowrap' }}>
                         🟢 Text
                     </span>
                     
-                    <span title={caps.vision ? "Vision Supported" : "Vision Not Supported"} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', fontSize: '10px', opacity: caps.vision ? 1 : 0.4, flexShrink: 0 }}>
+                    <span title={caps.vision ? "Vision Supported" : "Vision Not Supported"} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', fontSize: 'clamp(8px, 1.2cqi, 10px)', opacity: caps.vision ? 1 : 0.4, flexShrink: 0, whiteSpace: 'nowrap' }}>
                         {caps.vision ? '🟡 Vision' : '🔴 Vision'}
                     </span>
 
-                    <span title={caps.audio ? "Audio Input Supported" : "Audio Not Supported"} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', fontSize: '10px', opacity: caps.audio ? 1 : 0.4, flexShrink: 0 }}>
+                    <span title={caps.audio ? "Audio Input Supported" : "Audio Not Supported"} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', fontSize: 'clamp(8px, 1.2cqi, 10px)', opacity: caps.audio ? 1 : 0.4, flexShrink: 0, whiteSpace: 'nowrap' }}>
                         {caps.audio ? '🟢 Audio' : '🔴 Audio'}
                     </span>
 
-                    <span title={caps.video ? "Video Input Supported" : "Video Not Supported"} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', fontSize: '10px', opacity: caps.video ? 1 : 0.4, flexShrink: 0 }}>
+                    <span title={caps.video ? "Video Input Supported" : "Video Not Supported"} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', fontSize: 'clamp(8px, 1.2cqi, 10px)', opacity: caps.video ? 1 : 0.4, flexShrink: 0, whiteSpace: 'nowrap' }}>
                         {caps.video ? '🟢 Video' : '🔴 Video'}
                     </span>
 
-                    <span title="PDF Text/Document Supported" style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', fontSize: '10px', flexShrink: 0 }}>
+                    <span title="PDF Text/Document Supported" style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', fontSize: 'clamp(8px, 1.2cqi, 10px)', flexShrink: 0, whiteSpace: 'nowrap' }}>
                         📄 PDF
                     </span>
                 </div>
@@ -92,7 +116,7 @@ export const ModelCapabilityBar: FC<ModelCapabilityBarProps> = memo(({
 
             <div style={{
                 fontFamily: 'var(--font-monospace, monospace)',
-                fontSize: '10px',
+                fontSize: 'clamp(8px, 1.2cqi, 10px)',
                 color: 'var(--text-muted)',
                 whiteSpace: 'nowrap',
                 flexShrink: 0,

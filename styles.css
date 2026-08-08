@@ -3,6 +3,19 @@ NEI AI Chat Plugin Styles
 Scoped to plugin elements only — does NOT override Obsidian shell containers.
 */
 
+/* ── Container Query: Root panel as container ── */
+.nei-chat-view-root {
+    container-type: inline-size;
+    container-name: nei-panel;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    box-sizing: border-box;
+}
+
 /* ── Layout & Scrolling Isolation ── */
 .workspace-leaf-content .nei-chat-view-container,
 .nei-chat-view-container {
@@ -13,58 +26,208 @@ Scoped to plugin elements only — does NOT override Obsidian shell containers.
     flex-direction: column;
 }
 
-.nei-chat-view-root {
-    height: 100%;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    position: relative;
-    box-sizing: border-box;
-}
-
 .nei-chat-panel-container {
     display: flex;
     flex-direction: column;
     height: 100%;
     width: 100%;
-    padding: 10px;
+    padding: clamp(6px, 1.5cqi, 10px);
     box-sizing: border-box;
     position: relative;
     overflow: hidden;
 }
 
+/* ── Header Bar: Responsive 2-row (narrow) / 1-row (wide) layout ── */
 .nei-chat-header {
     flex-shrink: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 8px;
-    padding-bottom: 8px;
+    margin-bottom: 6px;
+    padding-bottom: 6px;
     border-bottom: 1px solid var(--background-modifier-border);
-    flex-wrap: wrap;
     gap: 6px;
     position: relative;
     z-index: 5;
+    /* Mobile-first: stacked rows, items wrap */
+    flex-direction: column;
+    align-items: stretch;
 }
 
+/* Wide containers (≥ 560px): single row header */
+@container nei-panel (min-width: 560px) {
+    .nei-chat-header {
+        flex-direction: row;
+        align-items: center;
+    }
+}
+
+.nei-header-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+/* Header group 1 (session + new chat): prevent + button from wrapping alone */
+.nei-chat-header .nei-header-group:first-child {
+    justify-content: space-between;
+    width: 100%;
+    flex-wrap: wrap;
+}
+
+@container nei-panel (min-width: 560px) {
+    .nei-chat-header .nei-header-group:first-child {
+        justify-content: flex-start;
+        width: auto;
+        flex: 1 1 auto;
+    }
+}
+
+/* Session dropdown button */
+.nei-session-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--background-secondary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    cursor: pointer;
+    padding: clamp(3px, 0.7cqi, 4px) clamp(6px, 1.2cqi, 10px);
+    font-size: clamp(10px, 2cqi, 11px);
+    font-weight: 500;
+    color: var(--text-normal);
+    transition: background 0.15s ease, border-color 0.15s ease;
+    box-sizing: border-box;
+    min-width: clamp(100px, 20cqi, 140px);
+    max-width: clamp(180px, 35cqi, 240px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1 1 auto;
+}
+
+.nei-session-btn:hover {
+    background: var(--background-secondary-alt);
+    border-color: var(--interactive-accent);
+}
+
+/* New chat button — never wraps alone */
+.nei-new-chat-btn {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    padding: clamp(3px, 0.7cqi, 4px) clamp(6px, 1.2cqi, 10px);
+    font-size: clamp(10px, 2cqi, 11px);
+    font-weight: bold;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    transition: background 0.15s ease;
+}
+
+.nei-new-chat-btn:hover {
+    background: var(--interactive-accent-hover, var(--interactive-accent));
+}
+
+/* Header group 2 (mode, vault context, move tab, settings) */
+.nei-chat-header .nei-header-group:last-child {
+    justify-content: flex-end;
+    width: 100%;
+    flex-wrap: wrap;
+    gap: clamp(4px, 1cqi, 6px);
+}
+
+@container nei-panel (min-width: 560px) {
+    .nei-chat-header .nei-header-group:last-child {
+        justify-content: flex-end;
+        width: auto;
+        flex: 0 0 auto;
+    }
+}
+
+/* Mode select, vault toggle, move tab, settings — all consistent sizing */
+.nei-header-btn,
+.nei-select-mode {
+    background: var(--background-secondary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    cursor: pointer;
+    padding: clamp(2px, 0.5cqi, 3px) clamp(5px, 1cqi, 8px);
+    font-size: clamp(10px, 1.8cqi, 11px);
+    font-weight: 500;
+    color: var(--text-normal);
+    transition: background 0.15s ease, border-color 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    box-sizing: border-box;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.nei-header-btn:hover,
+.nei-select-mode:hover {
+    background: var(--background-secondary-alt);
+    border-color: var(--interactive-accent);
+}
+
+.nei-header-btn:focus-visible,
+.nei-select-mode:focus-visible,
+.nei-model-select:focus-visible,
+.nei-chat-textarea:focus-visible {
+    outline: 2px solid var(--interactive-accent);
+    outline-offset: 1px;
+}
+
+/* Vault context toggle active state */
+.nei-header-btn.nei-btn-active {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border-color: var(--interactive-accent);
+}
+
+.nei-model-select {
+    background: var(--background-secondary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    font-size: clamp(10px, 1.8cqi, 11px);
+    padding: clamp(2px, 0.5cqi, 3px) clamp(5px, 1cqi, 8px);
+    color: var(--text-normal);
+    cursor: pointer;
+    max-width: clamp(120px, 25cqi, 180px);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    box-sizing: border-box;
+    flex-shrink: 0;
+}
+
+/* ── Capability Bar ── */
+.nei-capability-bar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--background-secondary-alt, var(--background-secondary));
+    border-bottom: 1px solid var(--background-modifier-border);
+    margin-bottom: 6px;
+}
+
+/* ── Messages Container ── */
 .nei-chat-messages-container {
     flex: 1;
     min-height: 0;          /* CRITICAL flex-child scroll fix */
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    margin-bottom: 10px;
+    gap: clamp(8px, 1.5cqi, 12px);
+    margin-bottom: clamp(6px, 1.2cqi, 10px);
     padding-right: 2px;
-}
-
-.nei-chat-input-container {
-    flex-shrink: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    padding-bottom: env(safe-area-inset-bottom, 28px); /* Clear Obsidian status bar overlay + safe area */
 }
 
 /* ── Message bubbles: prevent wide content from blowing out ── */
@@ -195,33 +358,112 @@ Scoped to plugin elements only — does NOT override Obsidian shell containers.
     overflow: hidden;
 }
 
-/* ── Capability Bar ── */
-.nei-capability-bar {
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    background: var(--background-secondary-alt, var(--background-secondary));
-    border-bottom: 1px solid var(--background-modifier-border);
-    margin-bottom: 8px;
+/* ── Input Container: Desktop respects status bar, Mobile handles safe area & keyboard ── */
+.nei-chat-input-container {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(4px, 1cqi, 6px);
+    /* Desktop: reserve space for Obsidian status bar */
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--status-bar-height, 30px));
+}
+
+/* On mobile (touch devices), reduce the status bar padding since mobile has its own handling */
+@media (pointer: coarse) {
+    .nei-chat-input-container {
+        padding-bottom: max(env(safe-area-inset-bottom, 12px), 12px);
+    }
+}
+
+/* When virtual keyboard is open, visualViewport API handles scroll in JS */
+
+.nei-chat-input-row {
+    display: flex;
+    gap: clamp(4px, 1cqi, 6px);
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+
+.nei-chat-attach-btn,
+.nei-chat-audio-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(6px, 1.2cqi, 8px) clamp(8px, 1.5cqi, 10px);
+    background: var(--background-secondary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: clamp(13px, 2.5cqi, 15px);
+    color: var(--text-normal);
+    transition: background 0.15s ease, border-color 0.15s ease;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    margin-bottom: 0;
+}
+
+.nei-chat-attach-btn:hover,
+.nei-chat-audio-btn:hover {
+    background: var(--background-secondary-alt);
+    border-color: var(--interactive-accent);
+}
+
+.nei-chat-audio-btn.recording {
+    background: var(--text-error, #ff5555);
+    color: #fff;
+    border-color: var(--text-error, #ff5555);
 }
 
 /* ── Smooth Textarea ── */
 .nei-chat-textarea {
     width: 100%;
+    flex: 1;
+    min-width: 0;
     resize: none;
     box-sizing: border-box;
     font-family: inherit;
-    font-size: 13px;
+    font-size: clamp(12px, 2cqi, 14px);
     line-height: 1.4;
-    padding: 8px 10px;
+    padding: clamp(6px, 1.2cqi, 8px) clamp(8px, 1.5cqi, 10px);
     border-radius: 6px;
     border: 1px solid var(--background-modifier-border);
     background: var(--background-primary);
     color: var(--text-normal);
     transition: border-color 0.15s ease;
+    min-height: clamp(44px, 8cqi, 60px);
+    max-height: clamp(180px, 35cqi, 280px);
 }
 
 .nei-chat-textarea:focus {
     border-color: var(--interactive-accent);
+}
+
+/* ── Send Button ── */
+.nei-chat-send-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 clamp(10px, 2cqi, 16px);
+    height: clamp(44px, 8cqi, 60px);
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: clamp(12px, 2cqi, 14px);
+    flex-shrink: 0;
+    box-sizing: border-box;
+    transition: background 0.15s ease;
+    margin-bottom: 0;
+}
+
+.nei-chat-send-btn:hover:not(:disabled) {
+    background: var(--interactive-accent-hover, var(--interactive-accent));
+}
+
+.nei-chat-send-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 

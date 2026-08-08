@@ -28343,27 +28343,44 @@ var ModelCapabilityBar = (0, import_react5.memo)(({
   const maxCtx = modelDetails?.contextLength || contextWindow;
   return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "nei-capability-bar", style: {
     position: "sticky",
-    top: "38px",
+    top: "0",
     zIndex: 10,
     display: "flex",
     flexWrap: "wrap",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: "6px",
-    padding: "3px 8px",
+    gap: "clamp(4px, 1cqi, 8px)",
+    padding: "clamp(2px, 0.5cqi, 4px) clamp(6px, 1.2cqi, 10px)",
     background: "var(--background-secondary-alt, var(--background-secondary))",
     borderBottom: "1px solid var(--background-modifier-border)",
-    fontSize: "11px",
-    lineHeight: "1.2",
-    minHeight: "28px",
+    fontSize: "clamp(9px, 1.5cqi, 11px)",
+    lineHeight: "1.3",
+    minHeight: "clamp(24px, 4cqi, 32px)",
     boxSizing: "border-box"
   }, children: [
-    /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: "6px", overflow: "hidden", flexWrap: "wrap", minWidth: 0, flex: 1 }, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { style: {
+      display: "flex",
+      alignItems: "center",
+      gap: "clamp(4px, 1cqi, 6px)",
+      overflow: "hidden",
+      flexWrap: "wrap",
+      minWidth: 0,
+      flex: "1 1 auto"
+    }, children: [
       /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(
         "span",
         {
           title: modelName,
-          style: { fontWeight: 600, color: "var(--text-normal)", textOverflow: "ellipsis", overflow: "hidden", fontSize: "11px", whiteSpace: "nowrap", flexShrink: 1 },
+          style: {
+            fontWeight: 600,
+            color: "var(--text-normal)",
+            textOverflow: "ellipsis",
+            overflow: "hidden",
+            fontSize: "clamp(9px, 1.5cqi, 11px)",
+            whiteSpace: "nowrap",
+            flexShrink: 1,
+            maxWidth: "clamp(120px, 30cqi, 200px)"
+          },
           children: [
             "Model: ",
             prettifyName(modelName)
@@ -28371,17 +28388,23 @@ var ModelCapabilityBar = (0, import_react5.memo)(({
         }
       ),
       /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { style: { opacity: 0.4, flexShrink: 0 }, children: "\u2022" }),
-      /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: "4px", flexWrap: "wrap" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { title: "Text Support", style: { display: "inline-flex", alignItems: "center", gap: "2px", fontSize: "10px", flexShrink: 0 }, children: "\u{1F7E2} Text" }),
-        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { title: caps.vision ? "Vision Supported" : "Vision Not Supported", style: { display: "inline-flex", alignItems: "center", gap: "2px", fontSize: "10px", opacity: caps.vision ? 1 : 0.4, flexShrink: 0 }, children: caps.vision ? "\u{1F7E1} Vision" : "\u{1F534} Vision" }),
-        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { title: caps.audio ? "Audio Input Supported" : "Audio Not Supported", style: { display: "inline-flex", alignItems: "center", gap: "2px", fontSize: "10px", opacity: caps.audio ? 1 : 0.4, flexShrink: 0 }, children: caps.audio ? "\u{1F7E2} Audio" : "\u{1F534} Audio" }),
-        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { title: caps.video ? "Video Input Supported" : "Video Not Supported", style: { display: "inline-flex", alignItems: "center", gap: "2px", fontSize: "10px", opacity: caps.video ? 1 : 0.4, flexShrink: 0 }, children: caps.video ? "\u{1F7E2} Video" : "\u{1F534} Video" }),
-        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { title: "PDF Text/Document Supported", style: { display: "inline-flex", alignItems: "center", gap: "2px", fontSize: "10px", flexShrink: 0 }, children: "\u{1F4C4} PDF" })
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { style: {
+        display: "flex",
+        alignItems: "center",
+        gap: "clamp(2px, 0.5cqi, 4px)",
+        flexWrap: "wrap",
+        minWidth: 0
+      }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { title: "Text Support", style: { display: "inline-flex", alignItems: "center", gap: "2px", fontSize: "clamp(8px, 1.2cqi, 10px)", flexShrink: 0, whiteSpace: "nowrap" }, children: "\u{1F7E2} Text" }),
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { title: caps.vision ? "Vision Supported" : "Vision Not Supported", style: { display: "inline-flex", alignItems: "center", gap: "2px", fontSize: "clamp(8px, 1.2cqi, 10px)", opacity: caps.vision ? 1 : 0.4, flexShrink: 0, whiteSpace: "nowrap" }, children: caps.vision ? "\u{1F7E1} Vision" : "\u{1F534} Vision" }),
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { title: caps.audio ? "Audio Input Supported" : "Audio Not Supported", style: { display: "inline-flex", alignItems: "center", gap: "2px", fontSize: "clamp(8px, 1.2cqi, 10px)", opacity: caps.audio ? 1 : 0.4, flexShrink: 0, whiteSpace: "nowrap" }, children: caps.audio ? "\u{1F7E2} Audio" : "\u{1F534} Audio" }),
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { title: caps.video ? "Video Input Supported" : "Video Not Supported", style: { display: "inline-flex", alignItems: "center", gap: "2px", fontSize: "clamp(8px, 1.2cqi, 10px)", opacity: caps.video ? 1 : 0.4, flexShrink: 0, whiteSpace: "nowrap" }, children: caps.video ? "\u{1F7E2} Video" : "\u{1F534} Video" }),
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { title: "PDF Text/Document Supported", style: { display: "inline-flex", alignItems: "center", gap: "2px", fontSize: "clamp(8px, 1.2cqi, 10px)", flexShrink: 0, whiteSpace: "nowrap" }, children: "\u{1F4C4} PDF" })
       ] })
     ] }),
     /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { style: {
       fontFamily: "var(--font-monospace, monospace)",
-      fontSize: "10px",
+      fontSize: "clamp(8px, 1.2cqi, 10px)",
       color: "var(--text-muted)",
       whiteSpace: "nowrap",
       flexShrink: 0,
@@ -28809,10 +28832,32 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onR
       const el = textareaRef.current;
       if (!el)
         return;
-      el.setCssStyles({ height: "auto" });
+      el.style.height = "auto";
       const maxHeight = Math.min(el.scrollHeight, window.innerHeight * 0.4, 280);
-      el.setCssStyles({ height: `${maxHeight}px` });
+      el.style.height = `${maxHeight}px`;
     });
+  }, []);
+  const handleTextareaFocus = import_react7.default.useCallback(() => {
+    if (!textareaRef.current)
+      return;
+    if (window.visualViewport) {
+      const handleResize = () => {
+        if (!textareaRef.current)
+          return;
+        const rect = textareaRef.current.getBoundingClientRect();
+        const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+        if (rect.bottom > viewportHeight) {
+          textareaRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
+        }
+      };
+      window.visualViewport.addEventListener("resize", handleResize);
+      setTimeout(() => {
+        textareaRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+      }, 50);
+      return () => {
+        window.visualViewport?.removeEventListener("resize", handleResize);
+      };
+    }
   }, []);
   const [executionMode, setExecutionMode] = import_react7.default.useState(settings.executionMode || "auto");
   const [loading, setLoading] = import_react7.default.useState(false);
@@ -29280,7 +29325,7 @@ ${fileContext}` : fileContext;
     setAttachedFiles([]);
     setAttachedImages([]);
     if (textareaRef.current) {
-      textareaRef.current.setCssStyles({ height: "auto" });
+      textareaRef.current.style.height = "auto";
     }
     void executeQuery(fullQuery, currentSession.messages, imagesToPass);
   };
@@ -29435,27 +29480,15 @@ ${fileContext}` : fileContext;
     }
   };
   return /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "nei-chat-panel-container", children: [
-    /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "nei-chat-header", style: { height: "auto", minHeight: "36px", boxSizing: "border-box" }, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "nei-header-group", style: { flex: 1, minWidth: 0, flexWrap: "wrap", gap: "6px" }, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "nei-chat-header", style: { height: "auto", minHeight: "auto", boxSizing: "border-box" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "nei-header-group", style: { flex: 1, minWidth: 0, flexWrap: "wrap", gap: "clamp(4px, 1cqi, 6px)" }, children: [
         /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(
           "button",
           {
             onClick: () => setShowSessionsDrawer(!showSessionsDrawer),
             title: t("historyTooltip", language),
             "aria-label": t("historyTooltip", language),
-            className: "nei-header-btn",
-            style: {
-              maxWidth: "200px",
-              minWidth: "120px",
-              padding: "4px 10px",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              flex: "1 1 auto"
-            },
+            className: "nei-session-btn",
             children: [
               /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("span", { style: { flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }, children: [
                 "\u{1F4C2} ",
@@ -29471,13 +29504,12 @@ ${fileContext}` : fileContext;
             onClick: () => handleNewChat(),
             title: t("newChatTooltip", language),
             "aria-label": t("newChatTooltip", language),
-            className: "nei-header-btn nei-btn-accent",
-            style: { padding: "4px 8px", flexShrink: 0 },
+            className: "nei-new-chat-btn",
             children: "\u2795"
           }
         )
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "nei-header-group", style: { flexWrap: "wrap", gap: "6px", alignItems: "center" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "nei-header-group", style: { flexWrap: "wrap", gap: "clamp(4px, 1cqi, 6px)", alignItems: "center" }, children: [
         /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(
           "select",
           {
@@ -29490,7 +29522,7 @@ ${fileContext}` : fileContext;
             title: t("modeAutoTitle", language),
             "aria-label": t("modeAutoTitle", language),
             className: "nei-select-mode",
-            style: { flexShrink: 1, minWidth: "100px" },
+            style: { flexShrink: 1, minWidth: "clamp(80px, 15cqi, 120px)" },
             children: [
               /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("option", { value: "auto", children: "\u26A1 Auto" }),
               /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("option", { value: "quick", children: "\u{1F680} Quick" }),
@@ -29506,11 +29538,9 @@ ${fileContext}` : fileContext;
             "aria-label": t("vaultContextToggleTooltip", language),
             className: `nei-header-btn ${vaultContextEnabled ? "nei-btn-active" : ""}`,
             style: {
-              fontSize: "11px",
-              padding: "3px 7px",
+              fontSize: "clamp(10px, 1.8cqi, 11px)",
+              padding: "clamp(2px, 0.5cqi, 3px) clamp(5px, 1cqi, 8px)",
               borderRadius: "4px",
-              background: vaultContextEnabled ? "var(--interactive-accent)" : "var(--background-modifier-border)",
-              color: vaultContextEnabled ? "var(--text-on-accent)" : "var(--text-muted)",
               fontWeight: "500",
               flexShrink: 0,
               whiteSpace: "nowrap"
@@ -30379,13 +30409,13 @@ ${fileContext}` : fileContext;
         onCancel: () => setIsRecordingAudio(false)
       }
     ) }),
-    /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { className: "nei-chat-input-container", children: /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { display: "flex", gap: "6px", alignItems: "flex-end" }, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { className: "nei-chat-input-container", children: /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "nei-chat-input-row", children: [
       /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(
         "label",
         {
           title: t("attachTooltip", language),
           "aria-label": t("attachTooltip", language),
-          style: { padding: "8px 10px", background: "var(--background-secondary)", border: "1px solid var(--background-modifier-border)", borderRadius: "6px", cursor: "pointer", fontSize: "14px", marginBottom: "2px" },
+          className: "nei-chat-attach-btn",
           children: [
             "\u{1F4CE}",
             /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
@@ -30407,16 +30437,7 @@ ${fileContext}` : fileContext;
           onClick: () => setIsRecordingAudio(!isRecordingAudio),
           title: "Record Audio Input",
           "aria-label": "Record Audio Input",
-          style: {
-            padding: "8px 10px",
-            background: isRecordingAudio ? "var(--text-error, #ff5555)" : "var(--background-secondary)",
-            color: isRecordingAudio ? "#fff" : "var(--text-normal)",
-            border: "1px solid var(--background-modifier-border)",
-            borderRadius: "6px",
-            cursor: "pointer",
-            fontSize: "14px",
-            marginBottom: "2px"
-          },
+          className: `nei-chat-audio-btn ${isRecordingAudio ? "recording" : ""}`,
           children: "\u{1F3A4}"
         }
       ),
@@ -30435,24 +30456,11 @@ ${fileContext}` : fileContext;
               handleSendMessage();
             }
           },
+          onFocus: handleTextareaFocus,
           placeholder: t("inputPlaceholder", language),
           disabled: loading,
           rows: 3,
-          className: "nei-chat-textarea",
-          style: {
-            flex: 1,
-            minHeight: "60px",
-            maxHeight: "280px",
-            padding: "8px 10px",
-            borderRadius: "6px",
-            border: "1px solid var(--background-modifier-border)",
-            background: "var(--background-primary)",
-            color: "var(--text-normal)",
-            resize: "none",
-            fontSize: "13px",
-            lineHeight: "1.4",
-            fontFamily: "inherit"
-          }
+          className: "nei-chat-textarea"
         }
       ),
       /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
@@ -30462,7 +30470,7 @@ ${fileContext}` : fileContext;
           disabled: loading || !input.trim() && attachedFiles.length === 0,
           title: "Send Message",
           "aria-label": "Send Message",
-          style: { padding: "0 14px", height: "60px", background: "var(--interactive-accent)", color: "var(--text-on-accent)", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px", marginBottom: "2px" },
+          className: "nei-chat-send-btn",
           children: loading ? "..." : "\u27A4"
         }
       )

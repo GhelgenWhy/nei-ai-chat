@@ -133,10 +133,35 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
         window.requestAnimationFrame(() => {
             const el = textareaRef.current;
             if (!el) return;
-            el.setCssStyles({ height: 'auto' });
+            el.style.height = 'auto';
             const maxHeight = Math.min(el.scrollHeight, window.innerHeight * 0.4, 280);
-            el.setCssStyles({ height: `${maxHeight}px` });
+            el.style.height = `${maxHeight}px`;
         });
+    }, []);
+
+    // Mobile keyboard handling: keep textarea visible when virtual keyboard opens
+    const handleTextareaFocus = React.useCallback(() => {
+        if (!textareaRef.current) return;
+        // Use visualViewport API to detect keyboard and scroll textarea into view
+        if (window.visualViewport) {
+            const handleResize = () => {
+                if (!textareaRef.current) return;
+                const rect = textareaRef.current.getBoundingClientRect();
+                const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+                // If textarea bottom is below viewport, scroll it into view
+                if (rect.bottom > viewportHeight) {
+                    textareaRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                }
+            };
+            window.visualViewport.addEventListener('resize', handleResize);
+            // Also scroll immediately on focus
+            setTimeout(() => {
+                textareaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+            }, 50);
+            return () => {
+                window.visualViewport?.removeEventListener('resize', handleResize);
+            };
+        }
     }, []);
 
     const [executionMode, setExecutionMode] = React.useState<ExecutionMode>(settings.executionMode || "auto");
@@ -669,7 +694,7 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
         setAttachedFiles([]);
         setAttachedImages([]);
         if (textareaRef.current) {
-            textareaRef.current.setCssStyles({ height: 'auto' });
+            textareaRef.current.style.height = 'auto';
         }
 
         void executeQuery(fullQuery, currentSession.messages, imagesToPass);
@@ -841,25 +866,13 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
     return (
         <div className="nei-chat-panel-container">
             {/* Bar 1 — Functional Controls (UI-01) */}
-            <div className="nei-chat-header" style={{ height: 'auto', minHeight: '36px', boxSizing: 'border-box' }}>
-                <div className="nei-header-group" style={{ flex: 1, minWidth: 0, flexWrap: 'wrap', gap: '6px' }}>
+            <div className="nei-chat-header" style={{ height: 'auto', minHeight: 'auto', boxSizing: 'border-box' }}>
+                <div className="nei-header-group" style={{ flex: 1, minWidth: 0, flexWrap: 'wrap', gap: 'clamp(4px, 1cqi, 6px)' }}>
                     <button 
                         onClick={() => setShowSessionsDrawer(!showSessionsDrawer)}
                         title={t("historyTooltip", language)}
                         aria-label={t("historyTooltip", language)}
-                        className="nei-header-btn"
-                        style={{ 
-                            maxWidth: '200px', 
-                            minWidth: '120px',
-                            padding: '4px 10px',
-                            overflow: 'hidden', 
-                            textOverflow: 'ellipsis', 
-                            whiteSpace: 'nowrap',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            flex: '1 1 auto'
-                        }}
+                        className="nei-session-btn"
                     >
                         <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>📂 {formatSessionTitle(currentSession.title)}</span>
                         <span style={{ flexShrink: 0 }}>▼</span>
@@ -869,14 +882,13 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                         onClick={() => handleNewChat()}
                         title={t("newChatTooltip", language)}
                         aria-label={t("newChatTooltip", language)}
-                        className="nei-header-btn nei-btn-accent"
-                        style={{ padding: '4px 8px', flexShrink: 0 }}
+                        className="nei-new-chat-btn"
                     >
                         ➕
                     </button>
                 </div>
 
-                <div className="nei-header-group" style={{ flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
+                <div className="nei-header-group" style={{ flexWrap: 'wrap', gap: 'clamp(4px, 1cqi, 6px)', alignItems: 'center' }}>
                     <select
                         value={executionMode}
                         onChange={(e) => {
@@ -887,7 +899,7 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                         title={t("modeAutoTitle", language)}
                         aria-label={t("modeAutoTitle", language)}
                         className="nei-select-mode"
-                        style={{ flexShrink: 1, minWidth: '100px' }}
+                        style={{ flexShrink: 1, minWidth: 'clamp(80px, 15cqi, 120px)' }}
                     >
                         <option value="auto">⚡ Auto</option>
                         <option value="quick">🚀 Quick</option>
@@ -900,11 +912,9 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                         aria-label={t("vaultContextToggleTooltip", language)}
                         className={`nei-header-btn ${vaultContextEnabled ? "nei-btn-active" : ""}`}
                         style={{
-                            fontSize: '11px',
-                            padding: '3px 7px',
+                            fontSize: 'clamp(10px, 1.8cqi, 11px)',
+                            padding: 'clamp(2px, 0.5cqi, 3px) clamp(5px, 1cqi, 8px)',
                             borderRadius: '4px',
-                            background: vaultContextEnabled ? 'var(--interactive-accent)' : 'var(--background-modifier-border)',
-                            color: vaultContextEnabled ? 'var(--text-on-accent)' : 'var(--text-muted)',
                             fontWeight: '500',
                             flexShrink: 0,
                             whiteSpace: 'nowrap'
@@ -1719,11 +1729,11 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
 
             {/* Bottom Query Input Box */}
             <div className="nei-chat-input-container">
-                <div style={{ display: 'flex', gap: '6px', alignItems: 'flex-end' }}>
+                <div className="nei-chat-input-row">
                     <label 
                         title={t("attachTooltip", language)}
                         aria-label={t("attachTooltip", language)}
-                        style={{ padding: '8px 10px', background: 'var(--background-secondary)', border: '1px solid var(--background-modifier-border)', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', marginBottom: '2px' }}
+                        className="nei-chat-attach-btn"
                     >
                         📎
                         <input 
@@ -1740,16 +1750,7 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                             onClick={() => setIsRecordingAudio(!isRecordingAudio)}
                             title="Record Audio Input"
                             aria-label="Record Audio Input"
-                            style={{
-                                padding: '8px 10px',
-                                background: isRecordingAudio ? 'var(--text-error, #ff5555)' : 'var(--background-secondary)',
-                                color: isRecordingAudio ? '#fff' : 'var(--text-normal)',
-                                border: '1px solid var(--background-modifier-border)',
-                                borderRadius: '6px',
-                                cursor: 'pointer',
-                                fontSize: '14px',
-                                marginBottom: '2px'
-                            }}
+                            className={`nei-chat-audio-btn ${isRecordingAudio ? 'recording' : ''}`}
                         >
                             🎤
                         </button>
@@ -1768,31 +1769,18 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                                 handleSendMessage();
                             }
                         }}
+                        onFocus={handleTextareaFocus}
                         placeholder={t("inputPlaceholder", language)}
                         disabled={loading}
                         rows={3}
                         className="nei-chat-textarea"
-                        style={{
-                            flex: 1,
-                            minHeight: '60px',
-                            maxHeight: '280px',
-                            padding: '8px 10px',
-                            borderRadius: '6px',
-                            border: '1px solid var(--background-modifier-border)',
-                            background: 'var(--background-primary)',
-                            color: 'var(--text-normal)',
-                            resize: 'none',
-                            fontSize: '13px',
-                            lineHeight: '1.4',
-                            fontFamily: 'inherit'
-                        }}
                     />
                     <button
                         onClick={handleSendMessage}
                         disabled={loading || (!input.trim() && attachedFiles.length === 0)}
                         title="Send Message"
                         aria-label="Send Message"
-                        style={{ padding: '0 14px', height: '60px', background: 'var(--interactive-accent)', color: 'var(--text-on-accent)', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', marginBottom: '2px' }}
+                        className="nei-chat-send-btn"
                     >
                         {loading ? '...' : '➤'}
                     </button>
