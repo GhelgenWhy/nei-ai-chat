@@ -37,12 +37,14 @@ interface ChatPanelProps {
 
 export const ObsidianMarkdown: FC<{ markdown: string; app: App }> = ({ markdown, app }) => {
     const containerRef = useRef<HTMLDivElement | null>(null);
+    const componentRef = useRef<Component | null>(null);
 
     useEffect(() => {
         const el = containerRef.current;
         if (el) {
             el.empty();
             const component = new Component();
+            componentRef.current = component;
             component.load();
             void MarkdownRenderer.render(
                 app,
@@ -52,6 +54,13 @@ export const ObsidianMarkdown: FC<{ markdown: string; app: App }> = ({ markdown,
                 component
             );
         }
+
+        return () => {
+            if (componentRef.current) {
+                componentRef.current.unload();
+                componentRef.current = null;
+            }
+        };
     }, [markdown, app]);
 
     return <div ref={containerRef} className="markdown-preview-view markdown-rendered" style={{ background: 'transparent', padding: 0 }} />;
@@ -104,6 +113,20 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
     } | null>(null);
 
     const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+    const fileReadersRef = React.useRef<FileReader[]>([]);
+    const componentRef = React.useRef<Component | null>(null);
+
+    // Cleanup FileReaders on unmount
+    React.useEffect(() => {
+        return () => {
+            fileReadersRef.current.forEach(reader => {
+                reader.onload = null;
+                reader.onerror = null;
+                reader.abort();
+            });
+            fileReadersRef.current = [];
+        };
+    }, []);
 
     const adjustTextareaHeight = React.useCallback(() => {
         if (!textareaRef.current) return;
@@ -111,8 +134,8 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
             const el = textareaRef.current;
             if (!el) return;
             el.setCssStyles({ height: 'auto' });
-            const newHeight = Math.min(el.scrollHeight, 280);
-            el.setCssStyles({ height: `${newHeight}px` });
+            const maxHeight = Math.min(el.scrollHeight, window.innerHeight * 0.4, 280);
+            el.setCssStyles({ height: `${maxHeight}px` });
         });
     }, []);
 
@@ -739,45 +762,76 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
 
             if (isTextFile(file.name, file.type)) {
                 const reader = new FileReader();
+                fileReadersRef.current.push(reader);
                 reader.onload = (evt) => {
                     const content = (evt.target?.result as string) || '';
                     setAttachedFiles(prev => [...prev, { id, name, type: 'text', content, sizeBytes }]);
+                    fileReadersRef.current = fileReadersRef.current.filter(r => r !== reader);
+                };
+                reader.onerror = () => {
+                    fileReadersRef.current = fileReadersRef.current.filter(r => r !== reader);
                 };
                 reader.readAsText(file);
             } else if (file.type.startsWith('image/')) {
                 const reader = new FileReader();
+                fileReadersRef.current.push(reader);
                 reader.onload = (evt) => {
                     const content = (evt.target?.result as string) || '';
                     setAttachedFiles(prev => [...prev, { id, name, type: 'image', content, sizeBytes }]);
                     setAttachedImages(prev => [...prev, content]);
+                    fileReadersRef.current = fileReadersRef.current.filter(r => r !== reader);
+                };
+                reader.onerror = () => {
+                    fileReadersRef.current = fileReadersRef.current.filter(r => r !== reader);
                 };
                 reader.readAsDataURL(file);
             } else if (file.type.startsWith('audio/')) {
                 const reader = new FileReader();
+                fileReadersRef.current.push(reader);
                 reader.onload = (evt) => {
                     const content = (evt.target?.result as string) || '';
                     setAttachedFiles(prev => [...prev, { id, name, type: 'audio', content, sizeBytes }]);
+                    fileReadersRef.current = fileReadersRef.current.filter(r => r !== reader);
+                };
+                reader.onerror = () => {
+                    fileReadersRef.current = fileReadersRef.current.filter(r => r !== reader);
                 };
                 reader.readAsDataURL(file);
             } else if (file.type.startsWith('video/')) {
                 const reader = new FileReader();
+                fileReadersRef.current.push(reader);
                 reader.onload = (evt) => {
                     const content = (evt.target?.result as string) || '';
                     setAttachedFiles(prev => [...prev, { id, name, type: 'video', content, sizeBytes }]);
+                    fileReadersRef.current = fileReadersRef.current.filter(r => r !== reader);
+                };
+                reader.onerror = () => {
+                    fileReadersRef.current = fileReadersRef.current.filter(r => r !== reader);
                 };
                 reader.readAsDataURL(file);
             } else if (file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf') {
                 const reader = new FileReader();
+                fileReadersRef.current.push(reader);
                 reader.onload = (evt) => {
-                    const content = (evt.target?.result as string) || '';
+                    const arrayBuffer = evt.target?.result as ArrayBuffer;
+                    const content = `[PDF file: ${name}, ${sizeBytes} bytes - binary content not extracted]`;
                     setAttachedFiles(prev => [...prev, { id, name, type: 'pdf', content, sizeBytes }]);
+                    fileReadersRef.current = fileReadersRef.current.filter(r => r !== reader);
                 };
-                reader.readAsText(file);
+                reader.onerror = () => {
+                    fileReadersRef.current = fileReadersRef.current.filter(r => r !== reader);
+                };
+                reader.readAsArrayBuffer(file);
             } else {
                 const reader = new FileReader();
+                fileReadersRef.current.push(reader);
                 reader.onload = (evt) => {
                     const content = (evt.target?.result as string) || '';
                     setAttachedFiles(prev => [...prev, { id, name, type: 'text', content, sizeBytes }]);
+                    fileReadersRef.current = fileReadersRef.current.filter(r => r !== reader);
+                };
+                reader.onerror = () => {
+                    fileReadersRef.current = fileReadersRef.current.filter(r => r !== reader);
                 };
                 reader.readAsText(file);
             }
@@ -787,8 +841,8 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
     return (
         <div className="nei-chat-panel-container">
             {/* Bar 1 — Functional Controls (UI-01) */}
-            <div className="nei-chat-header" style={{ height: '36px', boxSizing: 'border-box' }}>
-                <div className="nei-header-group" style={{ flex: 1, minWidth: 0 }}>
+            <div className="nei-chat-header" style={{ height: 'auto', minHeight: '36px', boxSizing: 'border-box' }}>
+                <div className="nei-header-group" style={{ flex: 1, minWidth: 0, flexWrap: 'wrap', gap: '6px' }}>
                     <button 
                         onClick={() => setShowSessionsDrawer(!showSessionsDrawer)}
                         title={t("historyTooltip", language)}
@@ -804,10 +858,10 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                             display: 'flex',
                             alignItems: 'center',
                             gap: '6px',
-                            flex: 1
+                            flex: '1 1 auto'
                         }}
                     >
-                        <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>📂 {formatSessionTitle(currentSession.title)}</span>
+                        <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>📂 {formatSessionTitle(currentSession.title)}</span>
                         <span style={{ flexShrink: 0 }}>▼</span>
                     </button>
 
@@ -816,13 +870,13 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                         title={t("newChatTooltip", language)}
                         aria-label={t("newChatTooltip", language)}
                         className="nei-header-btn nei-btn-accent"
-                        style={{ padding: '4px 8px' }}
+                        style={{ padding: '4px 8px', flexShrink: 0 }}
                     >
                         ➕
                     </button>
                 </div>
 
-                <div className="nei-header-group">
+                <div className="nei-header-group" style={{ flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
                     <select
                         value={executionMode}
                         onChange={(e) => {
@@ -833,6 +887,7 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                         title={t("modeAutoTitle", language)}
                         aria-label={t("modeAutoTitle", language)}
                         className="nei-select-mode"
+                        style={{ flexShrink: 1, minWidth: '100px' }}
                     >
                         <option value="auto">⚡ Auto</option>
                         <option value="quick">🚀 Quick</option>
@@ -850,7 +905,9 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                             borderRadius: '4px',
                             background: vaultContextEnabled ? 'var(--interactive-accent)' : 'var(--background-modifier-border)',
                             color: vaultContextEnabled ? 'var(--text-on-accent)' : 'var(--text-muted)',
-                            fontWeight: '500'
+                            fontWeight: '500',
+                            flexShrink: 0,
+                            whiteSpace: 'nowrap'
                         }}
                     >
                         {vaultContextEnabled ? "🧠" : "⚪"} {t("vaultContextToggleLabel", language)}
@@ -861,6 +918,7 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                         title={isMainTab ? t("moveSidebarTitle", language) : t("moveTabTitle", language)}
                         aria-label={isMainTab ? t("moveSidebarTitle", language) : t("moveTabTitle", language)}
                         className="nei-header-btn"
+                        style={{ flexShrink: 0 }}
                     >
                         {isMainTab ? "↙️" : "↗️"}
                     </button>
@@ -870,6 +928,7 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                         title={t("settingsTooltip", language)}
                         aria-label={t("settingsTooltip", language)}
                         className="nei-header-btn"
+                        style={{ flexShrink: 0 }}
                     >
                         ⚙️
                     </button>
@@ -886,57 +945,81 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
 
             {/* Sessions History Drawer */}
             {showSessionsDrawer && (
-                <div style={{ position: 'absolute', top: '45px', left: '10px', right: '10px', zIndex: 100, background: 'var(--background-primary)', border: '1px solid var(--background-modifier-border)', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.25)', maxHeight: '280px', overflowY: 'auto', padding: '8px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', paddingBottom: '4px', borderBottom: '1px solid var(--background-modifier-border)' }}>
-                        <span style={{ fontWeight: 'bold', fontSize: '12px', color: 'var(--text-muted)' }}>{t("historyTitle", language)}</span>
-                        {sessionsList.length > 0 && (
-                            <button 
-                                onClick={() => { void handleClearAllSessions(); }}
-                                title={t("clearChats", language)}
-                                style={{ background: 'transparent', border: 'none', color: 'var(--text-error, #ff5555)', cursor: 'pointer', fontSize: '11px', fontWeight: '500' }}
-                            >
-                                {confirmingClear ? `⚠️ ${t("confirmClearChats", language)}` : t("clearAll", language)}
-                            </button>
+                <div style={{ 
+                    position: 'fixed', 
+                    top: 0, left: 0, right: 0, bottom: 0,
+                    zIndex: 100, 
+                    background: 'rgba(0, 0, 0, 0.3)',
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    justifyContent: 'flex-start',
+                    padding: 'env(safe-area-inset-top, 60px) env(safe-area-inset-right, 10px) env(safe-area-inset-bottom, 10px) env(safe-area-inset-left, 10px)',
+                    overflow: 'auto'
+                }}>
+                    <div style={{ 
+                        background: 'var(--background-primary)', 
+                        border: '1px solid var(--background-modifier-border)', 
+                        borderRadius: '8px', 
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.25)', 
+                        maxHeight: 'min(400px, calc(100vh - 80px))',
+                        width: '100%',
+                        maxWidth: 'calc(100vw - 20px)',
+                        overflowY: 'auto', 
+                        padding: '8px',
+                        display: 'flex',
+                        flexDirection: 'column'
+                    }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', paddingBottom: '4px', borderBottom: '1px solid var(--background-modifier-border)' }}>
+                            <span style={{ fontWeight: 'bold', fontSize: '12px', color: 'var(--text-muted)' }}>{t("historyTitle", language)}</span>
+                            {sessionsList.length > 0 && (
+                                <button 
+                                    onClick={() => { void handleClearAllSessions(); }}
+                                    title={t("clearChats", language)}
+                                    style={{ background: 'transparent', border: 'none', color: 'var(--text-error, #ff5555)', cursor: 'pointer', fontSize: '11px', fontWeight: '500' }}
+                                >
+                                    {confirmingClear ? `⚠️ ${t("confirmClearChats", language)}` : t("clearAll", language)}
+                                </button>
+                            )}
+                        </div>
+                        {sessionsList.length === 0 ? (
+                            <div style={{ fontSize: '12px', color: 'var(--text-muted)', padding: '6px' }}>{t("noSavedChats", language)}</div>
+                        ) : (
+                            sessionsList.map(s => (
+                                <div 
+                                    key={s.id}
+                                    onClick={() => { void handleSelectSession(s.id); }}
+                                    style={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                        padding: '6px 8px',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer',
+                                        fontSize: '12px',
+                                        background: s.id === currentSession.id ? 'var(--background-secondary-alt)' : 'transparent',
+                                        marginBottom: '2px'
+                                    }}
+                                >
+                                    <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '80%' }}>
+                                        {formatSessionTitle(s.title)}
+                                    </span>
+                                    <button 
+                                        onClick={(e) => { void handleDeleteSession(e, s.id); }}
+                                        title={t("deleteChatTooltip", language)}
+                                        style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '12px', opacity: 0.6 }}
+                                    >
+                                        🗑️
+                                    </button>
+                                </div>
+                            ))
                         )}
                     </div>
-                    {sessionsList.length === 0 ? (
-                        <div style={{ fontSize: '12px', color: 'var(--text-muted)', padding: '6px' }}>{t("noSavedChats", language)}</div>
-                    ) : (
-                        sessionsList.map(s => (
-                            <div 
-                                key={s.id}
-                                onClick={() => { void handleSelectSession(s.id); }}
-                                style={{
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                    padding: '6px 8px',
-                                    borderRadius: '4px',
-                                    cursor: 'pointer',
-                                    fontSize: '12px',
-                                    background: s.id === currentSession.id ? 'var(--background-secondary-alt)' : 'transparent',
-                                    marginBottom: '2px'
-                                }}
-                            >
-                                <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '80%' }}>
-                                    {formatSessionTitle(s.title)}
-                                </span>
-                                <button 
-                                    onClick={(e) => { void handleDeleteSession(e, s.id); }}
-                                    title={t("deleteChatTooltip", language)}
-                                    style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '12px', opacity: 0.6 }}
-                                >
-                                    🗑️
-                                </button>
-                            </div>
-                        ))
-                    )}
                 </div>
             )}
 
             {/* Config & Model Manager Modal */}
             {showConfig && (
-                <div style={{ flexShrink: 0, maxHeight: '55vh', overflowY: 'auto', background: 'var(--background-secondary)', padding: '12px', borderRadius: '8px', marginBottom: '12px', fontSize: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ flexShrink: 0, maxHeight: 'min(55vh, calc(100vh - 120px))', overflowY: 'auto', background: 'var(--background-secondary)', padding: '12px', borderRadius: '8px', marginBottom: '12px', fontSize: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     <div>
                         <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500' }}>OpenRouter API Key:</label>
                         <input 

@@ -20,18 +20,27 @@ export const Tooltip: FC<TooltipProps> = ({
 }) => {
     const [visible, setVisible] = useState<boolean>(false);
     const ref = useRef<HTMLDivElement | null>(null);
+    const cleanupRef = useRef<(() => void) | null>(null);
 
     const title = t(titleKey, language);
     const description = descriptionKey ? t(descriptionKey, language) : '';
 
     useEffect(() => {
-        const handleClickOutside = (e: MouseEvent) => {
+        const handlePointerDown = (e: PointerEvent) => {
             if (ref.current && e.target instanceof Node && !ref.current.contains(e.target)) {
                 setVisible(false);
             }
         };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
+        
+        document.addEventListener('pointerdown', handlePointerDown);
+        cleanupRef.current = () => document.removeEventListener('pointerdown', handlePointerDown);
+        
+        return () => {
+            if (cleanupRef.current) {
+                cleanupRef.current();
+                cleanupRef.current = null;
+            }
+        };
     }, []);
 
     const isTop = position === 'top';
@@ -45,8 +54,8 @@ export const Tooltip: FC<TooltipProps> = ({
                 <span
                     className="nei-tooltip-trigger"
                     onClick={(e) => { e.stopPropagation(); setVisible(v => !v); }}
-                    onMouseEnter={() => setVisible(true)}
-                    onMouseLeave={() => setVisible(false)}
+                    onPointerEnter={() => setVisible(true)}
+                    onPointerLeave={() => setVisible(false)}
                     style={{
                         cursor: 'help',
                         marginLeft: '5px',
@@ -54,7 +63,8 @@ export const Tooltip: FC<TooltipProps> = ({
                         fontSize: '11px',
                         lineHeight: 1,
                         color: 'var(--text-muted)',
-                        userSelect: 'none'
+                        userSelect: 'none',
+                        touchAction: 'manipulation'
                     }}
                     title={title}
                 >

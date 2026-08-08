@@ -64,7 +64,7 @@ Scoped to plugin elements only — does NOT override Obsidian shell containers.
     display: flex;
     flex-direction: column;
     gap: 6px;
-    padding-bottom: 28px; /* Clear Obsidian status bar overlay */
+    padding-bottom: env(safe-area-inset-bottom, 28px); /* Clear Obsidian status bar overlay + safe area */
 }
 
 /* ── Message bubbles: prevent wide content from blowing out ── */

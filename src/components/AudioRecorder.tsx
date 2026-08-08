@@ -13,12 +13,34 @@ export const AudioRecorder: FC<AudioRecorderProps> = ({ onAudioCaptured, onCance
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const audioChunksRef = useRef<Blob[]>([]);
     const timerRef = useRef<number | null>(null);
+    const streamRef = useRef<MediaStream | null>(null);
+
+    const cleanup = () => {
+        if (timerRef.current !== null) {
+            window.clearInterval(timerRef.current);
+            timerRef.current = null;
+        }
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+            mediaRecorderRef.current.stop();
+        }
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach((track: MediaStreamTrack) => track.stop());
+            streamRef.current = null;
+        }
+    };
+
+    useEffect(() => {
+        return () => {
+            cleanup();
+        };
+    }, []);
 
     const startRecording = async (): Promise<void> => {
         setErrorMsg(null);
         audioChunksRef.current = [];
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            streamRef.current = stream;
             const recorder = new MediaRecorder(stream);
             mediaRecorderRef.current = recorder;
 
@@ -39,7 +61,10 @@ export const AudioRecorder: FC<AudioRecorderProps> = ({ onAudioCaptured, onCance
                 reader.readAsDataURL(blob);
                 
                 // Stop audio tracks
-                stream.getTracks().forEach((track: MediaStreamTrack) => track.stop());
+                if (streamRef.current) {
+                    streamRef.current.getTracks().forEach((track: MediaStreamTrack) => track.stop());
+                    streamRef.current = null;
+                }
             };
 
             recorder.start();
@@ -52,6 +77,7 @@ export const AudioRecorder: FC<AudioRecorderProps> = ({ onAudioCaptured, onCance
         } catch (err: unknown) {
             console.error('[AudioRecorder] Access denied or failed:', err);
             setErrorMsg('Microphone permission denied or audio recording not available.');
+            cleanup();
         }
     };
 
@@ -69,12 +95,7 @@ export const AudioRecorder: FC<AudioRecorderProps> = ({ onAudioCaptured, onCance
     useEffect(() => {
         void startRecording();
         return () => {
-            if (timerRef.current !== null) {
-                window.clearInterval(timerRef.current);
-            }
-            if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-                mediaRecorderRef.current.stop();
-            }
+            cleanup();
         };
     }, []);
 
@@ -99,7 +120,7 @@ export const AudioRecorder: FC<AudioRecorderProps> = ({ onAudioCaptured, onCance
                 <div style={{ color: 'var(--text-error, #ff5555)', fontSize: '11px' }}>
                     ⚠️ {errorMsg}
                     <button 
-                        onClick={onCancel}
+                        onClick={() => { cleanup(); onCancel(); }}
                         style={{ marginLeft: '8px', background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
                     >
                         ✕
@@ -131,7 +152,7 @@ export const AudioRecorder: FC<AudioRecorderProps> = ({ onAudioCaptured, onCance
                     </button>
 
                     <button
-                        onClick={onCancel}
+                        onClick={() => { cleanup(); onCancel(); }}
                         style={{
                             background: 'transparent',
                             border: 'none',

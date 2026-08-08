@@ -45,6 +45,7 @@ export const ModelCapabilityBar: FC<ModelCapabilityBarProps> = memo(({
             top: '38px',
             zIndex: 10,
             display: 'flex',
+            flexWrap: 'wrap',
             alignItems: 'center',
             justifyContent: 'space-between',
             gap: '6px',
@@ -53,37 +54,37 @@ export const ModelCapabilityBar: FC<ModelCapabilityBarProps> = memo(({
             borderBottom: '1px solid var(--background-modifier-border)',
             fontSize: '11px',
             lineHeight: '1.2',
-            height: '28px',
+            minHeight: '28px',
             boxSizing: 'border-box'
         }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden', flexWrap: 'wrap', minWidth: 0, flex: 1 }}>
                 <span 
                     title={modelName}
-                    style={{ fontWeight: 600, color: 'var(--text-normal)', textOverflow: 'ellipsis', overflow: 'hidden', fontSize: '11px' }}
+                    style={{ fontWeight: 600, color: 'var(--text-normal)', textOverflow: 'ellipsis', overflow: 'hidden', fontSize: '11px', whiteSpace: 'nowrap', flexShrink: 1 }}
                 >
                     Model: {prettifyName(modelName)}
                 </span>
                 
-                <span style={{ opacity: 0.4 }}>•</span>
+                <span style={{ opacity: 0.4, flexShrink: 0 }}>•</span>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <span title="Text Support" style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', fontSize: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
+                    <span title="Text Support" style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', fontSize: '10px', flexShrink: 0 }}>
                         🟢 Text
                     </span>
                     
-                    <span title={caps.vision ? "Vision Supported" : "Vision Not Supported"} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', fontSize: '10px', opacity: caps.vision ? 1 : 0.4 }}>
+                    <span title={caps.vision ? "Vision Supported" : "Vision Not Supported"} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', fontSize: '10px', opacity: caps.vision ? 1 : 0.4, flexShrink: 0 }}>
                         {caps.vision ? '🟡 Vision' : '🔴 Vision'}
                     </span>
 
-                    <span title={caps.audio ? "Audio Input Supported" : "Audio Not Supported"} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', fontSize: '10px', opacity: caps.audio ? 1 : 0.4 }}>
+                    <span title={caps.audio ? "Audio Input Supported" : "Audio Not Supported"} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', fontSize: '10px', opacity: caps.audio ? 1 : 0.4, flexShrink: 0 }}>
                         {caps.audio ? '🟢 Audio' : '🔴 Audio'}
                     </span>
 
-                    <span title={caps.video ? "Video Input Supported" : "Video Not Supported"} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', fontSize: '10px', opacity: caps.video ? 1 : 0.4 }}>
+                    <span title={caps.video ? "Video Input Supported" : "Video Not Supported"} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', fontSize: '10px', opacity: caps.video ? 1 : 0.4, flexShrink: 0 }}>
                         {caps.video ? '🟢 Video' : '🔴 Video'}
                     </span>
 
-                    <span title="PDF Text/Document Supported" style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', fontSize: '10px' }}>
+                    <span title="PDF Text/Document Supported" style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', fontSize: '10px', flexShrink: 0 }}>
                         📄 PDF
                     </span>
                 </div>
@@ -94,7 +95,8 @@ export const ModelCapabilityBar: FC<ModelCapabilityBarProps> = memo(({
                 fontSize: '10px',
                 color: 'var(--text-muted)',
                 whiteSpace: 'nowrap',
-                flexShrink: 0
+                flexShrink: 0,
+                marginLeft: 'auto'
             }}>
                 Context: <strong style={{ color: 'var(--text-normal)' }}>{formatTokens(totalTokens)}</strong> / {formatTokens(maxCtx)} tokens
             </div>

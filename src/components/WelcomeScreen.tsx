@@ -44,19 +44,22 @@ export const WelcomeScreen: FC<WelcomeScreenProps> = memo(({ language, onClose }
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '16px'
+            padding: 'env(safe-area-inset-top, 16px) env(safe-area-inset-right, 16px) env(safe-area-inset-bottom, 16px) env(safe-area-inset-left, 16px)',
+            overflow: 'auto'
         }}>
             <div className="nei-welcome-modal" style={{
                 background: 'var(--background-primary)',
                 border: '1px solid var(--background-modifier-border)',
                 borderRadius: '12px',
                 padding: '24px',
-                maxWidth: '460px',
+                maxWidth: 'min(460px, calc(100vw - 32px))',
                 width: '100%',
+                maxHeight: 'min(90vh, calc(100vh - 32px))',
                 boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '16px'
+                gap: '16px',
+                overflow: 'auto'
             }}>
                 <div style={{ textAlign: 'center' }}>
                     <div style={{ fontSize: '42px', marginBottom: '8px' }}>{current.icon}</div>
