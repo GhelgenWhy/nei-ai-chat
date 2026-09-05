@@ -1,9 +1,10 @@
 import React, { FC, useRef, useEffect } from "react";
 import { App, Component, MarkdownRenderer, Notice, WorkspaceLeaf } from "obsidian";
-import { ChatMessage, getModelTemporalInfo } from "../services/llm";
+import { ChatMessage, getModelTemporalInfo, isAbortError } from "../services/llm";
 import { AgentLoop, AgentStep } from "../services/agent/agentLoop";
+import { ContextManager } from "../services/agent/contextManager";
 import { ChatStore, ChatSession } from "../services/chat/chatStore";
-import { OpenRouterService, OpenRouterModelInfo, OpenRouterKeyInfo, getDefaultModelCapabilities } from "../services/openrouter";
+import { OpenRouterService, OpenRouterModelInfo, OpenRouterKeyInfo, getDefaultModelCapabilities, buildPricingMap } from "../services/openrouter";
 import { ExecutionMode } from "../services/agent/intentRouter";
 import { t, SupportedLanguage } from "../i18n/translations";
 import { NeiAiChatSettings } from "../../main";
@@ -16,6 +17,7 @@ import { ModelCapabilityBar } from "./ModelCapabilityBar";
 import { AudioRecorder } from "./AudioRecorder";
 import { CapabilityWarningModal } from "./CapabilityWarningModal";
 import { calculateCost, ModelPricing } from "../utils/cost";
+import { attachChromeInsetWatcher } from "../utils/obsidianChrome";
 import { AutoLearner, LearningProposal } from "../services/memory/autoLearner";
 
 export interface AttachedFile {
@@ -29,46 +31,66 @@ export interface AttachedFile {
 interface ChatPanelProps {
     app: App;
     viewLeaf?: WorkspaceLeaf;
+    viewComponent?: Component;
     settings: NeiAiChatSettings;
+    getSettings?: () => NeiAiChatSettings;
     saveSettings: (settings: NeiAiChatSettings) => Promise<void>;
     toolRegistry: ToolRegistry;
     onReload?: () => void;
 }
 
-export const ObsidianMarkdown: FC<{ markdown: string; app: App }> = ({ markdown, app }) => {
+export const ObsidianMarkdown: FC<{ markdown: string; app: App; component?: Component }> = ({ markdown, app, component }) => {
     const containerRef = useRef<HTMLDivElement | null>(null);
-    const componentRef = useRef<Component | null>(null);
+    const localComponentRef = useRef<Component | null>(null);
+    const lastRenderedRef = useRef<string | null>(null);
+    const renderTokenRef = useRef(0);
 
     useEffect(() => {
         const el = containerRef.current;
-        if (el) {
+        if (!el) return;
+        // Skip re-render when content did not change (streaming chunks collapse here)
+        if (lastRenderedRef.current === markdown) return;
+        const token = ++renderTokenRef.current;
+
+        // Debounce: full MarkdownRenderer.render per chunk is too expensive on mobile
+        const timer = window.setTimeout(() => {
+            if (token !== renderTokenRef.current) return; // a newer render is pending
+            lastRenderedRef.current = markdown;
             el.empty();
-            const component = new Component();
-            componentRef.current = component;
-            component.load();
-            void MarkdownRenderer.render(
-                app,
-                markdown,
-                el,
-                "",
-                component
-            );
-        }
+            if (component) {
+                // View-scoped component: cleaned up when the view closes (B9)
+                void MarkdownRenderer.render(app, markdown, el, "", component);
+            } else {
+                const local = new Component();
+                localComponentRef.current = local;
+                local.load();
+                void MarkdownRenderer.render(app, markdown, el, "", local);
+            }
+        }, 80);
 
         return () => {
-            if (componentRef.current) {
-                componentRef.current.unload();
-                componentRef.current = null;
+            window.clearTimeout(timer);
+        };
+    }, [markdown, app, component]);
+
+    useEffect(() => {
+        return () => {
+            if (localComponentRef.current) {
+                localComponentRef.current.unload();
+                localComponentRef.current = null;
             }
         };
-    }, [markdown, app]);
+    }, []);
 
     return <div ref={containerRef} className="markdown-preview-view markdown-rendered" style={{ background: 'transparent', padding: 0 }} />;
 };
 
-const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onReload }) => {
+const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, viewComponent, settings, getSettings, saveSettings, toolRegistry, onReload }) => {
 
     const isMainTab = viewLeaf ? (viewLeaf.getRoot() === app.workspace.rootSplit) : false;
+
+    // N1: props.settings is a mount-time snapshot; plugin.settings is the live source of truth.
+    const getFreshSettings = React.useCallback((): NeiAiChatSettings => (getSettings ? getSettings() : settings), [getSettings, settings]);
 
     const handleToggleTabMode = async () => {
         try {
@@ -114,7 +136,54 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
 
     const textareaRef = React.useRef<HTMLTextAreaElement>(null);
     const fileReadersRef = React.useRef<FileReader[]>([]);
-    const componentRef = React.useRef<Component | null>(null);
+
+    // N14: auto-scroll the messages container while the user is at the bottom
+    const messagesContainerRef = React.useRef<HTMLDivElement | null>(null);
+    const isNearBottomRef = React.useRef(true);
+
+    const handleMessagesScroll = React.useCallback(() => {
+        const container = messagesContainerRef.current;
+        if (!container) return;
+        isNearBottomRef.current = container.scrollHeight - container.scrollTop - container.clientHeight < 120;
+    }, []);
+
+    // B4: mobile keyboard — the visualViewport listener lives in an effect with
+    // cleanup and only reacts when the keyboard is actually open (height shrunk).
+    React.useEffect(() => {
+        const vv = window.visualViewport;
+        if (!vv) return;
+        const handleViewportResize = () => {
+            const keyboardOpen = vv.height < window.innerHeight * 0.75;
+            if (!keyboardOpen) return;
+            const container = messagesContainerRef.current;
+            if (container) {
+                container.scrollTop = container.scrollHeight;
+            }
+        };
+        vv.addEventListener('resize', handleViewportResize);
+        return () => vv.removeEventListener('resize', handleViewportResize);
+    }, []);
+
+    // Obsidian chrome (desktop .status-bar, mobile .mobile-toolbar + keyboard)
+    // floats over the panel bottom — measure it and expose --nei-chrome-inset
+    // so the input area can pad itself clear of it on every platform.
+    const panelContainerRef = React.useRef<HTMLDivElement | null>(null);
+
+    React.useEffect(() => {
+        const panel = panelContainerRef.current;
+        if (!panel) return;
+        return attachChromeInsetWatcher(panel);
+    }, []);
+
+    // B4: on focus keep the input visible without hijacking the caret position
+    const handleTextareaFocus = React.useCallback(() => {
+        window.setTimeout(() => {
+            const container = messagesContainerRef.current;
+            if (container) {
+                container.scrollTop = container.scrollHeight;
+            }
+        }, 50);
+    }, []);
 
     // Cleanup FileReaders on unmount
     React.useEffect(() => {
@@ -139,38 +208,20 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
         });
     }, []);
 
-    // Mobile keyboard handling: keep textarea visible when virtual keyboard opens
-    const handleTextareaFocus = React.useCallback(() => {
-        if (!textareaRef.current) return;
-        // Use visualViewport API to detect keyboard and scroll textarea into view
-        if (window.visualViewport) {
-            const handleResize = () => {
-                if (!textareaRef.current) return;
-                const rect = textareaRef.current.getBoundingClientRect();
-                const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
-                // If textarea bottom is below viewport, scroll it into view
-                if (rect.bottom > viewportHeight) {
-                    textareaRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
-                }
-            };
-            window.visualViewport.addEventListener('resize', handleResize);
-            // Also scroll immediately on focus
-            setTimeout(() => {
-                textareaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-            }, 50);
-            return () => {
-                window.visualViewport?.removeEventListener('resize', handleResize);
-            };
-        }
-    }, []);
-
     const [executionMode, setExecutionMode] = React.useState<ExecutionMode>(settings.executionMode || "auto");
     const [loading, setLoading] = React.useState(false);
     const [abortController, setAbortController] = React.useState<AbortController | null>(null);
     const [activeSteps, setActiveSteps] = React.useState<AgentStep[]>([]);
     const [showSessionsDrawer, setShowSessionsDrawer] = React.useState(false);
     const [showConfig, setShowConfig] = React.useState(false);
-    const [pendingConfirmation, setPendingConfirmation] = React.useState<{ toolName: string; argsStr: string; resolve: (approved: boolean) => void } | null>(null);
+    // N6: queue — parallel confirmable tool calls must not overwrite each other
+    const confirmationIdRef = React.useRef(0);
+    const [pendingConfirmations, setPendingConfirmations] = React.useState<Array<{
+        id: number;
+        toolName: string;
+        argsStr: string;
+        resolve: (approved: boolean) => void;
+    }>>([]);
     const [showFreshnessSuggestion, setShowFreshnessSuggestion] = React.useState<{
         message: string;
         onEnableWeb: () => void;
@@ -188,7 +239,8 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
         totalCost: 0,
         requestCount: 0
     });
-    const [pricingMap] = React.useState<Record<string, ModelPricing>>({});
+    // N9: real OpenRouter pricing instead of a permanently empty map
+    const [pricingMap, setPricingMap] = React.useState<Record<string, ModelPricing>>({});
 
     // Reasoning Panel state
     const [showReasoning, setShowReasoning] = React.useState(true);
@@ -203,6 +255,15 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
     // Local Config & OpenRouter Stats State
     const [endpointUrl, setEndpointUrl] = React.useState(settings.endpointUrl || "https://openrouter.ai/api/v1");
     const [apiKey, setApiKey] = React.useState(settings.apiKey || "");
+
+    // N9: real OpenRouter pricing instead of a permanently empty map
+    React.useEffect(() => {
+        let cancelled = false;
+        void OpenRouterService.fetchModels(apiKey || undefined).then(models => {
+            if (!cancelled) setPricingMap(buildPricingMap(models));
+        });
+        return () => { cancelled = true; };
+    }, [apiKey]);
     const [model, setModel] = React.useState(settings.model || "google/gemini-2.5-flash");
     const [visionModel, setVisionModel] = React.useState(settings.visionModel || "google/gemini-2.5-flash");
     const [quickModel, setQuickModel] = React.useState(settings.quickModel || "google/gemini-2.5-flash");
@@ -246,9 +307,41 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
     }, []);
 
     const refreshSessionsList = async () => {
-        const list = await ChatStore.listSessions(app, settings);
+        const list = await ChatStore.listSessions(app, getFreshSettings());
         setSessionsList(list);
     };
+
+    // B15: coalesce session writes (one per turn → debounce) with flush on unmount
+    const saveTimerRef = React.useRef<number | null>(null);
+    const pendingSaveRef = React.useRef<ChatSession | null>(null);
+
+    const saveSessionDebounced = React.useCallback((session: ChatSession) => {
+        pendingSaveRef.current = session;
+        if (saveTimerRef.current !== null) window.clearTimeout(saveTimerRef.current);
+        saveTimerRef.current = window.setTimeout(() => {
+            saveTimerRef.current = null;
+            const pending = pendingSaveRef.current;
+            pendingSaveRef.current = null;
+            if (pending) {
+                void ChatStore.saveSession(app, getFreshSettings(), pending).then(() => refreshSessionsList());
+            }
+        }, 1500);
+    }, [app, getFreshSettings]);
+
+    React.useEffect(() => {
+        return () => {
+            if (saveTimerRef.current !== null) {
+                window.clearTimeout(saveTimerRef.current);
+                saveTimerRef.current = null;
+            }
+            const pending = pendingSaveRef.current;
+            pendingSaveRef.current = null;
+            if (pending) {
+                void ChatStore.saveSession(app, getFreshSettings(), pending);
+            }
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const verifyActiveModel = async (targetModel: string, key: string) => {
         setVerifyingModel(true);
@@ -334,6 +427,16 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
 
     const [confirmingClear, setConfirmingClear] = React.useState(false);
     const clearTimerRef = React.useRef<number | null>(null);
+
+    // B5/N12: close the sessions drawer on Escape while it is open
+    React.useEffect(() => {
+        if (!showSessionsDrawer) return;
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') setShowSessionsDrawer(false);
+        };
+        document.addEventListener('keydown', onKeyDown);
+        return () => document.removeEventListener('keydown', onKeyDown);
+    }, [showSessionsDrawer]);
 
     React.useEffect(() => {
         return () => {
@@ -480,6 +583,16 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
     };
 
     const [streamingContent, setStreamingContent] = React.useState("");
+    // Mirror of streamingContent for stale-closure-safe access (abort handling)
+    const streamingContentRef = React.useRef("");
+
+    // N14: keep the message list pinned to the bottom while the user is near it
+    React.useEffect(() => {
+        const container = messagesContainerRef.current;
+        if (container && isNearBottomRef.current) {
+            container.scrollTop = container.scrollHeight;
+        }
+    }, [currentSession.messages.length, streamingContent, activeSteps.length]);
     const [showWelcome, setShowWelcome] = React.useState<boolean>(() => app.loadLocalStorage("nei_welcome_seen") !== true);
     const [enableSemanticRag, setEnableSemanticRag] = React.useState<boolean>(settings.enableSemanticRag ?? false);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -544,15 +657,21 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
         setActiveSteps([]);
         setEditingMsgIdx(null);
         setStreamingContent("");
+        streamingContentRef.current = "";
 
         // Create abort controller for interruption
         const abortController = new AbortController();
         setAbortController(abortController);
 
+        // N1: read live settings at call time (props.settings is a mount snapshot)
+        const freshSettings = getFreshSettings();
+
         const currentImages = imagesPayload || attachedImages;
-        const userMsg: ChatMessage = { 
-            role: "user", 
+        const newMsgId = () => "m_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+        const userMsg: ChatMessage = {
+            role: "user",
             content: queryText,
+            id: newMsgId(),
             ...(currentImages.length > 0 ? { images: currentImages } : {})
         };
 
@@ -568,8 +687,8 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
 
         try {
             const isVisionRequired = currentImages.length > 0;
-            const activeModelToUse = isVisionRequired 
-                ? visionModel 
+            const activeModelToUse = isVisionRequired
+                ? visionModel
                 : (executionMode === "quick" ? quickModel : model);
 
             const result = await AgentLoop.run({
@@ -581,7 +700,7 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                     model: activeModelToUse
                 },
                 userQuery: queryText,
-                chatHistory: historySlice,
+                chatHistory: ContextManager.stripImages(historySlice, 0),
                 images: currentImages,
                 executionMode,
                 useVaultContext: vaultContextEnabled,
@@ -591,36 +710,55 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                 },
                 onConfirmationRequired: async (toolName, argsStr) => {
                     return new Promise((resolve) => {
-                        setPendingConfirmation({ toolName, argsStr, resolve });
+                        // Stop pressed while a confirmation is pending must not hang the loop:
+                        // abort resolves it as "denied", then the loop exits via throwIfAborted
+                        if (abortController.signal.aborted) {
+                            resolve(false);
+                            return;
+                        }
+                        const onAbort = () => resolve(false);
+                        abortController.signal.addEventListener('abort', onAbort, { once: true });
+                        const id = ++confirmationIdRef.current;
+                        setPendingConfirmations(prev => [...prev, {
+                            id,
+                            toolName,
+                            argsStr,
+                            resolve: (approved: boolean) => {
+                                abortController.signal.removeEventListener('abort', onAbort);
+                                resolve(approved);
+                            }
+                        }]);
                     });
                 },
                 onStreamChunk: (chunk) => {
+                    streamingContentRef.current += chunk;
                     setStreamingContent(prev => prev + chunk);
                 },
                 abortSignal: abortController.signal,
                 toolRegistry,
                 language,
-                settings
+                settings: freshSettings
             });
             setStreamingContent("");
 
-            const assistantMsg: ChatMessage = { 
-                role: "assistant", 
+            const assistantMsg: ChatMessage = {
+                role: "assistant",
                 content: result.responseText,
+                id: newMsgId(),
                 promptTokens: result.promptTokens,
                 completionTokens: result.completionTokens
             };
             const finalMessages = [...updatedMessages, assistantMsg];
 
+            // N3: steps come from the loop result, not from a stale state closure
             const finalSession: ChatSession = {
                 ...updatedSession,
                 messages: finalMessages,
-                steps: activeSteps
+                steps: result.steps
             };
 
             setCurrentSession(finalSession);
-            await ChatStore.saveSession(app, settings, finalSession);
-            await refreshSessionsList();
+            saveSessionDebounced(finalSession);
 
             // Update session cost metrics
             const promptTok = result.promptTokens || 0;
@@ -634,7 +772,7 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
             }));
 
             // Auto-Learning: extract facts/skills from conversation
-            if (settings.enableAutoLearning && finalMessages.length >= 4) {
+            if (freshSettings.enableAutoLearning && finalMessages.length >= 4) {
                 void AutoLearner.extractAndPropose(
                     { provider: "openrouter", endpointUrl, apiKey, model: quickModel },
                     finalMessages
@@ -643,7 +781,7 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                         setLearningProposal({
                             proposal,
                             onAccept: async () => {
-                                const applied = await AutoLearner.applyProposal(app, settings, proposal);
+                                const applied = await AutoLearner.applyProposal(app, freshSettings, proposal);
                                 new Notice(`${t("learningApplied", language)} (${applied})`);
                                 setLearningProposal(null);
                             },
@@ -661,18 +799,34 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
             }
         } catch (e: unknown) {
             console.error("[NEI Agent Error]", e);
-            const err = e as { message?: string };
-            const errMessages: ChatMessage[] = [...updatedMessages, { role: "assistant", content: `${t("agentError", language)} ${err?.message || String(e)}` }];
-            const errSession: ChatSession = {
-                ...updatedSession,
-                messages: errMessages
-            };
-            setCurrentSession(errSession);
-            await ChatStore.saveSession(app, settings, errSession);
+
+            // User pressed Stop: keep partial streamed output instead of an error card
+            if (isAbortError(e) || abortController.signal.aborted) {
+                const partial = streamingContentRef.current.trim();
+                const partialMessages: ChatMessage[] = partial
+                    ? [...updatedMessages, { role: "assistant", content: `${partial}\n\n_${t("stoppedByUser", language)}_`, id: newMsgId() }]
+                    : [...updatedMessages];
+                const partialSession: ChatSession = {
+                    ...updatedSession,
+                    messages: partialMessages
+                };
+                setCurrentSession(partialSession);
+                saveSessionDebounced(partialSession);
+            } else {
+                const err = e as { message?: string };
+                const errMessages: ChatMessage[] = [...updatedMessages, { role: "assistant", content: `${t("agentError", language)} ${err?.message || String(e)}`, id: newMsgId() }];
+                const errSession: ChatSession = {
+                    ...updatedSession,
+                    messages: errMessages
+                };
+                setCurrentSession(errSession);
+                saveSessionDebounced(errSession);
+            }
         } finally {
             setLoading(false);
             setActiveSteps([]);
-            setPendingConfirmation(null);
+            setPendingConfirmations([]);
+            setAbortController(null);
         }
     };
 
@@ -701,13 +855,8 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
     };
 
     const handleSendMessage = () => {
-        if ((!input.trim() && attachedFiles.length === 0) || loading) return;
-
-        // If already loading, this acts as interrupt
-        if (loading && abortController) {
-            abortController.abort();
-            return;
-        }
+        if (loading) return;
+        if (!input.trim() && attachedFiles.length === 0) return;
 
         // Model capability validation before send (FUNC-05)
         const modelCaps = activeModelDetails?.capabilities || getDefaultModelCapabilities(model).capabilities;
@@ -768,11 +917,49 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
         return textExts.includes(ext) || mimeType.startsWith('text/');
     };
 
+    // B10-lite: downscale attached images (max 1280px, JPEG) so session files
+    // and vision payloads stay small. Falls back to the original data URL.
+    const downscaleImage = React.useCallback((file: File, maxDim = 1280, quality = 0.85): Promise<string> => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            fileReadersRef.current.push(reader);
+            reader.onload = () => {
+                const dataUrl = reader.result as string;
+                const img = new Image();
+                img.onload = () => {
+                    const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+                    if (scale >= 1) {
+                        resolve(dataUrl);
+                        return;
+                    }
+                    try {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = Math.round(img.width * scale);
+                        canvas.height = Math.round(img.height * scale);
+                        const ctx = canvas.getContext('2d');
+                        if (!ctx) {
+                            resolve(dataUrl);
+                            return;
+                        }
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        resolve(canvas.toDataURL('image/jpeg', quality));
+                    } catch {
+                        resolve(dataUrl);
+                    }
+                };
+                img.onerror = () => resolve(dataUrl);
+                img.src = dataUrl;
+            };
+            reader.onerror = () => reject(new Error("Failed to read image file"));
+            reader.readAsDataURL(file);
+        });
+    }, []);
+
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (!files || files.length === 0) return;
 
-        const maxSize = settings.maxAttachmentSizeBytes || 512000;
+        const maxSize = getFreshSettings().maxAttachmentSizeBytes || 512000;
 
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
@@ -798,18 +985,14 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                 };
                 reader.readAsText(file);
             } else if (file.type.startsWith('image/')) {
-                const reader = new FileReader();
-                fileReadersRef.current.push(reader);
-                reader.onload = (evt) => {
-                    const content = (evt.target?.result as string) || '';
-                    setAttachedFiles(prev => [...prev, { id, name, type: 'image', content, sizeBytes }]);
-                    setAttachedImages(prev => [...prev, content]);
-                    fileReadersRef.current = fileReadersRef.current.filter(r => r !== reader);
-                };
-                reader.onerror = () => {
-                    fileReadersRef.current = fileReadersRef.current.filter(r => r !== reader);
-                };
-                reader.readAsDataURL(file);
+                void downscaleImage(file)
+                    .then(content => {
+                        setAttachedFiles(prev => [...prev, { id, name, type: 'image', content, sizeBytes: Math.round(content.length * 0.75) }]);
+                        setAttachedImages(prev => [...prev, content]);
+                    })
+                    .catch(() => {
+                        new Notice(`Failed to read image "${name}".`);
+                    });
             } else if (file.type.startsWith('audio/')) {
                 const reader = new FileReader();
                 fileReadersRef.current.push(reader);
@@ -863,8 +1046,18 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
         }
     };
 
+    const resolveConfirmation = (id: number, approved: boolean) => {
+        setPendingConfirmations(prev => {
+            const target = prev.find(c => c.id === id);
+            if (target) target.resolve(approved);
+            return prev.filter(c => c.id !== id);
+        });
+    };
+
+    const currentConfirmation = pendingConfirmations[0] || null;
+
     return (
-        <div className="nei-chat-panel-container">
+        <div className="nei-chat-panel-container" ref={panelContainerRef}>
             {/* Bar 1 — Functional Controls (UI-01) */}
             <div className="nei-chat-header" style={{ height: 'auto', minHeight: 'auto', boxSizing: 'border-box' }}>
                 <div className="nei-header-group" style={{ flex: 1, minWidth: 0, flexWrap: 'wrap', gap: 'clamp(4px, 1cqi, 6px)' }}>
@@ -953,32 +1146,36 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                 contextWindow={activeModelDetails?.contextLength}
             />
 
-            {/* Sessions History Drawer */}
+            {/* Sessions History Drawer (B5: scoped to the panel, not the window) */}
             {showSessionsDrawer && (
-                <div style={{ 
-                    position: 'fixed', 
+                <div style={{
+                    position: 'absolute',
                     top: 0, left: 0, right: 0, bottom: 0,
-                    zIndex: 100, 
+                    zIndex: 'var(--layer-modal, 100)',
                     background: 'rgba(0, 0, 0, 0.3)',
                     display: 'flex',
                     alignItems: 'flex-start',
                     justifyContent: 'flex-start',
-                    padding: 'env(safe-area-inset-top, 60px) env(safe-area-inset-right, 10px) env(safe-area-inset-bottom, 10px) env(safe-area-inset-left, 10px)',
-                    overflow: 'auto'
-                }}>
-                    <div style={{ 
-                        background: 'var(--background-primary)', 
-                        border: '1px solid var(--background-modifier-border)', 
-                        borderRadius: '8px', 
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.25)', 
-                        maxHeight: 'min(400px, calc(100vh - 80px))',
+                    padding: '8px',
+                    overflow: 'hidden'
+                }}
+                    onClick={() => setShowSessionsDrawer(false)}
+                >
+                    <div style={{
+                        background: 'var(--background-primary)',
+                        border: '1px solid var(--background-modifier-border)',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+                        maxHeight: '100%',
                         width: '100%',
-                        maxWidth: 'calc(100vw - 20px)',
-                        overflowY: 'auto', 
+                        maxWidth: 'calc(100% - 0px)',
+                        overflowY: 'auto',
                         padding: '8px',
                         display: 'flex',
                         flexDirection: 'column'
-                    }}>
+                    }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', paddingBottom: '4px', borderBottom: '1px solid var(--background-modifier-border)' }}>
                             <span style={{ fontWeight: 'bold', fontSize: '12px', color: 'var(--text-muted)' }}>{t("historyTitle", language)}</span>
                             {sessionsList.length > 0 && (
@@ -1419,7 +1616,11 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
             )}
 
             {/* Chat Messages Container */}
-            <div className="nei-chat-messages-container">
+            <div
+                className="nei-chat-messages-container"
+                ref={messagesContainerRef}
+                onScroll={handleMessagesScroll}
+            >
                 {currentSession.messages.length === 0 && (
                     <div style={{ textAlign: 'center', color: 'var(--text-muted)', marginTop: '24px', padding: '0 12px', fontSize: '13px' }}>
                         <div style={{ fontSize: '15px', fontWeight: 'bold', marginBottom: '8px', color: 'var(--text-normal)' }}>
@@ -1438,20 +1639,9 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                 )}
 
                 {currentSession.messages.map((msg, idx) => (
-                    <div 
-                        key={idx} 
-                        className="nei-chat-bubble"
-                        style={{
-                            alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
-                            maxWidth: '92%',
-                            padding: '10px 14px',
-                            borderRadius: '12px',
-                            background: msg.role === 'user' ? 'var(--interactive-accent)' : 'var(--background-secondary)',
-                            color: msg.role === 'user' ? 'var(--text-on-accent)' : 'var(--text-normal)',
-                            fontSize: '13px',
-                            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                            position: 'relative'
-                        }}
+                    <div
+                        key={msg.id || idx}
+                        className={`nei-chat-bubble nei-msg-bubble ${msg.role === 'user' ? 'nei-msg-bubble--user' : 'nei-msg-bubble--assistant'}`}
                     >
                         {msg.role === 'user' ? (
                             editingMsgIdx === idx ? (
@@ -1488,18 +1678,18 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                                         </div>
                                     )}
                                     <div style={{ whiteSpace: 'pre-wrap' }}>{msg.content}</div>
-                                    <div style={{ display: 'flex', gap: '6px', marginTop: '6px', justifyContent: 'flex-end', fontSize: '11px', flexWrap: 'wrap', maxWidth: '100%', opacity: 0.9 }}>
+                                    <div className="nei-msg-actions">
                                         <button
                                             onClick={() => { void handleCopyText(msg.content || ""); }}
                                             title={t("copyText", language)}
-                                            style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', padding: '2px 4px', borderRadius: '4px', fontSize: '11px', whiteSpace: 'nowrap' }}
+                                            className="nei-msg-action-btn"
                                         >
                                             {t("copyText", language)}
                                         </button>
                                         <button
                                             onClick={() => handleStartEdit(idx, msg.content || "")}
                                             title={t("editText", language)}
-                                            style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', padding: '2px 4px', borderRadius: '4px', fontSize: '11px', whiteSpace: 'nowrap' }}
+                                            className="nei-msg-action-btn"
                                         >
                                             {t("editText", language)}
                                         </button>
@@ -1507,7 +1697,7 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                                             onClick={() => handleRetryUserMessage(idx)}
                                             title={t("retry", language)}
                                             disabled={loading}
-                                            style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', padding: '2px 4px', borderRadius: '4px', fontSize: '11px', whiteSpace: 'nowrap' }}
+                                            className="nei-msg-action-btn"
                                         >
                                             {t("retry", language)}
                                         </button>
@@ -1517,38 +1707,38 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                         ) : (
                             /* Assistant Message Display */
                             <div style={{ minWidth: 0 }}>
-                                <ObsidianMarkdown markdown={msg.content || ""} app={app} />
-                                
+                                <ObsidianMarkdown markdown={msg.content || ""} app={app} component={viewComponent} />
+
                                 {/* Per-message Input/Output Token Counters */}
                                 {(msg.promptTokens !== undefined || msg.completionTokens !== undefined) && (
-                                    <div style={{ display: 'flex', gap: '6px', marginTop: '6px', fontSize: '10px', color: 'var(--text-muted)', borderTop: '1px solid var(--background-modifier-border)', paddingTop: '4px', flexWrap: 'wrap', maxWidth: '100%' }}>
-                                        <span style={{ background: 'var(--background-primary)', padding: '2px 6px', borderRadius: '4px' }}>
+                                    <div className="nei-msg-token-stats">
+                                        <span className="nei-msg-token-chip">
                                             {t("inputTokens", language)} {msg.promptTokens || 0} {t("tokens", language)}
                                         </span>
-                                        <span style={{ background: 'var(--background-primary)', padding: '2px 6px', borderRadius: '4px' }}>
+                                        <span className="nei-msg-token-chip">
                                             {t("outputTokens", language)} {msg.completionTokens || 0} {t("tokens", language)}
                                         </span>
                                     </div>
                                 )}
 
-                                <div style={{ display: 'flex', gap: '6px', marginTop: '8px', alignItems: 'center', flexWrap: 'wrap', fontSize: '11px', maxWidth: '100%' }}>
-                                    <button 
+                                <div className="nei-msg-actions nei-msg-actions--assistant">
+                                    <button
                                         onClick={() => { void handleCopyText(msg.content || ""); }}
-                                        style={{ background: 'var(--background-primary)', border: '1px solid var(--background-modifier-border)', borderRadius: '4px', cursor: 'pointer', padding: '3px 8px', color: 'var(--text-muted)', fontSize: '11px', whiteSpace: 'nowrap', maxWidth: '100%' }}
+                                        className="nei-msg-action-btn nei-msg-action-btn--outlined"
                                     >
                                         {t("copyText", language)}
                                     </button>
-                                    <button 
+                                    <button
                                         onClick={() => { void handleBranchFromMessage(idx); }}
-                                        style={{ background: 'var(--background-primary)', border: '1px solid var(--background-modifier-border)', borderRadius: '4px', cursor: 'pointer', padding: '3px 8px', color: 'var(--text-muted)', fontSize: '11px', whiteSpace: 'nowrap', maxWidth: '100%' }}
+                                        className="nei-msg-action-btn nei-msg-action-btn--outlined"
                                         title="Fork conversation from this message"
                                     >
                                         🌿 Branch
                                     </button>
                                     {msg.content && msg.content.length > 50 && (
-                                        <button 
+                                        <button
                                             onClick={() => { void handleSaveResponseAsNote(msg.content || ""); }}
-                                            style={{ background: 'var(--background-primary)', border: '1px solid var(--background-modifier-border)', borderRadius: '4px', cursor: 'pointer', padding: '3px 8px', color: 'var(--text-muted)', fontSize: '11px', whiteSpace: 'nowrap', maxWidth: '100%' }}
+                                            className="nei-msg-action-btn nei-msg-action-btn--outlined"
                                         >
                                             {t("saveNote", language)}
                                         </button>
@@ -1616,7 +1806,7 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignSelf: 'flex-start', maxWidth: '92%', padding: '10px 14px', borderRadius: '12px', background: 'var(--background-secondary)', fontSize: '13px' }}>
                         {streamingContent ? (
                             <div>
-                                <ObsidianMarkdown markdown={streamingContent} app={app} />
+                                <ObsidianMarkdown markdown={streamingContent} app={app} component={viewComponent} />
                                 <span className="nei-streaming-cursor" style={{ color: 'var(--interactive-accent)', fontWeight: 'bold' }}> ▊</span>
                             </div>
                         ) : (
@@ -1635,33 +1825,28 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
                     </div>
                 )}
 
-                {/* Pending Tool Action Approval Modal */}
-                {pendingConfirmation && (
+                {/* Pending Tool Action Approval Modal (N6: queue, shown one at a time) */}
+                {currentConfirmation && (
                     <div style={{ background: 'var(--background-secondary)', border: '2px solid var(--interactive-accent)', borderRadius: '8px', padding: '12px', marginTop: '6px', fontSize: '12px' }}>
                         <div style={{ fontWeight: 'bold', marginBottom: '6px', color: 'var(--text-normal)' }}>
                             ⚠️ {t("actionConfirmation", language)}
+                            {pendingConfirmations.length > 1 && ` (${pendingConfirmations.length})`}
                         </div>
                         <div style={{ marginBottom: '4px' }}>
-                            {t("agentWantsExecute", language)}: <code>{pendingConfirmation.toolName}</code>
+                            {t("agentWantsExecute", language)}: <code>{currentConfirmation.toolName}</code>
                         </div>
                         <div style={{ background: 'var(--background-primary)', padding: '6px', borderRadius: '4px', fontFamily: 'monospace', fontSize: '11px', marginBottom: '10px', whiteSpace: 'pre-wrap', maxHeight: '100px', overflowY: 'auto' }}>
-                            {pendingConfirmation.argsStr}
+                            {currentConfirmation.argsStr}
                         </div>
                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
                             <button
-                                onClick={() => {
-                                    pendingConfirmation.resolve(false);
-                                    setPendingConfirmation(null);
-                                }}
+                                onClick={() => resolveConfirmation(currentConfirmation.id, false)}
                                 style={{ padding: '4px 12px', background: 'transparent', border: '1px solid var(--background-modifier-border)', borderRadius: '4px', cursor: 'pointer' }}
                             >
                                 {t("cancelBtn", language)}
                             </button>
                             <button
-                                onClick={() => {
-                                    pendingConfirmation.resolve(true);
-                                    setPendingConfirmation(null);
-                                }}
+                                onClick={() => resolveConfirmation(currentConfirmation.id, true)}
                                 style={{ padding: '4px 12px', background: 'var(--interactive-accent)', color: 'var(--text-on-accent)', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
                             >
                                 {t("allowBtn", language)}
@@ -1684,26 +1869,26 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, settings, sav
 
             {/* Attached Files & Images Previews Bar */}
             {attachedFiles.length > 0 && (
-                <div style={{ flexShrink: 0, display: 'flex', gap: '6px', padding: '6px', background: 'var(--background-secondary)', borderRadius: '6px', marginBottom: '6px', flexWrap: 'wrap' }}>
+                <div className="nei-attach-bar">
                     {attachedFiles.map((file) => (
-                        <div key={file.id} style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'var(--background-primary)', border: '1px solid var(--background-modifier-border)', borderRadius: '4px', padding: '3px 8px', fontSize: '11px' }}>
+                        <div key={file.id} className="nei-attach-chip">
                             {file.type === 'image' && <img src={file.content} style={{ width: '20px', height: '20px', objectFit: 'cover', borderRadius: '2px' }} />}
                             {file.type === 'text' && <span>📄</span>}
                             {file.type === 'pdf' && <span>📕</span>}
                             {file.type === 'audio' && <span>🎤</span>}
                             {file.type === 'video' && <span>🎥</span>}
-                            <span style={{ fontWeight: 500, maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            <span className="nei-attach-chip-name">
                                 {file.name}
                             </span>
-                            <span style={{ fontSize: '9px', opacity: 0.6 }}>({(file.sizeBytes / 1024).toFixed(0)}KB)</span>
-                            <button 
+                            <span className="nei-attach-chip-size">({(file.sizeBytes / 1024).toFixed(0)}KB)</span>
+                            <button
                                 onClick={() => {
                                     setAttachedFiles(prev => prev.filter(f => f.id !== file.id));
                                     if (file.type === 'image') {
                                         setAttachedImages(prev => prev.filter(img => img !== file.content));
                                     }
                                 }}
-                                style={{ background: 'transparent', color: 'var(--text-muted)', border: 'none', borderRadius: '50%', width: '14px', height: '14px', fontSize: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                className="nei-attach-chip-remove"
                             >
                                 ✕
                             </button>

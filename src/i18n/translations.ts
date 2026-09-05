@@ -79,6 +79,7 @@ export interface Translations {
     historyClearedNotice: string;
     modeSwitchError: string;
     agentError: string;
+    stoppedByUser: string;
     cancel: string;
     saveSend: string;
     editText: string;
@@ -360,6 +361,7 @@ const baseEn: Translations = {
     historyClearedNotice: "Chat history cleared!",
     modeSwitchError: "Mode switch error:",
     agentError: "❌ Agent execution error:",
+    stoppedByUser: "⏹️ Generation stopped by user.",
     cancel: "Cancel",
     saveSend: "💾 Send",
     editText: "✏️ Edit",
@@ -638,6 +640,7 @@ const baseRu: Translations = {
     historyClearedNotice: "Вся история чатов очищена!",
     modeSwitchError: "Ошибка переключения режима:",
     agentError: "❌ Ошибка выполнения агента:",
+    stoppedByUser: "⏹️ Генерация остановлена пользователем.",
     cancel: "Отмена",
     saveSend: "💾 Отправить",
     editText: "✏️ Изменить",
@@ -822,9 +825,12 @@ const baseRu: Translations = {
     welcomeStep4Title: "Персональные скиллы и MCP инструменты",
     welcomeStep4Desc: "Расширяйте возможности агента собственными markdown скиллами и внешними MCP серверами.",
     startTour: "Начать тур",
-        skip: "Пропустить",
-        next: "Далее",
-        back: "Назад"
+    skip: "Пропустить",
+    next: "Далее",
+    back: "Назад",
+
+    systemPromptRu: "Ты — агентный ИИ-помощник NEI в Obsidian.\nТвоя цель: помогать пользователю работать с хранилищем заметок Vault и отвечать на его вопросы.\n\nПРАВИЛА ИСПОЛЬЗОВАНИЯ ИНСТРУМЕНТОВ:\n1. Если пользователь просит \"создай заметку\", \"создай папку\" или \"сохрани\" — ОБЯЗАТЕЛЬНО вызови инструмент `create_note(path, content)`.\n2. Для чтения заметок используй `read_note` или `get_folder_notes`.\n3. Инструмент `create_note` автоматически создаёт все вложенные папки.\n\nОТВЕТ: GitHub Flavored Markdown.",
+    systemPromptEn: "You are NEI — an agentic AI assistant integrated into Obsidian.\nYour goal: help the user work with their Vault (notes, folders) and answer questions.\n\nTOOL USAGE RULES:\n1. If the user asks to \"create a note\", \"create a folder\", or \"save\" — you MUST call the `create_note(path, content)` tool.\n2. To read notes, use `read_note` or `get_folder_notes`.\n3. The `create_note` tool automatically creates nested folders.\n\nRESPONSE FORMAT: GitHub Flavored Markdown."
     };
 
 export const translations: Record<string, Translations> = {

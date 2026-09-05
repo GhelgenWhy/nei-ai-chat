@@ -1,6 +1,9 @@
 /*
 NEI AI Chat Plugin Styles
 Scoped to plugin elements only — does NOT override Obsidian shell containers.
+
+NOTE: every selector below is defined exactly once. Responsive values use
+clamp() / container queries (container: nei-panel on .nei-chat-view-root).
 */
 
 /* ── Container Query: Root panel as container ── */
@@ -37,12 +40,12 @@ Scoped to plugin elements only — does NOT override Obsidian shell containers.
     overflow: hidden;
 }
 
-/* ── Header Bar: Responsive 2-row (narrow) / 1-row (wide) layout ── */
+/* ── Header Bar: 3 container breakpoints ──
+   ≤379px: stacked rows | 380-559px: wrapping row | ≥560px: single row */
 .nei-chat-header {
     flex-shrink: 0;
     display: flex;
     justify-content: space-between;
-    align-items: center;
     margin-bottom: 6px;
     padding-bottom: 6px;
     border-bottom: 1px solid var(--background-modifier-border);
@@ -54,18 +57,24 @@ Scoped to plugin elements only — does NOT override Obsidian shell containers.
     align-items: stretch;
 }
 
-/* Wide containers (≥ 560px): single row header */
-@container nei-panel (min-width: 560px) {
+@container nei-panel (min-width: 380px) {
     .nei-chat-header {
         flex-direction: row;
+        flex-wrap: wrap;
         align-items: center;
+    }
+}
+
+@container nei-panel (min-width: 560px) {
+    .nei-chat-header {
+        flex-wrap: nowrap;
     }
 }
 
 .nei-header-group {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: clamp(4px, 1cqi, 6px);
     flex-wrap: wrap;
 }
 
@@ -73,10 +82,9 @@ Scoped to plugin elements only — does NOT override Obsidian shell containers.
 .nei-chat-header .nei-header-group:first-child {
     justify-content: space-between;
     width: 100%;
-    flex-wrap: wrap;
 }
 
-@container nei-panel (min-width: 560px) {
+@container nei-panel (min-width: 380px) {
     .nei-chat-header .nei-header-group:first-child {
         justify-content: flex-start;
         width: auto;
@@ -138,13 +146,11 @@ Scoped to plugin elements only — does NOT override Obsidian shell containers.
 .nei-chat-header .nei-header-group:last-child {
     justify-content: flex-end;
     width: 100%;
-    flex-wrap: wrap;
     gap: clamp(4px, 1cqi, 6px);
 }
 
-@container nei-panel (min-width: 560px) {
+@container nei-panel (min-width: 380px) {
     .nei-chat-header .nei-header-group:last-child {
-        justify-content: flex-end;
         width: auto;
         flex: 0 0 auto;
     }
@@ -157,8 +163,8 @@ Scoped to plugin elements only — does NOT override Obsidian shell containers.
     border: 1px solid var(--background-modifier-border);
     border-radius: 4px;
     cursor: pointer;
-    padding: clamp(2px, 0.5cqi, 3px) clamp(5px, 1cqi, 8px);
-    font-size: clamp(10px, 1.8cqi, 11px);
+    padding: clamp(4px, 1cqi, 6px) clamp(6px, 1.2cqi, 10px);
+    font-size: clamp(10px, 1.8cqi, 12px);
     font-weight: 500;
     color: var(--text-normal);
     transition: background 0.15s ease, border-color 0.15s ease;
@@ -171,8 +177,16 @@ Scoped to plugin elements only — does NOT override Obsidian shell containers.
     flex-shrink: 0;
 }
 
+/* Select dropdown: centered label */
+.nei-select-mode {
+    text-align: center;
+    text-align-last: center;
+    outline: none;
+}
+
 .nei-header-btn:hover,
-.nei-select-mode:hover {
+.nei-select-mode:hover,
+.nei-select-mode:focus {
     background: var(--background-secondary-alt);
     border-color: var(--interactive-accent);
 }
@@ -185,11 +199,16 @@ Scoped to plugin elements only — does NOT override Obsidian shell containers.
     outline-offset: 1px;
 }
 
-/* Vault context toggle active state */
+/* Vault context toggle active state — hover keeps accent (no flicker) */
 .nei-header-btn.nei-btn-active {
     background: var(--interactive-accent);
     color: var(--text-on-accent);
     border-color: var(--interactive-accent);
+}
+
+.nei-header-btn.nei-btn-active:hover {
+    background: var(--interactive-accent-hover, var(--interactive-accent));
+    border-color: var(--interactive-accent-hover, var(--interactive-accent));
 }
 
 .nei-model-select {
@@ -228,9 +247,148 @@ Scoped to plugin elements only — does NOT override Obsidian shell containers.
     gap: clamp(8px, 1.5cqi, 12px);
     margin-bottom: clamp(6px, 1.2cqi, 10px);
     padding-right: 2px;
+    scrollbar-gutter: stable;
 }
 
 /* ── Message bubbles: prevent wide content from blowing out ── */
+.nei-msg-bubble {
+    box-sizing: border-box;
+    min-width: 0;
+    max-width: 92%;
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-size: 13px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    position: relative;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
+
+.nei-msg-bubble--user {
+    align-self: flex-end;
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+}
+
+.nei-msg-bubble--assistant {
+    align-self: flex-start;
+    background: var(--background-secondary);
+    color: var(--text-normal);
+}
+
+/* Per-message action row (copy / edit / retry / branch / save) */
+.nei-msg-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 6px;
+    align-items: center;
+    font-size: 11px;
+    flex-wrap: wrap;
+    max-width: 100%;
+    opacity: 0.9;
+    justify-content: flex-end;
+}
+
+.nei-msg-actions--assistant {
+    justify-content: flex-start;
+    margin-top: 8px;
+}
+
+.nei-msg-action-btn {
+    background: transparent;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-size: 11px;
+    white-space: nowrap;
+    max-width: 100%;
+}
+
+.nei-msg-action-btn--outlined {
+    background: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    padding: 3px 8px;
+    color: var(--text-muted);
+}
+
+.nei-msg-action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Per-message token counters */
+.nei-msg-token-stats {
+    display: flex;
+    gap: 6px;
+    margin-top: 6px;
+    font-size: 10px;
+    color: var(--text-muted);
+    border-top: 1px solid var(--background-modifier-border);
+    padding-top: 4px;
+    flex-wrap: wrap;
+    max-width: 100%;
+}
+
+.nei-msg-token-chip {
+    background: var(--background-primary);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+/* Attached file chips bar */
+.nei-attach-bar {
+    flex-shrink: 0;
+    display: flex;
+    gap: 6px;
+    padding: 6px;
+    background: var(--background-secondary);
+    border-radius: 6px;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+}
+
+.nei-attach-chip {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    padding: 3px 8px;
+    font-size: 11px;
+}
+
+.nei-attach-chip-name {
+    font-weight: 500;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.nei-attach-chip-size {
+    font-size: 9px;
+    opacity: 0.6;
+}
+
+.nei-attach-chip-remove {
+    background: transparent;
+    color: var(--text-muted);
+    border: none;
+    border-radius: 50%;
+    width: 14px;
+    height: 14px;
+    font-size: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .nei-chat-bubble {
     box-sizing: border-box;
     word-break: break-word;
@@ -276,106 +434,20 @@ Scoped to plugin elements only — does NOT override Obsidian shell containers.
     border-radius: 6px;
 }
 
-/* ── Execution-mode select dropdown (balanced padding) ── */
-.nei-select-mode {
-    background: var(--background-secondary);
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 4px;
-    font-size: 11px;
-    padding: 3px 6px;
-    color: var(--text-normal);
-    cursor: pointer;
-    text-align: center;
-    text-align-last: center;
-    box-sizing: border-box;
-    outline: none;
-}
-
-.nei-select-mode:hover,
-.nei-select-mode:focus {
-    border-color: var(--interactive-accent);
-}
-
-/* ── Header Groups & Buttons ── */
-.nei-header-group {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-wrap: nowrap;
-}
-
-.nei-header-btn {
-    background: var(--background-secondary);
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 4px;
-    cursor: pointer;
-    padding: 4px 8px;
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--text-normal);
-    transition: background 0.15s ease, border-color 0.15s ease;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-}
-
-.nei-header-btn:hover {
-    background: var(--background-secondary-alt);
-    border-color: var(--interactive-accent);
-}
-
-.nei-header-btn:focus-visible,
-.nei-select-mode:focus-visible,
-.nei-model-select:focus-visible,
-.nei-chat-textarea:focus-visible {
-    outline: 2px solid var(--interactive-accent);
-    outline-offset: 1px;
-}
-
-.nei-btn-accent {
-    background: var(--interactive-accent);
-    color: var(--text-on-accent);
-    border: none;
-    font-weight: bold;
-}
-
-.nei-btn-accent:hover {
-    background: var(--interactive-accent-hover, var(--interactive-accent));
-}
-
-.nei-model-select {
-    background: var(--background-secondary);
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 4px;
-    font-size: 11px;
-    padding: 3px 6px;
-    color: var(--text-normal);
-    cursor: pointer;
-    max-width: 140px;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    overflow: hidden;
-}
-
-/* ── Input Container: Desktop respects status bar, Mobile handles safe area & keyboard ── */
+/* ── Input Container ──
+   Obsidian chrome floats over the panel bottom on BOTH platforms:
+   desktop .status-bar, mobile .status-bar + .mobile-toolbar above the keyboard.
+   --nei-chrome-inset is measured at runtime (src/utils/obsidianChrome.ts);
+   env(safe-area-inset-bottom) covers the home indicator / gesture bar. */
 .nei-chat-input-container {
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
     gap: clamp(4px, 1cqi, 6px);
-    /* Desktop: reserve space for Obsidian status bar */
-    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--status-bar-height, 30px));
+    padding-bottom: calc(max(env(safe-area-inset-bottom, 8px), 8px) + var(--nei-chrome-inset, 0px));
 }
 
-/* On mobile (touch devices), reduce the status bar padding since mobile has its own handling */
-@media (pointer: coarse) {
-    .nei-chat-input-container {
-        padding-bottom: max(env(safe-area-inset-bottom, 12px), 12px);
-    }
-}
-
-/* When virtual keyboard is open, visualViewport API handles scroll in JS */
+/* When virtual keyboard is open, visualViewport + chrome measurement handle it */
 
 .nei-chat-input-row {
     display: flex;
@@ -467,3 +539,12 @@ Scoped to plugin elements only — does NOT override Obsidian shell containers.
     cursor: not-allowed;
 }
 
+/* ── Narrow containers: enforce minimum touch targets (B19) ── */
+@container nei-panel (max-width: 280px) {
+    .nei-header-btn,
+    .nei-select-mode,
+    .nei-session-btn,
+    .nei-new-chat-btn {
+        min-height: 36px;
+    }
+}

@@ -2,6 +2,12 @@ import { Plugin, WorkspaceLeaf } from "obsidian";
 import { NeiChatView, VIEW_TYPE_NEI_CHAT } from "./src/views/ChatView";
 import { ToolRegistry } from "./src/services/tools/toolRegistry";
 import { McpService } from "./src/services/mcp/mcpClient";
+import {
+    DEFAULT_CHATS_FOLDER,
+    DEFAULT_MEMORY_FILE,
+    DEFAULT_SKILLS_FOLDER,
+    DEFAULT_MAX_ATTACHMENT_SIZE_BYTES
+} from "./src/utils/defaults";
 
 interface VaultWithCrypto {
     decrypt?: (s: string) => Promise<string>;
@@ -101,9 +107,9 @@ const DEFAULT_SETTINGS: NeiAiChatSettings = {
     defaultNoteFolder: "",
     
     // Default paths - relative to vault root, user can customize
-    chatsFolder: ".nei/chats",
-    memoryFile: ".nei/memory.json",
-    skillsFolder: ".nei/skills",
+    chatsFolder: DEFAULT_CHATS_FOLDER,
+    memoryFile: DEFAULT_MEMORY_FILE,
+    skillsFolder: DEFAULT_SKILLS_FOLDER,
     
     // Agent defaults
     maxAgentIterations: 6,
@@ -159,7 +165,7 @@ const DEFAULT_SETTINGS: NeiAiChatSettings = {
     lastAutoLearnTimestamp: 0,
 
     // Attachments & Versioning defaults
-    maxAttachmentSizeBytes: 512000, // 500 KB
+    maxAttachmentSizeBytes: DEFAULT_MAX_ATTACHMENT_SIZE_BYTES, // 500 KB
     settingsVersion: 1,
 
     // Vault Context Toggle default
@@ -169,6 +175,7 @@ const DEFAULT_SETTINGS: NeiAiChatSettings = {
 export default class NeiAiChatPlugin extends Plugin {
     settings: NeiAiChatSettings = DEFAULT_SETTINGS;
     public toolRegistry!: ToolRegistry;
+    private reopenTimer: number | null = null;
 
     async onload() {
         await this.loadSettings();
@@ -199,7 +206,31 @@ export default class NeiAiChatPlugin extends Plugin {
     }
 
     onunload(): void {
-        // Resources are cleaned up by Obsidian automatically
+        if (this.reopenTimer !== null) {
+            window.clearTimeout(this.reopenTimer);
+            this.reopenTimer = null;
+        }
+        // Detach leaves so the mobile app does not keep stale view state (N16)
+        for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_NEI_CHAT)) {
+            leaf.detach();
+        }
+    }
+
+    /**
+     * Re-opens the chat in the sidebar after a main-tab close — debounced at the
+     * plugin level so rapid open/close cycles cannot spawn duplicate views (B11).
+     */
+    scheduleSidebarReopen(): void {
+        if (this.reopenTimer !== null) {
+            window.clearTimeout(this.reopenTimer);
+        }
+        this.reopenTimer = window.setTimeout(() => {
+            this.reopenTimer = null;
+            const existing = this.app.workspace.getLeavesOfType(VIEW_TYPE_NEI_CHAT);
+            if (existing.length === 0) {
+                void this.activateView();
+            }
+        }, 120);
     }
 
     async activateView() {

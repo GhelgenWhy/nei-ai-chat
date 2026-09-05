@@ -14,6 +14,11 @@ export const AudioRecorder: FC<AudioRecorderProps> = ({ onAudioCaptured, onCance
     const audioChunksRef = useRef<Blob[]>([]);
     const timerRef = useRef<number | null>(null);
     const streamRef = useRef<MediaStream | null>(null);
+    // N10: seconds read at stop-time must come from a ref, not a stale closure
+    const secondsRef = useRef<number>(0);
+    // B21: if the component unmounts while getUserMedia is pending, the
+    // resolved stream must not be turned into a recorder on a dead component
+    const mountedRef = useRef<boolean>(true);
 
     const cleanup = () => {
         if (timerRef.current !== null) {
@@ -30,7 +35,9 @@ export const AudioRecorder: FC<AudioRecorderProps> = ({ onAudioCaptured, onCance
     };
 
     useEffect(() => {
+        mountedRef.current = true;
         return () => {
+            mountedRef.current = false;
             cleanup();
         };
     }, []);
@@ -40,6 +47,11 @@ export const AudioRecorder: FC<AudioRecorderProps> = ({ onAudioCaptured, onCance
         audioChunksRef.current = [];
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            if (!mountedRef.current) {
+                // Unmounted while the permission dialog was open — release immediately
+                stream.getTracks().forEach((track: MediaStreamTrack) => track.stop());
+                return;
+            }
             streamRef.current = stream;
             const recorder = new MediaRecorder(stream);
             mediaRecorderRef.current = recorder;
@@ -55,11 +67,11 @@ export const AudioRecorder: FC<AudioRecorderProps> = ({ onAudioCaptured, onCance
                 const reader = new FileReader();
                 reader.onloadend = () => {
                     if (typeof reader.result === 'string') {
-                        onAudioCaptured(reader.result, seconds);
+                        onAudioCaptured(reader.result, secondsRef.current);
                     }
                 };
                 reader.readAsDataURL(blob);
-                
+
                 // Stop audio tracks
                 if (streamRef.current) {
                     streamRef.current.getTracks().forEach((track: MediaStreamTrack) => track.stop());
@@ -70,9 +82,11 @@ export const AudioRecorder: FC<AudioRecorderProps> = ({ onAudioCaptured, onCance
             recorder.start();
             setIsRecording(true);
             setSeconds(0);
+            secondsRef.current = 0;
 
             timerRef.current = window.setInterval(() => {
-                setSeconds((prev: number) => prev + 1);
+                secondsRef.current += 1;
+                setSeconds(secondsRef.current);
             }, 1000);
         } catch (err: unknown) {
             console.error('[AudioRecorder] Access denied or failed:', err);

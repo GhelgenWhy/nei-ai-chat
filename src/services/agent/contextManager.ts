@@ -42,5 +42,27 @@ export class ContextManager {
         const tail = text.substring(text.length - half);
         return `${head}\n\n... [Сжато системой NEI: пропущено ${text.length - maxLength} символов для экономии токенов] ...\n\n${tail}`;
     }
+
+    /**
+     * Strips base64 images from history (B10): re-sending old screenshots on
+     * every turn burns thousands of vision tokens. Keeps images on the last
+     * `keepLastUserImages` user messages (0 strips everything).
+     */
+    public static stripImages(messages: ChatMessage[], keepLastUserImages: number = 0): ChatMessage[] {
+        let remaining = keepLastUserImages;
+        const out: ChatMessage[] = [];
+        for (let i = messages.length - 1; i >= 0; i--) {
+            const m = messages[i];
+            if (m.role === "user" && m.images && m.images.length > 0 && remaining > 0) {
+                remaining--;
+                out.unshift(m);
+            } else if (m.images && m.images.length > 0) {
+                out.unshift({ ...m, images: undefined });
+            } else {
+                out.unshift(m);
+            }
+        }
+        return out;
+    }
 }
 

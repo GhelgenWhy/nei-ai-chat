@@ -1,5 +1,6 @@
 import { App, TFile, normalizePath } from "obsidian";
 import { NeiAiChatSettings } from "../../../main";
+import { DEFAULT_MEMORY_FILE, DEFAULT_AGENT_RULES_FILE } from "../../utils/defaults";
 
 export interface NeiMemory {
     userPreferences: Record<string, unknown>;
@@ -17,9 +18,9 @@ const DEFAULT_MEMORY: NeiMemory = {
 
 export class MemoryStore {
     private static getMemoryPath(settings?: NeiAiChatSettings): string {
-        return settings?.memoryFile || ".nei/memory.json";
+        return settings?.memoryFile || DEFAULT_MEMORY_FILE;
     }
-    
+
     private static getAgentsRulesPath(settings?: NeiAiChatSettings): string {
         const memoryPath = this.getMemoryPath(settings);
         const parts = memoryPath.split("/");
@@ -27,7 +28,7 @@ export class MemoryStore {
             parts.pop();
             return `${parts.join("/")}/AGENTS.md`;
         }
-        return ".nei/AGENTS.md";
+        return DEFAULT_AGENT_RULES_FILE;
     }
 
     public static async loadMemory(app: App, settings?: NeiAiChatSettings): Promise<NeiMemory> {

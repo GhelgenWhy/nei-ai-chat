@@ -25357,16 +25357,16 @@ __export(main_exports, {
   default: () => NeiAiChatPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian17 = require("obsidian");
+var import_obsidian16 = require("obsidian");
 
 // src/views/ChatView.ts
-var import_obsidian13 = require("obsidian");
+var import_obsidian12 = require("obsidian");
 var React8 = __toESM(require_react());
 var import_client = __toESM(require_client());
 
 // src/components/ChatPanel.tsx
 var import_react7 = __toESM(require_react());
-var import_obsidian12 = require("obsidian");
+var import_obsidian11 = require("obsidian");
 
 // src/services/llm.ts
 var import_obsidian = require("obsidian");
@@ -25429,12 +25429,27 @@ function isQueryLikelyStale(query, modelId) {
 }
 
 // src/services/llm.ts
-async function performPostRequest(url, headers, bodyStr, signal) {
-  const res = await (0, import_obsidian.requestUrl)({ url, method: "POST", headers, body: bodyStr });
-  return { status: res.status, text: res.text, json: res.json };
+var LlmHttpError = class extends Error {
+  constructor(status, message) {
+    super(message);
+    this.status = status;
+    this.name = "LlmHttpError";
+  }
+};
+function createAbortError() {
+  const e = new Error("NEI: request aborted by user");
+  e.name = "AbortError";
+  return e;
 }
-async function sendChatRequest(config, messages, tools, signal) {
-  const url = config.endpointUrl.endsWith("/") ? `${config.endpointUrl}chat/completions` : `${config.endpointUrl}/chat/completions`;
+function isAbortError(e) {
+  if (!(e instanceof Error))
+    return false;
+  return e.name === "AbortError" || /abort/i.test(e.message);
+}
+function buildChatUrl(endpointUrl) {
+  return endpointUrl.endsWith("/") ? `${endpointUrl}chat/completions` : `${endpointUrl}/chat/completions`;
+}
+function buildHeaders(config) {
   const headers = {
     "Content-Type": "application/json"
   };
@@ -25445,7 +25460,10 @@ async function sendChatRequest(config, messages, tools, signal) {
     headers["HTTP-Referer"] = "https://github.com/GhelgenWhy/NEI";
     headers["X-Title"] = "NEI AI Assistant Obsidian Plugin";
   }
-  const cleanMessages = messages.map((m) => {
+  return headers;
+}
+function prepareMessagesForApi(messages) {
+  return messages.map((m) => {
     let messageContent = m.content || "";
     if (m.images && m.images.length > 0) {
       const parts = [{ type: "text", text: m.content || "" }];
@@ -25468,157 +25486,249 @@ async function sendChatRequest(config, messages, tools, signal) {
       ...m.tool_calls ? { tool_calls: m.tool_calls } : {}
     };
   });
+}
+function parseHttpErrorMessage(status, errorText) {
+  const fallback = `\u041E\u0448\u0438\u0431\u043A\u0430 \u0418\u0418 (${status}): ${errorText}`;
+  try {
+    const parsedErr = JSON.parse(errorText);
+    if (parsedErr.error) {
+      const errObj = parsedErr.error;
+      const providerName = errObj.metadata?.provider_name || "";
+      if (status === 502 || status === 503 || status === 500) {
+        return `\u26A0\uFE0F \u0421\u0431\u043E\u0439 \u043F\u0440\u043E\u0432\u0430\u0439\u0434\u0435\u0440\u0430 OpenRouter ${providerName ? `(${providerName})` : ""} [\u041A\u043E\u0434 ${status}]: \u0421\u0435\u0440\u0432\u0435\u0440 \u0432\u044B\u0431\u0440\u0430\u043D\u043D\u043E\u0439 \u043C\u043E\u0434\u0435\u043B\u0438 \u0432\u0440\u0435\u043C\u0435\u043D\u043D\u043E \u043F\u0435\u0440\u0435\u0433\u0440\u0443\u0436\u0435\u043D \u0438\u043B\u0438 \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u0435\u043D. \u0412\u044B \u043C\u043E\u0436\u0435\u0442\u0435 \u043F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u044C \u0437\u0430\u043F\u0440\u043E\u0441 \u0447\u0435\u0440\u0435\u0437 \u043F\u0430\u0440\u0443 \u0441\u0435\u043A\u0443\u043D\u0434 \u0438\u043B\u0438 \u0432\u0440\u0435\u043C\u0435\u043D\u043D\u043E \u0432\u044B\u0431\u0440\u0430\u0442\u044C \u0434\u0440\u0443\u0433\u0443\u044E \u043C\u043E\u0434\u0435\u043B\u044C \u0432 \u043D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0430\u0445 \u2699\uFE0F.`;
+      }
+      if (status === 429) {
+        return `\u23F3 \u041F\u0440\u0435\u0432\u044B\u0448\u0435\u043D \u043B\u0438\u043C\u0438\u0442 \u0437\u0430\u043F\u0440\u043E\u0441\u043E\u0432 (429 Rate Limit): \u041F\u0440\u043E\u0432\u0430\u0439\u0434\u0435\u0440 \u0432\u0440\u0435\u043C\u0435\u043D\u043D\u043E \u043E\u0433\u0440\u0430\u043D\u0438\u0447\u0438\u043B \u0447\u0430\u0441\u0442\u043E\u0442\u0443 \u0432\u044B\u0437\u043E\u0432\u043E\u0432. \u041F\u043E\u0434\u043E\u0436\u0434\u0438\u0442\u0435 \u043D\u0435\u0441\u043A\u043E\u043B\u044C\u043A\u043E \u0441\u0435\u043A\u0443\u043D\u0434 \u0438 \u043F\u043E\u043F\u0440\u043E\u0431\u0443\u0439\u0442\u0435 \u0441\u043D\u043E\u0432\u0430.`;
+      }
+      if (status === 401) {
+        return `\u{1F511} \u041E\u0448\u0438\u0431\u043A\u0430 \u0430\u0432\u0442\u043E\u0440\u0438\u0437\u0430\u0446\u0438\u0438 (401): \u041D\u0435\u0432\u0435\u0440\u043D\u044B\u0439 \u0438\u043B\u0438 \u043E\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u0443\u044E\u0449\u0438\u0439 API-\u043A\u043B\u044E\u0447 OpenRouter. \u041F\u0440\u043E\u0432\u0435\u0440\u044C\u0442\u0435 \u0432\u0430\u0448 \u043A\u043B\u044E\u0447 \u0432 \u043D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0430\u0445 \u2699\uFE0F.`;
+      }
+      if (errObj.message) {
+        return `\u26A0\uFE0F \u0421\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0435 \u043F\u0440\u043E\u0432\u0430\u0439\u0434\u0435\u0440\u0430 OpenRouter [\u041A\u043E\u0434 ${status}]: ${errObj.message}`;
+      }
+    }
+  } catch {
+  }
+  return fallback;
+}
+function parseChatResponseJson(data) {
+  const d = data;
+  if (!d.choices || d.choices.length === 0) {
+    throw new Error("\u0418\u0418 \u0432\u0435\u0440\u043D\u0443\u043B \u043F\u0443\u0441\u0442\u043E\u0439 \u0432\u044B\u0431\u043E\u0440 \u043E\u0442\u0432\u0435\u0442\u0430 (empty choices).");
+  }
+  const choiceMessage = d.choices[0]?.message || {};
+  const usage = d.usage ? {
+    promptTokens: Number(d.usage.prompt_tokens || 0),
+    completionTokens: Number(d.usage.completion_tokens || 0),
+    totalTokens: Number(d.usage.total_tokens || 0)
+  } : void 0;
+  return {
+    content: choiceMessage.content || "",
+    tool_calls: choiceMessage.tool_calls || void 0,
+    reasoning: choiceMessage.reasoning || choiceMessage.reasoning_content || void 0,
+    usage
+  };
+}
+function buildRequestBody(config, messages, tools, stream = false) {
   const body = {
     model: config.model,
-    messages: cleanMessages
+    messages: prepareMessagesForApi(messages)
   };
+  if (stream)
+    body.stream = true;
   if (tools && tools.length > 0) {
     body.tools = tools;
     body.tool_choice = "auto";
   }
-  const response = await performPostRequest(url, headers, JSON.stringify(body), signal);
-  if (response.status < 200 || response.status >= 300) {
-    const errorText = response.text || "";
-    let userFriendlyMsg = `\u041E\u0448\u0438\u0431\u043A\u0430 \u0418\u0418 (${response.status}): ${errorText}`;
+  return JSON.stringify(body);
+}
+async function sendChatRequest(config, messages, tools, signal) {
+  const url = buildChatUrl(config.endpointUrl);
+  const headers = buildHeaders(config);
+  const bodyStr = buildRequestBody(config, messages, tools);
+  if (typeof fetch === "function") {
     try {
-      const parsedErr = JSON.parse(errorText);
-      if (parsedErr.error) {
-        const errObj = parsedErr.error;
-        const providerName = errObj.metadata?.provider_name || "";
-        if (response.status === 502 || response.status === 503 || response.status === 500) {
-          userFriendlyMsg = `\u26A0\uFE0F \u0421\u0431\u043E\u0439 \u043F\u0440\u043E\u0432\u0430\u0439\u0434\u0435\u0440\u0430 OpenRouter ${providerName ? `(${providerName})` : ""} [\u041A\u043E\u0434 ${response.status}]: \u0421\u0435\u0440\u0432\u0435\u0440 \u0432\u044B\u0431\u0440\u0430\u043D\u043D\u043E\u0439 \u043C\u043E\u0434\u0435\u043B\u0438 \u0432\u0440\u0435\u043C\u0435\u043D\u043D\u043E \u043F\u0435\u0440\u0435\u0433\u0440\u0443\u0436\u0435\u043D \u0438\u043B\u0438 \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u0435\u043D. \u0412\u044B \u043C\u043E\u0436\u0435\u0442\u0435 \u043F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u044C \u0437\u0430\u043F\u0440\u043E\u0441 \u0447\u0435\u0440\u0435\u0437 \u043F\u0430\u0440\u0443 \u0441\u0435\u043A\u0443\u043D\u0434 \u0438\u043B\u0438 \u0432\u0440\u0435\u043C\u0435\u043D\u043D\u043E \u0432\u044B\u0431\u0440\u0430\u0442\u044C \u0434\u0440\u0443\u0433\u0443\u044E \u043C\u043E\u0434\u0435\u043B\u044C \u0432 \u043D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0430\u0445 \u2699\uFE0F.`;
-        } else if (response.status === 429) {
-          userFriendlyMsg = `\u23F3 \u041F\u0440\u0435\u0432\u044B\u0448\u0435\u043D \u043B\u0438\u043C\u0438\u0442 \u0437\u0430\u043F\u0440\u043E\u0441\u043E\u0432 (429 Rate Limit): \u041F\u0440\u043E\u0432\u0430\u0439\u0434\u0435\u0440 \u0432\u0440\u0435\u043C\u0435\u043D\u043D\u043E \u043E\u0433\u0440\u0430\u043D\u0438\u0447\u0438\u043B \u0447\u0430\u0441\u0442\u043E\u0442\u0443 \u0432\u044B\u0437\u043E\u0432\u043E\u0432. \u041F\u043E\u0434\u043E\u0436\u0434\u0438\u0442\u0435 \u043D\u0435\u0441\u043A\u043E\u043B\u044C\u043A\u043E \u0441\u0435\u043A\u0443\u043D\u0434 \u0438 \u043F\u043E\u043F\u0440\u043E\u0431\u0443\u0439\u0442\u0435 \u0441\u043D\u043E\u0432\u0430.`;
-        } else if (response.status === 401) {
-          userFriendlyMsg = `\u{1F511} \u041E\u0448\u0438\u0431\u043A\u0430 \u0430\u0432\u0442\u043E\u0440\u0438\u0437\u0430\u0446\u0438\u0438 (401): \u041D\u0435\u0432\u0435\u0440\u043D\u044B\u0439 \u0438\u043B\u0438 \u043E\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u0443\u044E\u0449\u0438\u0439 API-\u043A\u043B\u044E\u0447 OpenRouter. \u041F\u0440\u043E\u0432\u0435\u0440\u044C\u0442\u0435 \u0432\u0430\u0448 \u043A\u043B\u044E\u0447 \u0432 \u043D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0430\u0445 \u2699\uFE0F.`;
-        } else if (errObj.message) {
-          userFriendlyMsg = `\u26A0\uFE0F \u0421\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0435 \u043F\u0440\u043E\u0432\u0430\u0439\u0434\u0435\u0440\u0430 OpenRouter [\u041A\u043E\u0434 ${response.status}]: ${errObj.message}`;
+      const res2 = await fetch(url, { method: "POST", headers, body: bodyStr, signal });
+      const text = await res2.text();
+      if (!res2.ok) {
+        throw new LlmHttpError(res2.status, parseHttpErrorMessage(res2.status, text));
+      }
+      return parseChatResponseJson(JSON.parse(text));
+    } catch (e) {
+      if (isAbortError(e))
+        throw e;
+      if (e instanceof LlmHttpError)
+        throw e;
+      console.warn("[NEI] Native fetch failed, falling back to requestUrl:", e);
+    }
+  }
+  const res = await (0, import_obsidian.requestUrl)({ url, method: "POST", headers, body: bodyStr });
+  if (res.status < 200 || res.status >= 300) {
+    throw new LlmHttpError(res.status, parseHttpErrorMessage(res.status, res.text || ""));
+  }
+  return parseChatResponseJson(res.json);
+}
+var StreamAccumulator = class {
+  constructor() {
+    this.content = "";
+    this.reasoning = "";
+    this.lineBuffer = "";
+    this.toolCalls = /* @__PURE__ */ new Map();
+  }
+  /**
+   * Processes one decoded chunk of SSE text. Handles arbitrary chunk splits:
+   * incomplete lines are buffered until their newline arrives (flush at EOF).
+   */
+  pushChunk(text) {
+    this.lineBuffer += text;
+    const lines = this.lineBuffer.split("\n");
+    this.lineBuffer = lines.pop() ?? "";
+    for (const line of lines) {
+      this.processLine(line);
+    }
+  }
+  /** Processes the buffered tail when the stream has ended. */
+  flush() {
+    if (this.lineBuffer) {
+      this.processLine(this.lineBuffer);
+      this.lineBuffer = "";
+    }
+  }
+  processLine(line) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith(":"))
+      return;
+    if (!trimmed.startsWith("data:"))
+      return;
+    const dataStr = trimmed.slice(5).trim();
+    if (dataStr === "[DONE]")
+      return;
+    try {
+      const parsed = JSON.parse(dataStr);
+      if (parsed.usage) {
+        this.usage = {
+          promptTokens: Number(parsed.usage.prompt_tokens || 0),
+          completionTokens: Number(parsed.usage.completion_tokens || 0),
+          totalTokens: Number(parsed.usage.total_tokens || 0)
+        };
+      }
+      const delta = parsed.choices?.[0]?.delta;
+      if (!delta)
+        return;
+      if (delta.content) {
+        this.content += delta.content;
+      }
+      if (delta.reasoning || delta.reasoning_content) {
+        this.reasoning += delta.reasoning || delta.reasoning_content || "";
+      }
+      if (delta.tool_calls) {
+        for (const tc of delta.tool_calls) {
+          const idx = typeof tc.index === "number" ? tc.index : this.toolCalls.size;
+          const cur = this.toolCalls.get(idx) || { id: "", name: "", arguments: "" };
+          if (tc.id)
+            cur.id = tc.id;
+          if (tc.function?.name)
+            cur.name += tc.function.name;
+          if (tc.function?.arguments)
+            cur.arguments += tc.function.arguments;
+          this.toolCalls.set(idx, cur);
         }
       }
     } catch {
     }
-    throw new Error(userFriendlyMsg);
   }
-  const data = response.json;
-  if (!data.choices || data.choices.length === 0) {
-    throw new Error("\u0418\u0418 \u0432\u0435\u0440\u043D\u0443\u043B \u043F\u0443\u0441\u0442\u043E\u0439 \u0432\u044B\u0431\u043E\u0440 \u043E\u0442\u0432\u0435\u0442\u0430 (empty choices).");
-  }
-  const choiceMessage = data.choices[0]?.message || {};
-  const content = choiceMessage.content || "";
-  const tool_calls = choiceMessage.tool_calls || void 0;
-  const reasoning = choiceMessage.reasoning || choiceMessage.reasoning_content || void 0;
-  const usage = data.usage ? {
-    promptTokens: Number(data.usage.prompt_tokens || 0),
-    completionTokens: Number(data.usage.completion_tokens || 0),
-    totalTokens: Number(data.usage.total_tokens || 0)
-  } : void 0;
-  return {
-    content,
-    tool_calls,
-    reasoning,
-    usage
-  };
-}
-async function sendChatRequestStream(config, messages, tools, onChunk, signal) {
-  const url = config.endpointUrl.endsWith("/") ? `${config.endpointUrl}chat/completions` : `${config.endpointUrl}/chat/completions`;
-  const headers = {
-    "Content-Type": "application/json"
-  };
-  if (config.apiKey && config.provider !== "ollama") {
-    headers["Authorization"] = `Bearer ${config.apiKey}`;
-  }
-  if (config.provider === "openrouter") {
-    headers["HTTP-Referer"] = "https://github.com/GhelgenWhy/NEI";
-    headers["X-Title"] = "NEI AI Assistant Obsidian Plugin";
-  }
-  const cleanMessages = messages.map((m) => {
-    let messageContent = m.content || "";
-    if (m.images && m.images.length > 0) {
-      const parts = [{ type: "text", text: m.content || "" }];
-      for (const img of m.images) {
-        parts.push({
-          type: "image_url",
-          image_url: { url: img }
-        });
-      }
-      messageContent = parts;
+  /** Returns null when the stream carried no content at all. */
+  toResponse() {
+    if (!this.content && !this.reasoning && this.toolCalls.size === 0)
+      return null;
+    let tool_calls;
+    if (this.toolCalls.size > 0) {
+      tool_calls = [...this.toolCalls.values()].filter((tc) => tc.name).map((tc, i) => ({
+        id: tc.id || `stream_call_${i}`,
+        type: "function",
+        function: { name: tc.name, arguments: tc.arguments || "{}" }
+      }));
     }
     return {
-      role: m.role,
-      content: messageContent,
-      ...m.name ? { name: m.name } : {},
-      ...m.tool_call_id ? { tool_call_id: m.tool_call_id } : {},
-      ...m.tool_calls ? { tool_calls: m.tool_calls } : {}
+      content: this.content,
+      reasoning: this.reasoning || void 0,
+      tool_calls,
+      usage: this.usage
     };
-  });
-  const body = {
-    model: config.model,
-    messages: cleanMessages,
-    stream: true
-  };
-  if (tools && tools.length > 0) {
-    body.tools = tools;
-    body.tool_choice = "auto";
   }
+};
+async function sendChatRequestStream(config, messages, tools, onChunk, signal) {
+  const nonStreamingFallback = async (reason) => {
+    console.warn(`[NEI] Streaming unavailable (${reason}), using non-streaming request`);
+    const fallbackRes = await sendChatRequest(config, messages, tools, signal);
+    if (fallbackRes.content && onChunk) {
+      onChunk(fallbackRes.content);
+    }
+    return fallbackRes;
+  };
+  if (typeof fetch !== "function") {
+    return nonStreamingFallback("fetch API not available");
+  }
+  const url = buildChatUrl(config.endpointUrl);
+  const headers = buildHeaders(config);
+  const bodyStr = buildRequestBody(config, messages, tools, true);
+  let res;
   try {
-    const res = await (0, import_obsidian.requestUrl)({
-      url,
-      method: "POST",
-      headers,
-      body: JSON.stringify(body)
-    });
-    if (res.status < 200 || res.status >= 300) {
-      return sendChatRequest(config, messages, tools, signal);
-    }
-    const reader = res.body?.getReader();
-    if (!reader) {
-      return sendChatRequest(config, messages, tools, signal);
-    }
-    const decoder = new TextDecoder();
-    let accumulatedContent = "";
-    let buffer = "";
+    res = await fetch(url, { method: "POST", headers, body: bodyStr, signal });
+  } catch (e) {
+    if (isAbortError(e))
+      throw e;
+    return nonStreamingFallback(`network error: ${e instanceof Error ? e.message : String(e)}`);
+  }
+  if (!res.ok) {
+    const errorText = await res.text().catch(() => "");
+    throw new LlmHttpError(res.status, parseHttpErrorMessage(res.status, errorText));
+  }
+  if (!res.body || typeof res.body.getReader !== "function") {
+    return nonStreamingFallback("response body is not a stream");
+  }
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  const accumulator = new StreamAccumulator();
+  try {
     while (true) {
+      if (signal?.aborted) {
+        void reader.cancel();
+        throw createAbortError();
+      }
       const { done, value } = await reader.read();
       if (done)
         break;
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop() || "";
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (!trimmed || trimmed.startsWith(":"))
-          continue;
-        if (trimmed.startsWith("data: ")) {
-          const dataStr = trimmed.slice(6);
-          if (dataStr === "[DONE]")
-            break;
-          try {
-            const parsed = JSON.parse(dataStr);
-            const delta = parsed.choices?.[0]?.delta?.content;
-            if (delta) {
-              accumulatedContent += delta;
-              if (onChunk)
-                onChunk(delta);
-            }
-          } catch {
-          }
-        }
+      const text = decoder.decode(value, { stream: true });
+      const before = accumulator.content.length;
+      accumulator.pushChunk(text);
+      if (onChunk && accumulator.content.length > before) {
+        onChunk(accumulator.content.slice(before));
       }
     }
-    if (accumulatedContent) {
-      return { content: accumulatedContent };
-    }
-  } catch {
+    accumulator.flush();
+  } catch (e) {
+    if (isAbortError(e))
+      throw e;
+    return nonStreamingFallback(`stream read error: ${e instanceof Error ? e.message : String(e)}`);
   }
-  const fallbackRes = await sendChatRequest(config, messages, tools, signal);
-  if (fallbackRes.content && onChunk) {
-    onChunk(fallbackRes.content);
-  }
-  return fallbackRes;
+  const result = accumulator.toResponse();
+  if (result)
+    return result;
+  return nonStreamingFallback("empty stream");
 }
 
 // src/services/memory/memoryStore.ts
 var import_obsidian4 = require("obsidian");
+
+// src/utils/defaults.ts
+var DEFAULT_CHATS_FOLDER = ".nei/chats";
+var DEFAULT_MEMORY_FILE = ".nei/memory.json";
+var DEFAULT_SKILLS_FOLDER = ".nei/skills";
+var DEFAULT_AGENT_RULES_FILE = ".nei/AGENTS.md";
+var DEFAULT_MAX_ATTACHMENT_SIZE_BYTES = 512e3;
+
+// src/services/memory/memoryStore.ts
 var DEFAULT_MEMORY = {
   userPreferences: {},
   projectContexts: {},
@@ -25627,7 +25737,7 @@ var DEFAULT_MEMORY = {
 };
 var MemoryStore = class {
   static getMemoryPath(settings) {
-    return settings?.memoryFile || ".nei/memory.json";
+    return settings?.memoryFile || DEFAULT_MEMORY_FILE;
   }
   static getAgentsRulesPath(settings) {
     const memoryPath = this.getMemoryPath(settings);
@@ -25636,7 +25746,7 @@ var MemoryStore = class {
       parts.pop();
       return `${parts.join("/")}/AGENTS.md`;
     }
-    return ".nei/AGENTS.md";
+    return DEFAULT_AGENT_RULES_FILE;
   }
   static async loadMemory(app, settings) {
     try {
@@ -25777,223 +25887,6 @@ var SkillsLoader = class {
   }
 };
 
-// src/services/context.ts
-var import_obsidian7 = require("obsidian");
-
-// src/services/rag.ts
-var import_obsidian6 = require("obsidian");
-var STOP_WORDS = /* @__PURE__ */ new Set([
-  // Russian
-  "\u0438",
-  "\u0432",
-  "\u043D\u0430",
-  "\u043D\u0435",
-  "\u0447\u0442\u043E",
-  "\u044D\u0442\u043E",
-  "\u043A\u0430\u043A",
-  "\u043E\u043D",
-  "\u043E\u043D\u0430",
-  "\u043E\u043D\u0438",
-  "\u043C\u044B",
-  "\u0432\u044B",
-  "\u0432\u0441\u0435",
-  "\u0442\u0430\u043A",
-  "\u0435\u0433\u043E",
-  "\u043D\u043E",
-  "\u0434\u0430",
-  "\u0442\u044B",
-  "\u043F\u043E",
-  "\u043E\u0442",
-  "\u0437\u0430",
-  "\u0434\u043B\u044F",
-  "\u0438\u0437",
-  "\u0436\u0435",
-  "\u0442\u043E",
-  "\u0431\u044B",
-  "\u0435\u0435",
-  "\u043F\u0440\u0438",
-  "\u0438\u043B\u0438",
-  "\u0443\u0436\u0435",
-  "\u0434\u043E",
-  "\u043D\u0435\u0442",
-  "\u0435\u0441\u043B\u0438",
-  "\u043D\u0438\u0445",
-  "\u0431\u044B\u043B",
-  "\u0431\u0435\u0437",
-  "\u0435\u0449\u0451",
-  "\u0431\u044B\u0442\u044C",
-  "\u043C\u043E\u0439",
-  "\u0447\u0435\u043C",
-  "\u044D\u0442\u0438",
-  "\u0433\u0434\u0435",
-  "\u043C\u043D\u0435",
-  "\u043D\u0438\u0445",
-  "\u0442\u0443\u0442",
-  // English
-  "the",
-  "and",
-  "for",
-  "are",
-  "but",
-  "not",
-  "you",
-  "all",
-  "can",
-  "had",
-  "her",
-  "was",
-  "one",
-  "our",
-  "out",
-  "has",
-  "have",
-  "been",
-  "from",
-  "this",
-  "that",
-  "with",
-  "they",
-  "will",
-  "each",
-  "make",
-  "like",
-  "just",
-  "than",
-  "them",
-  "very",
-  "when",
-  "what",
-  "your",
-  "about",
-  "would",
-  "there",
-  "their",
-  "which",
-  "could",
-  "other",
-  "into",
-  "more",
-  "some",
-  "time",
-  "also",
-  "its",
-  "only",
-  "over"
-]);
-function tokenize(text) {
-  return text.toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~()?"']/g, " ").split(/\s+/).filter((word) => word.length > 2 && !STOP_WORDS.has(word));
-}
-async function searchVaultLexical(app, query, limit = 5, snippetLength = 1e3) {
-  const files = app.vault.getMarkdownFiles();
-  const queryTokens = tokenize(query);
-  if (queryTokens.length === 0)
-    return [];
-  const docFreq = {};
-  const fileContents = /* @__PURE__ */ new Map();
-  const readResults = await Promise.all(
-    files.map(async (file) => {
-      try {
-        const content = await app.vault.cachedRead(file);
-        return { file, content };
-      } catch {
-        return { file, content: "" };
-      }
-    })
-  );
-  for (const { file, content } of readResults) {
-    if (!content)
-      continue;
-    fileContents.set(file, content);
-    const contentLower = content.toLowerCase();
-    for (const qToken of queryTokens) {
-      if (contentLower.includes(qToken)) {
-        docFreq[qToken] = (docFreq[qToken] || 0) + 1;
-      }
-    }
-  }
-  const totalDocs = fileContents.size || 1;
-  const results = [];
-  for (const [file, content] of fileContents) {
-    const fileTokens = tokenize(content);
-    if (fileTokens.length === 0)
-      continue;
-    let score = 0;
-    for (const qToken of queryTokens) {
-      const tf = fileTokens.filter((t2) => t2.includes(qToken)).length;
-      if (tf === 0)
-        continue;
-      const df = docFreq[qToken] || 1;
-      const idf = Math.log(totalDocs / df) + 1;
-      score += tf * idf;
-    }
-    if (score > 0) {
-      const normalizedScore = score / Math.sqrt(fileTokens.length);
-      results.push({
-        file,
-        content: content.slice(0, snippetLength),
-        score: normalizedScore
-      });
-    }
-  }
-  results.sort((a, b) => b.score - a.score);
-  return results.slice(0, limit);
-}
-
-// src/services/context.ts
-async function resolveContext(app, query, useRag, limitRag = 3) {
-  const activeFile = app.workspace.getActiveFile();
-  let activeNoteTitle = "";
-  let activeNoteContent = "";
-  if (activeFile instanceof import_obsidian7.TFile) {
-    activeNoteTitle = activeFile.basename;
-    try {
-      activeNoteContent = await app.vault.cachedRead(activeFile);
-    } catch {
-    }
-  }
-  const appPluginContainer = app;
-  const internalSet = appPluginContainer.internalPlugins?.enabledPlugins;
-  const communitySet = appPluginContainer.plugins?.enabledPlugins;
-  const manifests = appPluginContainer.plugins?.manifests;
-  const enabledInternal = Array.from(internalSet || []);
-  const enabledCommunity = Object.keys(manifests || {}).filter((id) => communitySet?.has(id));
-  const activePlugins = [...enabledInternal, ...enabledCommunity];
-  let characterStats = void 0;
-  let activeQuests = [];
-  const corePlugin = appPluginContainer.plugins?.getPlugin?.("nei-core-plugin");
-  if (corePlugin && corePlugin.enabled && corePlugin.api) {
-    try {
-      characterStats = await corePlugin.api.loadCharacterProfile();
-      activeQuests = await corePlugin.api.getAllQuests();
-    } catch (e) {
-      console.error("[NEI AI Chat] Error pulling RPG stats from Core plugin:", e);
-    }
-  }
-  let ragContext = "";
-  if (useRag && query.trim().length > 3) {
-    try {
-      const searchResults = await searchVaultLexical(app, query, limitRag);
-      if (searchResults.length > 0) {
-        ragContext = searchResults.map((res) => `---
-\u0424\u0430\u0439\u043B: ${res.file.path}
-\u0421\u043E\u0434\u0435\u0440\u0436\u0438\u043C\u043E\u0435:
-${res.content.substring(0, 1500)}${res.content.length > 1500 ? "..." : ""}
----`).join("\n\n");
-      }
-    } catch (e) {
-      console.error("[NEI AI Chat] RAG search error:", e);
-    }
-  }
-  return {
-    activeNoteTitle,
-    activeNoteContent,
-    activePlugins,
-    characterStats,
-    activeQuests,
-    ragContext
-  };
-}
-
 // src/i18n/translations.ts
 var baseEn = {
   welcomeGreeting: "\u{1F44B} NEI Assistant greets you. Awaiting instructions",
@@ -26074,6 +25967,7 @@ var baseEn = {
   historyClearedNotice: "Chat history cleared!",
   modeSwitchError: "Mode switch error:",
   agentError: "\u274C Agent execution error:",
+  stoppedByUser: "\u23F9\uFE0F Generation stopped by user.",
   cancel: "Cancel",
   saveSend: "\u{1F4BE} Send",
   editText: "\u270F\uFE0F Edit",
@@ -26331,6 +26225,7 @@ var baseRu = {
   historyClearedNotice: "\u0412\u0441\u044F \u0438\u0441\u0442\u043E\u0440\u0438\u044F \u0447\u0430\u0442\u043E\u0432 \u043E\u0447\u0438\u0449\u0435\u043D\u0430!",
   modeSwitchError: "\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0435\u0440\u0435\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u044F \u0440\u0435\u0436\u0438\u043C\u0430:",
   agentError: "\u274C \u041E\u0448\u0438\u0431\u043A\u0430 \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u0438\u044F \u0430\u0433\u0435\u043D\u0442\u0430:",
+  stoppedByUser: "\u23F9\uFE0F \u0413\u0435\u043D\u0435\u0440\u0430\u0446\u0438\u044F \u043E\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D\u0430 \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u0435\u043C.",
   cancel: "\u041E\u0442\u043C\u0435\u043D\u0430",
   saveSend: "\u{1F4BE} \u041E\u0442\u043F\u0440\u0430\u0432\u0438\u0442\u044C",
   editText: "\u270F\uFE0F \u0418\u0437\u043C\u0435\u043D\u0438\u0442\u044C",
@@ -26500,7 +26395,9 @@ var baseRu = {
   startTour: "\u041D\u0430\u0447\u0430\u0442\u044C \u0442\u0443\u0440",
   skip: "\u041F\u0440\u043E\u043F\u0443\u0441\u0442\u0438\u0442\u044C",
   next: "\u0414\u0430\u043B\u0435\u0435",
-  back: "\u041D\u0430\u0437\u0430\u0434"
+  back: "\u041D\u0430\u0437\u0430\u0434",
+  systemPromptRu: '\u0422\u044B \u2014 \u0430\u0433\u0435\u043D\u0442\u043D\u044B\u0439 \u0418\u0418-\u043F\u043E\u043C\u043E\u0449\u043D\u0438\u043A NEI \u0432 Obsidian.\n\u0422\u0432\u043E\u044F \u0446\u0435\u043B\u044C: \u043F\u043E\u043C\u043E\u0433\u0430\u0442\u044C \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044E \u0440\u0430\u0431\u043E\u0442\u0430\u0442\u044C \u0441 \u0445\u0440\u0430\u043D\u0438\u043B\u0438\u0449\u0435\u043C \u0437\u0430\u043C\u0435\u0442\u043E\u043A Vault \u0438 \u043E\u0442\u0432\u0435\u0447\u0430\u0442\u044C \u043D\u0430 \u0435\u0433\u043E \u0432\u043E\u043F\u0440\u043E\u0441\u044B.\n\n\u041F\u0420\u0410\u0412\u0418\u041B\u0410 \u0418\u0421\u041F\u041E\u041B\u042C\u0417\u041E\u0412\u0410\u041D\u0418\u042F \u0418\u041D\u0421\u0422\u0420\u0423\u041C\u0415\u041D\u0422\u041E\u0412:\n1. \u0415\u0441\u043B\u0438 \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C \u043F\u0440\u043E\u0441\u0438\u0442 "\u0441\u043E\u0437\u0434\u0430\u0439 \u0437\u0430\u043C\u0435\u0442\u043A\u0443", "\u0441\u043E\u0437\u0434\u0430\u0439 \u043F\u0430\u043F\u043A\u0443" \u0438\u043B\u0438 "\u0441\u043E\u0445\u0440\u0430\u043D\u0438" \u2014 \u041E\u0411\u042F\u0417\u0410\u0422\u0415\u041B\u042C\u041D\u041E \u0432\u044B\u0437\u043E\u0432\u0438 \u0438\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442 `create_note(path, content)`.\n2. \u0414\u043B\u044F \u0447\u0442\u0435\u043D\u0438\u044F \u0437\u0430\u043C\u0435\u0442\u043E\u043A \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u0443\u0439 `read_note` \u0438\u043B\u0438 `get_folder_notes`.\n3. \u0418\u043D\u0441\u0442\u0440\u0443\u043C\u0435\u043D\u0442 `create_note` \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438 \u0441\u043E\u0437\u0434\u0430\u0451\u0442 \u0432\u0441\u0435 \u0432\u043B\u043E\u0436\u0435\u043D\u043D\u044B\u0435 \u043F\u0430\u043F\u043A\u0438.\n\n\u041E\u0422\u0412\u0415\u0422: GitHub Flavored Markdown.',
+  systemPromptEn: 'You are NEI \u2014 an agentic AI assistant integrated into Obsidian.\nYour goal: help the user work with their Vault (notes, folders) and answer questions.\n\nTOOL USAGE RULES:\n1. If the user asks to "create a note", "create a folder", or "save" \u2014 you MUST call the `create_note(path, content)` tool.\n2. To read notes, use `read_note` or `get_folder_notes`.\n3. The `create_note` tool automatically creates nested folders.\n\nRESPONSE FORMAT: GitHub Flavored Markdown.'
 };
 var translations = {
   ru: baseRu,
@@ -26548,10 +26445,199 @@ function t(key, lang, params) {
   return str;
 }
 
+// src/services/rag.ts
+var import_obsidian6 = require("obsidian");
+var STOP_WORDS = /* @__PURE__ */ new Set([
+  // Russian
+  "\u0438",
+  "\u0432",
+  "\u043D\u0430",
+  "\u043D\u0435",
+  "\u0447\u0442\u043E",
+  "\u044D\u0442\u043E",
+  "\u043A\u0430\u043A",
+  "\u043E\u043D",
+  "\u043E\u043D\u0430",
+  "\u043E\u043D\u0438",
+  "\u043C\u044B",
+  "\u0432\u044B",
+  "\u0432\u0441\u0435",
+  "\u0442\u0430\u043A",
+  "\u0435\u0433\u043E",
+  "\u043D\u043E",
+  "\u0434\u0430",
+  "\u0442\u044B",
+  "\u043F\u043E",
+  "\u043E\u0442",
+  "\u0437\u0430",
+  "\u0434\u043B\u044F",
+  "\u0438\u0437",
+  "\u0436\u0435",
+  "\u0442\u043E",
+  "\u0431\u044B",
+  "\u0435\u0435",
+  "\u043F\u0440\u0438",
+  "\u0438\u043B\u0438",
+  "\u0443\u0436\u0435",
+  "\u0434\u043E",
+  "\u043D\u0435\u0442",
+  "\u0435\u0441\u043B\u0438",
+  "\u043D\u0438\u0445",
+  "\u0431\u044B\u043B",
+  "\u0431\u0435\u0437",
+  "\u0435\u0449\u0451",
+  "\u0431\u044B\u0442\u044C",
+  "\u043C\u043E\u0439",
+  "\u0447\u0435\u043C",
+  "\u044D\u0442\u0438",
+  "\u0433\u0434\u0435",
+  "\u043C\u043D\u0435",
+  "\u043D\u0438\u0445",
+  "\u0442\u0443\u0442",
+  // English
+  "the",
+  "and",
+  "for",
+  "are",
+  "but",
+  "not",
+  "you",
+  "all",
+  "can",
+  "had",
+  "her",
+  "was",
+  "one",
+  "our",
+  "out",
+  "has",
+  "have",
+  "been",
+  "from",
+  "this",
+  "that",
+  "with",
+  "they",
+  "will",
+  "each",
+  "make",
+  "like",
+  "just",
+  "than",
+  "them",
+  "very",
+  "when",
+  "what",
+  "your",
+  "about",
+  "would",
+  "there",
+  "their",
+  "which",
+  "could",
+  "other",
+  "into",
+  "more",
+  "some",
+  "time",
+  "also",
+  "its",
+  "only",
+  "over"
+]);
+var WORD_RE = /[^.,/#!$%^&*;:{}=\-_`~()?"'\s]+/g;
+function tokenize(text) {
+  const matches = text.toLowerCase().match(WORD_RE);
+  if (!matches)
+    return [];
+  return matches.filter((word) => word.length > 2 && !STOP_WORDS.has(word));
+}
+var tokenCache = /* @__PURE__ */ new Map();
+var TOKEN_CACHE_MAX = 500;
+function getTokensCached(file, content) {
+  const mtime = file.stat?.mtime ?? 0;
+  const cached = tokenCache.get(file.path);
+  if (cached && cached.mtime === mtime)
+    return cached.tokens;
+  const tokens = tokenize(content);
+  if (tokenCache.size >= TOKEN_CACHE_MAX) {
+    const oldest = tokenCache.keys().next().value;
+    if (oldest !== void 0)
+      tokenCache.delete(oldest);
+  }
+  tokenCache.set(file.path, { mtime, tokens });
+  return tokens;
+}
+async function forEachWithConcurrency(items, limit, fn) {
+  let index = 0;
+  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (index < items.length) {
+      const item = items[index++];
+      await fn(item);
+    }
+  });
+  await Promise.all(workers);
+}
+async function searchVaultLexical(app, query, limit = 5, snippetLength = 1e3) {
+  const files = app.vault.getMarkdownFiles();
+  const queryTokens = tokenize(query);
+  if (queryTokens.length === 0)
+    return [];
+  const docFreq = {};
+  const candidates = [];
+  await forEachWithConcurrency(files, 8, async (file) => {
+    let content = "";
+    try {
+      content = await app.vault.cachedRead(file);
+    } catch {
+      return;
+    }
+    if (!content)
+      return;
+    const contentLower = content.toLowerCase();
+    let matched = false;
+    for (const qToken of queryTokens) {
+      if (contentLower.includes(qToken)) {
+        docFreq[qToken] = (docFreq[qToken] || 0) + 1;
+        matched = true;
+      }
+    }
+    if (matched) {
+      candidates.push({ file, contentLower, content });
+    }
+  });
+  const totalDocs = files.length || 1;
+  const results = [];
+  for (const { file, contentLower, content } of candidates) {
+    const fileTokens = getTokensCached(file, contentLower);
+    if (fileTokens.length === 0)
+      continue;
+    let score = 0;
+    for (const qToken of queryTokens) {
+      const tf = fileTokens.reduce((n, t2) => t2.includes(qToken) ? n + 1 : n, 0);
+      if (tf === 0)
+        continue;
+      const df = docFreq[qToken] || 1;
+      const idf = Math.log(totalDocs / df) + 1;
+      score += tf * idf;
+    }
+    if (score > 0) {
+      const normalizedScore = score / Math.sqrt(fileTokens.length);
+      results.push({
+        file,
+        content: content.slice(0, snippetLength),
+        score: normalizedScore
+      });
+    }
+  }
+  results.sort((a, b) => b.score - a.score);
+  return results.slice(0, limit);
+}
+
 // src/services/rag/embeddings.ts
-var import_obsidian8 = require("obsidian");
+var import_obsidian7 = require("obsidian");
 async function httpPostJson(url, body, headers = {}) {
-  const res = await (0, import_obsidian8.requestUrl)({
+  const res = await (0, import_obsidian7.requestUrl)({
     url,
     method: "POST",
     headers: { "Content-Type": "application/json", ...headers },
@@ -26745,7 +26831,7 @@ async function searchVaultHybrid(app, query, settings, limit = 5) {
 }
 
 // src/services/openrouter.ts
-var import_obsidian9 = require("obsidian");
+var import_obsidian8 = require("obsidian");
 var OpenRouterService = class {
   /**
    * Fetches details about the user's OpenRouter API key (usage, limits).
@@ -26754,7 +26840,7 @@ var OpenRouterService = class {
     if (!apiKey)
       return null;
     try {
-      const response = await (0, import_obsidian9.requestUrl)({
+      const response = await (0, import_obsidian8.requestUrl)({
         url: "https://openrouter.ai/api/v1/auth/key",
         method: "GET",
         headers: {
@@ -26794,7 +26880,7 @@ var OpenRouterService = class {
       if (apiKey) {
         headers["Authorization"] = `Bearer ${apiKey}`;
       }
-      const response = await (0, import_obsidian9.requestUrl)({
+      const response = await (0, import_obsidian8.requestUrl)({
         url: "https://openrouter.ai/api/v1/models",
         method: "GET",
         headers
@@ -26899,6 +26985,23 @@ function getDefaultModelCapabilities(modelId) {
       pdf: supportsPdf
     }
   };
+}
+function buildPricingMap(models) {
+  const map = {};
+  for (const model of models) {
+    if (!model.pricing)
+      continue;
+    const prompt = Number(model.pricing.prompt);
+    const completion = Number(model.pricing.completion);
+    if (!isFinite(prompt) || !isFinite(completion))
+      continue;
+    map[model.id] = {
+      // OpenRouter prices are per token; cost utils expect per 1M tokens
+      prompt: prompt * 1e6,
+      completion: completion * 1e6
+    };
+  }
+  return map;
 }
 
 // src/services/agent/intentRouter.ts
@@ -27292,10 +27395,67 @@ var ContextManager = class {
 
 ${tail}`;
   }
+  /**
+   * Strips base64 images from history (B10): re-sending old screenshots on
+   * every turn burns thousands of vision tokens. Keeps images on the last
+   * `keepLastUserImages` user messages (0 strips everything).
+   */
+  static stripImages(messages, keepLastUserImages = 0) {
+    let remaining = keepLastUserImages;
+    const out = [];
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const m = messages[i];
+      if (m.role === "user" && m.images && m.images.length > 0 && remaining > 0) {
+        remaining--;
+        out.unshift(m);
+      } else if (m.images && m.images.length > 0) {
+        out.unshift({ ...m, images: void 0 });
+      } else {
+        out.unshift(m);
+      }
+    }
+    return out;
+  }
 };
 
 // src/services/agent/agentLoop.ts
+var LruCache = class {
+  constructor(max) {
+    this.max = max;
+    this.map = /* @__PURE__ */ new Map();
+  }
+  get(key) {
+    const value = this.map.get(key);
+    if (value !== void 0) {
+      this.map.delete(key);
+      this.map.set(key, value);
+    }
+    return value;
+  }
+  set(key, value) {
+    if (this.map.has(key))
+      this.map.delete(key);
+    else if (this.map.size >= this.max) {
+      const oldest = this.map.keys().next().value;
+      if (oldest !== void 0)
+        this.map.delete(oldest);
+    }
+    this.map.set(key, value);
+  }
+};
+function hashString(s) {
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) {
+    h = (h << 5) + h + s.charCodeAt(i) | 0;
+  }
+  return (h >>> 0).toString(36);
+}
 var AgentLoop = class {
+  static throwIfAborted(signal) {
+    if (signal?.aborted) {
+      throw createAbortError();
+    }
+  }
   static isResponseValid(response) {
     if (!response)
       return false;
@@ -27304,10 +27464,18 @@ var AgentLoop = class {
     const hasReasoning = Boolean(response.reasoning && response.reasoning.trim().length > 0);
     return hasContent || hasTools || hasReasoning;
   }
-  static getSystemPrompt(language, userQuery, vaultContext, agentsRules, memory, skills, prefetchedContext, settings, modelId) {
-    const cacheKey = `${language}|${vaultContext.ragContext?.length || 0}|${agentsRules.length}|${memory.learnedFacts.length}|${skills.length}|${prefetchedContext.length}|${settings.memoryFile}|${modelId}`;
+  static getSystemPrompt(language, userQuery, ragContext, agentsRules, memory, skills, settings, modelId) {
+    const cacheKey = [
+      language,
+      modelId,
+      settings.memoryFile,
+      hashString(ragContext),
+      hashString(agentsRules),
+      hashString(memory.learnedFacts.join("|")),
+      hashString(skills.map((s) => `${s.name}:${s.description}`).join("|"))
+    ].join("|");
     const cached = this.promptCache.get(cacheKey);
-    if (cached && Date.now() - cached.timestamp < 3e4) {
+    if (cached && Date.now() - cached.timestamp < 6e4) {
       return cached.prompt;
     }
     const isRu = language === "ru" || language === "auto" && /[а-яА-ЯёЁ]{3,}/.test(userQuery);
@@ -27363,10 +27531,10 @@ var AgentLoop = class {
 `;
     systemPrompt += `------------------------
 `;
-    if (vaultContext.ragContext) {
+    if (ragContext) {
       systemPrompt += `
 --- VAULT CONTEXT (RAG) ---
-${vaultContext.ragContext}
+${ragContext}
 `;
     }
     if (agentsRules.trim()) {
@@ -27387,9 +27555,6 @@ ${memory.learnedFacts.map((f) => `- ${f}`).join("\n")}
 ${skills.map((s) => `[Skill: ${s.name}]
 ${s.description}`).join("\n")}
 `;
-    }
-    if (prefetchedContext) {
-      systemPrompt += prefetchedContext;
     }
     this.promptCache.set(cacheKey, { prompt: systemPrompt, timestamp: Date.now() });
     return systemPrompt;
@@ -27421,6 +27586,7 @@ ${s.description}`).join("\n")}
         onStepUpdate([...steps]);
     };
     try {
+      this.throwIfAborted(abortSignal);
       const features = IntentRouter.extractFeatures(
         userQuery,
         Boolean(images && images.length > 0),
@@ -27454,15 +27620,24 @@ ${s.description}`).join("\n")}
         });
         notifySteps();
       }
-      const vaultContext = useVaultContext ? await resolveContext(app, userQuery, true) : { ragContext: void 0 };
+      if (actualMode === "agent" && activeModelDetails && activeModelDetails.supportsTools === false) {
+        actualMode = "quick";
+        steps.push({
+          id: "tools-unsupported-step",
+          type: "thought",
+          title: "Quick mode (model lacks tool calling)",
+          detail: `Model "${config.model}" does not support tool calling; agent mode is unavailable.`,
+          status: "completed"
+        });
+        notifySteps();
+      }
       const memory = await MemoryStore.loadMemory(app, settings);
       const agentsRules = await MemoryStore.loadAgentsRules(app, settings);
       const skills = await SkillsLoader.loadSkills(app, settings);
-      let prefetchedContext = "";
-      const needsVaultData = toolNeeds.needsVaultSearch || toolNeeds.needsVaultWrite;
-      const shouldPrefetchVault = useVaultContext && (settings.enableAdaptivePrefetch ? needsVaultData && actualMode === "agent" : actualMode === "agent");
-      if (shouldPrefetchVault) {
-        const maxCount = settings.maxPrefetchedNotes || 5;
+      let ragContext = "";
+      if (useVaultContext) {
+        this.throwIfAborted(abortSignal);
+        const maxCount = actualMode === "agent" ? settings.maxPrefetchedNotes || 5 : settings.ragResultLimit || 5;
         const searchResults = settings.enableSemanticRag ? await searchVaultHybrid(app, userQuery, settings, maxCount) : await searchVaultLexical(app, userQuery, maxCount, settings.prefetchSnippetLength);
         if (searchResults.length > 0) {
           const prefetchedBlocks = [];
@@ -27479,19 +27654,20 @@ ${s.description}`).join("\n")}
 ${snippet}`);
           }
           if (prefetchedBlocks.length > 0) {
-            const matchedFoldersArr = Array.from(matchedFoldersSet);
-            prefetchedContext += `
-${t("autoIndexedVaultNotes", language)}
+            ragContext = `${t("autoIndexedVaultNotes", language)}
 ${prefetchedBlocks.join("\n\n")}
 `;
-            steps.push({
-              id: "folder-prefetch-step",
-              type: "tool_result",
-              title: t("folderPrefetchTitle", language, { folders: matchedFoldersArr.join(", ") || "Vault" }),
-              detail: t("folderPrefetchDetail", language, { count: matchedFoldersArr.length.toString() }),
-              status: "completed"
-            });
-            notifySteps();
+            if (actualMode === "agent") {
+              const matchedFoldersArr = Array.from(matchedFoldersSet);
+              steps.push({
+                id: "folder-prefetch-step",
+                type: "tool_result",
+                title: t("folderPrefetchTitle", language, { folders: matchedFoldersArr.join(", ") || "Vault" }),
+                detail: t("folderPrefetchDetail", language, { count: matchedFoldersArr.length.toString() }),
+                status: "completed"
+              });
+              notifySteps();
+            }
           }
         }
       }
@@ -27499,7 +27675,7 @@ ${prefetchedBlocks.join("\n\n")}
       if (images && images.length > 0) {
         userMsg.images = images;
       }
-      const systemPrompt = this.getSystemPrompt(language, userQuery, vaultContext, agentsRules, memory, skills, prefetchedContext, settings, config.model);
+      const systemPrompt = this.getSystemPrompt(language, userQuery, ragContext, agentsRules, memory, skills, settings, config.model);
       const prunedHistory = ContextManager.pruneHistory(chatHistory, 6);
       const messages = [
         { role: "system", content: systemPrompt },
@@ -27507,10 +27683,13 @@ ${prefetchedBlocks.join("\n\n")}
         userMsg
       ];
       if (actualMode === "quick") {
+        this.throwIfAborted(abortSignal);
         let response;
         try {
           response = settings.enableStreaming && onStreamChunk ? await sendChatRequestStream(config, messages, void 0, onStreamChunk, abortSignal) : await sendChatRequest(config, messages, void 0, abortSignal);
         } catch (e) {
+          if (e instanceof Error && e.name === "AbortError")
+            throw e;
           const err = e;
           throw new Error(t("quickLlmError", language, { error: err?.message || String(e) }));
         }
@@ -27525,25 +27704,22 @@ ${prefetchedBlocks.join("\n\n")}
             Object.assign(response, fallbackResponse);
           }
         }
-        const responseText = response.content || "";
-        if (this.shouldAutoCreateNote(userQuery, responseText)) {
-          await this.attemptAutoCreateNote(app, userQuery, responseText, steps, notifySteps, toolRegistry, language);
-        }
         return {
-          responseText,
+          responseText: response.content || "",
           promptTokens: totalPromptTokens,
           completionTokens: totalCompletionTokens,
-          executionModeUsed: "quick"
+          executionModeUsed: "quick",
+          steps: [...steps]
         };
       }
       const allTools = toolRegistry.getToolDefinitions();
+      const validToolNames = new Set(allTools.map((t2) => t2.function.name));
       let filteredTools = allTools;
       let iteration = 0;
       let finalResponseText = "";
-      let toolCalledCount = 0;
-      const executedCallsMap = {};
       const effectiveMaxIterations = maxIterations ?? settings.maxAgentIterations;
       while (iteration < effectiveMaxIterations) {
+        this.throwIfAborted(abortSignal);
         iteration++;
         if (settings.enableSmartToolFiltering) {
           if (iteration === 1) {
@@ -27552,8 +27728,9 @@ ${prefetchedBlocks.join("\n\n")}
                 (t2) => ["web_search", "read_web_page", "analyze_github_repo"].includes(t2.function.name)
               );
             } else if (!toolNeeds.needsWebSearch && (toolNeeds.needsVaultSearch || toolNeeds.needsVaultWrite)) {
+              const extraAllowed = /* @__PURE__ */ new Set(["query_dataview", "render_templater", "execute_obsidian_command"]);
               filteredTools = allTools.filter(
-                (t2) => t2.function.name.startsWith("read_") || t2.function.name.startsWith("get_") || t2.function.name.startsWith("search_") || t2.function.name.startsWith("create_") || t2.function.name.startsWith("edit_") || t2.function.name.startsWith("rename_") || t2.function.name.startsWith("delete_") || t2.function.name.startsWith("list_") || t2.function.name.startsWith("diff_")
+                (t2) => extraAllowed.has(t2.function.name) || t2.function.name.startsWith("read_") || t2.function.name.startsWith("get_") || t2.function.name.startsWith("search_") || t2.function.name.startsWith("create_") || t2.function.name.startsWith("edit_") || t2.function.name.startsWith("rename_") || t2.function.name.startsWith("delete_") || t2.function.name.startsWith("list_") || t2.function.name.startsWith("diff_")
               );
             }
           } else {
@@ -27589,12 +27766,13 @@ ${prefetchedBlocks.join("\n\n")}
           notifySteps();
         }
         if (response.tool_calls && response.tool_calls.length > 0) {
-          toolCalledCount += response.tool_calls.length;
+          this.throwIfAborted(abortSignal);
           messages.push({
             role: "assistant",
             content: response.content || "",
             tool_calls: response.tool_calls
           });
+          const executedCallsMap = {};
           const toolPromises = response.tool_calls.map(async (toolCall) => {
             const toolName = toolCall.function.name;
             const toolArgsStr = toolCall.function.arguments;
@@ -27649,14 +27827,12 @@ ${prefetchedBlocks.join("\n\n")}
           });
           const toolResponses = await Promise.all(toolPromises);
           messages.push(...toolResponses);
-        } else if (response.content && this.containsJsonToolCall(response.content)) {
-          const parsedTool = this.extractJsonToolCall(response.content);
+        } else if (response.content && this.containsJsonToolCall(response.content, validToolNames)) {
+          const parsedTool = this.extractJsonToolCall(response.content, validToolNames);
           if (parsedTool) {
-            toolCalledCount++;
+            this.throwIfAborted(abortSignal);
             const callId = "text_call_" + Date.now();
             const callArgsStr = JSON.stringify(parsedTool.args);
-            const callKey = `${parsedTool.name}:${callArgsStr}`;
-            executedCallsMap[callKey] = (executedCallsMap[callKey] || 0) + 1;
             steps.push({
               id: callId,
               type: "tool_call",
@@ -27709,29 +27885,96 @@ ${prefetchedBlocks.join("\n\n")}
           break;
         }
       }
-      if (finalResponseText && this.containsJsonToolCall(finalResponseText)) {
+      if (finalResponseText && this.containsJsonToolCall(finalResponseText, validToolNames)) {
         console.warn("[AgentLoop] Model returned tool call as final text, stripping");
         finalResponseText = finalResponseText.replace(/```[\s\S]*?```/g, "").trim();
         finalResponseText = finalResponseText.replace(/<\/?tool_call>/gi, "").trim() || t("agentNoOutput", language);
-      }
-      if (toolCalledCount > 0 && this.shouldAutoCreateNote(userQuery, finalResponseText)) {
-        await this.attemptAutoCreateNote(app, userQuery, finalResponseText, steps, notifySteps, toolRegistry, language);
       }
       return {
         responseText: finalResponseText || t("agentNoOutput", language),
         promptTokens: totalPromptTokens,
         completionTokens: totalCompletionTokens,
-        executionModeUsed: "agent"
+        executionModeUsed: "agent",
+        steps: [...steps]
       };
     } catch (e) {
       console.error("[NEI Agent Loop Error]", e);
       throw e;
     }
   }
-  static containsJsonToolCall(text) {
-    if (/```(?:json)?\s*\{[\s\S]*?"(?:tool|name|function|action)"\s*:/i.test(text)) {
-      return true;
+  /**
+   * Extracts balanced-brace JSON object candidates from text
+   * (string-aware; prefers fenced code blocks when present).
+   */
+  static extractJsonCandidates(text) {
+    const scan = (src) => {
+      const out = [];
+      let depth = 0;
+      let start = -1;
+      let inStr = null;
+      for (let i = 0; i < src.length; i++) {
+        const ch = src[i];
+        const prev = i > 0 ? src[i - 1] : "";
+        if (inStr) {
+          if (ch === inStr && prev !== "\\")
+            inStr = null;
+          continue;
+        }
+        if (ch === '"' && depth > 0) {
+          inStr = ch;
+          continue;
+        }
+        if (ch === "{") {
+          if (depth === 0)
+            start = i;
+          depth++;
+        } else if (ch === "}") {
+          depth--;
+          if (depth === 0 && start >= 0) {
+            out.push(src.slice(start, i + 1));
+            start = -1;
+          }
+          if (depth < 0)
+            depth = 0;
+        }
+      }
+      return out;
+    };
+    const candidates = [];
+    const xmlMatches = text.matchAll(/<tool_call>\s*([\s\S]*?)\s*<\/tool_call>/gi);
+    for (const m of xmlMatches) {
+      candidates.push(...scan(m[1]));
     }
+    const fences = text.matchAll(/```(?:json)?\s*([\s\S]*?)```/gi);
+    let fenceCount = 0;
+    for (const m of fences) {
+      fenceCount++;
+      candidates.push(...scan(m[1]));
+    }
+    if (fenceCount === 0) {
+      candidates.push(...scan(text));
+    }
+    return candidates;
+  }
+  static parseToolCandidate(raw, validToolNames) {
+    let parsed;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      return null;
+    }
+    if (!parsed || typeof parsed !== "object")
+      return null;
+    const toolName = typeof parsed.tool === "string" ? parsed.tool : typeof parsed.name === "string" && ("arguments" in parsed || "args" in parsed || "action_input" in parsed) ? parsed.name : void 0;
+    if (!toolName || typeof toolName !== "string")
+      return null;
+    if (validToolNames.size > 0 && !validToolNames.has(toolName))
+      return null;
+    const args = parsed.arguments || parsed.args || parsed.action_input || {};
+    return { name: toolName, args };
+  }
+  // Public for regression tests (pure functions, no side effects)
+  static containsJsonToolCall(text, validToolNames) {
     if (/<tool_call>[\s\S]*?<\/tool_call>/i.test(text)) {
       return true;
     }
@@ -27739,82 +27982,29 @@ ${prefetchedBlocks.join("\n\n")}
       console.warn("[AgentLoop] Incomplete tool_call tag detected (streaming artifact), ignoring");
       return false;
     }
+    for (const candidate of this.extractJsonCandidates(text)) {
+      if (this.parseToolCandidate(candidate, validToolNames))
+        return true;
+    }
     return false;
   }
-  static extractJsonToolCall(text) {
-    try {
-      const xmlMatch = text.match(/<tool_call>\s*([\s\S]*?)\s*<\/tool_call>/i);
-      if (xmlMatch) {
-        const rawJson = xmlMatch[1];
-        const jsonMatch2 = rawJson.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/i) || rawJson.match(/(\{[\s\S]*?\})/i);
-        if (jsonMatch2) {
-          const parsed = JSON.parse(jsonMatch2[1]);
-          const toolName = typeof parsed.tool === "string" ? parsed.tool : typeof parsed.name === "string" ? parsed.name : typeof parsed.function === "string" ? parsed.function : typeof parsed.action === "string" ? parsed.action : void 0;
-          if (toolName) {
-            const args = parsed.arguments || parsed.args || parsed.action_input || {};
-            return { name: toolName, args };
-          }
-        }
-      }
-      const jsonMatch = text.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/i) || text.match(/(\{[\s\S]*?\})/i);
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[1]);
-        const toolName = typeof parsed.tool === "string" ? parsed.tool : typeof parsed.name === "string" ? parsed.name : typeof parsed.function === "string" ? parsed.function : typeof parsed.action === "string" ? parsed.action : void 0;
-        if (toolName) {
-          const args = parsed.arguments || parsed.args || parsed.action_input || {};
-          return { name: toolName, args };
-        }
-      }
-    } catch {
+  // Public for regression tests (pure functions, no side effects)
+  static extractJsonToolCall(text, validToolNames) {
+    for (const candidate of this.extractJsonCandidates(text)) {
+      const parsed = this.parseToolCandidate(candidate, validToolNames);
+      if (parsed)
+        return parsed;
     }
     return null;
   }
-  static shouldAutoCreateNote(query, responseText) {
-    const queryLower = query.toLowerCase();
-    const isCreateRequest = queryLower.includes("\u0441\u043E\u0437\u0434\u0430\u0439") || queryLower.includes("\u0441\u043E\u0437\u0434\u0430\u0442\u044C") || queryLower.includes("\u043D\u0430\u043F\u0438\u0448\u0438 \u0437\u0430\u043C\u0435\u0442\u043A\u0443") || queryLower.includes("\u0441\u043E\u0445\u0440\u0430\u043D\u0438") || queryLower.includes("create note") || queryLower.includes("save note");
-    return isCreateRequest && responseText.length > 30;
-  }
-  static async attemptAutoCreateNote(app, query, responseText, steps, notifySteps, toolRegistry, language) {
-    let notePath = "";
-    const folderMatch = query.match(/(?:папке|папку|folder|directory)\s+["']?([a-zA-Z0-9_\-/А-Яа-яЁё ]+?)["']?(?:\s|$)/i);
-    const fileMatch = query.match(/(?:заметку|файл|note|file)\s+["']?([a-zA-Z0-9_\-/А-Яа-яЁё ]+?\.md)["']?/i);
-    if (fileMatch && fileMatch[1]) {
-      notePath = fileMatch[1].trim();
-    } else {
-      const folder = folderMatch && folderMatch[1] ? folderMatch[1].trim() : "";
-      const dateStr = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
-      const titleMatch = query.match(/(?:создай|создать|create|write)\s+(?:заметку|файл|название|note)?\s*["']?([^"'\n,]{3,30})["']?/i);
-      let slug = titleMatch && titleMatch[1] ? titleMatch[1].trim().replace(/[^\w\sА-Яа-яЁё-]/g, "") : "New_Note";
-      if (slug.length < 3)
-        slug = "New_Note";
-      notePath = folder ? `${folder}/${slug}_${dateStr}.md` : `${slug}_${dateStr}.md`;
-    }
-    try {
-      const execResult = await toolRegistry.executeTool(
-        app,
-        "auto-create-fallback",
-        "create_note",
-        JSON.stringify({ path: notePath, content: responseText })
-      );
-      steps.push({
-        id: "auto-create-step",
-        type: "tool_result",
-        title: t("autoCreatedNote", language, { path: notePath }),
-        detail: String(execResult.result),
-        status: execResult.isError ? "failed" : "completed"
-      });
-      notifySteps();
-    } catch {
-    }
-  }
 };
-AgentLoop.promptCache = /* @__PURE__ */ new Map();
+AgentLoop.promptCache = new LruCache(20);
 
 // src/services/chat/chatStore.ts
-var import_obsidian10 = require("obsidian");
+var import_obsidian9 = require("obsidian");
 var ChatStore = class {
   static getChatsFolder(settings) {
-    return settings.chatsFolder || ".nei/chats";
+    return settings.chatsFolder || DEFAULT_CHATS_FOLDER;
   }
   static getIndexFile(settings) {
     const folder = this.getChatsFolder(settings);
@@ -27915,7 +28105,7 @@ var ChatStore = class {
     };
   }
   static async ensureFolder(app, folderPath) {
-    const norm = (0, import_obsidian10.normalizePath)(folderPath);
+    const norm = (0, import_obsidian9.normalizePath)(folderPath);
     if (!await app.vault.adapter.exists(norm)) {
       await app.vault.adapter.mkdir(norm);
     }
@@ -27924,7 +28114,7 @@ var ChatStore = class {
 
 // src/components/ErrorBoundary.tsx
 var import_react = __toESM(require_react());
-var import_obsidian11 = require("obsidian");
+var import_obsidian10 = require("obsidian");
 var import_jsx_runtime = __toESM(require_jsx_runtime());
 var ErrorBoundary = class extends import_react.Component {
   constructor() {
@@ -27939,7 +28129,7 @@ var ErrorBoundary = class extends import_react.Component {
   }
   componentDidCatch(error, errorInfo) {
     console.error("[NEI Chat ErrorBoundary]", error, errorInfo);
-    new import_obsidian11.Notice(`\u274C NEI Chat Error: ${error.message}`);
+    new import_obsidian10.Notice(`\u274C NEI Chat Error: ${error.message}`);
   }
   render() {
     if (this.state.hasError) {
@@ -28084,27 +28274,27 @@ var WelcomeScreen = (0, import_react3.memo)(({ language, onClose }) => {
   ];
   const current = steps[step];
   return /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "nei-welcome-overlay", style: {
-    position: "fixed",
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    zIndex: 1e4,
+    zIndex: "var(--layer-modal, 200)",
     background: "rgba(0, 0, 0, 0.75)",
     backdropFilter: "blur(4px)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    padding: "env(safe-area-inset-top, 16px) env(safe-area-inset-right, 16px) env(safe-area-inset-bottom, 16px) env(safe-area-inset-left, 16px)",
+    padding: "16px",
     overflow: "auto"
   }, children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "nei-welcome-modal", style: {
     background: "var(--background-primary)",
     border: "1px solid var(--background-modifier-border)",
     borderRadius: "12px",
     padding: "24px",
-    maxWidth: "min(460px, calc(100vw - 32px))",
+    maxWidth: "min(460px, 100%)",
     width: "100%",
-    maxHeight: "min(90vh, calc(100vh - 32px))",
+    maxHeight: "100%",
     boxShadow: "0 20px 40px rgba(0,0,0,0.3)",
     display: "flex",
     flexDirection: "column",
@@ -28431,6 +28621,8 @@ var AudioRecorder = ({ onAudioCaptured, onCancel }) => {
   const audioChunksRef = (0, import_react6.useRef)([]);
   const timerRef = (0, import_react6.useRef)(null);
   const streamRef = (0, import_react6.useRef)(null);
+  const secondsRef = (0, import_react6.useRef)(0);
+  const mountedRef = (0, import_react6.useRef)(true);
   const cleanup = () => {
     if (timerRef.current !== null) {
       window.clearInterval(timerRef.current);
@@ -28445,7 +28637,9 @@ var AudioRecorder = ({ onAudioCaptured, onCancel }) => {
     }
   };
   (0, import_react6.useEffect)(() => {
+    mountedRef.current = true;
     return () => {
+      mountedRef.current = false;
       cleanup();
     };
   }, []);
@@ -28454,6 +28648,10 @@ var AudioRecorder = ({ onAudioCaptured, onCancel }) => {
     audioChunksRef.current = [];
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      if (!mountedRef.current) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
       streamRef.current = stream;
       const recorder = new MediaRecorder(stream);
       mediaRecorderRef.current = recorder;
@@ -28467,7 +28665,7 @@ var AudioRecorder = ({ onAudioCaptured, onCancel }) => {
         const reader = new FileReader();
         reader.onloadend = () => {
           if (typeof reader.result === "string") {
-            onAudioCaptured(reader.result, seconds);
+            onAudioCaptured(reader.result, secondsRef.current);
           }
         };
         reader.readAsDataURL(blob);
@@ -28479,8 +28677,10 @@ var AudioRecorder = ({ onAudioCaptured, onCancel }) => {
       recorder.start();
       setIsRecording(true);
       setSeconds(0);
+      secondsRef.current = 0;
       timerRef.current = window.setInterval(() => {
-        setSeconds((prev) => prev + 1);
+        secondsRef.current += 1;
+        setSeconds(secondsRef.current);
       }, 1e3);
     } catch (err) {
       console.error("[AudioRecorder] Access denied or failed:", err);
@@ -28684,6 +28884,71 @@ function calculateCost(promptTokens, completionTokens, modelId, pricingMap) {
   return promptTokens / 1e6 * p.prompt + completionTokens / 1e6 * p.completion;
 }
 
+// src/utils/obsidianChrome.ts
+var OBSIDIAN_BOTTOM_CHROME_SELECTOR = ".status-bar, .mobile-toolbar";
+function measureBottomChromeInset(container, chromeElements) {
+  const cRect = container.getBoundingClientRect();
+  if (cRect.height <= 0 || cRect.width <= 0)
+    return 0;
+  const chrome = chromeElements ?? container.ownerDocument.querySelectorAll(OBSIDIAN_BOTTOM_CHROME_SELECTOR);
+  let inset = 0;
+  for (const el of Array.from(chrome)) {
+    const rect = el.getBoundingClientRect();
+    if (rect.height <= 0 || rect.width <= 0)
+      continue;
+    const touchesBottom = rect.top < cRect.bottom && rect.bottom >= cRect.bottom - 2;
+    const overlapsHorizontally = rect.left < cRect.right && rect.right > cRect.left;
+    if (touchesBottom && overlapsHorizontally) {
+      inset = Math.max(inset, cRect.bottom - rect.top);
+    }
+  }
+  return Math.ceil(inset);
+}
+function computeKeyboardInset(baselineInnerHeight, currentInnerHeight, visualViewport) {
+  if (!visualViewport)
+    return 0;
+  const layoutShrank = currentInnerHeight < baselineInnerHeight - 40;
+  if (layoutShrank)
+    return 0;
+  return Math.max(0, currentInnerHeight - visualViewport.height - visualViewport.offsetTop);
+}
+function attachChromeInsetWatcher(container) {
+  let baselineInnerHeight = window.innerHeight;
+  const apply = () => {
+    const chromeInset = measureBottomChromeInset(container);
+    const keyboardInset = computeKeyboardInset(
+      baselineInnerHeight,
+      window.innerHeight,
+      window.visualViewport ?? void 0
+    );
+    if (window.innerHeight >= baselineInnerHeight)
+      baselineInnerHeight = window.innerHeight;
+    container.style.setProperty("--nei-chrome-inset", `${Math.ceil(chromeInset + keyboardInset)}px`);
+  };
+  const delayedRemeasure = () => {
+    [200, 600, 1200].forEach((ms) => window.setTimeout(apply, ms));
+  };
+  const vv = window.visualViewport;
+  window.addEventListener("resize", apply);
+  vv?.addEventListener("resize", apply);
+  vv?.addEventListener("scroll", apply);
+  container.ownerDocument.addEventListener("focusin", delayedRemeasure);
+  container.ownerDocument.addEventListener("focusout", delayedRemeasure);
+  const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(apply) : null;
+  ro?.observe(container);
+  apply();
+  delayedRemeasure();
+  return () => {
+    window.removeEventListener("resize", apply);
+    vv?.removeEventListener("resize", apply);
+    vv?.removeEventListener("scroll", apply);
+    container.ownerDocument.removeEventListener("focusin", delayedRemeasure);
+    container.ownerDocument.removeEventListener("focusout", delayedRemeasure);
+    ro?.disconnect();
+    container.style.removeProperty("--nei-chrome-inset");
+  };
+}
+
 // src/services/memory/autoLearner.ts
 var _AutoLearner = class _AutoLearner {
   static async extractAndPropose(config, messages) {
@@ -28751,35 +29016,49 @@ var AutoLearner = _AutoLearner;
 
 // src/components/ChatPanel.tsx
 var import_jsx_runtime8 = __toESM(require_jsx_runtime());
-var ObsidianMarkdown = ({ markdown, app }) => {
+var ObsidianMarkdown = ({ markdown, app, component }) => {
   const containerRef = (0, import_react7.useRef)(null);
-  const componentRef = (0, import_react7.useRef)(null);
+  const localComponentRef = (0, import_react7.useRef)(null);
+  const lastRenderedRef = (0, import_react7.useRef)(null);
+  const renderTokenRef = (0, import_react7.useRef)(0);
   (0, import_react7.useEffect)(() => {
     const el = containerRef.current;
-    if (el) {
+    if (!el)
+      return;
+    if (lastRenderedRef.current === markdown)
+      return;
+    const token = ++renderTokenRef.current;
+    const timer = window.setTimeout(() => {
+      if (token !== renderTokenRef.current)
+        return;
+      lastRenderedRef.current = markdown;
       el.empty();
-      const component = new import_obsidian12.Component();
-      componentRef.current = component;
-      component.load();
-      void import_obsidian12.MarkdownRenderer.render(
-        app,
-        markdown,
-        el,
-        "",
-        component
-      );
-    }
+      if (component) {
+        void import_obsidian11.MarkdownRenderer.render(app, markdown, el, "", component);
+      } else {
+        const local = new import_obsidian11.Component();
+        localComponentRef.current = local;
+        local.load();
+        void import_obsidian11.MarkdownRenderer.render(app, markdown, el, "", local);
+      }
+    }, 80);
     return () => {
-      if (componentRef.current) {
-        componentRef.current.unload();
-        componentRef.current = null;
+      window.clearTimeout(timer);
+    };
+  }, [markdown, app, component]);
+  (0, import_react7.useEffect)(() => {
+    return () => {
+      if (localComponentRef.current) {
+        localComponentRef.current.unload();
+        localComponentRef.current = null;
       }
     };
-  }, [markdown, app]);
+  }, []);
   return /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { ref: containerRef, className: "markdown-preview-view markdown-rendered", style: { background: "transparent", padding: 0 } });
 };
-var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onReload }) => {
+var ChatPanelInner = ({ app, viewLeaf, viewComponent, settings, getSettings, saveSettings, toolRegistry, onReload }) => {
   const isMainTab = viewLeaf ? viewLeaf.getRoot() === app.workspace.rootSplit : false;
+  const getFreshSettings = import_react7.default.useCallback(() => getSettings ? getSettings() : settings, [getSettings, settings]);
   const handleToggleTabMode = async () => {
     try {
       const workspace = app.workspace;
@@ -28802,7 +29081,7 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onR
       }
     } catch (e) {
       const err = e;
-      new import_obsidian12.Notice(`${t("modeSwitchError", language)} ${err?.message || String(e)}`);
+      new import_obsidian11.Notice(`${t("modeSwitchError", language)} ${err?.message || String(e)}`);
     }
   };
   const [currentSession, setCurrentSession] = import_react7.default.useState(() => ChatStore.createNewSession());
@@ -28814,7 +29093,45 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onR
   const [warningModal, setWarningModal] = import_react7.default.useState(null);
   const textareaRef = import_react7.default.useRef(null);
   const fileReadersRef = import_react7.default.useRef([]);
-  const componentRef = import_react7.default.useRef(null);
+  const messagesContainerRef = import_react7.default.useRef(null);
+  const isNearBottomRef = import_react7.default.useRef(true);
+  const handleMessagesScroll = import_react7.default.useCallback(() => {
+    const container = messagesContainerRef.current;
+    if (!container)
+      return;
+    isNearBottomRef.current = container.scrollHeight - container.scrollTop - container.clientHeight < 120;
+  }, []);
+  import_react7.default.useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv)
+      return;
+    const handleViewportResize = () => {
+      const keyboardOpen = vv.height < window.innerHeight * 0.75;
+      if (!keyboardOpen)
+        return;
+      const container = messagesContainerRef.current;
+      if (container) {
+        container.scrollTop = container.scrollHeight;
+      }
+    };
+    vv.addEventListener("resize", handleViewportResize);
+    return () => vv.removeEventListener("resize", handleViewportResize);
+  }, []);
+  const panelContainerRef = import_react7.default.useRef(null);
+  import_react7.default.useEffect(() => {
+    const panel = panelContainerRef.current;
+    if (!panel)
+      return;
+    return attachChromeInsetWatcher(panel);
+  }, []);
+  const handleTextareaFocus = import_react7.default.useCallback(() => {
+    window.setTimeout(() => {
+      const container = messagesContainerRef.current;
+      if (container) {
+        container.scrollTop = container.scrollHeight;
+      }
+    }, 50);
+  }, []);
   import_react7.default.useEffect(() => {
     return () => {
       fileReadersRef.current.forEach((reader) => {
@@ -28837,35 +29154,14 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onR
       el.style.height = `${maxHeight}px`;
     });
   }, []);
-  const handleTextareaFocus = import_react7.default.useCallback(() => {
-    if (!textareaRef.current)
-      return;
-    if (window.visualViewport) {
-      const handleResize = () => {
-        if (!textareaRef.current)
-          return;
-        const rect = textareaRef.current.getBoundingClientRect();
-        const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
-        if (rect.bottom > viewportHeight) {
-          textareaRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
-        }
-      };
-      window.visualViewport.addEventListener("resize", handleResize);
-      setTimeout(() => {
-        textareaRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-      }, 50);
-      return () => {
-        window.visualViewport?.removeEventListener("resize", handleResize);
-      };
-    }
-  }, []);
   const [executionMode, setExecutionMode] = import_react7.default.useState(settings.executionMode || "auto");
   const [loading, setLoading] = import_react7.default.useState(false);
   const [abortController, setAbortController] = import_react7.default.useState(null);
   const [activeSteps, setActiveSteps] = import_react7.default.useState([]);
   const [showSessionsDrawer, setShowSessionsDrawer] = import_react7.default.useState(false);
   const [showConfig, setShowConfig] = import_react7.default.useState(false);
-  const [pendingConfirmation, setPendingConfirmation] = import_react7.default.useState(null);
+  const confirmationIdRef = import_react7.default.useRef(0);
+  const [pendingConfirmations, setPendingConfirmations] = import_react7.default.useState([]);
   const [showFreshnessSuggestion, setShowFreshnessSuggestion] = import_react7.default.useState(null);
   const [editingMsgIdx, setEditingMsgIdx] = import_react7.default.useState(null);
   const [editingText, setEditingText] = import_react7.default.useState("");
@@ -28875,11 +29171,21 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onR
     totalCost: 0,
     requestCount: 0
   });
-  const [pricingMap] = import_react7.default.useState({});
+  const [pricingMap, setPricingMap] = import_react7.default.useState({});
   const [showReasoning, setShowReasoning] = import_react7.default.useState(true);
   const [learningProposal, setLearningProposal] = import_react7.default.useState(null);
   const [endpointUrl, setEndpointUrl] = import_react7.default.useState(settings.endpointUrl || "https://openrouter.ai/api/v1");
   const [apiKey, setApiKey] = import_react7.default.useState(settings.apiKey || "");
+  import_react7.default.useEffect(() => {
+    let cancelled = false;
+    void OpenRouterService.fetchModels(apiKey || void 0).then((models) => {
+      if (!cancelled)
+        setPricingMap(buildPricingMap(models));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [apiKey]);
   const [model, setModel] = import_react7.default.useState(settings.model || "google/gemini-2.5-flash");
   const [visionModel, setVisionModel] = import_react7.default.useState(settings.visionModel || "google/gemini-2.5-flash");
   const [quickModel, setQuickModel] = import_react7.default.useState(settings.quickModel || "google/gemini-2.5-flash");
@@ -28914,9 +29220,37 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onR
     }
   }, []);
   const refreshSessionsList = async () => {
-    const list = await ChatStore.listSessions(app, settings);
+    const list = await ChatStore.listSessions(app, getFreshSettings());
     setSessionsList(list);
   };
+  const saveTimerRef = import_react7.default.useRef(null);
+  const pendingSaveRef = import_react7.default.useRef(null);
+  const saveSessionDebounced = import_react7.default.useCallback((session) => {
+    pendingSaveRef.current = session;
+    if (saveTimerRef.current !== null)
+      window.clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = window.setTimeout(() => {
+      saveTimerRef.current = null;
+      const pending = pendingSaveRef.current;
+      pendingSaveRef.current = null;
+      if (pending) {
+        void ChatStore.saveSession(app, getFreshSettings(), pending).then(() => refreshSessionsList());
+      }
+    }, 1500);
+  }, [app, getFreshSettings]);
+  import_react7.default.useEffect(() => {
+    return () => {
+      if (saveTimerRef.current !== null) {
+        window.clearTimeout(saveTimerRef.current);
+        saveTimerRef.current = null;
+      }
+      const pending = pendingSaveRef.current;
+      pendingSaveRef.current = null;
+      if (pending) {
+        void ChatStore.saveSession(app, getFreshSettings(), pending);
+      }
+    };
+  }, []);
   const verifyActiveModel = async (targetModel, key) => {
     setVerifyingModel(true);
     try {
@@ -28948,14 +29282,14 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onR
       setCustomModels(updated);
       setModel(trimmed);
       void verifyActiveModel(trimmed, apiKey);
-      new import_obsidian12.Notice(`${t("modelAddedNotice", language)} ${trimmed}`);
+      new import_obsidian11.Notice(`${t("modelAddedNotice", language)} ${trimmed}`);
     }
     setNewModelInput("");
   };
   const handleDeleteModel = (e, targetModel) => {
     e.stopPropagation();
     if (customModels.length <= 1) {
-      new import_obsidian12.Notice(t("cannotDeleteLastModel", language));
+      new import_obsidian11.Notice(t("cannotDeleteLastModel", language));
       return;
     }
     const updated = customModels.filter((m) => m !== targetModel);
@@ -28995,6 +29329,16 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onR
   const [confirmingClear, setConfirmingClear] = import_react7.default.useState(false);
   const clearTimerRef = import_react7.default.useRef(null);
   import_react7.default.useEffect(() => {
+    if (!showSessionsDrawer)
+      return;
+    const onKeyDown = (e) => {
+      if (e.key === "Escape")
+        setShowSessionsDrawer(false);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [showSessionsDrawer]);
+  import_react7.default.useEffect(() => {
     return () => {
       if (clearTimerRef.current !== null)
         window.clearTimeout(clearTimerRef.current);
@@ -29014,7 +29358,7 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onR
     await ChatStore.clearAllSessions(app, settings);
     await refreshSessionsList();
     handleNewChat();
-    new import_obsidian12.Notice(t("historyClearedNotice", language));
+    new import_obsidian11.Notice(t("historyClearedNotice", language));
   };
   const handleBranchFromMessage = async (msgIndex) => {
     if (!currentSession)
@@ -29026,7 +29370,7 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onR
     setCurrentSession(newSession);
     await ChatStore.saveSession(app, settings, newSession);
     await refreshSessionsList();
-    new import_obsidian12.Notice("\u{1F33F} Conversation branched!");
+    new import_obsidian11.Notice("\u{1F33F} Conversation branched!");
   };
   const [language, setLanguage] = import_react7.default.useState(settings.language || "auto");
   const [defaultNoteFolder, setDefaultNoteFolder] = import_react7.default.useState(settings.defaultNoteFolder || "");
@@ -29096,14 +29440,14 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onR
     };
     await saveSettings(newSettings);
     setShowConfig(false);
-    new import_obsidian12.Notice(t("saveSettings", language) + "!");
+    new import_obsidian11.Notice(t("saveSettings", language) + "!");
   };
   const handleCopyText = async (text) => {
     try {
       await navigator.clipboard.writeText(text);
-      new import_obsidian12.Notice(t("copied", language));
+      new import_obsidian11.Notice(t("copied", language));
     } catch {
-      new import_obsidian12.Notice(t("copyError", language));
+      new import_obsidian11.Notice(t("copyError", language));
     }
   };
   const handleSaveResponseAsNote = async (content) => {
@@ -29118,18 +29462,25 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onR
         JSON.stringify({ path: fileName, content })
       );
       if (execResult.isError) {
-        new import_obsidian12.Notice(`${t("noteCreateError", language)} ${execResult.result}`);
+        new import_obsidian11.Notice(`${t("noteCreateError", language)} ${execResult.result}`);
       } else {
         const pathMatch = execResult.result.match(/'([^']+)'/);
         const savedPath = pathMatch ? pathMatch[1] : fileName;
-        new import_obsidian12.Notice(`${t("noteCreatedSuccess", language)} '${savedPath}'`);
+        new import_obsidian11.Notice(`${t("noteCreatedSuccess", language)} '${savedPath}'`);
       }
     } catch (e) {
       const err = e;
-      new import_obsidian12.Notice(`${t("noteCreateError", language)} ${err?.message || String(e)}`);
+      new import_obsidian11.Notice(`${t("noteCreateError", language)} ${err?.message || String(e)}`);
     }
   };
   const [streamingContent, setStreamingContent] = import_react7.default.useState("");
+  const streamingContentRef = import_react7.default.useRef("");
+  import_react7.default.useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (container && isNearBottomRef.current) {
+      container.scrollTop = container.scrollHeight;
+    }
+  }, [currentSession.messages.length, streamingContent, activeSteps.length]);
   const [showWelcome, setShowWelcome] = import_react7.default.useState(() => app.loadLocalStorage("nei_welcome_seen") !== true);
   const [enableSemanticRag, setEnableSemanticRag] = import_react7.default.useState(settings.enableSemanticRag ?? false);
   const fileInputRef = import_react7.default.useRef(null);
@@ -29144,10 +29495,10 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onR
       a.download = `nei-settings-${Date.now()}.json`;
       a.click();
       URL.revokeObjectURL(url);
-      new import_obsidian12.Notice(t("settingsExported", language));
+      new import_obsidian11.Notice(t("settingsExported", language));
     } catch (e) {
       const err = e;
-      new import_obsidian12.Notice(`Export error: ${err?.message || String(e)}`);
+      new import_obsidian11.Notice(`Export error: ${err?.message || String(e)}`);
     }
   };
   const handleImportSettings = async (e) => {
@@ -29183,12 +29534,12 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onR
         setDefaultNoteFolder(newSettings.defaultNoteFolder);
       if (newSettings.customModels)
         setCustomModels(newSettings.customModels);
-      new import_obsidian12.Notice(t("settingsImported", language));
+      new import_obsidian11.Notice(t("settingsImported", language));
       if (onReload)
         onReload();
     } catch (err) {
       const errObj = err;
-      new import_obsidian12.Notice(`Import error: ${errObj?.message || String(err)}`);
+      new import_obsidian11.Notice(`Import error: ${errObj?.message || String(err)}`);
     }
   };
   const executeQuery = async (queryText, historySlice, imagesPayload) => {
@@ -29196,12 +29547,16 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onR
     setActiveSteps([]);
     setEditingMsgIdx(null);
     setStreamingContent("");
+    streamingContentRef.current = "";
     const abortController2 = new AbortController();
     setAbortController(abortController2);
+    const freshSettings = getFreshSettings();
     const currentImages = imagesPayload || attachedImages;
+    const newMsgId = () => "m_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
     const userMsg = {
       role: "user",
       content: queryText,
+      id: newMsgId(),
       ...currentImages.length > 0 ? { images: currentImages } : {}
     };
     const updatedMessages = [...historySlice, userMsg];
@@ -29224,7 +29579,7 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onR
           model: activeModelToUse
         },
         userQuery: queryText,
-        chatHistory: historySlice,
+        chatHistory: ContextManager.stripImages(historySlice, 0),
         images: currentImages,
         executionMode,
         useVaultContext: vaultContextEnabled,
@@ -29234,21 +29589,38 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onR
         },
         onConfirmationRequired: async (toolName, argsStr) => {
           return new Promise((resolve) => {
-            setPendingConfirmation({ toolName, argsStr, resolve });
+            if (abortController2.signal.aborted) {
+              resolve(false);
+              return;
+            }
+            const onAbort = () => resolve(false);
+            abortController2.signal.addEventListener("abort", onAbort, { once: true });
+            const id = ++confirmationIdRef.current;
+            setPendingConfirmations((prev) => [...prev, {
+              id,
+              toolName,
+              argsStr,
+              resolve: (approved) => {
+                abortController2.signal.removeEventListener("abort", onAbort);
+                resolve(approved);
+              }
+            }]);
           });
         },
         onStreamChunk: (chunk) => {
+          streamingContentRef.current += chunk;
           setStreamingContent((prev) => prev + chunk);
         },
         abortSignal: abortController2.signal,
         toolRegistry,
         language,
-        settings
+        settings: freshSettings
       });
       setStreamingContent("");
       const assistantMsg = {
         role: "assistant",
         content: result.responseText,
+        id: newMsgId(),
         promptTokens: result.promptTokens,
         completionTokens: result.completionTokens
       };
@@ -29256,11 +29628,10 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onR
       const finalSession = {
         ...updatedSession,
         messages: finalMessages,
-        steps: activeSteps
+        steps: result.steps
       };
       setCurrentSession(finalSession);
-      await ChatStore.saveSession(app, settings, finalSession);
-      await refreshSessionsList();
+      saveSessionDebounced(finalSession);
       const promptTok = result.promptTokens || 0;
       const completionTok = result.completionTokens || 0;
       const cost = calculateCost(promptTok, completionTok, activeModelToUse, pricingMap);
@@ -29270,7 +29641,7 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onR
         totalCost: prev.totalCost + cost,
         requestCount: prev.requestCount + 1
       }));
-      if (settings.enableAutoLearning && finalMessages.length >= 4) {
+      if (freshSettings.enableAutoLearning && finalMessages.length >= 4) {
         void AutoLearner.extractAndPropose(
           { provider: "openrouter", endpointUrl, apiKey, model: quickModel },
           finalMessages
@@ -29279,8 +29650,8 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onR
             setLearningProposal({
               proposal,
               onAccept: async () => {
-                const applied = await AutoLearner.applyProposal(app, settings, proposal);
-                new import_obsidian12.Notice(`${t("learningApplied", language)} (${applied})`);
+                const applied = await AutoLearner.applyProposal(app, freshSettings, proposal);
+                new import_obsidian11.Notice(`${t("learningApplied", language)} (${applied})`);
                 setLearningProposal(null);
               },
               onDismiss: () => {
@@ -29295,18 +29666,32 @@ var ChatPanelInner = ({ app, viewLeaf, settings, saveSettings, toolRegistry, onR
       }
     } catch (e) {
       console.error("[NEI Agent Error]", e);
-      const err = e;
-      const errMessages = [...updatedMessages, { role: "assistant", content: `${t("agentError", language)} ${err?.message || String(e)}` }];
-      const errSession = {
-        ...updatedSession,
-        messages: errMessages
-      };
-      setCurrentSession(errSession);
-      await ChatStore.saveSession(app, settings, errSession);
+      if (isAbortError(e) || abortController2.signal.aborted) {
+        const partial = streamingContentRef.current.trim();
+        const partialMessages = partial ? [...updatedMessages, { role: "assistant", content: `${partial}
+
+_${t("stoppedByUser", language)}_`, id: newMsgId() }] : [...updatedMessages];
+        const partialSession = {
+          ...updatedSession,
+          messages: partialMessages
+        };
+        setCurrentSession(partialSession);
+        saveSessionDebounced(partialSession);
+      } else {
+        const err = e;
+        const errMessages = [...updatedMessages, { role: "assistant", content: `${t("agentError", language)} ${err?.message || String(e)}`, id: newMsgId() }];
+        const errSession = {
+          ...updatedSession,
+          messages: errMessages
+        };
+        setCurrentSession(errSession);
+        saveSessionDebounced(errSession);
+      }
     } finally {
       setLoading(false);
       setActiveSteps([]);
-      setPendingConfirmation(null);
+      setPendingConfirmations([]);
+      setAbortController(null);
     }
   };
   const sendWithPreparedContent = (textOnlyFallback) => {
@@ -29330,12 +29715,10 @@ ${fileContext}` : fileContext;
     void executeQuery(fullQuery, currentSession.messages, imagesToPass);
   };
   const handleSendMessage = () => {
-    if (!input.trim() && attachedFiles.length === 0 || loading)
+    if (loading)
       return;
-    if (loading && abortController) {
-      abortController.abort();
+    if (!input.trim() && attachedFiles.length === 0)
       return;
-    }
     const modelCaps = activeModelDetails?.capabilities || getDefaultModelCapabilities(model).capabilities;
     const unsupported = [];
     attachedFiles.forEach((f) => {
@@ -29388,15 +29771,50 @@ ${fileContext}` : fileContext;
     const ext = filename.substring(filename.lastIndexOf(".")).toLowerCase();
     return textExts.includes(ext) || mimeType.startsWith("text/");
   };
+  const downscaleImage = import_react7.default.useCallback((file, maxDim = 1280, quality = 0.85) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      fileReadersRef.current.push(reader);
+      reader.onload = () => {
+        const dataUrl = reader.result;
+        const img = new Image();
+        img.onload = () => {
+          const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+          if (scale >= 1) {
+            resolve(dataUrl);
+            return;
+          }
+          try {
+            const canvas = document.createElement("canvas");
+            canvas.width = Math.round(img.width * scale);
+            canvas.height = Math.round(img.height * scale);
+            const ctx = canvas.getContext("2d");
+            if (!ctx) {
+              resolve(dataUrl);
+              return;
+            }
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            resolve(canvas.toDataURL("image/jpeg", quality));
+          } catch {
+            resolve(dataUrl);
+          }
+        };
+        img.onerror = () => resolve(dataUrl);
+        img.src = dataUrl;
+      };
+      reader.onerror = () => reject(new Error("Failed to read image file"));
+      reader.readAsDataURL(file);
+    });
+  }, []);
   const handleFileSelect = (e) => {
     const files = e.target.files;
     if (!files || files.length === 0)
       return;
-    const maxSize = settings.maxAttachmentSizeBytes || 512e3;
+    const maxSize = getFreshSettings().maxAttachmentSizeBytes || 512e3;
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       if (file.size > maxSize) {
-        new import_obsidian12.Notice(`File "${file.name}" exceeds maximum size of ${(maxSize / 1024).toFixed(0)} KB.`);
+        new import_obsidian11.Notice(`File "${file.name}" exceeds maximum size of ${(maxSize / 1024).toFixed(0)} KB.`);
         continue;
       }
       const id = Math.random().toString(36).substring(2, 9);
@@ -29415,18 +29833,12 @@ ${fileContext}` : fileContext;
         };
         reader.readAsText(file);
       } else if (file.type.startsWith("image/")) {
-        const reader = new FileReader();
-        fileReadersRef.current.push(reader);
-        reader.onload = (evt) => {
-          const content = evt.target?.result || "";
-          setAttachedFiles((prev) => [...prev, { id, name, type: "image", content, sizeBytes }]);
+        void downscaleImage(file).then((content) => {
+          setAttachedFiles((prev) => [...prev, { id, name, type: "image", content, sizeBytes: Math.round(content.length * 0.75) }]);
           setAttachedImages((prev) => [...prev, content]);
-          fileReadersRef.current = fileReadersRef.current.filter((r) => r !== reader);
-        };
-        reader.onerror = () => {
-          fileReadersRef.current = fileReadersRef.current.filter((r) => r !== reader);
-        };
-        reader.readAsDataURL(file);
+        }).catch(() => {
+          new import_obsidian11.Notice(`Failed to read image "${name}".`);
+        });
       } else if (file.type.startsWith("audio/")) {
         const reader = new FileReader();
         fileReadersRef.current.push(reader);
@@ -29479,7 +29891,16 @@ ${fileContext}` : fileContext;
       }
     }
   };
-  return /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "nei-chat-panel-container", children: [
+  const resolveConfirmation = (id, approved) => {
+    setPendingConfirmations((prev) => {
+      const target = prev.find((c) => c.id === id);
+      if (target)
+        target.resolve(approved);
+      return prev.filter((c) => c.id !== id);
+    });
+  };
+  const currentConfirmation = pendingConfirmations[0] || null;
+  return /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "nei-chat-panel-container", ref: panelContainerRef, children: [
     /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "nei-chat-header", style: { height: "auto", minHeight: "auto", boxSizing: "border-box" }, children: [
       /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "nei-header-group", style: { flex: 1, minWidth: 0, flexWrap: "wrap", gap: "clamp(4px, 1cqi, 6px)" }, children: [
         /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(
@@ -29585,81 +30006,95 @@ ${fileContext}` : fileContext;
         contextWindow: activeModelDetails?.contextLength
       }
     ),
-    showSessionsDrawer && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { style: {
-      position: "fixed",
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      zIndex: 100,
-      background: "rgba(0, 0, 0, 0.3)",
-      display: "flex",
-      alignItems: "flex-start",
-      justifyContent: "flex-start",
-      padding: "env(safe-area-inset-top, 60px) env(safe-area-inset-right, 10px) env(safe-area-inset-bottom, 10px) env(safe-area-inset-left, 10px)",
-      overflow: "auto"
-    }, children: /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: {
-      background: "var(--background-primary)",
-      border: "1px solid var(--background-modifier-border)",
-      borderRadius: "8px",
-      boxShadow: "0 4px 12px rgba(0,0,0,0.25)",
-      maxHeight: "min(400px, calc(100vh - 80px))",
-      width: "100%",
-      maxWidth: "calc(100vw - 20px)",
-      overflowY: "auto",
-      padding: "8px",
-      display: "flex",
-      flexDirection: "column"
-    }, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px", paddingBottom: "4px", borderBottom: "1px solid var(--background-modifier-border)" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { style: { fontWeight: "bold", fontSize: "12px", color: "var(--text-muted)" }, children: t("historyTitle", language) }),
-        sessionsList.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
-          "button",
+    showSessionsDrawer && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+      "div",
+      {
+        style: {
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: "var(--layer-modal, 100)",
+          background: "rgba(0, 0, 0, 0.3)",
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "flex-start",
+          padding: "8px",
+          overflow: "hidden"
+        },
+        onClick: () => setShowSessionsDrawer(false),
+        children: /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(
+          "div",
           {
-            onClick: () => {
-              void handleClearAllSessions();
+            style: {
+              background: "var(--background-primary)",
+              border: "1px solid var(--background-modifier-border)",
+              borderRadius: "8px",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.25)",
+              maxHeight: "100%",
+              width: "100%",
+              maxWidth: "calc(100% - 0px)",
+              overflowY: "auto",
+              padding: "8px",
+              display: "flex",
+              flexDirection: "column"
             },
-            title: t("clearChats", language),
-            style: { background: "transparent", border: "none", color: "var(--text-error, #ff5555)", cursor: "pointer", fontSize: "11px", fontWeight: "500" },
-            children: confirmingClear ? `\u26A0\uFE0F ${t("confirmClearChats", language)}` : t("clearAll", language)
+            onClick: (e) => e.stopPropagation(),
+            children: [
+              /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px", paddingBottom: "4px", borderBottom: "1px solid var(--background-modifier-border)" }, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { style: { fontWeight: "bold", fontSize: "12px", color: "var(--text-muted)" }, children: t("historyTitle", language) }),
+                sessionsList.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+                  "button",
+                  {
+                    onClick: () => {
+                      void handleClearAllSessions();
+                    },
+                    title: t("clearChats", language),
+                    style: { background: "transparent", border: "none", color: "var(--text-error, #ff5555)", cursor: "pointer", fontSize: "11px", fontWeight: "500" },
+                    children: confirmingClear ? `\u26A0\uFE0F ${t("confirmClearChats", language)}` : t("clearAll", language)
+                  }
+                )
+              ] }),
+              sessionsList.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { style: { fontSize: "12px", color: "var(--text-muted)", padding: "6px" }, children: t("noSavedChats", language) }) : sessionsList.map((s) => /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(
+                "div",
+                {
+                  onClick: () => {
+                    void handleSelectSession(s.id);
+                  },
+                  style: {
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "6px 8px",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                    fontSize: "12px",
+                    background: s.id === currentSession.id ? "var(--background-secondary-alt)" : "transparent",
+                    marginBottom: "2px"
+                  },
+                  children: [
+                    /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { style: { textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", maxWidth: "80%" }, children: formatSessionTitle(s.title) }),
+                    /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+                      "button",
+                      {
+                        onClick: (e) => {
+                          void handleDeleteSession(e, s.id);
+                        },
+                        title: t("deleteChatTooltip", language),
+                        style: { background: "transparent", border: "none", cursor: "pointer", fontSize: "12px", opacity: 0.6 },
+                        children: "\u{1F5D1}\uFE0F"
+                      }
+                    )
+                  ]
+                },
+                s.id
+              ))
+            ]
           }
         )
-      ] }),
-      sessionsList.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { style: { fontSize: "12px", color: "var(--text-muted)", padding: "6px" }, children: t("noSavedChats", language) }) : sessionsList.map((s) => /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(
-        "div",
-        {
-          onClick: () => {
-            void handleSelectSession(s.id);
-          },
-          style: {
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            padding: "6px 8px",
-            borderRadius: "4px",
-            cursor: "pointer",
-            fontSize: "12px",
-            background: s.id === currentSession.id ? "var(--background-secondary-alt)" : "transparent",
-            marginBottom: "2px"
-          },
-          children: [
-            /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { style: { textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", maxWidth: "80%" }, children: formatSessionTitle(s.title) }),
-            /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
-              "button",
-              {
-                onClick: (e) => {
-                  void handleDeleteSession(e, s.id);
-                },
-                title: t("deleteChatTooltip", language),
-                style: { background: "transparent", border: "none", cursor: "pointer", fontSize: "12px", opacity: 0.6 },
-                children: "\u{1F5D1}\uFE0F"
-              }
-            )
-          ]
-        },
-        s.id
-      ))
-    ] }) }),
+      }
+    ),
     showConfig && /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { flexShrink: 0, maxHeight: "min(55vh, calc(100vh - 120px))", overflowY: "auto", background: "var(--background-secondary)", padding: "12px", borderRadius: "8px", marginBottom: "12px", fontSize: "12px", display: "flex", flexDirection: "column", gap: "10px" }, children: [
       /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { children: [
         /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("label", { style: { display: "block", marginBottom: "4px", fontWeight: "500" }, children: "OpenRouter API Key:" }),
@@ -30095,272 +30530,264 @@ ${fileContext}` : fileContext;
         /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("button", { onClick: showFreshnessSuggestion.onDismiss, style: { fontSize: "11px", padding: "3px 8px", background: "transparent", border: "1px solid var(--background-modifier-border)", color: "var(--text-muted)", borderRadius: "4px", cursor: "pointer" }, children: "\u2715" })
       ] })
     ] }),
-    /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "nei-chat-messages-container", children: [
-      currentSession.messages.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { textAlign: "center", color: "var(--text-muted)", marginTop: "24px", padding: "0 12px", fontSize: "13px" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { style: { fontSize: "15px", fontWeight: "bold", marginBottom: "8px", color: "var(--text-normal)" }, children: t("welcomeGreeting", language) }),
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { style: { fontSize: "12px", marginBottom: "16px", opacity: 0.85 }, children: t("welcomeSubText", language) }),
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { textAlign: "left", display: "inline-block", fontSize: "12px", lineHeight: "1.8", background: "var(--background-secondary)", padding: "12px 16px", borderRadius: "10px", border: "1px solid var(--background-modifier-border)", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }, children: [
-          "\u2022 ",
-          t("featureNotes", language),
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("br", {}),
-          "\u2022 ",
-          t("featureRouting", language),
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("br", {}),
-          "\u2022 ",
-          t("featureVision", language),
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("br", {}),
-          "\u2022 ",
-          t("featureTokens", language)
-        ] })
-      ] }),
-      currentSession.messages.map((msg, idx) => /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
-        "div",
-        {
-          className: "nei-chat-bubble",
-          style: {
-            alignSelf: msg.role === "user" ? "flex-end" : "flex-start",
-            maxWidth: "92%",
-            padding: "10px 14px",
-            borderRadius: "12px",
-            background: msg.role === "user" ? "var(--interactive-accent)" : "var(--background-secondary)",
-            color: msg.role === "user" ? "var(--text-on-accent)" : "var(--text-normal)",
-            fontSize: "13px",
-            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-            position: "relative"
-          },
-          children: msg.role === "user" ? editingMsgIdx === idx ? (
-            /* Inline Edit Form for User Message */
-            /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { display: "flex", flexDirection: "column", gap: "6px", minWidth: "220px" }, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(
+      "div",
+      {
+        className: "nei-chat-messages-container",
+        ref: messagesContainerRef,
+        onScroll: handleMessagesScroll,
+        children: [
+          currentSession.messages.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { textAlign: "center", color: "var(--text-muted)", marginTop: "24px", padding: "0 12px", fontSize: "13px" }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { style: { fontSize: "15px", fontWeight: "bold", marginBottom: "8px", color: "var(--text-normal)" }, children: t("welcomeGreeting", language) }),
+            /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { style: { fontSize: "12px", marginBottom: "16px", opacity: 0.85 }, children: t("welcomeSubText", language) }),
+            /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { textAlign: "left", display: "inline-block", fontSize: "12px", lineHeight: "1.8", background: "var(--background-secondary)", padding: "12px 16px", borderRadius: "10px", border: "1px solid var(--background-modifier-border)", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }, children: [
+              "\u2022 ",
+              t("featureNotes", language),
+              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("br", {}),
+              "\u2022 ",
+              t("featureRouting", language),
+              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("br", {}),
+              "\u2022 ",
+              t("featureVision", language),
+              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("br", {}),
+              "\u2022 ",
+              t("featureTokens", language)
+            ] })
+          ] }),
+          currentSession.messages.map((msg, idx) => /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+            "div",
+            {
+              className: `nei-chat-bubble nei-msg-bubble ${msg.role === "user" ? "nei-msg-bubble--user" : "nei-msg-bubble--assistant"}`,
+              children: msg.role === "user" ? editingMsgIdx === idx ? (
+                /* Inline Edit Form for User Message */
+                /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { display: "flex", flexDirection: "column", gap: "6px", minWidth: "220px" }, children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+                    "textarea",
+                    {
+                      value: editingText,
+                      onChange: (e) => setEditingText(e.target.value),
+                      style: { width: "100%", minHeight: "60px", padding: "6px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-primary)", color: "var(--text-normal)", fontSize: "12px" }
+                    }
+                  ),
+                  /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { display: "flex", gap: "6px", justifyContent: "flex-end" }, children: [
+                    /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+                      "button",
+                      {
+                        onClick: () => setEditingMsgIdx(null),
+                        style: { padding: "3px 8px", fontSize: "11px", background: "transparent", border: "1px solid var(--background-modifier-border)", color: "inherit", borderRadius: "4px", cursor: "pointer" },
+                        children: t("cancelBtn", language)
+                      }
+                    ),
+                    /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+                      "button",
+                      {
+                        onClick: () => handleSaveEdit(idx),
+                        style: { padding: "3px 8px", fontSize: "11px", background: "var(--background-primary)", color: "var(--interactive-accent)", border: "none", borderRadius: "4px", cursor: "pointer", fontWeight: "bold" },
+                        children: t("saveResendBtn", language)
+                      }
+                    )
+                  ] })
+                ] })
+              ) : (
+                /* Standard User Message Display */
+                /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { children: [
+                  msg.images && msg.images.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { style: { display: "flex", gap: "4px", marginBottom: "6px", flexWrap: "wrap" }, children: msg.images.map((img, i) => /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("img", { src: img, style: { width: "60px", height: "60px", borderRadius: "4px", objectFit: "cover" } }, i)) }),
+                  /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { style: { whiteSpace: "pre-wrap" }, children: msg.content }),
+                  /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "nei-msg-actions", children: [
+                    /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+                      "button",
+                      {
+                        onClick: () => {
+                          void handleCopyText(msg.content || "");
+                        },
+                        title: t("copyText", language),
+                        className: "nei-msg-action-btn",
+                        children: t("copyText", language)
+                      }
+                    ),
+                    /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+                      "button",
+                      {
+                        onClick: () => handleStartEdit(idx, msg.content || ""),
+                        title: t("editText", language),
+                        className: "nei-msg-action-btn",
+                        children: t("editText", language)
+                      }
+                    ),
+                    /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+                      "button",
+                      {
+                        onClick: () => handleRetryUserMessage(idx),
+                        title: t("retry", language),
+                        disabled: loading,
+                        className: "nei-msg-action-btn",
+                        children: t("retry", language)
+                      }
+                    )
+                  ] })
+                ] })
+              ) : (
+                /* Assistant Message Display */
+                /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { minWidth: 0 }, children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(ObsidianMarkdown, { markdown: msg.content || "", app, component: viewComponent }),
+                  (msg.promptTokens !== void 0 || msg.completionTokens !== void 0) && /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "nei-msg-token-stats", children: [
+                    /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("span", { className: "nei-msg-token-chip", children: [
+                      t("inputTokens", language),
+                      " ",
+                      msg.promptTokens || 0,
+                      " ",
+                      t("tokens", language)
+                    ] }),
+                    /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("span", { className: "nei-msg-token-chip", children: [
+                      t("outputTokens", language),
+                      " ",
+                      msg.completionTokens || 0,
+                      " ",
+                      t("tokens", language)
+                    ] })
+                  ] }),
+                  /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "nei-msg-actions nei-msg-actions--assistant", children: [
+                    /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+                      "button",
+                      {
+                        onClick: () => {
+                          void handleCopyText(msg.content || "");
+                        },
+                        className: "nei-msg-action-btn nei-msg-action-btn--outlined",
+                        children: t("copyText", language)
+                      }
+                    ),
+                    /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+                      "button",
+                      {
+                        onClick: () => {
+                          void handleBranchFromMessage(idx);
+                        },
+                        className: "nei-msg-action-btn nei-msg-action-btn--outlined",
+                        title: "Fork conversation from this message",
+                        children: "\u{1F33F} Branch"
+                      }
+                    ),
+                    msg.content && msg.content.length > 50 && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+                      "button",
+                      {
+                        onClick: () => {
+                          void handleSaveResponseAsNote(msg.content || "");
+                        },
+                        className: "nei-msg-action-btn nei-msg-action-btn--outlined",
+                        children: t("saveNote", language)
+                      }
+                    )
+                  ] })
+                ] })
+              )
+            },
+            msg.id || idx
+          )),
+          activeSteps.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+            ReasoningPanel,
+            {
+              steps: activeSteps,
+              language,
+              isExpanded: showReasoning,
+              onToggle: () => setShowReasoning(!showReasoning)
+            }
+          ),
+          learningProposal && /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "nei-learning-proposal", style: {
+            background: "var(--background-secondary-alt)",
+            border: "1px solid var(--interactive-accent)",
+            borderRadius: "8px",
+            padding: "10px 12px",
+            fontSize: "11px"
+          }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { style: { fontWeight: "bold", marginBottom: "6px", color: "var(--interactive-accent)" }, children: t("learningProposalTitle", language) }),
+            learningProposal.proposal.facts.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { marginBottom: "4px" }, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { style: { fontSize: "10px", fontWeight: 600, color: "var(--text-muted)", marginBottom: "2px" }, children: t("learningProposalFacts", language) }),
+              learningProposal.proposal.facts.map((f, i) => /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { padding: "1px 0", color: "var(--text-normal)" }, children: [
+                "\u{1F4A1} ",
+                f
+              ] }, i))
+            ] }),
+            learningProposal.proposal.skillIdeas.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { marginBottom: "4px" }, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { style: { fontSize: "10px", fontWeight: 600, color: "var(--text-muted)", marginBottom: "2px" }, children: t("learningProposalSkills", language) }),
+              learningProposal.proposal.skillIdeas.map((s, i) => /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { padding: "1px 0", color: "var(--text-normal)" }, children: [
+                "\u{1F6E0} ",
+                s.name,
+                ": ",
+                s.description
+              ] }, i))
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { display: "flex", gap: "8px", justifyContent: "flex-end", marginTop: "6px" }, children: [
               /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
-                "textarea",
+                "button",
                 {
-                  value: editingText,
-                  onChange: (e) => setEditingText(e.target.value),
-                  style: { width: "100%", minHeight: "60px", padding: "6px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-primary)", color: "var(--text-normal)", fontSize: "12px" }
+                  onClick: learningProposal.onDismiss,
+                  style: { padding: "3px 10px", fontSize: "10px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-primary)", cursor: "pointer", color: "var(--text-muted)" },
+                  children: t("dismiss", language)
                 }
               ),
-              /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { display: "flex", gap: "6px", justifyContent: "flex-end" }, children: [
-                /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
-                  "button",
-                  {
-                    onClick: () => setEditingMsgIdx(null),
-                    style: { padding: "3px 8px", fontSize: "11px", background: "transparent", border: "1px solid var(--background-modifier-border)", color: "inherit", borderRadius: "4px", cursor: "pointer" },
-                    children: t("cancelBtn", language)
-                  }
-                ),
-                /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
-                  "button",
-                  {
-                    onClick: () => handleSaveEdit(idx),
-                    style: { padding: "3px 8px", fontSize: "11px", background: "var(--background-primary)", color: "var(--interactive-accent)", border: "none", borderRadius: "4px", cursor: "pointer", fontWeight: "bold" },
-                    children: t("saveResendBtn", language)
-                  }
-                )
-              ] })
+              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+                "button",
+                {
+                  onClick: () => void learningProposal.onAccept(),
+                  style: { padding: "3px 10px", fontSize: "10px", borderRadius: "4px", border: "none", background: "var(--interactive-accent)", color: "var(--text-on-accent)", cursor: "pointer", fontWeight: 600 },
+                  children: t("accept", language)
+                }
+              )
             ] })
-          ) : (
-            /* Standard User Message Display */
-            /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { children: [
-              msg.images && msg.images.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { style: { display: "flex", gap: "4px", marginBottom: "6px", flexWrap: "wrap" }, children: msg.images.map((img, i) => /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("img", { src: img, style: { width: "60px", height: "60px", borderRadius: "4px", objectFit: "cover" } }, i)) }),
-              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { style: { whiteSpace: "pre-wrap" }, children: msg.content }),
-              /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { display: "flex", gap: "6px", marginTop: "6px", justifyContent: "flex-end", fontSize: "11px", flexWrap: "wrap", maxWidth: "100%", opacity: 0.9 }, children: [
-                /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
-                  "button",
-                  {
-                    onClick: () => {
-                      void handleCopyText(msg.content || "");
-                    },
-                    title: t("copyText", language),
-                    style: { background: "transparent", border: "none", color: "inherit", cursor: "pointer", padding: "2px 4px", borderRadius: "4px", fontSize: "11px", whiteSpace: "nowrap" },
-                    children: t("copyText", language)
-                  }
-                ),
-                /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
-                  "button",
-                  {
-                    onClick: () => handleStartEdit(idx, msg.content || ""),
-                    title: t("editText", language),
-                    style: { background: "transparent", border: "none", color: "inherit", cursor: "pointer", padding: "2px 4px", borderRadius: "4px", fontSize: "11px", whiteSpace: "nowrap" },
-                    children: t("editText", language)
-                  }
-                ),
-                /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
-                  "button",
-                  {
-                    onClick: () => handleRetryUserMessage(idx),
-                    title: t("retry", language),
-                    disabled: loading,
-                    style: { background: "transparent", border: "none", color: "inherit", cursor: "pointer", padding: "2px 4px", borderRadius: "4px", fontSize: "11px", whiteSpace: "nowrap" },
-                    children: t("retry", language)
-                  }
-                )
-              ] })
+          ] }),
+          loading && /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { display: "flex", flexDirection: "column", gap: "4px", alignSelf: "flex-start", maxWidth: "92%", padding: "10px 14px", borderRadius: "12px", background: "var(--background-secondary)", fontSize: "13px" }, children: [
+            streamingContent ? /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { children: [
+              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(ObsidianMarkdown, { markdown: streamingContent, app, component: viewComponent }),
+              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { className: "nei-streaming-cursor", style: { color: "var(--interactive-accent)", fontWeight: "bold" }, children: " \u258A" })
+            ] }) : /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: "8px", color: "var(--text-muted)" }, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { className: "nei-spinner", children: "\u27F3" }),
+              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { children: t("agentRunning", language) })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+              "button",
+              {
+                onClick: () => abortController?.abort(),
+                title: t("stopGeneration", language),
+                style: { alignSelf: "flex-end", marginTop: "4px", padding: "2px 8px", fontSize: "11px", background: "var(--background-modifier-error-hover, #ff444433)", border: "1px solid var(--text-error, #ff5555)", borderRadius: "4px", cursor: "pointer", color: "var(--text-error, #ff5555)" },
+                children: t("stopBtn", language)
+              }
+            )
+          ] }),
+          currentConfirmation && /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { background: "var(--background-secondary)", border: "2px solid var(--interactive-accent)", borderRadius: "8px", padding: "12px", marginTop: "6px", fontSize: "12px" }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { fontWeight: "bold", marginBottom: "6px", color: "var(--text-normal)" }, children: [
+              "\u26A0\uFE0F ",
+              t("actionConfirmation", language),
+              pendingConfirmations.length > 1 && ` (${pendingConfirmations.length})`
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { marginBottom: "4px" }, children: [
+              t("agentWantsExecute", language),
+              ": ",
+              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("code", { children: currentConfirmation.toolName })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { style: { background: "var(--background-primary)", padding: "6px", borderRadius: "4px", fontFamily: "monospace", fontSize: "11px", marginBottom: "10px", whiteSpace: "pre-wrap", maxHeight: "100px", overflowY: "auto" }, children: currentConfirmation.argsStr }),
+            /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { display: "flex", gap: "8px", justifyContent: "flex-end" }, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+                "button",
+                {
+                  onClick: () => resolveConfirmation(currentConfirmation.id, false),
+                  style: { padding: "4px 12px", background: "transparent", border: "1px solid var(--background-modifier-border)", borderRadius: "4px", cursor: "pointer" },
+                  children: t("cancelBtn", language)
+                }
+              ),
+              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+                "button",
+                {
+                  onClick: () => resolveConfirmation(currentConfirmation.id, true),
+                  style: { padding: "4px 12px", background: "var(--interactive-accent)", color: "var(--text-on-accent)", border: "none", borderRadius: "4px", cursor: "pointer", fontWeight: "bold" },
+                  children: t("allowBtn", language)
+                }
+              )
             ] })
-          ) : (
-            /* Assistant Message Display */
-            /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { minWidth: 0 }, children: [
-              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(ObsidianMarkdown, { markdown: msg.content || "", app }),
-              (msg.promptTokens !== void 0 || msg.completionTokens !== void 0) && /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { display: "flex", gap: "6px", marginTop: "6px", fontSize: "10px", color: "var(--text-muted)", borderTop: "1px solid var(--background-modifier-border)", paddingTop: "4px", flexWrap: "wrap", maxWidth: "100%" }, children: [
-                /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("span", { style: { background: "var(--background-primary)", padding: "2px 6px", borderRadius: "4px" }, children: [
-                  t("inputTokens", language),
-                  " ",
-                  msg.promptTokens || 0,
-                  " ",
-                  t("tokens", language)
-                ] }),
-                /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("span", { style: { background: "var(--background-primary)", padding: "2px 6px", borderRadius: "4px" }, children: [
-                  t("outputTokens", language),
-                  " ",
-                  msg.completionTokens || 0,
-                  " ",
-                  t("tokens", language)
-                ] })
-              ] }),
-              /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { display: "flex", gap: "6px", marginTop: "8px", alignItems: "center", flexWrap: "wrap", fontSize: "11px", maxWidth: "100%" }, children: [
-                /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
-                  "button",
-                  {
-                    onClick: () => {
-                      void handleCopyText(msg.content || "");
-                    },
-                    style: { background: "var(--background-primary)", border: "1px solid var(--background-modifier-border)", borderRadius: "4px", cursor: "pointer", padding: "3px 8px", color: "var(--text-muted)", fontSize: "11px", whiteSpace: "nowrap", maxWidth: "100%" },
-                    children: t("copyText", language)
-                  }
-                ),
-                /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
-                  "button",
-                  {
-                    onClick: () => {
-                      void handleBranchFromMessage(idx);
-                    },
-                    style: { background: "var(--background-primary)", border: "1px solid var(--background-modifier-border)", borderRadius: "4px", cursor: "pointer", padding: "3px 8px", color: "var(--text-muted)", fontSize: "11px", whiteSpace: "nowrap", maxWidth: "100%" },
-                    title: "Fork conversation from this message",
-                    children: "\u{1F33F} Branch"
-                  }
-                ),
-                msg.content && msg.content.length > 50 && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
-                  "button",
-                  {
-                    onClick: () => {
-                      void handleSaveResponseAsNote(msg.content || "");
-                    },
-                    style: { background: "var(--background-primary)", border: "1px solid var(--background-modifier-border)", borderRadius: "4px", cursor: "pointer", padding: "3px 8px", color: "var(--text-muted)", fontSize: "11px", whiteSpace: "nowrap", maxWidth: "100%" },
-                    children: t("saveNote", language)
-                  }
-                )
-              ] })
-            ] })
-          )
-        },
-        idx
-      )),
-      activeSteps.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
-        ReasoningPanel,
-        {
-          steps: activeSteps,
-          language,
-          isExpanded: showReasoning,
-          onToggle: () => setShowReasoning(!showReasoning)
-        }
-      ),
-      learningProposal && /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "nei-learning-proposal", style: {
-        background: "var(--background-secondary-alt)",
-        border: "1px solid var(--interactive-accent)",
-        borderRadius: "8px",
-        padding: "10px 12px",
-        fontSize: "11px"
-      }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { style: { fontWeight: "bold", marginBottom: "6px", color: "var(--interactive-accent)" }, children: t("learningProposalTitle", language) }),
-        learningProposal.proposal.facts.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { marginBottom: "4px" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { style: { fontSize: "10px", fontWeight: 600, color: "var(--text-muted)", marginBottom: "2px" }, children: t("learningProposalFacts", language) }),
-          learningProposal.proposal.facts.map((f, i) => /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { padding: "1px 0", color: "var(--text-normal)" }, children: [
-            "\u{1F4A1} ",
-            f
-          ] }, i))
-        ] }),
-        learningProposal.proposal.skillIdeas.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { marginBottom: "4px" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { style: { fontSize: "10px", fontWeight: 600, color: "var(--text-muted)", marginBottom: "2px" }, children: t("learningProposalSkills", language) }),
-          learningProposal.proposal.skillIdeas.map((s, i) => /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { padding: "1px 0", color: "var(--text-normal)" }, children: [
-            "\u{1F6E0} ",
-            s.name,
-            ": ",
-            s.description
-          ] }, i))
-        ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { display: "flex", gap: "8px", justifyContent: "flex-end", marginTop: "6px" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
-            "button",
-            {
-              onClick: learningProposal.onDismiss,
-              style: { padding: "3px 10px", fontSize: "10px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-primary)", cursor: "pointer", color: "var(--text-muted)" },
-              children: t("dismiss", language)
-            }
-          ),
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
-            "button",
-            {
-              onClick: () => void learningProposal.onAccept(),
-              style: { padding: "3px 10px", fontSize: "10px", borderRadius: "4px", border: "none", background: "var(--interactive-accent)", color: "var(--text-on-accent)", cursor: "pointer", fontWeight: 600 },
-              children: t("accept", language)
-            }
-          )
-        ] })
-      ] }),
-      loading && /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { display: "flex", flexDirection: "column", gap: "4px", alignSelf: "flex-start", maxWidth: "92%", padding: "10px 14px", borderRadius: "12px", background: "var(--background-secondary)", fontSize: "13px" }, children: [
-        streamingContent ? /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(ObsidianMarkdown, { markdown: streamingContent, app }),
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { className: "nei-streaming-cursor", style: { color: "var(--interactive-accent)", fontWeight: "bold" }, children: " \u258A" })
-        ] }) : /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: "8px", color: "var(--text-muted)" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { className: "nei-spinner", children: "\u27F3" }),
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { children: t("agentRunning", language) })
-        ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
-          "button",
-          {
-            onClick: () => abortController?.abort(),
-            title: t("stopGeneration", language),
-            style: { alignSelf: "flex-end", marginTop: "4px", padding: "2px 8px", fontSize: "11px", background: "var(--background-modifier-error-hover, #ff444433)", border: "1px solid var(--text-error, #ff5555)", borderRadius: "4px", cursor: "pointer", color: "var(--text-error, #ff5555)" },
-            children: t("stopBtn", language)
-          }
-        )
-      ] }),
-      pendingConfirmation && /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { background: "var(--background-secondary)", border: "2px solid var(--interactive-accent)", borderRadius: "8px", padding: "12px", marginTop: "6px", fontSize: "12px" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { fontWeight: "bold", marginBottom: "6px", color: "var(--text-normal)" }, children: [
-          "\u26A0\uFE0F ",
-          t("actionConfirmation", language)
-        ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { marginBottom: "4px" }, children: [
-          t("agentWantsExecute", language),
-          ": ",
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("code", { children: pendingConfirmation.toolName })
-        ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { style: { background: "var(--background-primary)", padding: "6px", borderRadius: "4px", fontFamily: "monospace", fontSize: "11px", marginBottom: "10px", whiteSpace: "pre-wrap", maxHeight: "100px", overflowY: "auto" }, children: pendingConfirmation.argsStr }),
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { display: "flex", gap: "8px", justifyContent: "flex-end" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
-            "button",
-            {
-              onClick: () => {
-                pendingConfirmation.resolve(false);
-                setPendingConfirmation(null);
-              },
-              style: { padding: "4px 12px", background: "transparent", border: "1px solid var(--background-modifier-border)", borderRadius: "4px", cursor: "pointer" },
-              children: t("cancelBtn", language)
-            }
-          ),
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
-            "button",
-            {
-              onClick: () => {
-                pendingConfirmation.resolve(true);
-                setPendingConfirmation(null);
-              },
-              style: { padding: "4px 12px", background: "var(--interactive-accent)", color: "var(--text-on-accent)", border: "none", borderRadius: "4px", cursor: "pointer", fontWeight: "bold" },
-              children: t("allowBtn", language)
-            }
-          )
-        ] })
-      ] })
-    ] }),
+          ] })
+        ]
+      }
+    ),
     warningModal && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
       CapabilityWarningModal,
       {
@@ -30371,14 +30798,14 @@ ${fileContext}` : fileContext;
         onCancel: () => setWarningModal(null)
       }
     ),
-    attachedFiles.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { style: { flexShrink: 0, display: "flex", gap: "6px", padding: "6px", background: "var(--background-secondary)", borderRadius: "6px", marginBottom: "6px", flexWrap: "wrap" }, children: attachedFiles.map((file) => /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { position: "relative", display: "inline-flex", alignItems: "center", gap: "4px", background: "var(--background-primary)", border: "1px solid var(--background-modifier-border)", borderRadius: "4px", padding: "3px 8px", fontSize: "11px" }, children: [
+    attachedFiles.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { className: "nei-attach-bar", children: attachedFiles.map((file) => /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "nei-attach-chip", children: [
       file.type === "image" && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("img", { src: file.content, style: { width: "20px", height: "20px", objectFit: "cover", borderRadius: "2px" } }),
       file.type === "text" && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { children: "\u{1F4C4}" }),
       file.type === "pdf" && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { children: "\u{1F4D5}" }),
       file.type === "audio" && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { children: "\u{1F3A4}" }),
       file.type === "video" && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { children: "\u{1F3A5}" }),
-      /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { style: { fontWeight: 500, maxWidth: "120px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }, children: file.name }),
-      /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("span", { style: { fontSize: "9px", opacity: 0.6 }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { className: "nei-attach-chip-name", children: file.name }),
+      /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("span", { className: "nei-attach-chip-size", children: [
         "(",
         (file.sizeBytes / 1024).toFixed(0),
         "KB)"
@@ -30392,7 +30819,7 @@ ${fileContext}` : fileContext;
               setAttachedImages((prev) => prev.filter((img) => img !== file.content));
             }
           },
-          style: { background: "transparent", color: "var(--text-muted)", border: "none", borderRadius: "50%", width: "14px", height: "14px", fontSize: "10px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" },
+          className: "nei-attach-chip-remove",
           children: "\u2715"
         }
       )
@@ -30484,7 +30911,7 @@ var ChatPanel = (props) => {
 
 // src/views/ChatView.ts
 var VIEW_TYPE_NEI_CHAT = "nei-chat-view";
-var NeiChatView = class extends import_obsidian13.ItemView {
+var NeiChatView = class extends import_obsidian12.ItemView {
   constructor(leaf, plugin) {
     super(leaf);
     this.root = null;
@@ -30509,7 +30936,11 @@ var NeiChatView = class extends import_obsidian13.ItemView {
       React8.createElement(ChatPanel, {
         app: this.app,
         viewLeaf: this.leaf,
+        viewComponent: this,
         settings: this.plugin.settings,
+        // Live accessor: settings changed via saveSettings take effect
+        // on the next request without remounting the panel (N1)
+        getSettings: () => this.plugin.settings,
         saveSettings: async (newSettings) => {
           this.plugin.settings = newSettings;
           await this.plugin.saveSettings();
@@ -30525,12 +30956,7 @@ var NeiChatView = class extends import_obsidian13.ItemView {
     }
     const isMainTab = this.leaf.getRoot() === this.app.workspace.rootSplit;
     if (isMainTab) {
-      window.setTimeout(() => {
-        const existing = this.app.workspace.getLeavesOfType(VIEW_TYPE_NEI_CHAT);
-        if (existing.length === 0) {
-          void this.plugin.activateView();
-        }
-      }, 100);
+      this.plugin.scheduleSidebarReopen();
     }
   }
 };
@@ -30539,7 +30965,7 @@ var NeiChatView = class extends import_obsidian13.ItemView {
 init_vaultTools();
 
 // src/services/tools/systemTools.ts
-var import_obsidian14 = require("obsidian");
+var import_obsidian13 = require("obsidian");
 var systemToolDefinitions = [
   {
     type: "function",
@@ -30598,7 +31024,7 @@ var systemExecutors = {
     const args = rawArgs;
     try {
       const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(args.query)}`;
-      const response = await (0, import_obsidian14.requestUrl)({
+      const response = await (0, import_obsidian13.requestUrl)({
         url: searchUrl,
         method: "GET",
         headers: {
@@ -30637,8 +31063,8 @@ var systemExecutors = {
       const repo = githubRepoMatch[2].replace(/\.git$/, "");
       try {
         const rawReadmeUrl = `https://raw.githubusercontent.com/${owner}/${repo}/main/README.md`;
-        const response = await (0, import_obsidian14.requestUrl)({ url: rawReadmeUrl, method: "GET" }).catch(
-          () => (0, import_obsidian14.requestUrl)({ url: `https://raw.githubusercontent.com/${owner}/${repo}/master/README.md`, method: "GET" })
+        const response = await (0, import_obsidian13.requestUrl)({ url: rawReadmeUrl, method: "GET" }).catch(
+          () => (0, import_obsidian13.requestUrl)({ url: `https://raw.githubusercontent.com/${owner}/${repo}/master/README.md`, method: "GET" })
         );
         if (response.status === 200 && response.text) {
           const text = response.text.length > 3e3 ? response.text.substring(0, 3e3) + "\n...[README \u043E\u0431\u0440\u0435\u0437\u0430\u043D \u0434\u043B\u044F \u044D\u043A\u043E\u043D\u043E\u043C\u0438\u0438 \u0442\u043E\u043A\u0435\u043D\u043E\u0432]" : response.text;
@@ -30649,7 +31075,7 @@ ${text}`;
       }
     }
     try {
-      const response = await (0, import_obsidian14.requestUrl)({
+      const response = await (0, import_obsidian13.requestUrl)({
         url: urlStr,
         method: "GET",
         headers: {
@@ -30680,7 +31106,7 @@ ${truncated}`;
     try {
       let repoMetaInfo = "";
       try {
-        const metaRes = await (0, import_obsidian14.requestUrl)({
+        const metaRes = await (0, import_obsidian13.requestUrl)({
           url: `https://api.github.com/repos/${owner}/${repo}`,
           method: "GET",
           headers: { "User-Agent": "NEI-Obsidian-Plugin" }
@@ -30704,7 +31130,7 @@ ${truncated}`;
           break;
         for (const fname of filenames) {
           try {
-            const res = await (0, import_obsidian14.requestUrl)({
+            const res = await (0, import_obsidian13.requestUrl)({
               url: `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${fname}`,
               method: "GET"
             });
@@ -30949,7 +31375,7 @@ async function executeTemplaterRender(app, template, context) {
 }
 
 // src/services/tools/canvasTools.ts
-var import_obsidian15 = require("obsidian");
+var import_obsidian14 = require("obsidian");
 function safeNormalizePath(path) {
   return path.replace(/\\/g, "/").replace(/\/+/g, "/").replace(/^\//, "");
 }
@@ -31071,7 +31497,7 @@ async function executeReadCanvas(app, path) {
       canvasPath += ".canvas";
     }
     const file = app.vault.getAbstractFileByPath(canvasPath);
-    if (!file || !(file instanceof import_obsidian15.TFile)) {
+    if (!file || !(file instanceof import_obsidian14.TFile)) {
       return `Error: Canvas file '${canvasPath}' not found or is not a valid file.`;
     }
     const content = await app.vault.read(file);
@@ -31182,7 +31608,7 @@ var ToolRegistry = class {
 };
 
 // src/services/mcp/mcpClient.ts
-var import_obsidian16 = require("obsidian");
+var import_obsidian15 = require("obsidian");
 var McpService = class {
   static setServers(servers) {
     this.servers = servers;
@@ -31197,7 +31623,7 @@ var McpService = class {
       if (!server.enabled || !server.endpointUrl)
         continue;
       try {
-        const response = await (0, import_obsidian16.requestUrl)({
+        const response = await (0, import_obsidian15.requestUrl)({
           url: server.endpointUrl.endsWith("/") ? `${server.endpointUrl}tools/list` : `${server.endpointUrl}/tools/list`,
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -31233,7 +31659,7 @@ var McpService = class {
    */
   static async callMcpTool(server, originalToolName, args) {
     try {
-      const response = await (0, import_obsidian16.requestUrl)({
+      const response = await (0, import_obsidian15.requestUrl)({
         url: server.endpointUrl.endsWith("/") ? `${server.endpointUrl}tools/call` : `${server.endpointUrl}/tools/call`,
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -31283,9 +31709,9 @@ var DEFAULT_SETTINGS = {
   language: "auto",
   defaultNoteFolder: "",
   // Default paths - relative to vault root, user can customize
-  chatsFolder: ".nei/chats",
-  memoryFile: ".nei/memory.json",
-  skillsFolder: ".nei/skills",
+  chatsFolder: DEFAULT_CHATS_FOLDER,
+  memoryFile: DEFAULT_MEMORY_FILE,
+  skillsFolder: DEFAULT_SKILLS_FOLDER,
   // Agent defaults
   maxAgentIterations: 6,
   maxPrefetchedNotes: 12,
@@ -31333,16 +31759,17 @@ var DEFAULT_SETTINGS = {
   enableAutoLearning: false,
   lastAutoLearnTimestamp: 0,
   // Attachments & Versioning defaults
-  maxAttachmentSizeBytes: 512e3,
+  maxAttachmentSizeBytes: DEFAULT_MAX_ATTACHMENT_SIZE_BYTES,
   // 500 KB
   settingsVersion: 1,
   // Vault Context Toggle default
   enableVaultContextDefault: true
 };
-var NeiAiChatPlugin = class extends import_obsidian17.Plugin {
+var NeiAiChatPlugin = class extends import_obsidian16.Plugin {
   constructor() {
     super(...arguments);
     this.settings = DEFAULT_SETTINGS;
+    this.reopenTimer = null;
   }
   async onload() {
     await this.loadSettings();
@@ -31365,6 +31792,29 @@ var NeiAiChatPlugin = class extends import_obsidian17.Plugin {
     });
   }
   onunload() {
+    if (this.reopenTimer !== null) {
+      window.clearTimeout(this.reopenTimer);
+      this.reopenTimer = null;
+    }
+    for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_NEI_CHAT)) {
+      leaf.detach();
+    }
+  }
+  /**
+   * Re-opens the chat in the sidebar after a main-tab close — debounced at the
+   * plugin level so rapid open/close cycles cannot spawn duplicate views (B11).
+   */
+  scheduleSidebarReopen() {
+    if (this.reopenTimer !== null) {
+      window.clearTimeout(this.reopenTimer);
+    }
+    this.reopenTimer = window.setTimeout(() => {
+      this.reopenTimer = null;
+      const existing = this.app.workspace.getLeavesOfType(VIEW_TYPE_NEI_CHAT);
+      if (existing.length === 0) {
+        void this.activateView();
+      }
+    }, 120);
   }
   async activateView() {
     const { workspace } = this.app;

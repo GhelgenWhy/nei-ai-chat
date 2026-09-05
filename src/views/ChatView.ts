@@ -38,7 +38,11 @@ export class NeiChatView extends ItemView {
             React.createElement(ChatPanel, {
                 app: this.app,
                 viewLeaf: this.leaf,
+                viewComponent: this,
                 settings: this.plugin.settings,
+                // Live accessor: settings changed via saveSettings take effect
+                // on the next request without remounting the panel (N1)
+                getSettings: () => this.plugin.settings,
                 saveSettings: async (newSettings: NeiAiChatSettings) => {
                     this.plugin.settings = newSettings;
                     await this.plugin.saveSettings();
@@ -54,15 +58,11 @@ export class NeiChatView extends ItemView {
             this.root = null;
         }
 
-        // If closing a main tab and no other NEI chat view remains open, automatically return chat to right sidebar
+        // If closing a main tab and no other NEI chat view remains open, return chat to right sidebar.
+        // Debounced on the plugin to avoid duplicate views from rapid open/close cycles (B11).
         const isMainTab = this.leaf.getRoot() === this.app.workspace.rootSplit;
         if (isMainTab) {
-            window.setTimeout(() => {
-                const existing = this.app.workspace.getLeavesOfType(VIEW_TYPE_NEI_CHAT);
-                if (existing.length === 0) {
-                    void this.plugin.activateView();
-                }
-            }, 100);
+            this.plugin.scheduleSidebarReopen();
         }
     }
 }

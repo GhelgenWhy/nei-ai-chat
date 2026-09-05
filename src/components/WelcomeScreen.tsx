@@ -36,15 +36,15 @@ export const WelcomeScreen: FC<WelcomeScreenProps> = memo(({ language, onClose }
 
     return (
         <div className="nei-welcome-overlay" style={{
-            position: 'fixed',
+            position: 'absolute',
             top: 0, left: 0, right: 0, bottom: 0,
-            zIndex: 10000,
+            zIndex: 'var(--layer-modal, 200)',
             background: 'rgba(0, 0, 0, 0.75)',
             backdropFilter: 'blur(4px)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: 'env(safe-area-inset-top, 16px) env(safe-area-inset-right, 16px) env(safe-area-inset-bottom, 16px) env(safe-area-inset-left, 16px)',
+            padding: '16px',
             overflow: 'auto'
         }}>
             <div className="nei-welcome-modal" style={{
@@ -52,9 +52,9 @@ export const WelcomeScreen: FC<WelcomeScreenProps> = memo(({ language, onClose }
                 border: '1px solid var(--background-modifier-border)',
                 borderRadius: '12px',
                 padding: '24px',
-                maxWidth: 'min(460px, calc(100vw - 32px))',
+                maxWidth: 'min(460px, 100%)',
                 width: '100%',
-                maxHeight: 'min(90vh, calc(100vh - 32px))',
+                maxHeight: '100%',
                 boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
                 display: 'flex',
                 flexDirection: 'column',

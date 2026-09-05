@@ -2,6 +2,7 @@ import { App, normalizePath } from "obsidian";
 import { ChatMessage } from "../llm";
 import { AgentStep } from "../agent/agentLoop";
 import { NeiAiChatSettings } from "../../../main";
+import { DEFAULT_CHATS_FOLDER } from "../../utils/defaults";
 
 export interface ChatSession {
     id: string;
@@ -14,7 +15,7 @@ export interface ChatSession {
 
 export class ChatStore {
     private static getChatsFolder(settings: NeiAiChatSettings): string {
-        return settings.chatsFolder || ".nei/chats";
+        return settings.chatsFolder || DEFAULT_CHATS_FOLDER;
     }
     
     private static getIndexFile(settings: NeiAiChatSettings): string {

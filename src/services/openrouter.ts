@@ -1,4 +1,5 @@
 import { requestUrl } from "obsidian";
+import { ModelPricing } from "../utils/cost";
 
 export interface ModelCapabilities {
     text: boolean;
@@ -210,8 +211,7 @@ export class OpenRouterService {
     }
 }
 
-export function getDefaultModelCapabilities(modelId: string): OpenRouterModelInfo {
-    const lower = (modelId || "").toLowerCase();
+export function getDefaultModelCapabilities(modelId: string): OpenRouterModelInfo {    const lower = (modelId || "").toLowerCase();
     const supportsVision = lower.includes("gemini") || lower.includes("gpt-4o") || lower.includes("claude-3") || lower.includes("vision");
     const supportsAudio = lower.includes("gemini-2.5") || lower.includes("gemini-1.5") || (lower.includes("gpt-4o") && !lower.includes("mini")) || lower.includes("whisper") || lower.includes("audio");
     const supportsVideo = lower.includes("gemini");
@@ -234,5 +234,25 @@ export function getDefaultModelCapabilities(modelId: string): OpenRouterModelInf
             pdf: supportsPdf
         }
     };
+}
+
+/**
+ * Builds a model → pricing map (cost per 1M tokens) from fetched model metadata,
+ * so the session cost dashboard reflects real OpenRouter prices (N9).
+ */
+export function buildPricingMap(models: OpenRouterModelInfo[]): Record<string, ModelPricing> {
+    const map: Record<string, ModelPricing> = {};
+    for (const model of models) {
+        if (!model.pricing) continue;
+        const prompt = Number(model.pricing.prompt);
+        const completion = Number(model.pricing.completion);
+        if (!isFinite(prompt) || !isFinite(completion)) continue;
+        map[model.id] = {
+            // OpenRouter prices are per token; cost utils expect per 1M tokens
+            prompt: prompt * 1_000_000,
+            completion: completion * 1_000_000
+        };
+    }
+    return map;
 }
 

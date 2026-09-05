@@ -1,14 +1,13 @@
 import { App } from "obsidian";
-import { ChatMessage, LlmConfig, sendChatRequest, sendChatRequestStream, getModelTemporalInfo, LlmResponse } from "../llm";
+import { ChatMessage, LlmConfig, sendChatRequest, sendChatRequestStream, getModelTemporalInfo, LlmResponse, createAbortError } from "../llm";
 import { MemoryStore } from "../memory/memoryStore";
 import { SkillsLoader } from "../skills/skillsLoader";
-import { resolveContext } from "../context";
 import { ToolRegistry } from "../tools/toolRegistry";
 import { SupportedLanguage, t } from "../../i18n/translations";
 import { NeiAiChatSettings } from "../../../main";
 import { searchVaultLexical } from "../rag";
 import { searchVaultHybrid } from "../rag/vectorIndex";
-import { OpenRouterModelInfo } from "../openrouter";
+import { OpenRouterModelInfo, getDefaultModelCapabilities } from "../openrouter";
 
 import { IntentRouter, ExecutionMode } from "./intentRouter";
 import { ContextManager } from "./contextManager";
@@ -46,10 +45,50 @@ export interface AgentLoopResult {
     promptTokens: number;
     completionTokens: number;
     executionModeUsed: "quick" | "agent";
+    steps: AgentStep[];
+}
+
+/** Small bounded LRU (insertion-order based) to keep hot data without leaks. */
+class LruCache<K, V> {
+    private map = new Map<K, V>();
+    constructor(private max: number) {}
+
+    get(key: K): V | undefined {
+        const value = this.map.get(key);
+        if (value !== undefined) {
+            this.map.delete(key);
+            this.map.set(key, value);
+        }
+        return value;
+    }
+
+    set(key: K, value: V): void {
+        if (this.map.has(key)) this.map.delete(key);
+        else if (this.map.size >= this.max) {
+            const oldest = this.map.keys().next().value;
+            if (oldest !== undefined) this.map.delete(oldest);
+        }
+        this.map.set(key, value);
+    }
+}
+
+/** djb2 string hash — cheap content fingerprint for cache keys. */
+export function hashString(s: string): string {
+    let h = 5381;
+    for (let i = 0; i < s.length; i++) {
+        h = ((h << 5) + h + s.charCodeAt(i)) | 0;
+    }
+    return (h >>> 0).toString(36);
 }
 
 export class AgentLoop {
-    private static promptCache: Map<string, { prompt: string; timestamp: number }> = new Map();
+    private static promptCache: LruCache<string, { prompt: string; timestamp: number }> = new LruCache(20);
+
+    private static throwIfAborted(signal?: AbortSignal): void {
+        if (signal?.aborted) {
+            throw createAbortError();
+        }
+    }
 
     private static isResponseValid(response: LlmResponse | null | undefined): boolean {
         if (!response) return false;
@@ -62,17 +101,26 @@ export class AgentLoop {
     private static getSystemPrompt(
         language: SupportedLanguage,
         userQuery: string,
-        vaultContext: { ragContext?: string },
+        ragContext: string,
         agentsRules: string,
         memory: { learnedFacts: string[] },
         skills: Array<{ name: string; description: string }>,
-        prefetchedContext: string,
         settings: NeiAiChatSettings,
         modelId: string
     ): string {
-        const cacheKey = `${language}|${vaultContext.ragContext?.length || 0}|${agentsRules.length}|${memory.learnedFacts.length}|${skills.length}|${prefetchedContext.length}|${settings.memoryFile}|${modelId}`;
+        // Content-hash key: same lengths but different vault content must not collide.
+        const cacheKey = [
+            language,
+            modelId,
+            settings.memoryFile,
+            hashString(ragContext),
+            hashString(agentsRules),
+            hashString(memory.learnedFacts.join("|")),
+            hashString(skills.map(s => `${s.name}:${s.description}`).join("|"))
+        ].join("|");
+
         const cached = this.promptCache.get(cacheKey);
-        if (cached && Date.now() - cached.timestamp < 30000) {
+        if (cached && Date.now() - cached.timestamp < 60000) {
             return cached.prompt;
         }
 
@@ -115,8 +163,8 @@ export class AgentLoop {
         systemPrompt += `If user explicitly requests a tool (e.g., "search for X"), you MUST call that tool.\n`;
         systemPrompt += `------------------------\n`;
 
-        if (vaultContext.ragContext) {
-            systemPrompt += `\n--- VAULT CONTEXT (RAG) ---\n${vaultContext.ragContext}\n`;
+        if (ragContext) {
+            systemPrompt += `\n--- VAULT CONTEXT (RAG) ---\n${ragContext}\n`;
         }
 
         if (agentsRules.trim()) {
@@ -131,25 +179,21 @@ export class AgentLoop {
             systemPrompt += `\n--- AGENT SKILLS (${settings.skillsFolder}/) ---\n${skills.map(s => `[Skill: ${s.name}]\n${s.description}`).join("\n")}\n`;
         }
 
-        if (prefetchedContext) {
-            systemPrompt += prefetchedContext;
-        }
-
         this.promptCache.set(cacheKey, { prompt: systemPrompt, timestamp: Date.now() });
         return systemPrompt;
     }
 
     public static async run(options: AgentLoopOptions): Promise<AgentLoopResult> {
-        const { 
-            app, 
-            config, 
-            userQuery, 
-            chatHistory, 
+        const {
+            app,
+            config,
+            userQuery,
+            chatHistory,
             images,
-            executionMode = "auto", 
+            executionMode = "auto",
             useVaultContext = true,
             activeModelDetails,
-            onStepUpdate, 
+            onStepUpdate,
             onConfirmationRequired,
             onStreamChunk,
             maxIterations,
@@ -168,10 +212,12 @@ export class AgentLoop {
         };
 
         try {
+            this.throwIfAborted(abortSignal);
+
             const features = IntentRouter.extractFeatures(
-                userQuery, 
-                Boolean(images && images.length > 0), 
-                chatHistory, 
+                userQuery,
+                Boolean(images && images.length > 0),
+                chatHistory,
                 config.model,
                 activeModelDetails || undefined
             );
@@ -185,10 +231,10 @@ export class AgentLoop {
                 actualMode = "agent";
             } else {
                 const decision = IntentRouter.classifyIntent(
-                    userQuery, 
-                    Boolean(images && images.length > 0), 
-                    language, 
-                    chatHistory, 
+                    userQuery,
+                    Boolean(images && images.length > 0),
+                    language,
+                    chatHistory,
                     settings,
                     activeModelDetails || undefined
                 );
@@ -204,24 +250,31 @@ export class AgentLoop {
                 notifySteps();
             }
 
-            // 1. Resolve Context & Memory (Bypass if useVaultContext is false)
-            const vaultContext = useVaultContext ? await resolveContext(app, userQuery, true) : { ragContext: undefined };
+            // Models without tool calling cannot run agent mode (prevents provider 400s)
+            if (actualMode === "agent" && activeModelDetails && activeModelDetails.supportsTools === false) {
+                actualMode = "quick";
+                steps.push({
+                    id: "tools-unsupported-step",
+                    type: "thought",
+                    title: "Quick mode (model lacks tool calling)",
+                    detail: `Model "${config.model}" does not support tool calling; agent mode is unavailable.`,
+                    status: "completed"
+                });
+                notifySteps();
+            }
+
+            // 1. Memory & Skills (independent of the vault-context toggle)
             const memory = await MemoryStore.loadMemory(app, settings);
             const agentsRules = await MemoryStore.loadAgentsRules(app, settings);
             const skills = await SkillsLoader.loadSkills(app, settings);
 
-            // 2. Conditional Vault Prefetching via RAG
-            let prefetchedContext = "";
-            const needsVaultData = toolNeeds.needsVaultSearch || toolNeeds.needsVaultWrite;
-            const shouldPrefetchVault = useVaultContext && (
-                settings.enableAdaptivePrefetch
-                    ? (needsVaultData && actualMode === "agent")
-                    : (actualMode === "agent")
-            );
-
-            if (shouldPrefetchVault) {
-                // TODO: Implement dynamic token budget prefetch using calculateTokenBudget from calc.ts
-                const maxCount = settings.maxPrefetchedNotes || 5;
+            // 2. Vault context via a single RAG search (used to be resolved twice per message)
+            let ragContext = "";
+            if (useVaultContext) {
+                this.throwIfAborted(abortSignal);
+                const maxCount = actualMode === "agent"
+                    ? (settings.maxPrefetchedNotes || 5)
+                    : (settings.ragResultLimit || 5);
                 const searchResults = settings.enableSemanticRag
                     ? await searchVaultHybrid(app, userQuery, settings, maxCount)
                     : await searchVaultLexical(app, userQuery, maxCount, settings.prefetchSnippetLength);
@@ -237,24 +290,27 @@ export class AgentLoop {
                             matchedFoldersSet.add(folderName);
                         }
                         const cleanContent = res.content.replace(/^---[\s\S]*?---\n?/, "").trim();
-                        const snippet = cleanContent.length > settings.prefetchSnippetLength 
-                            ? cleanContent.substring(0, settings.prefetchSnippetLength) + "... [обрезано]" 
+                        const snippet = cleanContent.length > settings.prefetchSnippetLength
+                            ? cleanContent.substring(0, settings.prefetchSnippetLength) + "... [обрезано]"
                             : cleanContent;
 
                         prefetchedBlocks.push(`--- NOTE: [[${abstractFile.basename}]] (${abstractFile.path}) ---\n${snippet}`);
                     }
 
                     if (prefetchedBlocks.length > 0) {
-                        const matchedFoldersArr = Array.from(matchedFoldersSet);
-                        prefetchedContext += `\n${t("autoIndexedVaultNotes", language)}\n${prefetchedBlocks.join("\n\n")}\n`;
-                        steps.push({
-                            id: "folder-prefetch-step",
-                            type: "tool_result",
-                            title: t("folderPrefetchTitle", language, { folders: matchedFoldersArr.join(", ") || "Vault" }),
-                            detail: t("folderPrefetchDetail", language, { count: matchedFoldersArr.length.toString() }),
-                            status: "completed"
-                        });
-                        notifySteps();
+                        ragContext = `${t("autoIndexedVaultNotes", language)}\n${prefetchedBlocks.join("\n\n")}\n`;
+
+                        if (actualMode === "agent") {
+                            const matchedFoldersArr = Array.from(matchedFoldersSet);
+                            steps.push({
+                                id: "folder-prefetch-step",
+                                type: "tool_result",
+                                title: t("folderPrefetchTitle", language, { folders: matchedFoldersArr.join(", ") || "Vault" }),
+                                detail: t("folderPrefetchDetail", language, { count: matchedFoldersArr.length.toString() }),
+                                status: "completed"
+                            });
+                            notifySteps();
+                        }
                     }
                 }
             }
@@ -266,7 +322,7 @@ export class AgentLoop {
             }
 
             // 4. Build System Prompt & Prune History (ContextManager)
-            const systemPrompt = this.getSystemPrompt(language, userQuery, vaultContext, agentsRules, memory, skills, prefetchedContext, settings, config.model);
+            const systemPrompt = this.getSystemPrompt(language, userQuery, ragContext, agentsRules, memory, skills, settings, config.model);
 
             const prunedHistory = ContextManager.pruneHistory(chatHistory, 6);
 
@@ -278,12 +334,14 @@ export class AgentLoop {
 
             // 5. QUICK MODE (Single Direct Turn with optional Streaming)
             if (actualMode === "quick") {
+                this.throwIfAborted(abortSignal);
                 let response: LlmResponse;
                 try {
                     response = (settings.enableStreaming && onStreamChunk)
                         ? await sendChatRequestStream(config, messages, undefined, onStreamChunk, abortSignal)
                         : await sendChatRequest(config, messages, undefined, abortSignal);
                 } catch (e: unknown) {
+                    if (e instanceof Error && e.name === "AbortError") throw e;
                     const err = e as { message?: string };
                     throw new Error(t("quickLlmError", language, { error: err?.message || String(e) }));
                 }
@@ -302,31 +360,26 @@ export class AgentLoop {
                     }
                 }
 
-                const responseText = response.content || "";
-
-                if (this.shouldAutoCreateNote(userQuery, responseText)) {
-                    await this.attemptAutoCreateNote(app, userQuery, responseText, steps, notifySteps, toolRegistry, language);
-                }
-
                 return {
-                    responseText,
+                    responseText: response.content || "",
                     promptTokens: totalPromptTokens,
                     completionTokens: totalCompletionTokens,
-                    executionModeUsed: "quick"
+                    executionModeUsed: "quick",
+                    steps: [...steps]
                 };
             }
 
             // 6. AGENT MODE (Multi-step Tool Execution Loop)
             const allTools = toolRegistry.getToolDefinitions();
+            const validToolNames = new Set(allTools.map(t => t.function.name));
             let filteredTools = allTools;
 
             let iteration = 0;
             let finalResponseText = "";
-            let toolCalledCount = 0;
-            const executedCallsMap: Record<string, number> = {};
             const effectiveMaxIterations = maxIterations ?? settings.maxAgentIterations;
 
             while (iteration < effectiveMaxIterations) {
+                this.throwIfAborted(abortSignal);
                 iteration++;
 
                 // Only filter tools for the FIRST turn based on intent classification
@@ -338,7 +391,10 @@ export class AgentLoop {
                                 ["web_search", "read_web_page", "analyze_github_repo"].includes(t.function.name)
                             );
                         } else if (!toolNeeds.needsWebSearch && (toolNeeds.needsVaultSearch || toolNeeds.needsVaultWrite)) {
+                            // Prefix-based allow-list plus tools whose names don't match any vault verb prefix
+                            const extraAllowed = new Set(["query_dataview", "render_templater", "execute_obsidian_command"]);
                             filteredTools = allTools.filter(t =>
+                                extraAllowed.has(t.function.name) ||
                                 t.function.name.startsWith("read_") ||
                                 t.function.name.startsWith("get_") ||
                                 t.function.name.startsWith("search_") ||
@@ -396,7 +452,8 @@ export class AgentLoop {
                 // A) Standard OpenAI / OpenRouter Native Tool Calls
                 // Execute tools on ANY iteration where model calls them
                 if (response.tool_calls && response.tool_calls.length > 0) {
-                    toolCalledCount += response.tool_calls.length;
+                    // Do not run side-effectful tools after the user pressed Stop
+                    this.throwIfAborted(abortSignal);
 
                     messages.push({
                         role: "assistant",
@@ -404,6 +461,7 @@ export class AgentLoop {
                         tool_calls: response.tool_calls
                     });
 
+                    const executedCallsMap: Record<string, number> = {};
                     const toolPromises = response.tool_calls.map(async (toolCall) => {
                         const toolName = toolCall.function.name;
                         const toolArgsStr = toolCall.function.arguments;
@@ -466,16 +524,15 @@ export class AgentLoop {
 
                     const toolResponses = await Promise.all(toolPromises);
                     messages.push(...toolResponses);
-                } 
-                // B) Fallback: Text-based JSON Tool Call Parser
-                else if (response.content && this.containsJsonToolCall(response.content)) {
-                    const parsedTool = this.extractJsonToolCall(response.content);
+                }
+                // B) Fallback: Text-based JSON Tool Call Parser (hardened: signature + registry check)
+                else if (response.content && this.containsJsonToolCall(response.content, validToolNames)) {
+                    const parsedTool = this.extractJsonToolCall(response.content, validToolNames);
                     if (parsedTool) {
-                        toolCalledCount++;
+                        this.throwIfAborted(abortSignal);
+
                         const callId = "text_call_" + Date.now();
                         const callArgsStr = JSON.stringify(parsedTool.args);
-                        const callKey = `${parsedTool.name}:${callArgsStr}`;
-                        executedCallsMap[callKey] = (executedCallsMap[callKey] || 0) + 1;
 
                         steps.push({
                             id: callId,
@@ -529,7 +586,7 @@ export class AgentLoop {
                         finalResponseText = response.content;
                         break;
                     }
-                } 
+                }
                 // C) Final Text Response
                 else {
                     // No tool calls = model is done
@@ -539,7 +596,7 @@ export class AgentLoop {
             }
 
             // Safety: prevent returning raw tool call JSON/XML as final answer
-            if (finalResponseText && this.containsJsonToolCall(finalResponseText)) {
+            if (finalResponseText && this.containsJsonToolCall(finalResponseText, validToolNames)) {
                 console.warn('[AgentLoop] Model returned tool call as final text, stripping');
                 // Remove JSON tool calls in markdown code blocks
                 finalResponseText = finalResponseText.replace(/```[\s\S]*?```/g, '').trim()
@@ -548,15 +605,12 @@ export class AgentLoop {
                     || t("agentNoOutput", language);
             }
 
-            if (toolCalledCount > 0 && this.shouldAutoCreateNote(userQuery, finalResponseText)) {
-                await this.attemptAutoCreateNote(app, userQuery, finalResponseText, steps, notifySteps, toolRegistry, language);
-            }
-
             return {
                 responseText: finalResponseText || t("agentNoOutput", language),
                 promptTokens: totalPromptTokens,
                 completionTokens: totalCompletionTokens,
-                executionModeUsed: "agent"
+                executionModeUsed: "agent",
+                steps: [...steps]
             };
         } catch (e: unknown) {
             console.error("[NEI Agent Loop Error]", e);
@@ -564,12 +618,95 @@ export class AgentLoop {
         }
     }
 
-    private static containsJsonToolCall(text: string): boolean {
-        // Check for JSON tool calls in markdown code blocks
-        if (/```(?:json)?\s*\{[\s\S]*?"(?:tool|name|function|action)"\s*:/i.test(text)) {
-            return true;
+    /**
+     * Extracts balanced-brace JSON object candidates from text
+     * (string-aware; prefers fenced code blocks when present).
+     */
+    private static extractJsonCandidates(text: string): string[] {
+        const scan = (src: string): string[] => {
+            const out: string[] = [];
+            let depth = 0;
+            let start = -1;
+            let inStr: string | null = null;
+            for (let i = 0; i < src.length; i++) {
+                const ch = src[i];
+                const prev = i > 0 ? src[i - 1] : "";
+                if (inStr) {
+                    if (ch === inStr && prev !== "\\") inStr = null;
+                    continue;
+                }
+                if (ch === '"' && depth > 0) {
+                    inStr = ch;
+                    continue;
+                }
+                if (ch === "{") {
+                    if (depth === 0) start = i;
+                    depth++;
+                } else if (ch === "}") {
+                    depth--;
+                    if (depth === 0 && start >= 0) {
+                        out.push(src.slice(start, i + 1));
+                        start = -1;
+                    }
+                    if (depth < 0) depth = 0;
+                }
+            }
+            return out;
+        };
+
+        const candidates: string[] = [];
+
+        // 1. XML tool calls
+        const xmlMatches = text.matchAll(/<tool_call>\s*([\s\S]*?)\s*<\/tool_call>/gi);
+        for (const m of xmlMatches) {
+            candidates.push(...scan(m[1]));
         }
-        // Check for XML tool calls - must have both opening and closing tags
+
+        // 2. Fenced code blocks
+        const fences = text.matchAll(/```(?:json)?\s*([\s\S]*?)```/gi);
+        let fenceCount = 0;
+        for (const m of fences) {
+            fenceCount++;
+            candidates.push(...scan(m[1]));
+        }
+
+        // 3. Whole text (only when no fences — avoids matching prose examples)
+        if (fenceCount === 0) {
+            candidates.push(...scan(text));
+        }
+
+        return candidates;
+    }
+
+    private static parseToolCandidate(
+        raw: string,
+        validToolNames: Set<string>
+    ): { name: string; args: Record<string, unknown> } | null {
+        let parsed: Record<string, unknown>;
+        try {
+            parsed = JSON.parse(raw) as Record<string, unknown>;
+        } catch {
+            return null;
+        }
+        if (!parsed || typeof parsed !== "object") return null;
+
+        // Explicit signature only: `tool` key, or `name` combined with an args key.
+        // Generic `name`/`function`/`action` alone would match arbitrary JSON examples.
+        const toolName = typeof parsed.tool === "string" ? parsed.tool
+            : typeof parsed.name === "string" && ("arguments" in parsed || "args" in parsed || "action_input" in parsed) ? parsed.name
+            : undefined;
+        if (!toolName || typeof toolName !== "string") return null;
+
+        // Must reference a real registered tool when the registry is known
+        if (validToolNames.size > 0 && !validToolNames.has(toolName)) return null;
+
+        const args = (parsed.arguments || parsed.args || parsed.action_input || {}) as Record<string, unknown>;
+        return { name: toolName, args };
+    }
+
+    // Public for regression tests (pure functions, no side effects)
+    public static containsJsonToolCall(text: string, validToolNames: Set<string>): boolean {
+        // Check for complete XML tool calls
         if (/<tool_call>[\s\S]*?<\/tool_call>/i.test(text)) {
             return true;
         }
@@ -578,94 +715,21 @@ export class AgentLoop {
             console.warn('[AgentLoop] Incomplete tool_call tag detected (streaming artifact), ignoring');
             return false;
         }
+        for (const candidate of this.extractJsonCandidates(text)) {
+            if (this.parseToolCandidate(candidate, validToolNames)) return true;
+        }
         return false;
     }
 
-    private static extractJsonToolCall(text: string): { name: string; args: Record<string, unknown> } | null {
-        try {
-            // First try to extract complete XML tool calls
-            const xmlMatch = text.match(/<tool_call>\s*([\s\S]*?)\s*<\/tool_call>/i);
-            if (xmlMatch) {
-                const rawJson = xmlMatch[1];
-                const jsonMatch = rawJson.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/i) || rawJson.match(/(\{[\s\S]*?\})/i);
-                if (jsonMatch) {
-                    const parsed = JSON.parse(jsonMatch[1]) as Record<string, unknown>;
-                    const toolName = typeof parsed.tool === "string" ? parsed.tool :
-                                     typeof parsed.name === "string" ? parsed.name :
-                                     typeof parsed.function === "string" ? parsed.function :
-                                     typeof parsed.action === "string" ? parsed.action : undefined;
-                    if (toolName) {
-                        const args = (parsed.arguments || parsed.args || parsed.action_input || {}) as Record<string, unknown>;
-                        return { name: toolName, args };
-                    }
-                }
-            }
-
-            // Fallback: try to find JSON in markdown code blocks
-            const jsonMatch = text.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/i) || text.match(/(\{[\s\S]*?\})/i);
-            if (jsonMatch) {
-                const parsed = JSON.parse(jsonMatch[1]) as Record<string, unknown>;
-                const toolName = typeof parsed.tool === "string" ? parsed.tool :
-                                 typeof parsed.name === "string" ? parsed.name :
-                                 typeof parsed.function === "string" ? parsed.function :
-                                 typeof parsed.action === "string" ? parsed.action : undefined;
-                if (toolName) {
-                    const args = (parsed.arguments || parsed.args || parsed.action_input || {}) as Record<string, unknown>;
-                    return { name: toolName, args };
-                }
-            }
-        } catch {
-            /* ignore JSON parse error */
+    // Public for regression tests (pure functions, no side effects)
+    public static extractJsonToolCall(
+        text: string,
+        validToolNames: Set<string>
+    ): { name: string; args: Record<string, unknown> } | null {
+        for (const candidate of this.extractJsonCandidates(text)) {
+            const parsed = this.parseToolCandidate(candidate, validToolNames);
+            if (parsed) return parsed;
         }
         return null;
-    }
-
-    private static shouldAutoCreateNote(query: string, responseText: string): boolean {
-        const queryLower = query.toLowerCase();
-        const isCreateRequest = queryLower.includes("создай") || 
-                                queryLower.includes("создать") || 
-                                queryLower.includes("напиши заметку") ||
-                                queryLower.includes("сохрани") ||
-                                queryLower.includes("create note") ||
-                                queryLower.includes("save note");
-        return isCreateRequest && responseText.length > 30;
-    }
-
-    private static async attemptAutoCreateNote(app: App, query: string, responseText: string, steps: AgentStep[], notifySteps: () => void, toolRegistry: ToolRegistry, language: SupportedLanguage): Promise<void> {
-        let notePath = "";
-
-        const folderMatch = query.match(/(?:папке|папку|folder|directory)\s+["']?([a-zA-Z0-9_\-/А-Яа-яЁё ]+?)["']?(?:\s|$)/i);
-        const fileMatch = query.match(/(?:заметку|файл|note|file)\s+["']?([a-zA-Z0-9_\-/А-Яа-яЁё ]+?\.md)["']?/i);
-
-        if (fileMatch && fileMatch[1]) {
-            notePath = fileMatch[1].trim();
-        } else {
-            const folder = folderMatch && folderMatch[1] ? folderMatch[1].trim() : "";
-            const dateStr = new Date().toISOString().slice(0, 10);
-            const titleMatch = query.match(/(?:создай|создать|create|write)\s+(?:заметку|файл|название|note)?\s*["']?([^"'\n,]{3,30})["']?/i);
-            let slug = titleMatch && titleMatch[1] ? titleMatch[1].trim().replace(/[^\w\sА-Яа-яЁё-]/g, "") : "New_Note";
-            if (slug.length < 3) slug = "New_Note";
-            notePath = folder ? `${folder}/${slug}_${dateStr}.md` : `${slug}_${dateStr}.md`;
-        }
-
-        try {
-            const execResult = await toolRegistry.executeTool(
-                app,
-                "auto-create-fallback",
-                "create_note",
-                JSON.stringify({ path: notePath, content: responseText })
-            );
-
-            steps.push({
-                id: "auto-create-step",
-                type: "tool_result",
-                title: t("autoCreatedNote", language, { path: notePath }),
-                detail: String(execResult.result),
-                status: execResult.isError ? "failed" : "completed"
-            });
-            notifySteps();
-        } catch {
-            /* ignore auto create error */
-        }
     }
 }
