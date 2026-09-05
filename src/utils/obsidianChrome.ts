@@ -207,6 +207,33 @@ export function computeKeyboardInset(
     return Math.max(0, currentInnerHeight - visualViewport.height - visualViewport.offsetTop);
 }
 
+/** Gap below the panel that means "the keyboard already has its room". */
+export const KEYBOARD_ROOM_THRESHOLD = 60;
+
+export interface KeyboardInsetParams {
+    kbOpen: boolean;
+    layoutShrank: boolean;
+    /** Empty space between the panel bottom and the viewport bottom. */
+    roomBelow: number;
+    vvInset: number;
+    capInset: number;
+}
+
+/**
+ * Decides how much of the bottom inset the keyboard itself contributes.
+ *  - Resizing layout: the workspace already moved — 0.
+ *  - Obsidian-made room: on mobile Obsidian may shrink the WORKSPACE (not the
+ *    webview) when the keyboard opens (measured on device: main window, ih
+ *    unchanged, pill removed from DOM, big gap below the panel). A large gap
+ *    below the panel means the keyboard is already accounted for — 0.
+ *  - Otherwise (keyboard purely overlays the page): the larger of the signals.
+ */
+export function resolveKeyboardInset(p: KeyboardInsetParams): number {
+    if (p.layoutShrank) return 0;
+    if (p.kbOpen && p.roomBelow > KEYBOARD_ROOM_THRESHOLD) return 0;
+    return Math.max(p.vvInset, p.capInset);
+}
+
 /**
  * Watches a container and keeps `--nei-chrome-inset` up to date.
  * Returns a detach function.
@@ -248,12 +275,14 @@ export function attachChromeInsetWatcher(container: HTMLElement): () => void {
         );
         // Keyboard closed again → re-baseline for the next open
         if (window.innerHeight >= baselineInnerHeight) baselineInnerHeight = window.innerHeight;
-        // In a non-resizing webview the keyboard OVERLAYS the page: bottom chrome
-        // (navbar pill) is then hidden BEHIND the keyboard and covers the same
-        // bottom region — take max, never sum (summing pushed the input ~100px
-        // too far from the keyboard). In a resizing webview the layout already
-        // excludes the keyboard, so the keyboard contributes nothing here.
-        const keyboard = layoutShrank ? 0 : Math.max(keyboardInset, capKeyboardInset);
+        const roomBelow = Math.max(0, window.innerHeight - container.getBoundingClientRect().bottom);
+        const keyboard = resolveKeyboardInset({
+            kbOpen,
+            layoutShrank,
+            roomBelow,
+            vvInset: keyboardInset,
+            capInset: capKeyboardInset
+        });
         const total = Math.ceil(Math.max(effectiveChrome, keyboard));
         container.style.setProperty("--nei-chrome-inset", `${total}px`);
         // Telemetry for the layout inspector / remote debugging
@@ -263,6 +292,7 @@ export function attachChromeInsetWatcher(container: HTMLElement): () => void {
         container.dataset.neiKb = String(keyboard);
         container.dataset.neiCap = String(capKeyboardInset);
         container.dataset.neiGap = String(systemGap);
+        container.dataset.neiRoom = String(Math.round(roomBelow));
     };
 
     const measureDeep = () => {
@@ -402,6 +432,7 @@ export function attachChromeInsetWatcher(container: HTMLElement): () => void {
         delete container.dataset.neiKb;
         delete container.dataset.neiCap;
         delete container.dataset.neiGap;
+        delete container.dataset.neiRoom;
         document.body.classList.remove("nei-kb-open");
     };
 }

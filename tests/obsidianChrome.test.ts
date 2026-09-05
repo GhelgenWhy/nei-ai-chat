@@ -3,6 +3,7 @@ import {
     measureBottomChromeInset,
     measureChrome,
     computeKeyboardInset,
+    resolveKeyboardInset,
     bottomOverlayOverlap
 } from "../src/utils/obsidianChrome";
 
@@ -174,5 +175,38 @@ describe("computeKeyboardInset", () => {
 
     test("no visualViewport API → zero", () => {
         expect(computeKeyboardInset(800, 800, undefined)).toBe(0);
+    });
+});
+
+describe("resolveKeyboardInset (Obsidian mobile shrinks the workspace, not the webview)", () => {
+    const base = { kbOpen: true, layoutShrank: false, vvInset: 0, capInset: 300 };
+
+    test("measured on device: Obsidian made room below the panel → keyboard contributes 0", () => {
+        // main window, ih=904, panel bottom ≈ keyboard top → room ≈ keyboard height
+        expect(resolveKeyboardInset({ ...base, roomBelow: 296 })).toBe(0);
+    });
+
+    test("no room (keyboard purely overlays, e.g. drawer) → bridge height applies", () => {
+        expect(resolveKeyboardInset({ ...base, roomBelow: 0 })).toBe(300);
+        expect(resolveKeyboardInset({ ...base, roomBelow: 45 })).toBe(300);
+    });
+
+    test("small room below the threshold does not disable the keyboard inset", () => {
+        expect(resolveKeyboardInset({ ...base, roomBelow: 45 })).toBe(300);
+        expect(resolveKeyboardInset({ ...base, roomBelow: 60 })).toBe(300);
+        expect(resolveKeyboardInset({ ...base, roomBelow: 61 })).toBe(0);
+    });
+
+    test("resizing layout always wins (keyboard already excluded by the layout)", () => {
+        expect(resolveKeyboardInset({ ...base, layoutShrank: true, roomBelow: 300 })).toBe(0);
+        expect(resolveKeyboardInset({ kbOpen: true, layoutShrank: true, roomBelow: 0, vvInset: 200, capInset: 400 })).toBe(0);
+    });
+
+    test("keyboard closed → 0 regardless of stale bridge data", () => {
+        expect(resolveKeyboardInset({ kbOpen: false, layoutShrank: false, roomBelow: 0, vvInset: 0, capInset: 300 })).toBe(0);
+    });
+
+    test("takes the larger of vv / cap when the keyboard overlays", () => {
+        expect(resolveKeyboardInset({ ...base, roomBelow: 0, vvInset: 340, capInset: 300 })).toBe(340);
     });
 });

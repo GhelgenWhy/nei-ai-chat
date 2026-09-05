@@ -28980,6 +28980,14 @@ function computeKeyboardInset(baselineInnerHeight, currentInnerHeight, visualVie
     return 0;
   return Math.max(0, currentInnerHeight - visualViewport.height - visualViewport.offsetTop);
 }
+var KEYBOARD_ROOM_THRESHOLD = 60;
+function resolveKeyboardInset(p) {
+  if (p.layoutShrank)
+    return 0;
+  if (p.kbOpen && p.roomBelow > KEYBOARD_ROOM_THRESHOLD)
+    return 0;
+  return Math.max(p.vvInset, p.capInset);
+}
 function attachChromeInsetWatcher(container) {
   let baselineInnerHeight = window.innerHeight;
   let deep = { inset: 0, gapBelow: 0 };
@@ -29007,7 +29015,14 @@ function attachChromeInsetWatcher(container) {
     );
     if (window.innerHeight >= baselineInnerHeight)
       baselineInnerHeight = window.innerHeight;
-    const keyboard = layoutShrank ? 0 : Math.max(keyboardInset, capKeyboardInset);
+    const roomBelow = Math.max(0, window.innerHeight - container.getBoundingClientRect().bottom);
+    const keyboard = resolveKeyboardInset({
+      kbOpen,
+      layoutShrank,
+      roomBelow,
+      vvInset: keyboardInset,
+      capInset: capKeyboardInset
+    });
     const total = Math.ceil(Math.max(effectiveChrome, keyboard));
     container.style.setProperty("--nei-chrome-inset", `${total}px`);
     container.dataset.neiInset = String(total);
@@ -29016,6 +29031,7 @@ function attachChromeInsetWatcher(container) {
     container.dataset.neiKb = String(keyboard);
     container.dataset.neiCap = String(capKeyboardInset);
     container.dataset.neiGap = String(systemGap);
+    container.dataset.neiRoom = String(Math.round(roomBelow));
   };
   const measureDeep = () => {
     deep = scanBottomOverlaps(container);
@@ -29137,6 +29153,7 @@ function attachChromeInsetWatcher(container) {
     delete container.dataset.neiKb;
     delete container.dataset.neiCap;
     delete container.dataset.neiGap;
+    delete container.dataset.neiRoom;
     document.body.classList.remove("nei-kb-open");
   };
 }
