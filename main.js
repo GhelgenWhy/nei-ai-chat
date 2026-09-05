@@ -28891,6 +28891,7 @@ var OBSIDIAN_BOTTOM_CHROME_SELECTOR = ".status-bar, .mobile-toolbar, .mobile-nav
 var TRANSIENT_OVERLAY_SELECTOR = ".notice, .menu, .modal-container";
 var MIN_CHROME_HEIGHT = 16;
 var MIN_CHROME_WIDTH = 80;
+var KEYBOARD_HEIGHT_TRIM = 20;
 function bottomOverlayOverlap(containerRect, rect, style) {
   if (style.display === "none" || style.visibility === "hidden" || style.opacity === 0)
     return 0;
@@ -28984,12 +28985,13 @@ function attachChromeInsetWatcher(container) {
   let deep = { inset: 0, gapBelow: 0 };
   let systemGap = 0;
   let capKeyboardInset = 0;
+  let capKeyboardSeen = false;
   let deepTimer = null;
   const timers = [];
   const capListenerHandles = [];
   const apply = () => {
     const layoutShrank = window.innerHeight < baselineInnerHeight - 40;
-    const kbOpen = layoutShrank || capKeyboardInset > 0;
+    const kbOpen = layoutShrank || capKeyboardSeen;
     document.body.classList.toggle("nei-kb-open", kbOpen);
     const fast = measureChrome(container);
     if (fast.inset > 0)
@@ -29029,10 +29031,15 @@ function attachChromeInsetWatcher(container) {
         let h = Math.round(e?.keyboardHeight || 0);
         if (h > window.innerHeight * 0.8)
           h = Math.round(h / (window.devicePixelRatio || 1));
-        capKeyboardInset = Math.max(0, Math.min(h, Math.round(window.innerHeight * 0.6)));
+        capKeyboardSeen = true;
+        capKeyboardInset = Math.max(
+          0,
+          Math.min(h - KEYBOARD_HEIGHT_TRIM, Math.round(window.innerHeight * 0.6))
+        );
         apply();
       };
       const onHide = () => {
+        capKeyboardSeen = false;
         capKeyboardInset = 0;
         apply();
       };

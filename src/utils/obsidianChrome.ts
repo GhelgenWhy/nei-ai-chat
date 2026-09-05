@@ -49,6 +49,13 @@ const MIN_CHROME_HEIGHT = 16;
 const MIN_CHROME_WIDTH = 80;
 
 /**
+ * Capacitor's keyboardHeight tends to over-report (suggestion strip, rounded
+ * corners) — the input ends up floating above the keyboard. Calibrated
+ * on-device (MIUI): trim ~20px from bridge-reported heights.
+ */
+const KEYBOARD_HEIGHT_TRIM = 20;
+
+/**
  * How many pixels `rect` covers of the container's bottom strip, given its
  * computed style. Returns 0 for non-overlays (static elements, hidden
  * elements, tiny floating buttons, elements translated off the bottom edge)
@@ -214,6 +221,9 @@ export function attachChromeInsetWatcher(container: HTMLElement): () => void {
     // on Android WebViews where the keyboard neither resizes the layout viewport
     // nor shrinks visualViewport (it just overlays the page).
     let capKeyboardInset = 0;
+    // Separate "keyboard seen" flag: stays true even if the reported height
+    // trims down to 0, so the open/closed state never flickers.
+    let capKeyboardSeen = false;
     let deepTimer: number | null = null;
     const timers: number[] = [];
     const capListenerHandles: Array<Promise<unknown> | unknown> = [];
@@ -222,7 +232,7 @@ export function attachChromeInsetWatcher(container: HTMLElement): () => void {
         // Keyboard open = layout viewport shrank (resizing webview) OR the
         // Capacitor bridge reported a keyboard (non-resizing webviews, e.g. MIUI).
         const layoutShrank = window.innerHeight < baselineInnerHeight - 40;
-        const kbOpen = layoutShrank || capKeyboardInset > 0;
+        const kbOpen = layoutShrank || capKeyboardSeen;
         document.body.classList.toggle("nei-kb-open", kbOpen);
 
         const fast = measureChrome(container);
@@ -274,10 +284,18 @@ export function attachChromeInsetWatcher(container: HTMLElement): () => void {
             const onShow = (e: { keyboardHeight?: number }) => {
                 let h = Math.round(e?.keyboardHeight || 0);
                 if (h > window.innerHeight * 0.8) h = Math.round(h / (window.devicePixelRatio || 1));
-                capKeyboardInset = Math.max(0, Math.min(h, Math.round(window.innerHeight * 0.6)));
+                // Bridges tend to over-report by the suggestion strip / rounding —
+                // the input ends up floating above the keyboard. Calibrated
+                // on-device (MIUI): trim ~20px.
+                capKeyboardSeen = true;
+                capKeyboardInset = Math.max(
+                    0,
+                    Math.min(h - KEYBOARD_HEIGHT_TRIM, Math.round(window.innerHeight * 0.6))
+                );
                 apply();
             };
             const onHide = () => {
+                capKeyboardSeen = false;
                 capKeyboardInset = 0;
                 apply();
             };
