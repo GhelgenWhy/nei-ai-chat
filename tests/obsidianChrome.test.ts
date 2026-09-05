@@ -1,7 +1,8 @@
 import { describe, test, expect } from "vitest";
 import {
     measureBottomChromeInset,
-    computeKeyboardInset
+    computeKeyboardInset,
+    bottomOverlayOverlap
 } from "../src/utils/obsidianChrome";
 
 type Rect = { top: number; bottom: number; left: number; right: number; width: number; height: number };
@@ -22,6 +23,8 @@ const statusBar: Partial<Rect> = { top: 776, bottom: 800, left: 0, right: 400, w
 
 // Mobile toolbar above the keyboard: extends below the (unresized) container bottom
 const mobileToolbar: Partial<Rect> = { top: 760, bottom: 860, left: 0, right: 400, width: 400, height: 100 };
+
+const visibleFixed = { position: "fixed", display: "block", visibility: "visible", opacity: 1 };
 
 describe("measureBottomChromeInset", () => {
     test("status bar overlapping the panel bottom yields its height", () => {
@@ -58,16 +61,73 @@ describe("measureBottomChromeInset", () => {
     });
 });
 
+describe("bottomOverlayOverlap (deep scan predicate — floating mobile navbar pill)", () => {
+    const cRect: Rect = { top: 0, bottom: 800, left: 0, right: 400, width: 400, height: 800 };
+
+    test("fixed floating pill overlapping the bottom is counted with full clearance", () => {
+        // MIUI/Obsidian mobile navbar pill: centered, covers the input row
+        const pill: Rect = { top: 700, bottom: 800, left: 30, right: 370, width: 340, height: 100 };
+        expect(bottomOverlayOverlap(cRect, pill, visibleFixed)).toBe(100);
+    });
+
+    test("auto-hidden pill (translated below the viewport) is ignored", () => {
+        const hidden: Rect = { top: 810, bottom: 910, left: 30, right: 370, width: 340, height: 100 };
+        expect(bottomOverlayOverlap(cRect, hidden, visibleFixed)).toBe(0);
+    });
+
+    test("static in-flow element is ignored (only fixed/absolute overlay)", () => {
+        const pill: Rect = { top: 700, bottom: 800, left: 30, right: 370, width: 340, height: 100 };
+        expect(bottomOverlayOverlap(cRect, pill, { ...visibleFixed, position: "static" })).toBe(0);
+    });
+
+    test("hidden / transparent elements are ignored", () => {
+        const pill: Rect = { top: 700, bottom: 800, left: 30, right: 370, width: 340, height: 100 };
+        expect(bottomOverlayOverlap(cRect, pill, { ...visibleFixed, display: "none" })).toBe(0);
+        expect(bottomOverlayOverlap(cRect, pill, { ...visibleFixed, visibility: "hidden" })).toBe(0);
+        expect(bottomOverlayOverlap(cRect, pill, { ...visibleFixed, opacity: 0 })).toBe(0);
+    });
+
+    test("small floating buttons (FABs) are below the chrome size threshold", () => {
+        const fab: Rect = { top: 730, bottom: 786, left: 320, right: 376, width: 56, height: 56 };
+        expect(bottomOverlayOverlap(cRect, fab, visibleFixed)).toBe(0);
+    });
+
+    test("element off to the side without horizontal overlap is ignored", () => {
+        const sideBar: Rect = { top: 700, bottom: 800, left: 500, right: 900, width: 400, height: 100 };
+        expect(bottomOverlayOverlap(cRect, sideBar, visibleFixed)).toBe(0);
+    });
+
+    test("absolute-positioned overlay (drawer content) is counted too", () => {
+        const drawer: Rect = { top: 650, bottom: 820, left: 0, right: 400, width: 400, height: 170 };
+        expect(bottomOverlayOverlap(cRect, drawer, { ...visibleFixed, position: "absolute" })).toBe(150);
+    });
+
+    test("full-screen backdrop layer (drawer dim) is NOT chrome — must not pad", () => {
+        // Regression: a fixed backdrop covering the panel from the top produced
+        // an inset equal to the panel height and collapsed the message list.
+        const backdrop: Rect = { top: 0, bottom: 800, left: 0, right: 400, width: 400, height: 800 };
+        expect(bottomOverlayOverlap(cRect, backdrop, visibleFixed)).toBe(0);
+    });
+
+    test("overlay starting in the top half is treated as backdrop, not chrome", () => {
+        const tallOverlay: Rect = { top: 100, bottom: 800, left: 0, right: 400, width: 400, height: 700 };
+        expect(bottomOverlayOverlap(cRect, tallOverlay, visibleFixed)).toBe(0);
+    });
+
+    test("measureBottomChromeInset skips full-screen wrappers of known classes", () => {
+        const wrapper: Partial<Rect> = { top: 0, bottom: 800, left: 0, right: 400, width: 400, height: 800 };
+        expect(measureBottomChromeInset(container(), [el(wrapper)])).toBe(0);
+    });
+});
+
 describe("computeKeyboardInset", () => {
     const vv = (height: number, offsetTop = 0) => ({ height, offsetTop });
 
     test("resized webview (Android/Capacitor): layout shrank → no extra inset", () => {
-        // baseline 800 → innerHeight now 500 (webview resized by keyboard)
         expect(computeKeyboardInset(800, 500, vv(500))).toBe(0);
     });
 
     test("non-resizing webview (iOS edge): visual viewport shrank → keyboard height", () => {
-        // layout stayed 800, visual viewport shrank to 500
         expect(computeKeyboardInset(800, 800, vv(500))).toBe(300);
     });
 

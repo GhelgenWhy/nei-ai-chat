@@ -28546,7 +28546,8 @@ var ModelCapabilityBar = (0, import_react5.memo)(({
     fontSize: "clamp(9px, 1.5cqi, 11px)",
     lineHeight: "1.3",
     minHeight: "clamp(24px, 4cqi, 32px)",
-    boxSizing: "border-box"
+    boxSizing: "border-box",
+    overflow: "hidden"
   }, children: [
     /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { style: {
       display: "flex",
@@ -28596,9 +28597,10 @@ var ModelCapabilityBar = (0, import_react5.memo)(({
       fontFamily: "var(--font-monospace, monospace)",
       fontSize: "clamp(8px, 1.2cqi, 10px)",
       color: "var(--text-muted)",
-      whiteSpace: "nowrap",
-      flexShrink: 0,
-      marginLeft: "auto"
+      minWidth: 0,
+      flexShrink: 1,
+      marginLeft: "auto",
+      overflow: "hidden"
     }, children: [
       "Context: ",
       /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("strong", { style: { color: "var(--text-normal)" }, children: formatTokens(totalTokens) }),
@@ -28885,16 +28887,38 @@ function calculateCost(promptTokens, completionTokens, modelId, pricingMap) {
 }
 
 // src/utils/obsidianChrome.ts
-var OBSIDIAN_BOTTOM_CHROME_SELECTOR = ".status-bar, .mobile-toolbar";
+var OBSIDIAN_BOTTOM_CHROME_SELECTOR = ".status-bar, .mobile-toolbar, .mobile-navbar";
+var TRANSIENT_OVERLAY_SELECTOR = ".notice, .menu, .modal-container";
+var MIN_CHROME_HEIGHT = 16;
+var MIN_CHROME_WIDTH = 80;
+function bottomOverlayOverlap(containerRect, rect, style) {
+  if (style.display === "none" || style.visibility === "hidden" || style.opacity === 0)
+    return 0;
+  if (style.position !== "fixed" && style.position !== "absolute")
+    return 0;
+  if (rect.height < MIN_CHROME_HEIGHT || rect.width < MIN_CHROME_WIDTH)
+    return 0;
+  const halfPoint = containerRect.top + containerRect.height * 0.5;
+  if (rect.top < halfPoint)
+    return 0;
+  const touchesBottom = rect.top < containerRect.bottom && rect.bottom >= containerRect.bottom - 2;
+  const overlapsHorizontally = rect.left < containerRect.right && rect.right > containerRect.left;
+  if (!touchesBottom || !overlapsHorizontally)
+    return 0;
+  return Math.ceil(containerRect.bottom - rect.top);
+}
 function measureBottomChromeInset(container, chromeElements) {
   const cRect = container.getBoundingClientRect();
   if (cRect.height <= 0 || cRect.width <= 0)
     return 0;
   const chrome = chromeElements ?? container.ownerDocument.querySelectorAll(OBSIDIAN_BOTTOM_CHROME_SELECTOR);
   let inset = 0;
+  const halfPoint = cRect.top + cRect.height * 0.5;
   for (const el of Array.from(chrome)) {
     const rect = el.getBoundingClientRect();
     if (rect.height <= 0 || rect.width <= 0)
+      continue;
+    if (rect.top < halfPoint)
       continue;
     const touchesBottom = rect.top < cRect.bottom && rect.bottom >= cRect.bottom - 2;
     const overlapsHorizontally = rect.left < cRect.right && rect.right > cRect.left;
@@ -28903,6 +28927,38 @@ function measureBottomChromeInset(container, chromeElements) {
     }
   }
   return Math.ceil(inset);
+}
+function scanBottomOverlaps(container) {
+  const doc = container.ownerDocument;
+  const view = doc.defaultView;
+  if (!view)
+    return 0;
+  const cRect = container.getBoundingClientRect();
+  if (cRect.height <= 0 || cRect.width <= 0)
+    return 0;
+  let maxOverlap = 0;
+  const all = doc.querySelectorAll("body *");
+  for (const el of Array.from(all)) {
+    if (el === container || el.contains(container) || container.contains(el))
+      continue;
+    if (el.closest(TRANSIENT_OVERLAY_SELECTOR))
+      continue;
+    let cs;
+    try {
+      cs = view.getComputedStyle(el);
+    } catch {
+      continue;
+    }
+    const overlap = bottomOverlayOverlap(cRect, el.getBoundingClientRect(), {
+      position: cs.position,
+      display: cs.display,
+      visibility: cs.visibility,
+      opacity: Number(cs.opacity)
+    });
+    if (overlap > maxOverlap)
+      maxOverlap = overlap;
+  }
+  return maxOverlap;
 }
 function computeKeyboardInset(baselineInnerHeight, currentInnerHeight, visualViewport) {
   if (!visualViewport)
@@ -28914,8 +28970,11 @@ function computeKeyboardInset(baselineInnerHeight, currentInnerHeight, visualVie
 }
 function attachChromeInsetWatcher(container) {
   let baselineInnerHeight = window.innerHeight;
+  let deepInset = 0;
+  let deepTimer = null;
+  const timers = [];
   const apply = () => {
-    const chromeInset = measureBottomChromeInset(container);
+    const fastInset = measureBottomChromeInset(container);
     const keyboardInset = computeKeyboardInset(
       baselineInnerHeight,
       window.innerHeight,
@@ -28923,28 +28982,60 @@ function attachChromeInsetWatcher(container) {
     );
     if (window.innerHeight >= baselineInnerHeight)
       baselineInnerHeight = window.innerHeight;
-    container.style.setProperty("--nei-chrome-inset", `${Math.ceil(chromeInset + keyboardInset)}px`);
+    const total = Math.ceil(Math.max(fastInset, deepInset) + keyboardInset);
+    container.style.setProperty("--nei-chrome-inset", `${total}px`);
+  };
+  const measureDeep = () => {
+    deepInset = scanBottomOverlaps(container);
+    apply();
+  };
+  const scheduleDeep = () => {
+    if (deepTimer !== null)
+      return;
+    deepTimer = window.setTimeout(() => {
+      deepTimer = null;
+      measureDeep();
+    }, 250);
   };
   const delayedRemeasure = () => {
-    [200, 600, 1200].forEach((ms) => window.setTimeout(apply, ms));
+    [200, 600, 1200].forEach((ms) => {
+      timers.push(window.setTimeout(() => {
+        apply();
+        scheduleDeep();
+      }, ms));
+    });
   };
+  const onResize = () => {
+    apply();
+    scheduleDeep();
+  };
+  window.addEventListener("resize", onResize);
   const vv = window.visualViewport;
-  window.addEventListener("resize", apply);
-  vv?.addEventListener("resize", apply);
+  vv?.addEventListener("resize", onResize);
   vv?.addEventListener("scroll", apply);
   container.ownerDocument.addEventListener("focusin", delayedRemeasure);
   container.ownerDocument.addEventListener("focusout", delayedRemeasure);
-  const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(apply) : null;
+  const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(onResize) : null;
   ro?.observe(container);
+  let mo = null;
+  if (typeof MutationObserver !== "undefined" && container.ownerDocument.body) {
+    mo = new MutationObserver(scheduleDeep);
+    mo.observe(container.ownerDocument.body, { childList: true, subtree: false });
+  }
   apply();
+  scheduleDeep();
   delayedRemeasure();
   return () => {
-    window.removeEventListener("resize", apply);
-    vv?.removeEventListener("resize", apply);
+    window.removeEventListener("resize", onResize);
+    vv?.removeEventListener("resize", onResize);
     vv?.removeEventListener("scroll", apply);
     container.ownerDocument.removeEventListener("focusin", delayedRemeasure);
     container.ownerDocument.removeEventListener("focusout", delayedRemeasure);
     ro?.disconnect();
+    mo?.disconnect();
+    if (deepTimer !== null)
+      window.clearTimeout(deepTimer);
+    timers.forEach((t2) => window.clearTimeout(t2));
     container.style.removeProperty("--nei-chrome-inset");
   };
 }

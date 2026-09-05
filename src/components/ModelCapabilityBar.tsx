@@ -55,7 +55,8 @@ export const ModelCapabilityBar: FC<ModelCapabilityBarProps> = memo(({
             fontSize: 'clamp(9px, 1.5cqi, 11px)',
             lineHeight: '1.3',
             minHeight: 'clamp(24px, 4cqi, 32px)',
-            boxSizing: 'border-box'
+            boxSizing: 'border-box',
+            overflow: 'hidden'
         }}>
             <div style={{ 
                 display: 'flex', 
@@ -118,9 +119,10 @@ export const ModelCapabilityBar: FC<ModelCapabilityBarProps> = memo(({
                 fontFamily: 'var(--font-monospace, monospace)',
                 fontSize: 'clamp(8px, 1.2cqi, 10px)',
                 color: 'var(--text-muted)',
-                whiteSpace: 'nowrap',
-                flexShrink: 0,
-                marginLeft: 'auto'
+                minWidth: 0,
+                flexShrink: 1,
+                marginLeft: 'auto',
+                overflow: 'hidden'
             }}>
                 Context: <strong style={{ color: 'var(--text-normal)' }}>{formatTokens(totalTokens)}</strong> / {formatTokens(maxCtx)} tokens
             </div>
