@@ -1,6 +1,6 @@
 {
   "name": "nei-ai-chat",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Smart local and cloud AI assistant with vault RAG and custom plugin integration.",
   "main": "main.js",
   "scripts": {

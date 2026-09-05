@@ -14,7 +14,6 @@ import { Tooltip } from "./Tooltip";
 import { WelcomeScreen } from "./WelcomeScreen";
 import { ReasoningPanel } from "./ReasoningPanel";
 import { ModelCapabilityBar } from "./ModelCapabilityBar";
-import { AudioRecorder } from "./AudioRecorder";
 import { CapabilityWarningModal } from "./CapabilityWarningModal";
 import { calculateCost, ModelPricing } from "../utils/cost";
 import { attachChromeInsetWatcher } from "../utils/obsidianChrome";
@@ -127,7 +126,6 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, viewComponent
     const [input, setInput] = React.useState("");
     const [attachedImages, setAttachedImages] = React.useState<string[]>([]);
     const [attachedFiles, setAttachedFiles] = React.useState<AttachedFile[]>([]);
-    const [isRecordingAudio, setIsRecordingAudio] = React.useState(false);
     const [warningModal, setWarningModal] = React.useState<{
         unsupportedTypes: string[];
         onProceedTextOnly: () => void;
@@ -1897,21 +1895,6 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, viewComponent
                 </div>
             )}
 
-            {/* Audio Recording Active View */}
-            {isRecordingAudio && (
-                <div style={{ marginBottom: '6px' }}>
-                    <AudioRecorder
-                        onAudioCaptured={(audioDataUrl, durationSec) => {
-                            const id = Math.random().toString(36).substring(2, 9);
-                            const name = `audio_${durationSec}s.webm`;
-                            setAttachedFiles(prev => [...prev, { id, name, type: 'audio', content: audioDataUrl, sizeBytes: Math.round(audioDataUrl.length * 0.75) }]);
-                            setIsRecordingAudio(false);
-                        }}
-                        onCancel={() => setIsRecordingAudio(false)}
-                    />
-                </div>
-            )}
-
             {/* Bottom Query Input Box */}
             <div className="nei-chat-input-container">
                 <div className="nei-chat-input-row">
@@ -1929,17 +1912,6 @@ const ChatPanelInner: React.FC<ChatPanelProps> = ({ app, viewLeaf, viewComponent
                             style={{ display: 'none' }} 
                         />
                     </label>
-
-                    {(activeModelDetails?.capabilities?.audio || getDefaultModelCapabilities(model).supportsAudio) && (
-                        <button
-                            onClick={() => setIsRecordingAudio(!isRecordingAudio)}
-                            title="Record Audio Input"
-                            aria-label="Record Audio Input"
-                            className={`nei-chat-audio-btn ${isRecordingAudio ? 'recording' : ''}`}
-                        >
-                            🎤
-                        </button>
-                    )}
 
                     <textarea
                         ref={textareaRef}

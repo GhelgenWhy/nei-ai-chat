@@ -1096,7 +1096,7 @@ var require_react_development = __commonJS({
           }
           return dispatcher.useContext(Context);
         }
-        function useState4(initialState) {
+        function useState3(initialState) {
           var dispatcher = resolveDispatcher();
           return dispatcher.useState(initialState);
         }
@@ -1104,11 +1104,11 @@ var require_react_development = __commonJS({
           var dispatcher = resolveDispatcher();
           return dispatcher.useReducer(reducer, initialArg, init);
         }
-        function useRef4(initialValue) {
+        function useRef3(initialValue) {
           var dispatcher = resolveDispatcher();
           return dispatcher.useRef(initialValue);
         }
-        function useEffect4(create, deps) {
+        function useEffect3(create, deps) {
           var dispatcher = resolveDispatcher();
           return dispatcher.useEffect(create, deps);
         }
@@ -1891,15 +1891,15 @@ var require_react_development = __commonJS({
         exports.useContext = useContext;
         exports.useDebugValue = useDebugValue;
         exports.useDeferredValue = useDeferredValue;
-        exports.useEffect = useEffect4;
+        exports.useEffect = useEffect3;
         exports.useId = useId;
         exports.useImperativeHandle = useImperativeHandle;
         exports.useInsertionEffect = useInsertionEffect;
         exports.useLayoutEffect = useLayoutEffect;
         exports.useMemo = useMemo;
         exports.useReducer = useReducer;
-        exports.useRef = useRef4;
-        exports.useState = useState4;
+        exports.useRef = useRef3;
+        exports.useState = useState3;
         exports.useSyncExternalStore = useSyncExternalStore;
         exports.useTransition = useTransition;
         exports.version = ReactVersion;
@@ -2395,9 +2395,9 @@ var require_react_dom_development = __commonJS({
         if (typeof __REACT_DEVTOOLS_GLOBAL_HOOK__ !== "undefined" && typeof __REACT_DEVTOOLS_GLOBAL_HOOK__.registerInternalModuleStart === "function") {
           __REACT_DEVTOOLS_GLOBAL_HOOK__.registerInternalModuleStart(new Error());
         }
-        var React9 = require_react();
+        var React8 = require_react();
         var Scheduler = require_scheduler();
-        var ReactSharedInternals = React9.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
+        var ReactSharedInternals = React8.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
         var suppressWarning = false;
         function setSuppressWarning(newSuppressWarning) {
           {
@@ -2446,7 +2446,7 @@ var require_react_dom_development = __commonJS({
         var HostPortal = 4;
         var HostComponent = 5;
         var HostText = 6;
-        var Fragment2 = 7;
+        var Fragment = 7;
         var Mode = 8;
         var ContextConsumer = 9;
         var ContextProvider = 10;
@@ -3602,7 +3602,7 @@ var require_react_dom_development = __commonJS({
               return "DehydratedFragment";
             case ForwardRef:
               return getWrappedName$1(type, type.render, "ForwardRef");
-            case Fragment2:
+            case Fragment:
               return "Fragment";
             case HostComponent:
               return type;
@@ -4002,7 +4002,7 @@ var require_react_dom_development = __commonJS({
           {
             if (props.value == null) {
               if (typeof props.children === "object" && props.children !== null) {
-                React9.Children.forEach(props.children, function(child) {
+                React8.Children.forEach(props.children, function(child) {
                   if (child == null) {
                     return;
                   }
@@ -12003,7 +12003,7 @@ var require_react_dom_development = __commonJS({
             }
           }
           function updateFragment2(returnFiber, current2, fragment, lanes, key) {
-            if (current2 === null || current2.tag !== Fragment2) {
+            if (current2 === null || current2.tag !== Fragment) {
               var created = createFiberFromFragment(fragment, returnFiber.mode, lanes, key);
               created.return = returnFiber;
               return created;
@@ -12406,7 +12406,7 @@ var require_react_dom_development = __commonJS({
               if (child.key === key) {
                 var elementType = element.type;
                 if (elementType === REACT_FRAGMENT_TYPE) {
-                  if (child.tag === Fragment2) {
+                  if (child.tag === Fragment) {
                     deleteRemainingChildren(returnFiber, child.sibling);
                     var existing = useFiber(child, element.props.children);
                     existing.return = returnFiber;
@@ -17883,7 +17883,7 @@ var require_react_dom_development = __commonJS({
               var _resolvedProps2 = workInProgress2.elementType === type ? _unresolvedProps2 : resolveDefaultProps(type, _unresolvedProps2);
               return updateForwardRef(current2, workInProgress2, type, _resolvedProps2, renderLanes2);
             }
-            case Fragment2:
+            case Fragment:
               return updateFragment(current2, workInProgress2, renderLanes2);
             case Mode:
               return updateMode(current2, workInProgress2, renderLanes2);
@@ -18156,7 +18156,7 @@ var require_react_dom_development = __commonJS({
             case SimpleMemoComponent:
             case FunctionComponent:
             case ForwardRef:
-            case Fragment2:
+            case Fragment:
             case Mode:
             case Profiler:
             case ContextConsumer:
@@ -22415,7 +22415,7 @@ var require_react_dom_development = __commonJS({
           return fiber;
         }
         function createFiberFromFragment(elements, mode, lanes, key) {
-          var fiber = createFiber(Fragment2, elements, key, mode);
+          var fiber = createFiber(Fragment, elements, key, mode);
           fiber.lanes = lanes;
           return fiber;
         }
@@ -24452,7 +24452,7 @@ var require_react_jsx_runtime_development = __commonJS({
     if (true) {
       (function() {
         "use strict";
-        var React9 = require_react();
+        var React8 = require_react();
         var REACT_ELEMENT_TYPE = Symbol.for("react.element");
         var REACT_PORTAL_TYPE = Symbol.for("react.portal");
         var REACT_FRAGMENT_TYPE = Symbol.for("react.fragment");
@@ -24478,7 +24478,7 @@ var require_react_jsx_runtime_development = __commonJS({
           }
           return null;
         }
-        var ReactSharedInternals = React9.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
+        var ReactSharedInternals = React8.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
         function error(format) {
           {
             {
@@ -25328,11 +25328,11 @@ var require_react_jsx_runtime_development = __commonJS({
             return jsxWithValidation(type, props, key, false);
           }
         }
-        var jsx9 = jsxWithValidationDynamic;
-        var jsxs9 = jsxWithValidationStatic;
+        var jsx8 = jsxWithValidationDynamic;
+        var jsxs8 = jsxWithValidationStatic;
         exports.Fragment = REACT_FRAGMENT_TYPE;
-        exports.jsx = jsx9;
-        exports.jsxs = jsxs9;
+        exports.jsx = jsx8;
+        exports.jsxs = jsxs8;
       })();
     }
   }
@@ -25361,11 +25361,11 @@ var import_obsidian16 = require("obsidian");
 
 // src/views/ChatView.ts
 var import_obsidian12 = require("obsidian");
-var React8 = __toESM(require_react());
+var React7 = __toESM(require_react());
 var import_client = __toESM(require_client());
 
 // src/components/ChatPanel.tsx
-var import_react7 = __toESM(require_react());
+var import_react6 = __toESM(require_react());
 var import_obsidian11 = require("obsidian");
 
 // src/services/llm.ts
@@ -28612,173 +28612,8 @@ var ModelCapabilityBar = (0, import_react5.memo)(({
 });
 ModelCapabilityBar.displayName = "ModelCapabilityBar";
 
-// src/components/AudioRecorder.tsx
-var import_react6 = __toESM(require_react());
-var import_jsx_runtime6 = __toESM(require_jsx_runtime());
-var AudioRecorder = ({ onAudioCaptured, onCancel }) => {
-  const [isRecording, setIsRecording] = (0, import_react6.useState)(false);
-  const [seconds, setSeconds] = (0, import_react6.useState)(0);
-  const [errorMsg, setErrorMsg] = (0, import_react6.useState)(null);
-  const mediaRecorderRef = (0, import_react6.useRef)(null);
-  const audioChunksRef = (0, import_react6.useRef)([]);
-  const timerRef = (0, import_react6.useRef)(null);
-  const streamRef = (0, import_react6.useRef)(null);
-  const secondsRef = (0, import_react6.useRef)(0);
-  const mountedRef = (0, import_react6.useRef)(true);
-  const cleanup = () => {
-    if (timerRef.current !== null) {
-      window.clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
-      mediaRecorderRef.current.stop();
-    }
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
-      streamRef.current = null;
-    }
-  };
-  (0, import_react6.useEffect)(() => {
-    mountedRef.current = true;
-    return () => {
-      mountedRef.current = false;
-      cleanup();
-    };
-  }, []);
-  const startRecording = async () => {
-    setErrorMsg(null);
-    audioChunksRef.current = [];
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      if (!mountedRef.current) {
-        stream.getTracks().forEach((track) => track.stop());
-        return;
-      }
-      streamRef.current = stream;
-      const recorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = recorder;
-      recorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-      recorder.onstop = () => {
-        const blob = new Blob(audioChunksRef.current, { type: recorder.mimeType || "audio/webm" });
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          if (typeof reader.result === "string") {
-            onAudioCaptured(reader.result, secondsRef.current);
-          }
-        };
-        reader.readAsDataURL(blob);
-        if (streamRef.current) {
-          streamRef.current.getTracks().forEach((track) => track.stop());
-          streamRef.current = null;
-        }
-      };
-      recorder.start();
-      setIsRecording(true);
-      setSeconds(0);
-      secondsRef.current = 0;
-      timerRef.current = window.setInterval(() => {
-        secondsRef.current += 1;
-        setSeconds(secondsRef.current);
-      }, 1e3);
-    } catch (err) {
-      console.error("[AudioRecorder] Access denied or failed:", err);
-      setErrorMsg("Microphone permission denied or audio recording not available.");
-      cleanup();
-    }
-  };
-  const stopRecording = () => {
-    if (timerRef.current !== null) {
-      window.clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
-      mediaRecorderRef.current.stop();
-    }
-    setIsRecording(false);
-  };
-  (0, import_react6.useEffect)(() => {
-    void startRecording();
-    return () => {
-      cleanup();
-    };
-  }, []);
-  const formatTime = (totalSec) => {
-    const mins = Math.floor(totalSec / 60);
-    const secs = totalSec % 60;
-    return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
-  };
-  return /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { style: {
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    padding: "4px 8px",
-    background: "var(--background-secondary-alt)",
-    borderRadius: "6px",
-    border: "1px solid var(--background-modifier-border)",
-    fontSize: "12px"
-  }, children: errorMsg ? /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { style: { color: "var(--text-error, #ff5555)", fontSize: "11px" }, children: [
-    "\u26A0\uFE0F ",
-    errorMsg,
-    /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
-      "button",
-      {
-        onClick: () => {
-          cleanup();
-          onCancel();
-        },
-        style: { marginLeft: "8px", background: "transparent", border: "none", cursor: "pointer", color: "var(--text-muted)" },
-        children: "\u2715"
-      }
-    )
-  ] }) : /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(import_jsx_runtime6.Fragment, { children: [
-    /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("span", { style: { display: "inline-flex", alignItems: "center", gap: "4px", color: "var(--text-error, #ff5555)", fontWeight: "bold" }, children: [
-      "\u{1F534} ",
-      formatTime(seconds)
-    ] }),
-    /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { style: { fontSize: "11px", color: "var(--text-muted)" }, children: isRecording ? "Recording audio..." : "Processing audio..." }),
-    /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
-      "button",
-      {
-        onClick: stopRecording,
-        style: {
-          background: "var(--interactive-accent)",
-          color: "var(--text-on-accent)",
-          border: "none",
-          borderRadius: "4px",
-          padding: "2px 8px",
-          cursor: "pointer",
-          fontSize: "11px",
-          fontWeight: "bold"
-        },
-        children: "Done"
-      }
-    ),
-    /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
-      "button",
-      {
-        onClick: () => {
-          cleanup();
-          onCancel();
-        },
-        style: {
-          background: "transparent",
-          border: "none",
-          color: "var(--text-muted)",
-          cursor: "pointer",
-          fontSize: "11px"
-        },
-        children: "Cancel"
-      }
-    )
-  ] }) });
-};
-
 // src/components/CapabilityWarningModal.tsx
-var import_jsx_runtime7 = __toESM(require_jsx_runtime());
+var import_jsx_runtime6 = __toESM(require_jsx_runtime());
 var CapabilityWarningModal = ({
   unsupportedTypes,
   modelName,
@@ -28786,7 +28621,7 @@ var CapabilityWarningModal = ({
   onRemoveAttachments,
   onCancel
 }) => {
-  return /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { style: {
+  return /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { style: {
     position: "fixed",
     top: 0,
     left: 0,
@@ -28799,7 +28634,7 @@ var CapabilityWarningModal = ({
     justifyContent: "center",
     padding: "env(safe-area-inset-top, 16px) env(safe-area-inset-right, 16px) env(safe-area-inset-bottom, 16px) env(safe-area-inset-left, 16px)",
     overflow: "auto"
-  }, children: /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: {
+  }, children: /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { style: {
     background: "var(--background-primary)",
     border: "1px solid var(--background-modifier-border)",
     borderRadius: "8px",
@@ -28814,15 +28649,15 @@ var CapabilityWarningModal = ({
     fontSize: "12px",
     overflow: "auto"
   }, children: [
-    /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { style: { display: "flex", alignItems: "center", gap: "8px", fontWeight: "bold", fontSize: "13px", color: "var(--text-warning, #ffaa00)" }, children: "\u26A0\uFE0F Model Capability Mismatch" }),
-    /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { color: "var(--text-normal)", lineHeight: "1.4" }, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { style: { display: "flex", alignItems: "center", gap: "8px", fontWeight: "bold", fontSize: "13px", color: "var(--text-warning, #ffaa00)" }, children: "\u26A0\uFE0F Model Capability Mismatch" }),
+    /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { style: { color: "var(--text-normal)", lineHeight: "1.4" }, children: [
       "The model ",
-      /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("strong", { children: modelName }),
+      /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("strong", { children: modelName }),
       " does not support the following attached media format(s):",
-      /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("ul", { style: { margin: "6px 0 0 16px", padding: 0 }, children: unsupportedTypes.map((t2) => /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("li", { style: { fontWeight: 600 }, children: t2.toUpperCase() }, t2)) })
+      /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("ul", { style: { margin: "6px 0 0 16px", padding: 0 }, children: unsupportedTypes.map((t2) => /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("li", { style: { fontWeight: 600 }, children: t2.toUpperCase() }, t2)) })
     ] }),
-    /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { display: "flex", flexDirection: "column", gap: "6px", marginTop: "6px" }, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
+    /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { style: { display: "flex", flexDirection: "column", gap: "6px", marginTop: "6px" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
         "button",
         {
           onClick: onProceedTextOnly,
@@ -28840,7 +28675,7 @@ var CapabilityWarningModal = ({
           children: "\u{1F4C4} Send as extracted text / text description"
         }
       ),
-      /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
         "button",
         {
           onClick: onRemoveAttachments,
@@ -28857,7 +28692,7 @@ var CapabilityWarningModal = ({
           children: "\u{1F5D1}\uFE0F Remove incompatible attachment(s) and send"
         }
       ),
-      /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
         "button",
         {
           onClick: onCancel,
@@ -29226,13 +29061,13 @@ Rules:
 var AutoLearner = _AutoLearner;
 
 // src/components/ChatPanel.tsx
-var import_jsx_runtime8 = __toESM(require_jsx_runtime());
+var import_jsx_runtime7 = __toESM(require_jsx_runtime());
 var ObsidianMarkdown = ({ markdown, app, component }) => {
-  const containerRef = (0, import_react7.useRef)(null);
-  const localComponentRef = (0, import_react7.useRef)(null);
-  const lastRenderedRef = (0, import_react7.useRef)(null);
-  const renderTokenRef = (0, import_react7.useRef)(0);
-  (0, import_react7.useEffect)(() => {
+  const containerRef = (0, import_react6.useRef)(null);
+  const localComponentRef = (0, import_react6.useRef)(null);
+  const lastRenderedRef = (0, import_react6.useRef)(null);
+  const renderTokenRef = (0, import_react6.useRef)(0);
+  (0, import_react6.useEffect)(() => {
     const el = containerRef.current;
     if (!el)
       return;
@@ -29257,7 +29092,7 @@ var ObsidianMarkdown = ({ markdown, app, component }) => {
       window.clearTimeout(timer);
     };
   }, [markdown, app, component]);
-  (0, import_react7.useEffect)(() => {
+  (0, import_react6.useEffect)(() => {
     return () => {
       if (localComponentRef.current) {
         localComponentRef.current.unload();
@@ -29265,11 +29100,11 @@ var ObsidianMarkdown = ({ markdown, app, component }) => {
       }
     };
   }, []);
-  return /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { ref: containerRef, className: "markdown-preview-view markdown-rendered", style: { background: "transparent", padding: 0 } });
+  return /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { ref: containerRef, className: "markdown-preview-view markdown-rendered", style: { background: "transparent", padding: 0 } });
 };
 var ChatPanelInner = ({ app, viewLeaf, viewComponent, settings, getSettings, saveSettings, toolRegistry, onReload }) => {
   const isMainTab = viewLeaf ? viewLeaf.getRoot() === app.workspace.rootSplit : false;
-  const getFreshSettings = import_react7.default.useCallback(() => getSettings ? getSettings() : settings, [getSettings, settings]);
+  const getFreshSettings = import_react6.default.useCallback(() => getSettings ? getSettings() : settings, [getSettings, settings]);
   const handleToggleTabMode = async () => {
     try {
       const workspace = app.workspace;
@@ -29295,24 +29130,23 @@ var ChatPanelInner = ({ app, viewLeaf, viewComponent, settings, getSettings, sav
       new import_obsidian11.Notice(`${t("modeSwitchError", language)} ${err?.message || String(e)}`);
     }
   };
-  const [currentSession, setCurrentSession] = import_react7.default.useState(() => ChatStore.createNewSession());
-  const [sessionsList, setSessionsList] = import_react7.default.useState([]);
-  const [input, setInput] = import_react7.default.useState("");
-  const [attachedImages, setAttachedImages] = import_react7.default.useState([]);
-  const [attachedFiles, setAttachedFiles] = import_react7.default.useState([]);
-  const [isRecordingAudio, setIsRecordingAudio] = import_react7.default.useState(false);
-  const [warningModal, setWarningModal] = import_react7.default.useState(null);
-  const textareaRef = import_react7.default.useRef(null);
-  const fileReadersRef = import_react7.default.useRef([]);
-  const messagesContainerRef = import_react7.default.useRef(null);
-  const isNearBottomRef = import_react7.default.useRef(true);
-  const handleMessagesScroll = import_react7.default.useCallback(() => {
+  const [currentSession, setCurrentSession] = import_react6.default.useState(() => ChatStore.createNewSession());
+  const [sessionsList, setSessionsList] = import_react6.default.useState([]);
+  const [input, setInput] = import_react6.default.useState("");
+  const [attachedImages, setAttachedImages] = import_react6.default.useState([]);
+  const [attachedFiles, setAttachedFiles] = import_react6.default.useState([]);
+  const [warningModal, setWarningModal] = import_react6.default.useState(null);
+  const textareaRef = import_react6.default.useRef(null);
+  const fileReadersRef = import_react6.default.useRef([]);
+  const messagesContainerRef = import_react6.default.useRef(null);
+  const isNearBottomRef = import_react6.default.useRef(true);
+  const handleMessagesScroll = import_react6.default.useCallback(() => {
     const container = messagesContainerRef.current;
     if (!container)
       return;
     isNearBottomRef.current = container.scrollHeight - container.scrollTop - container.clientHeight < 120;
   }, []);
-  import_react7.default.useEffect(() => {
+  import_react6.default.useEffect(() => {
     const vv = window.visualViewport;
     if (!vv)
       return;
@@ -29328,14 +29162,14 @@ var ChatPanelInner = ({ app, viewLeaf, viewComponent, settings, getSettings, sav
     vv.addEventListener("resize", handleViewportResize);
     return () => vv.removeEventListener("resize", handleViewportResize);
   }, []);
-  const panelContainerRef = import_react7.default.useRef(null);
-  import_react7.default.useEffect(() => {
+  const panelContainerRef = import_react6.default.useRef(null);
+  import_react6.default.useEffect(() => {
     const panel = panelContainerRef.current;
     if (!panel)
       return;
     return attachChromeInsetWatcher(panel);
   }, []);
-  const handleTextareaFocus = import_react7.default.useCallback(() => {
+  const handleTextareaFocus = import_react6.default.useCallback(() => {
     window.setTimeout(() => {
       const container = messagesContainerRef.current;
       if (container) {
@@ -29343,7 +29177,7 @@ var ChatPanelInner = ({ app, viewLeaf, viewComponent, settings, getSettings, sav
       }
     }, 50);
   }, []);
-  import_react7.default.useEffect(() => {
+  import_react6.default.useEffect(() => {
     return () => {
       fileReadersRef.current.forEach((reader) => {
         reader.onload = null;
@@ -29353,7 +29187,7 @@ var ChatPanelInner = ({ app, viewLeaf, viewComponent, settings, getSettings, sav
       fileReadersRef.current = [];
     };
   }, []);
-  const adjustTextareaHeight = import_react7.default.useCallback(() => {
+  const adjustTextareaHeight = import_react6.default.useCallback(() => {
     if (!textareaRef.current)
       return;
     window.requestAnimationFrame(() => {
@@ -29365,29 +29199,29 @@ var ChatPanelInner = ({ app, viewLeaf, viewComponent, settings, getSettings, sav
       el.style.height = `${maxHeight}px`;
     });
   }, []);
-  const [executionMode, setExecutionMode] = import_react7.default.useState(settings.executionMode || "auto");
-  const [loading, setLoading] = import_react7.default.useState(false);
-  const [abortController, setAbortController] = import_react7.default.useState(null);
-  const [activeSteps, setActiveSteps] = import_react7.default.useState([]);
-  const [showSessionsDrawer, setShowSessionsDrawer] = import_react7.default.useState(false);
-  const [showConfig, setShowConfig] = import_react7.default.useState(false);
-  const confirmationIdRef = import_react7.default.useRef(0);
-  const [pendingConfirmations, setPendingConfirmations] = import_react7.default.useState([]);
-  const [showFreshnessSuggestion, setShowFreshnessSuggestion] = import_react7.default.useState(null);
-  const [editingMsgIdx, setEditingMsgIdx] = import_react7.default.useState(null);
-  const [editingText, setEditingText] = import_react7.default.useState("");
-  const [sessionMetrics, setSessionMetrics] = import_react7.default.useState({
+  const [executionMode, setExecutionMode] = import_react6.default.useState(settings.executionMode || "auto");
+  const [loading, setLoading] = import_react6.default.useState(false);
+  const [abortController, setAbortController] = import_react6.default.useState(null);
+  const [activeSteps, setActiveSteps] = import_react6.default.useState([]);
+  const [showSessionsDrawer, setShowSessionsDrawer] = import_react6.default.useState(false);
+  const [showConfig, setShowConfig] = import_react6.default.useState(false);
+  const confirmationIdRef = import_react6.default.useRef(0);
+  const [pendingConfirmations, setPendingConfirmations] = import_react6.default.useState([]);
+  const [showFreshnessSuggestion, setShowFreshnessSuggestion] = import_react6.default.useState(null);
+  const [editingMsgIdx, setEditingMsgIdx] = import_react6.default.useState(null);
+  const [editingText, setEditingText] = import_react6.default.useState("");
+  const [sessionMetrics, setSessionMetrics] = import_react6.default.useState({
     totalPromptTokens: 0,
     totalCompletionTokens: 0,
     totalCost: 0,
     requestCount: 0
   });
-  const [pricingMap, setPricingMap] = import_react7.default.useState({});
-  const [showReasoning, setShowReasoning] = import_react7.default.useState(true);
-  const [learningProposal, setLearningProposal] = import_react7.default.useState(null);
-  const [endpointUrl, setEndpointUrl] = import_react7.default.useState(settings.endpointUrl || "https://openrouter.ai/api/v1");
-  const [apiKey, setApiKey] = import_react7.default.useState(settings.apiKey || "");
-  import_react7.default.useEffect(() => {
+  const [pricingMap, setPricingMap] = import_react6.default.useState({});
+  const [showReasoning, setShowReasoning] = import_react6.default.useState(true);
+  const [learningProposal, setLearningProposal] = import_react6.default.useState(null);
+  const [endpointUrl, setEndpointUrl] = import_react6.default.useState(settings.endpointUrl || "https://openrouter.ai/api/v1");
+  const [apiKey, setApiKey] = import_react6.default.useState(settings.apiKey || "");
+  import_react6.default.useEffect(() => {
     let cancelled = false;
     void OpenRouterService.fetchModels(apiKey || void 0).then((models) => {
       if (!cancelled)
@@ -29397,22 +29231,22 @@ var ChatPanelInner = ({ app, viewLeaf, viewComponent, settings, getSettings, sav
       cancelled = true;
     };
   }, [apiKey]);
-  const [model, setModel] = import_react7.default.useState(settings.model || "google/gemini-2.5-flash");
-  const [visionModel, setVisionModel] = import_react7.default.useState(settings.visionModel || "google/gemini-2.5-flash");
-  const [quickModel, setQuickModel] = import_react7.default.useState(settings.quickModel || "google/gemini-2.5-flash");
-  const [customModels, setCustomModels] = import_react7.default.useState(settings.customModels || [
+  const [model, setModel] = import_react6.default.useState(settings.model || "google/gemini-2.5-flash");
+  const [visionModel, setVisionModel] = import_react6.default.useState(settings.visionModel || "google/gemini-2.5-flash");
+  const [quickModel, setQuickModel] = import_react6.default.useState(settings.quickModel || "google/gemini-2.5-flash");
+  const [customModels, setCustomModels] = import_react6.default.useState(settings.customModels || [
     "google/gemini-2.5-flash",
     "anthropic/claude-3.5-sonnet",
     "google/gemini-2.5-pro",
     "openai/gpt-4o",
     "deepseek/deepseek-chat"
   ]);
-  const [newModelInput, setNewModelInput] = import_react7.default.useState("");
-  const [activeModelDetails, setActiveModelDetails] = import_react7.default.useState(null);
-  const [keyInfo, setKeyInfo] = import_react7.default.useState(null);
-  const [verifyingModel, setVerifyingModel] = import_react7.default.useState(false);
-  const [modelFreshness, setModelFreshness] = import_react7.default.useState(null);
-  import_react7.default.useEffect(() => {
+  const [newModelInput, setNewModelInput] = import_react6.default.useState("");
+  const [activeModelDetails, setActiveModelDetails] = import_react6.default.useState(null);
+  const [keyInfo, setKeyInfo] = import_react6.default.useState(null);
+  const [verifyingModel, setVerifyingModel] = import_react6.default.useState(false);
+  const [modelFreshness, setModelFreshness] = import_react6.default.useState(null);
+  import_react6.default.useEffect(() => {
     const info = getModelTemporalInfo(model);
     const cutoff = new Date(info.knowledgeCutoff);
     const daysSince = Math.floor((Date.now() - cutoff.getTime()) / (1e3 * 60 * 60 * 24));
@@ -29423,7 +29257,7 @@ var ChatPanelInner = ({ app, viewLeaf, viewComponent, settings, getSettings, sav
       isStale: daysSince > 30
     });
   }, [model]);
-  import_react7.default.useEffect(() => {
+  import_react6.default.useEffect(() => {
     void refreshSessionsList();
     void verifyActiveModel(model, apiKey);
     if (apiKey) {
@@ -29434,9 +29268,9 @@ var ChatPanelInner = ({ app, viewLeaf, viewComponent, settings, getSettings, sav
     const list = await ChatStore.listSessions(app, getFreshSettings());
     setSessionsList(list);
   };
-  const saveTimerRef = import_react7.default.useRef(null);
-  const pendingSaveRef = import_react7.default.useRef(null);
-  const saveSessionDebounced = import_react7.default.useCallback((session) => {
+  const saveTimerRef = import_react6.default.useRef(null);
+  const pendingSaveRef = import_react6.default.useRef(null);
+  const saveSessionDebounced = import_react6.default.useCallback((session) => {
     pendingSaveRef.current = session;
     if (saveTimerRef.current !== null)
       window.clearTimeout(saveTimerRef.current);
@@ -29449,7 +29283,7 @@ var ChatPanelInner = ({ app, viewLeaf, viewComponent, settings, getSettings, sav
       }
     }, 1500);
   }, [app, getFreshSettings]);
-  import_react7.default.useEffect(() => {
+  import_react6.default.useEffect(() => {
     return () => {
       if (saveTimerRef.current !== null) {
         window.clearTimeout(saveTimerRef.current);
@@ -29537,9 +29371,9 @@ var ChatPanelInner = ({ app, viewLeaf, viewComponent, settings, getSettings, sav
       handleNewChat();
     }
   };
-  const [confirmingClear, setConfirmingClear] = import_react7.default.useState(false);
-  const clearTimerRef = import_react7.default.useRef(null);
-  import_react7.default.useEffect(() => {
+  const [confirmingClear, setConfirmingClear] = import_react6.default.useState(false);
+  const clearTimerRef = import_react6.default.useRef(null);
+  import_react6.default.useEffect(() => {
     if (!showSessionsDrawer)
       return;
     const onKeyDown = (e) => {
@@ -29549,7 +29383,7 @@ var ChatPanelInner = ({ app, viewLeaf, viewComponent, settings, getSettings, sav
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [showSessionsDrawer]);
-  import_react7.default.useEffect(() => {
+  import_react6.default.useEffect(() => {
     return () => {
       if (clearTimerRef.current !== null)
         window.clearTimeout(clearTimerRef.current);
@@ -29583,34 +29417,34 @@ var ChatPanelInner = ({ app, viewLeaf, viewComponent, settings, getSettings, sav
     await refreshSessionsList();
     new import_obsidian11.Notice("\u{1F33F} Conversation branched!");
   };
-  const [language, setLanguage] = import_react7.default.useState(settings.language || "auto");
-  const [defaultNoteFolder, setDefaultNoteFolder] = import_react7.default.useState(settings.defaultNoteFolder || "");
-  const [chatsFolder, setChatsFolder] = import_react7.default.useState(settings.chatsFolder || ".nei/chats");
-  const [memoryFile, setMemoryFile] = import_react7.default.useState(settings.memoryFile || ".nei/memory.json");
-  const [skillsFolder, setSkillsFolder] = import_react7.default.useState(settings.skillsFolder || ".nei/skills");
-  const [maxAgentIterations, setMaxAgentIterations] = import_react7.default.useState(settings.maxAgentIterations || 10);
-  const [maxPrefetchedNotes, setMaxPrefetchedNotes] = import_react7.default.useState(settings.maxPrefetchedNotes || 5);
-  const [prefetchSnippetLength, setPrefetchSnippetLength] = import_react7.default.useState(settings.prefetchSnippetLength || 400);
-  const [ragResultLimit, setRagResultLimit] = import_react7.default.useState(settings.ragResultLimit || 5);
-  const [ragSnippetLength] = import_react7.default.useState(settings.ragSnippetLength || 1e3);
-  const [confirmObsidianCommands, setConfirmObsidianCommands] = import_react7.default.useState(settings.confirmObsidianCommands ?? true);
-  const [enableTemporalAwareness, setEnableTemporalAwareness] = import_react7.default.useState(settings.enableTemporalAwareness ?? true);
-  const [enableAdaptivePrefetch, setEnableAdaptivePrefetch] = import_react7.default.useState(settings.enableAdaptivePrefetch ?? true);
-  const [enableFreshnessSuggestions, setEnableFreshnessSuggestions] = import_react7.default.useState(settings.enableFreshnessSuggestions ?? true);
-  const [enableSmartToolFiltering, setEnableSmartToolFiltering] = import_react7.default.useState(settings.enableSmartToolFiltering ?? true);
-  const [enableVaultContextDefault, setEnableVaultContextDefault] = import_react7.default.useState(settings.enableVaultContextDefault ?? true);
-  const [vaultContextEnabled, setVaultContextEnabled] = import_react7.default.useState(settings.enableVaultContextDefault ?? true);
-  const [intentRoutingThreshold, setIntentRoutingThreshold] = import_react7.default.useState(settings.intentRoutingThreshold ?? 2.5);
-  const [intentVaultKeywordWeight] = import_react7.default.useState(settings.intentVaultKeywordWeight ?? 2);
-  const [intentCreationWeight, setIntentCreationWeight] = import_react7.default.useState(settings.intentCreationWeight ?? 3);
-  const [intentDeletionWeight, setIntentDeletionWeight] = import_react7.default.useState(settings.intentDeletionWeight ?? 4);
-  const [intentAnalysisWeight] = import_react7.default.useState(settings.intentAnalysisWeight ?? 2.5);
-  const [intentQuestionWeight, setIntentQuestionWeight] = import_react7.default.useState(settings.intentQuestionWeight ?? -1.5);
-  const [intentLengthWeight] = import_react7.default.useState(settings.intentLengthWeight ?? 5e-3);
-  const [intentHistoryWeight] = import_react7.default.useState(settings.intentHistoryWeight ?? 0.3);
-  const [intentStaleQueryWeight, setIntentStaleQueryWeight] = import_react7.default.useState(settings.intentStaleQueryWeight ?? 3);
-  const [intentFreshnessWeight, setIntentFreshnessWeight] = import_react7.default.useState(settings.intentFreshnessWeight ?? 2);
-  const settingsSaveTimerRef = import_react7.default.useRef(null);
+  const [language, setLanguage] = import_react6.default.useState(settings.language || "auto");
+  const [defaultNoteFolder, setDefaultNoteFolder] = import_react6.default.useState(settings.defaultNoteFolder || "");
+  const [chatsFolder, setChatsFolder] = import_react6.default.useState(settings.chatsFolder || ".nei/chats");
+  const [memoryFile, setMemoryFile] = import_react6.default.useState(settings.memoryFile || ".nei/memory.json");
+  const [skillsFolder, setSkillsFolder] = import_react6.default.useState(settings.skillsFolder || ".nei/skills");
+  const [maxAgentIterations, setMaxAgentIterations] = import_react6.default.useState(settings.maxAgentIterations || 10);
+  const [maxPrefetchedNotes, setMaxPrefetchedNotes] = import_react6.default.useState(settings.maxPrefetchedNotes || 5);
+  const [prefetchSnippetLength, setPrefetchSnippetLength] = import_react6.default.useState(settings.prefetchSnippetLength || 400);
+  const [ragResultLimit, setRagResultLimit] = import_react6.default.useState(settings.ragResultLimit || 5);
+  const [ragSnippetLength] = import_react6.default.useState(settings.ragSnippetLength || 1e3);
+  const [confirmObsidianCommands, setConfirmObsidianCommands] = import_react6.default.useState(settings.confirmObsidianCommands ?? true);
+  const [enableTemporalAwareness, setEnableTemporalAwareness] = import_react6.default.useState(settings.enableTemporalAwareness ?? true);
+  const [enableAdaptivePrefetch, setEnableAdaptivePrefetch] = import_react6.default.useState(settings.enableAdaptivePrefetch ?? true);
+  const [enableFreshnessSuggestions, setEnableFreshnessSuggestions] = import_react6.default.useState(settings.enableFreshnessSuggestions ?? true);
+  const [enableSmartToolFiltering, setEnableSmartToolFiltering] = import_react6.default.useState(settings.enableSmartToolFiltering ?? true);
+  const [enableVaultContextDefault, setEnableVaultContextDefault] = import_react6.default.useState(settings.enableVaultContextDefault ?? true);
+  const [vaultContextEnabled, setVaultContextEnabled] = import_react6.default.useState(settings.enableVaultContextDefault ?? true);
+  const [intentRoutingThreshold, setIntentRoutingThreshold] = import_react6.default.useState(settings.intentRoutingThreshold ?? 2.5);
+  const [intentVaultKeywordWeight] = import_react6.default.useState(settings.intentVaultKeywordWeight ?? 2);
+  const [intentCreationWeight, setIntentCreationWeight] = import_react6.default.useState(settings.intentCreationWeight ?? 3);
+  const [intentDeletionWeight, setIntentDeletionWeight] = import_react6.default.useState(settings.intentDeletionWeight ?? 4);
+  const [intentAnalysisWeight] = import_react6.default.useState(settings.intentAnalysisWeight ?? 2.5);
+  const [intentQuestionWeight, setIntentQuestionWeight] = import_react6.default.useState(settings.intentQuestionWeight ?? -1.5);
+  const [intentLengthWeight] = import_react6.default.useState(settings.intentLengthWeight ?? 5e-3);
+  const [intentHistoryWeight] = import_react6.default.useState(settings.intentHistoryWeight ?? 0.3);
+  const [intentStaleQueryWeight, setIntentStaleQueryWeight] = import_react6.default.useState(settings.intentStaleQueryWeight ?? 3);
+  const [intentFreshnessWeight, setIntentFreshnessWeight] = import_react6.default.useState(settings.intentFreshnessWeight ?? 2);
+  const settingsSaveTimerRef = import_react6.default.useRef(null);
   const handleSaveConfig = async () => {
     const newSettings = {
       ...settings,
@@ -29684,17 +29518,17 @@ var ChatPanelInner = ({ app, viewLeaf, viewComponent, settings, getSettings, sav
       new import_obsidian11.Notice(`${t("noteCreateError", language)} ${err?.message || String(e)}`);
     }
   };
-  const [streamingContent, setStreamingContent] = import_react7.default.useState("");
-  const streamingContentRef = import_react7.default.useRef("");
-  import_react7.default.useEffect(() => {
+  const [streamingContent, setStreamingContent] = import_react6.default.useState("");
+  const streamingContentRef = import_react6.default.useRef("");
+  import_react6.default.useEffect(() => {
     const container = messagesContainerRef.current;
     if (container && isNearBottomRef.current) {
       container.scrollTop = container.scrollHeight;
     }
   }, [currentSession.messages.length, streamingContent, activeSteps.length]);
-  const [showWelcome, setShowWelcome] = import_react7.default.useState(() => app.loadLocalStorage("nei_welcome_seen") !== true);
-  const [enableSemanticRag, setEnableSemanticRag] = import_react7.default.useState(settings.enableSemanticRag ?? false);
-  const fileInputRef = import_react7.default.useRef(null);
+  const [showWelcome, setShowWelcome] = import_react6.default.useState(() => app.loadLocalStorage("nei_welcome_seen") !== true);
+  const [enableSemanticRag, setEnableSemanticRag] = import_react6.default.useState(settings.enableSemanticRag ?? false);
+  const fileInputRef = import_react6.default.useRef(null);
   const handleExportSettings = () => {
     try {
       const dataStr = JSON.stringify(settings, null, 2);
@@ -29982,7 +29816,7 @@ ${fileContext}` : fileContext;
     const ext = filename.substring(filename.lastIndexOf(".")).toLowerCase();
     return textExts.includes(ext) || mimeType.startsWith("text/");
   };
-  const downscaleImage = import_react7.default.useCallback((file, maxDim = 1280, quality = 0.85) => {
+  const downscaleImage = import_react6.default.useCallback((file, maxDim = 1280, quality = 0.85) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       fileReadersRef.current.push(reader);
@@ -30111,10 +29945,10 @@ ${fileContext}` : fileContext;
     });
   };
   const currentConfirmation = pendingConfirmations[0] || null;
-  return /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "nei-chat-panel-container", ref: panelContainerRef, children: [
-    /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "nei-chat-header", style: { height: "auto", minHeight: "auto", boxSizing: "border-box" }, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "nei-header-group", style: { flex: 1, minWidth: 0, flexWrap: "wrap", gap: "clamp(4px, 1cqi, 6px)" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(
+  return /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "nei-chat-panel-container", ref: panelContainerRef, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "nei-chat-header", style: { height: "auto", minHeight: "auto", boxSizing: "border-box" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "nei-header-group", style: { flex: 1, minWidth: 0, flexWrap: "wrap", gap: "clamp(4px, 1cqi, 6px)" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(
           "button",
           {
             onClick: () => setShowSessionsDrawer(!showSessionsDrawer),
@@ -30122,15 +29956,15 @@ ${fileContext}` : fileContext;
             "aria-label": t("historyTooltip", language),
             className: "nei-session-btn",
             children: [
-              /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("span", { style: { flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("span", { style: { flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }, children: [
                 "\u{1F4C2} ",
                 formatSessionTitle(currentSession.title)
               ] }),
-              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { style: { flexShrink: 0 }, children: "\u25BC" })
+              /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { style: { flexShrink: 0 }, children: "\u25BC" })
             ]
           }
         ),
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
           "button",
           {
             onClick: () => handleNewChat(),
@@ -30141,8 +29975,8 @@ ${fileContext}` : fileContext;
           }
         )
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "nei-header-group", style: { flexWrap: "wrap", gap: "clamp(4px, 1cqi, 6px)", alignItems: "center" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(
+      /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "nei-header-group", style: { flexWrap: "wrap", gap: "clamp(4px, 1cqi, 6px)", alignItems: "center" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(
           "select",
           {
             value: executionMode,
@@ -30156,13 +29990,13 @@ ${fileContext}` : fileContext;
             className: "nei-select-mode",
             style: { flexShrink: 1, minWidth: "clamp(80px, 15cqi, 120px)" },
             children: [
-              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("option", { value: "auto", children: "\u26A1 Auto" }),
-              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("option", { value: "quick", children: "\u{1F680} Quick" }),
-              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("option", { value: "agent", children: "\u{1F9E0} Agent" })
+              /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("option", { value: "auto", children: "\u26A1 Auto" }),
+              /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("option", { value: "quick", children: "\u{1F680} Quick" }),
+              /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("option", { value: "agent", children: "\u{1F9E0} Agent" })
             ]
           }
         ),
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(
           "button",
           {
             onClick: () => setVaultContextEnabled((prev) => !prev),
@@ -30184,7 +30018,7 @@ ${fileContext}` : fileContext;
             ]
           }
         ),
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
           "button",
           {
             onClick: () => void handleToggleTabMode(),
@@ -30195,7 +30029,7 @@ ${fileContext}` : fileContext;
             children: isMainTab ? "\u2199\uFE0F" : "\u2197\uFE0F"
           }
         ),
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
           "button",
           {
             onClick: () => setShowConfig(!showConfig),
@@ -30208,7 +30042,7 @@ ${fileContext}` : fileContext;
         )
       ] })
     ] }),
-    /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+    /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
       ModelCapabilityBar,
       {
         modelName: model,
@@ -30217,7 +30051,7 @@ ${fileContext}` : fileContext;
         contextWindow: activeModelDetails?.contextLength
       }
     ),
-    showSessionsDrawer && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+    showSessionsDrawer && /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
       "div",
       {
         style: {
@@ -30235,7 +30069,7 @@ ${fileContext}` : fileContext;
           overflow: "hidden"
         },
         onClick: () => setShowSessionsDrawer(false),
-        children: /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(
+        children: /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(
           "div",
           {
             style: {
@@ -30253,9 +30087,9 @@ ${fileContext}` : fileContext;
             },
             onClick: (e) => e.stopPropagation(),
             children: [
-              /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px", paddingBottom: "4px", borderBottom: "1px solid var(--background-modifier-border)" }, children: [
-                /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { style: { fontWeight: "bold", fontSize: "12px", color: "var(--text-muted)" }, children: t("historyTitle", language) }),
-                sessionsList.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+              /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px", paddingBottom: "4px", borderBottom: "1px solid var(--background-modifier-border)" }, children: [
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { style: { fontWeight: "bold", fontSize: "12px", color: "var(--text-muted)" }, children: t("historyTitle", language) }),
+                sessionsList.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
                   "button",
                   {
                     onClick: () => {
@@ -30267,7 +30101,7 @@ ${fileContext}` : fileContext;
                   }
                 )
               ] }),
-              sessionsList.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { style: { fontSize: "12px", color: "var(--text-muted)", padding: "6px" }, children: t("noSavedChats", language) }) : sessionsList.map((s) => /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(
+              sessionsList.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { style: { fontSize: "12px", color: "var(--text-muted)", padding: "6px" }, children: t("noSavedChats", language) }) : sessionsList.map((s) => /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(
                 "div",
                 {
                   onClick: () => {
@@ -30285,8 +30119,8 @@ ${fileContext}` : fileContext;
                     marginBottom: "2px"
                   },
                   children: [
-                    /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { style: { textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", maxWidth: "80%" }, children: formatSessionTitle(s.title) }),
-                    /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+                    /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { style: { textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", maxWidth: "80%" }, children: formatSessionTitle(s.title) }),
+                    /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
                       "button",
                       {
                         onClick: (e) => {
@@ -30306,10 +30140,10 @@ ${fileContext}` : fileContext;
         )
       }
     ),
-    showConfig && /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { flexShrink: 0, maxHeight: "min(55vh, calc(100vh - 120px))", overflowY: "auto", background: "var(--background-secondary)", padding: "12px", borderRadius: "8px", marginBottom: "12px", fontSize: "12px", display: "flex", flexDirection: "column", gap: "10px" }, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("label", { style: { display: "block", marginBottom: "4px", fontWeight: "500" }, children: "OpenRouter API Key:" }),
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+    showConfig && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { flexShrink: 0, maxHeight: "min(55vh, calc(100vh - 120px))", overflowY: "auto", background: "var(--background-secondary)", padding: "12px", borderRadius: "8px", marginBottom: "12px", fontSize: "12px", display: "flex", flexDirection: "column", gap: "10px" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("label", { style: { display: "block", marginBottom: "4px", fontWeight: "500" }, children: "OpenRouter API Key:" }),
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
           "input",
           {
             type: "password",
@@ -30320,9 +30154,9 @@ ${fileContext}` : fileContext;
           }
         )
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("label", { style: { display: "block", marginBottom: "4px", fontWeight: "500" }, children: "API Endpoint URL:" }),
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("label", { style: { display: "block", marginBottom: "4px", fontWeight: "500" }, children: "API Endpoint URL:" }),
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
           "input",
           {
             type: "text",
@@ -30333,35 +30167,35 @@ ${fileContext}` : fileContext;
           }
         )
       ] }),
-      keyInfo && /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { background: "var(--background-primary)", padding: "6px 10px", borderRadius: "6px", fontSize: "11px", display: "flex", justifyContent: "space-between", alignItems: "center" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("span", { children: [
+      keyInfo && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { background: "var(--background-primary)", padding: "6px 10px", borderRadius: "6px", fontSize: "11px", display: "flex", justifyContent: "space-between", alignItems: "center" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("span", { children: [
           "\u{1F4B0} ",
           t("keyUsage", language),
           " ",
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("strong", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("strong", { children: [
             "$",
             keyInfo.usage.toFixed(4)
           ] })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { children: keyInfo.isFreeTier ? "\u{1F7E2} Free Tier" : "\u{1F4B3} Paid Tier" })
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { children: keyInfo.isFreeTier ? "\u{1F7E2} Free Tier" : "\u{1F4B3} Paid Tier" })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { background: "var(--background-primary)", padding: "8px 10px", borderRadius: "6px", border: "1px solid var(--background-modifier-border)", display: "flex", flexDirection: "column", gap: "6px" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { style: { fontWeight: "bold", fontSize: "11px" }, children: t("modelCategories", language) }),
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("primaryModel", language) }),
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { background: "var(--background-primary)", padding: "8px 10px", borderRadius: "6px", border: "1px solid var(--background-modifier-border)", display: "flex", flexDirection: "column", gap: "6px" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { style: { fontWeight: "bold", fontSize: "11px" }, children: t("modelCategories", language) }),
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("primaryModel", language) }),
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
             "select",
             {
               value: model,
               onChange: (e) => handleSelectModel(e.target.value),
               style: { width: "100%", padding: "4px", borderRadius: "4px", fontSize: "11px", background: "var(--background-secondary)", color: "var(--text-normal)", border: "1px solid var(--background-modifier-border)" },
-              children: customModels.map((m) => /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("option", { value: m, children: m }, m))
+              children: customModels.map((m) => /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("option", { value: m, children: m }, m))
             }
           )
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("visionModel", language) }),
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("visionModel", language) }),
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
             "select",
             {
               value: visionModel,
@@ -30370,13 +30204,13 @@ ${fileContext}` : fileContext;
                 void saveSettings({ ...settings, visionModel: e.target.value });
               },
               style: { width: "100%", padding: "4px", borderRadius: "4px", fontSize: "11px", background: "var(--background-secondary)", color: "var(--text-normal)", border: "1px solid var(--background-modifier-border)" },
-              children: customModels.map((m) => /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("option", { value: m, children: m }, m))
+              children: customModels.map((m) => /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("option", { value: m, children: m }, m))
             }
           )
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("quickModel", language) }),
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("quickModel", language) }),
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
             "select",
             {
               value: quickModel,
@@ -30385,16 +30219,16 @@ ${fileContext}` : fileContext;
                 void saveSettings({ ...settings, quickModel: e.target.value });
               },
               style: { width: "100%", padding: "4px", borderRadius: "4px", fontSize: "11px", background: "var(--background-secondary)", color: "var(--text-normal)", border: "1px solid var(--background-modifier-border)" },
-              children: customModels.map((m) => /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("option", { value: m, children: m }, m))
+              children: customModels.map((m) => /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("option", { value: m, children: m }, m))
             }
           )
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)", fontWeight: "bold", marginTop: "4px" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)", fontWeight: "bold", marginTop: "4px" }, children: [
             "\u{1F310} ",
             t("languageLabel", language)
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(
             "select",
             {
               value: language,
@@ -30405,26 +30239,26 @@ ${fileContext}` : fileContext;
               },
               style: { width: "100%", padding: "4px", borderRadius: "4px", fontSize: "11px", background: "var(--background-secondary)", color: "var(--text-normal)", border: "1px solid var(--background-modifier-border)" },
               children: [
-                /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("option", { value: "auto", children: t("autoDetect", language) }),
-                /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("option", { value: "ru", children: "\u0420\u0443\u0441\u0441\u043A\u0438\u0439" }),
-                /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("option", { value: "en", children: "English" }),
-                /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("option", { value: "es", children: "Espa\xF1ol" }),
-                /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("option", { value: "de", children: "Deutsch" }),
-                /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("option", { value: "fr", children: "Fran\xE7ais" }),
-                /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("option", { value: "zh", children: "\u4E2D\u6587" }),
-                /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("option", { value: "ja", children: "\u65E5\u672C\u8A9E" }),
-                /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("option", { value: "pt", children: "Portugu\xEAs" }),
-                /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("option", { value: "ko", children: "\uD55C\uAD6D\uC5B4" })
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("option", { value: "auto", children: t("autoDetect", language) }),
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("option", { value: "ru", children: "\u0420\u0443\u0441\u0441\u043A\u0438\u0439" }),
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("option", { value: "en", children: "English" }),
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("option", { value: "es", children: "Espa\xF1ol" }),
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("option", { value: "de", children: "Deutsch" }),
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("option", { value: "fr", children: "Fran\xE7ais" }),
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("option", { value: "zh", children: "\u4E2D\u6587" }),
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("option", { value: "ja", children: "\u65E5\u672C\u8A9E" }),
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("option", { value: "pt", children: "Portugu\xEAs" }),
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("option", { value: "ko", children: "\uD55C\uAD6D\uC5B4" })
               ]
             }
           )
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)", fontWeight: "bold", marginTop: "4px" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)", fontWeight: "bold", marginTop: "4px" }, children: [
             "\u{1F4C1} ",
             t("defaultNoteFolderLabel", language)
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
             "input",
             {
               type: "text",
@@ -30444,14 +30278,14 @@ ${fileContext}` : fileContext;
           )
         ] })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { background: "var(--background-primary)", padding: "8px 10px", borderRadius: "6px", border: "1px solid var(--background-modifier-border)" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("strong", { style: { fontSize: "11px" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { background: "var(--background-primary)", padding: "8px 10px", borderRadius: "6px", border: "1px solid var(--background-modifier-border)" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("strong", { style: { fontSize: "11px" }, children: [
             t("parameters", language),
             ": ",
             model
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
             "button",
             {
               onClick: () => {
@@ -30462,49 +30296,49 @@ ${fileContext}` : fileContext;
             }
           )
         ] }),
-        activeModelDetails ? /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { fontSize: "11px", color: "var(--text-muted)", display: "flex", flexDirection: "column", gap: "2px" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { children: [
+        activeModelDetails ? /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { fontSize: "11px", color: "var(--text-muted)", display: "flex", flexDirection: "column", gap: "2px" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { children: [
             "\u2022 ",
             t("contextLength", language),
             " ",
-            /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("strong", { children: [
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("strong", { children: [
               activeModelDetails.contextLength ? activeModelDetails.contextLength.toLocaleString() : "N/A",
               " ",
               t("tokens", language)
             ] })
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { children: [
             "\u2022 ",
             t("toolCallingSupport", language),
             " ",
             activeModelDetails.supportsTools ? "\u2705" : "\u274C"
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { children: [
             "\u2022 ",
             t("visionSupport", language),
             " ",
             activeModelDetails.supportsVision ? "\u2705" : "\u274C"
           ] }),
-          modelFreshness && /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { children: [
+          modelFreshness && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { children: [
             "\u2022 ",
             t("modelCutoffLabel", language),
             " ",
-            /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("strong", { children: modelFreshness.cutoff }),
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("strong", { children: modelFreshness.cutoff }),
             " (",
             modelFreshness.daysSince,
             "d ago) ",
             modelFreshness.supportsWeb ? "\u{1F310}" : "\u{1F512}"
           ] })
-        ] }) : /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { style: { fontSize: "11px", color: "var(--text-muted)" }, children: verifyingModel ? t("checkingApi", language) : t("infoUnavailable", language) })
+        ] }) : /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { style: { fontSize: "11px", color: "var(--text-muted)" }, children: verifyingModel ? t("checkingApi", language) : t("infoUnavailable", language) })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { background: "var(--background-primary)", padding: "8px 10px", borderRadius: "6px", border: "1px solid var(--background-modifier-border)" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("label", { style: { display: "block", marginBottom: "6px", fontWeight: "bold", fontSize: "11px" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { background: "var(--background-primary)", padding: "8px 10px", borderRadius: "6px", border: "1px solid var(--background-modifier-border)" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("label", { style: { display: "block", marginBottom: "6px", fontWeight: "bold", fontSize: "11px" }, children: [
           t("modelsList", language),
           ":"
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { style: { display: "flex", flexDirection: "column", gap: "4px", marginBottom: "8px", maxHeight: "120px", overflowY: "auto" }, children: customModels.map((m) => /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "3px 6px", background: "var(--background-secondary)", borderRadius: "4px", fontSize: "11px" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { style: { fontFamily: "monospace", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }, children: m }),
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { style: { display: "flex", flexDirection: "column", gap: "4px", marginBottom: "8px", maxHeight: "120px", overflowY: "auto" }, children: customModels.map((m) => /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "3px 6px", background: "var(--background-secondary)", borderRadius: "4px", fontSize: "11px" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { style: { fontFamily: "monospace", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }, children: m }),
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
             "button",
             {
               onClick: (e) => handleDeleteModel(e, m),
@@ -30514,8 +30348,8 @@ ${fileContext}` : fileContext;
             }
           )
         ] }, m)) }),
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { display: "flex", gap: "4px" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { display: "flex", gap: "4px" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
             "input",
             {
               type: "text",
@@ -30525,7 +30359,7 @@ ${fileContext}` : fileContext;
               style: { flex: 1, padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-primary)", color: "var(--text-normal)" }
             }
           ),
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
             "button",
             {
               onClick: handleAddModel,
@@ -30535,133 +30369,133 @@ ${fileContext}` : fileContext;
           )
         ] })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { background: "var(--background-primary)", padding: "8px 10px", borderRadius: "6px", border: "1px solid var(--background-modifier-border)", display: "flex", flexDirection: "column", gap: "6px" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { style: { fontWeight: "bold", fontSize: "11px" }, children: "\u{1F4C2} Storage Paths & Limits" }),
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("chatsFolderLabel", language) }),
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("input", { type: "text", value: chatsFolder, onChange: (e) => setChatsFolder(e.target.value), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
+      /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { background: "var(--background-primary)", padding: "8px 10px", borderRadius: "6px", border: "1px solid var(--background-modifier-border)", display: "flex", flexDirection: "column", gap: "6px" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { style: { fontWeight: "bold", fontSize: "11px" }, children: "\u{1F4C2} Storage Paths & Limits" }),
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("chatsFolderLabel", language) }),
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("input", { type: "text", value: chatsFolder, onChange: (e) => setChatsFolder(e.target.value), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("memoryFileLabel", language) }),
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("input", { type: "text", value: memoryFile, onChange: (e) => setMemoryFile(e.target.value), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("memoryFileLabel", language) }),
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("input", { type: "text", value: memoryFile, onChange: (e) => setMemoryFile(e.target.value), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("skillsFolderLabel", language) }),
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("input", { type: "text", value: skillsFolder, onChange: (e) => setSkillsFolder(e.target.value), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("skillsFolderLabel", language) }),
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("input", { type: "text", value: skillsFolder, onChange: (e) => setSkillsFolder(e.target.value), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { display: "flex", gap: "8px" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { flex: 1 }, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("maxAgentIterationsLabel", language) }),
-            /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("input", { type: "number", value: maxAgentIterations, onChange: (e) => setMaxAgentIterations(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { display: "flex", gap: "8px" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { flex: 1 }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("maxAgentIterationsLabel", language) }),
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("input", { type: "number", value: maxAgentIterations, onChange: (e) => setMaxAgentIterations(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { flex: 1 }, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("maxPrefetchedNotesLabel", language) }),
-            /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("input", { type: "number", value: maxPrefetchedNotes, onChange: (e) => setMaxPrefetchedNotes(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { flex: 1 }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("maxPrefetchedNotesLabel", language) }),
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("input", { type: "number", value: maxPrefetchedNotes, onChange: (e) => setMaxPrefetchedNotes(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
           ] })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { display: "flex", gap: "8px" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { flex: 1 }, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("prefetchSnippetLengthLabel", language) }),
-            /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("input", { type: "number", value: prefetchSnippetLength, onChange: (e) => setPrefetchSnippetLength(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { display: "flex", gap: "8px" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { flex: 1 }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("prefetchSnippetLengthLabel", language) }),
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("input", { type: "number", value: prefetchSnippetLength, onChange: (e) => setPrefetchSnippetLength(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { flex: 1 }, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("ragResultLimitLabel", language) }),
-            /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("input", { type: "number", value: ragResultLimit, onChange: (e) => setRagResultLimit(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { flex: 1 }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: t("ragResultLimitLabel", language) }),
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("input", { type: "number", value: ragResultLimit, onChange: (e) => setRagResultLimit(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
           ] })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { children: /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("label", { style: { fontSize: "11px", display: "flex", alignItems: "center", gap: "6px", color: "var(--text-normal)", cursor: "pointer", marginTop: "2px" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("input", { type: "checkbox", checked: enableVaultContextDefault, onChange: (e) => setEnableVaultContextDefault(e.target.checked) }),
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { children: t("enableVaultContextDefaultLabel", language) })
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { children: /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("label", { style: { fontSize: "11px", display: "flex", alignItems: "center", gap: "6px", color: "var(--text-normal)", cursor: "pointer", marginTop: "2px" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("input", { type: "checkbox", checked: enableVaultContextDefault, onChange: (e) => setEnableVaultContextDefault(e.target.checked) }),
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { children: t("enableVaultContextDefaultLabel", language) })
         ] }) }),
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { children: /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("label", { style: { fontSize: "11px", display: "flex", alignItems: "center", gap: "6px", color: "var(--text-normal)", cursor: "pointer", marginTop: "2px" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("input", { type: "checkbox", checked: confirmObsidianCommands, onChange: (e) => setConfirmObsidianCommands(e.target.checked) }),
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { children: t("confirmObsidianCommandsLabel", language) })
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { children: /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("label", { style: { fontSize: "11px", display: "flex", alignItems: "center", gap: "6px", color: "var(--text-normal)", cursor: "pointer", marginTop: "2px" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("input", { type: "checkbox", checked: confirmObsidianCommands, onChange: (e) => setConfirmObsidianCommands(e.target.checked) }),
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { children: t("confirmObsidianCommandsLabel", language) })
         ] }) })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { background: "var(--background-primary)", padding: "8px 10px", borderRadius: "6px", border: "1px solid var(--background-modifier-border)", display: "flex", flexDirection: "column", gap: "6px" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { style: { fontWeight: "bold", fontSize: "11px" }, children: "\u{1F9E0} Temporal Intelligence & Smart Routing" }),
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(Tooltip, { titleKey: "enableTemporalAwarenessLabel", descriptionKey: "enableTemporalAwarenessDesc", language, children: /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("label", { style: { fontSize: "11px", display: "flex", alignItems: "center", gap: "6px", color: "var(--text-normal)", cursor: "pointer" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("input", { type: "checkbox", checked: enableTemporalAwareness, onChange: (e) => setEnableTemporalAwareness(e.target.checked) }),
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { children: t("enableTemporalAwarenessLabel", language) })
+      /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { background: "var(--background-primary)", padding: "8px 10px", borderRadius: "6px", border: "1px solid var(--background-modifier-border)", display: "flex", flexDirection: "column", gap: "6px" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { style: { fontWeight: "bold", fontSize: "11px" }, children: "\u{1F9E0} Temporal Intelligence & Smart Routing" }),
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Tooltip, { titleKey: "enableTemporalAwarenessLabel", descriptionKey: "enableTemporalAwarenessDesc", language, children: /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("label", { style: { fontSize: "11px", display: "flex", alignItems: "center", gap: "6px", color: "var(--text-normal)", cursor: "pointer" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("input", { type: "checkbox", checked: enableTemporalAwareness, onChange: (e) => setEnableTemporalAwareness(e.target.checked) }),
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { children: t("enableTemporalAwarenessLabel", language) })
         ] }) }),
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(Tooltip, { titleKey: "enableAdaptivePrefetchLabel", descriptionKey: "enableAdaptivePrefetchDesc", language, children: /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("label", { style: { fontSize: "11px", display: "flex", alignItems: "center", gap: "6px", color: "var(--text-normal)", cursor: "pointer" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("input", { type: "checkbox", checked: enableAdaptivePrefetch, onChange: (e) => setEnableAdaptivePrefetch(e.target.checked) }),
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { children: t("enableAdaptivePrefetchLabel", language) })
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Tooltip, { titleKey: "enableAdaptivePrefetchLabel", descriptionKey: "enableAdaptivePrefetchDesc", language, children: /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("label", { style: { fontSize: "11px", display: "flex", alignItems: "center", gap: "6px", color: "var(--text-normal)", cursor: "pointer" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("input", { type: "checkbox", checked: enableAdaptivePrefetch, onChange: (e) => setEnableAdaptivePrefetch(e.target.checked) }),
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { children: t("enableAdaptivePrefetchLabel", language) })
         ] }) }),
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(Tooltip, { titleKey: "enableFreshnessSuggestionsLabel", descriptionKey: "enableFreshnessSuggestionsDesc", language, children: /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("label", { style: { fontSize: "11px", display: "flex", alignItems: "center", gap: "6px", color: "var(--text-normal)", cursor: "pointer" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("input", { type: "checkbox", checked: enableFreshnessSuggestions, onChange: (e) => setEnableFreshnessSuggestions(e.target.checked) }),
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { children: t("enableFreshnessSuggestionsLabel", language) })
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Tooltip, { titleKey: "enableFreshnessSuggestionsLabel", descriptionKey: "enableFreshnessSuggestionsDesc", language, children: /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("label", { style: { fontSize: "11px", display: "flex", alignItems: "center", gap: "6px", color: "var(--text-normal)", cursor: "pointer" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("input", { type: "checkbox", checked: enableFreshnessSuggestions, onChange: (e) => setEnableFreshnessSuggestions(e.target.checked) }),
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { children: t("enableFreshnessSuggestionsLabel", language) })
         ] }) }),
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(Tooltip, { titleKey: "enableSmartToolFilteringLabel", descriptionKey: "enableSmartToolFilteringDesc", language, children: /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("label", { style: { fontSize: "11px", display: "flex", alignItems: "center", gap: "6px", color: "var(--text-normal)", cursor: "pointer" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("input", { type: "checkbox", checked: enableSmartToolFiltering, onChange: (e) => setEnableSmartToolFiltering(e.target.checked) }),
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { children: t("enableSmartToolFilteringLabel", language) })
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Tooltip, { titleKey: "enableSmartToolFilteringLabel", descriptionKey: "enableSmartToolFilteringDesc", language, children: /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("label", { style: { fontSize: "11px", display: "flex", alignItems: "center", gap: "6px", color: "var(--text-normal)", cursor: "pointer" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("input", { type: "checkbox", checked: enableSmartToolFiltering, onChange: (e) => setEnableSmartToolFiltering(e.target.checked) }),
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { children: t("enableSmartToolFilteringLabel", language) })
         ] }) }),
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(Tooltip, { titleKey: "enableSemanticRagLabel", descriptionKey: "enableSemanticRagDesc", language, children: /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("label", { style: { fontSize: "11px", display: "flex", alignItems: "center", gap: "6px", color: "var(--text-normal)", cursor: "pointer" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("input", { type: "checkbox", checked: enableSemanticRag, onChange: (e) => setEnableSemanticRag(e.target.checked) }),
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { children: t("enableSemanticRagLabel", language) })
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Tooltip, { titleKey: "enableSemanticRagLabel", descriptionKey: "enableSemanticRagDesc", language, children: /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("label", { style: { fontSize: "11px", display: "flex", alignItems: "center", gap: "6px", color: "var(--text-normal)", cursor: "pointer" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("input", { type: "checkbox", checked: enableSemanticRag, onChange: (e) => setEnableSemanticRag(e.target.checked) }),
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { children: t("enableSemanticRagLabel", language) })
         ] }) }),
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { display: "flex", gap: "8px", marginTop: "4px" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { flex: 1 }, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(Tooltip, { titleKey: "intentStaleQueryWeightLabel", descriptionKey: "intentStaleQueryWeightDesc", language, children: /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { display: "flex", gap: "8px", marginTop: "4px" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { flex: 1 }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Tooltip, { titleKey: "intentStaleQueryWeightLabel", descriptionKey: "intentStaleQueryWeightDesc", language, children: /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: [
               t("intentStaleQueryWeightLabel", language),
               " (",
               intentStaleQueryWeight,
               ")"
             ] }) }),
-            /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("input", { type: "number", step: "0.1", value: intentStaleQueryWeight, onChange: (e) => setIntentStaleQueryWeight(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("input", { type: "number", step: "0.1", value: intentStaleQueryWeight, onChange: (e) => setIntentStaleQueryWeight(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { flex: 1 }, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(Tooltip, { titleKey: "intentFreshnessWeightLabel", descriptionKey: "intentFreshnessWeightDesc", language, children: /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { flex: 1 }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Tooltip, { titleKey: "intentFreshnessWeightLabel", descriptionKey: "intentFreshnessWeightDesc", language, children: /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: [
               t("intentFreshnessWeightLabel", language),
               " (",
               intentFreshnessWeight,
               ")"
             ] }) }),
-            /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("input", { type: "number", step: "0.1", value: intentFreshnessWeight, onChange: (e) => setIntentFreshnessWeight(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("input", { type: "number", step: "0.1", value: intentFreshnessWeight, onChange: (e) => setIntentFreshnessWeight(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
           ] })
         ] })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { background: "var(--background-primary)", padding: "8px 10px", borderRadius: "6px", border: "1px solid var(--background-modifier-border)", display: "flex", flexDirection: "column", gap: "6px" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { style: { fontWeight: "bold", fontSize: "11px" }, children: "\u{1F3AF} Intent Router Scoring Weights" }),
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { display: "flex", gap: "8px" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { flex: 1 }, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(Tooltip, { titleKey: "intentRoutingThresholdLabel", descriptionKey: "intentRoutingThresholdDesc", language, children: /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { background: "var(--background-primary)", padding: "8px 10px", borderRadius: "6px", border: "1px solid var(--background-modifier-border)", display: "flex", flexDirection: "column", gap: "6px" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { style: { fontWeight: "bold", fontSize: "11px" }, children: "\u{1F3AF} Intent Router Scoring Weights" }),
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { display: "flex", gap: "8px" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { flex: 1 }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Tooltip, { titleKey: "intentRoutingThresholdLabel", descriptionKey: "intentRoutingThresholdDesc", language, children: /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: [
               "Threshold (",
               intentRoutingThreshold,
               ")"
             ] }) }),
-            /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("input", { type: "number", step: "0.1", value: intentRoutingThreshold, onChange: (e) => setIntentRoutingThreshold(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("input", { type: "number", step: "0.1", value: intentRoutingThreshold, onChange: (e) => setIntentRoutingThreshold(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { flex: 1 }, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(Tooltip, { titleKey: "intentCreationWeightLabel", descriptionKey: "intentCreationWeightDesc", language, children: /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { flex: 1 }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Tooltip, { titleKey: "intentCreationWeightLabel", descriptionKey: "intentCreationWeightDesc", language, children: /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: [
               "Creation Wt (",
               intentCreationWeight,
               ")"
             ] }) }),
-            /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("input", { type: "number", step: "0.1", value: intentCreationWeight, onChange: (e) => setIntentCreationWeight(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("input", { type: "number", step: "0.1", value: intentCreationWeight, onChange: (e) => setIntentCreationWeight(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
           ] })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { display: "flex", gap: "8px" }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { flex: 1 }, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(Tooltip, { titleKey: "intentDeletionWeightLabel", descriptionKey: "intentDeletionWeightDesc", language, children: /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { display: "flex", gap: "8px" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { flex: 1 }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Tooltip, { titleKey: "intentDeletionWeightLabel", descriptionKey: "intentDeletionWeightDesc", language, children: /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: [
               "Deletion Wt (",
               intentDeletionWeight,
               ")"
             ] }) }),
-            /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("input", { type: "number", step: "0.1", value: intentDeletionWeight, onChange: (e) => setIntentDeletionWeight(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("input", { type: "number", step: "0.1", value: intentDeletionWeight, onChange: (e) => setIntentDeletionWeight(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { flex: 1 }, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(Tooltip, { titleKey: "intentQuestionWeightLabel", descriptionKey: "intentQuestionWeightDesc", language, children: /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { flex: 1 }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Tooltip, { titleKey: "intentQuestionWeightLabel", descriptionKey: "intentQuestionWeightDesc", language, children: /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("label", { style: { fontSize: "11px", display: "block", color: "var(--text-muted)" }, children: [
               "Question Wt (",
               intentQuestionWeight,
               ")"
             ] }) }),
-            /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("input", { type: "number", step: "0.1", value: intentQuestionWeight, onChange: (e) => setIntentQuestionWeight(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("input", { type: "number", step: "0.1", value: intentQuestionWeight, onChange: (e) => setIntentQuestionWeight(Number(e.target.value)), style: { width: "100%", padding: "4px 6px", fontSize: "11px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-secondary)", color: "var(--text-normal)" } })
           ] })
         ] })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { display: "flex", gap: "8px", marginTop: "4px" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(
+      /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { display: "flex", gap: "8px", marginTop: "4px" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(
           "button",
           {
             onClick: handleExportSettings,
@@ -30672,7 +30506,7 @@ ${fileContext}` : fileContext;
             ]
           }
         ),
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(
           "button",
           {
             onClick: () => fileInputRef.current?.click(),
@@ -30683,7 +30517,7 @@ ${fileContext}` : fileContext;
             ]
           }
         ),
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
           "input",
           {
             type: "file",
@@ -30694,7 +30528,7 @@ ${fileContext}` : fileContext;
           }
         )
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
         "button",
         {
           onClick: () => {
@@ -30705,7 +30539,7 @@ ${fileContext}` : fileContext;
         }
       )
     ] }),
-    showWelcome && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+    showWelcome && /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
       WelcomeScreen,
       {
         language,
@@ -30718,7 +30552,7 @@ ${fileContext}` : fileContext;
         }
       }
     ),
-    showFreshnessSuggestion && /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "nei-suggestion-banner", style: {
+    showFreshnessSuggestion && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "nei-suggestion-banner", style: {
       background: "var(--background-secondary-alt)",
       border: "1px solid var(--interactive-accent)",
       borderRadius: "6px",
@@ -30729,50 +30563,50 @@ ${fileContext}` : fileContext;
       justifyContent: "space-between",
       gap: "8px"
     }, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("span", { style: { fontSize: "11px" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("span", { style: { fontSize: "11px" }, children: [
         "\u26A1 ",
         showFreshnessSuggestion.message
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { display: "flex", gap: "6px" }, children: [
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("button", { onClick: showFreshnessSuggestion.onEnableWeb, style: { fontSize: "11px", padding: "3px 8px", background: "var(--interactive-accent)", color: "var(--text-on-accent)", border: "none", borderRadius: "4px", cursor: "pointer", fontWeight: "bold" }, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { display: "flex", gap: "6px" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("button", { onClick: showFreshnessSuggestion.onEnableWeb, style: { fontSize: "11px", padding: "3px 8px", background: "var(--interactive-accent)", color: "var(--text-on-accent)", border: "none", borderRadius: "4px", cursor: "pointer", fontWeight: "bold" }, children: [
           "\u{1F310} ",
           t("agentMode", language)
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("button", { onClick: showFreshnessSuggestion.onDismiss, style: { fontSize: "11px", padding: "3px 8px", background: "transparent", border: "1px solid var(--background-modifier-border)", color: "var(--text-muted)", borderRadius: "4px", cursor: "pointer" }, children: "\u2715" })
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("button", { onClick: showFreshnessSuggestion.onDismiss, style: { fontSize: "11px", padding: "3px 8px", background: "transparent", border: "1px solid var(--background-modifier-border)", color: "var(--text-muted)", borderRadius: "4px", cursor: "pointer" }, children: "\u2715" })
       ] })
     ] }),
-    /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(
+    /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(
       "div",
       {
         className: "nei-chat-messages-container",
         ref: messagesContainerRef,
         onScroll: handleMessagesScroll,
         children: [
-          currentSession.messages.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { textAlign: "center", color: "var(--text-muted)", marginTop: "24px", padding: "0 12px", fontSize: "13px" }, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { style: { fontSize: "15px", fontWeight: "bold", marginBottom: "8px", color: "var(--text-normal)" }, children: t("welcomeGreeting", language) }),
-            /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { style: { fontSize: "12px", marginBottom: "16px", opacity: 0.85 }, children: t("welcomeSubText", language) }),
-            /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { textAlign: "left", display: "inline-block", fontSize: "12px", lineHeight: "1.8", background: "var(--background-secondary)", padding: "12px 16px", borderRadius: "10px", border: "1px solid var(--background-modifier-border)", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }, children: [
+          currentSession.messages.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { textAlign: "center", color: "var(--text-muted)", marginTop: "24px", padding: "0 12px", fontSize: "13px" }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { style: { fontSize: "15px", fontWeight: "bold", marginBottom: "8px", color: "var(--text-normal)" }, children: t("welcomeGreeting", language) }),
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { style: { fontSize: "12px", marginBottom: "16px", opacity: 0.85 }, children: t("welcomeSubText", language) }),
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { textAlign: "left", display: "inline-block", fontSize: "12px", lineHeight: "1.8", background: "var(--background-secondary)", padding: "12px 16px", borderRadius: "10px", border: "1px solid var(--background-modifier-border)", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }, children: [
               "\u2022 ",
               t("featureNotes", language),
-              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("br", {}),
+              /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("br", {}),
               "\u2022 ",
               t("featureRouting", language),
-              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("br", {}),
+              /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("br", {}),
               "\u2022 ",
               t("featureVision", language),
-              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("br", {}),
+              /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("br", {}),
               "\u2022 ",
               t("featureTokens", language)
             ] })
           ] }),
-          currentSession.messages.map((msg, idx) => /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+          currentSession.messages.map((msg, idx) => /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
             "div",
             {
               className: `nei-chat-bubble nei-msg-bubble ${msg.role === "user" ? "nei-msg-bubble--user" : "nei-msg-bubble--assistant"}`,
               children: msg.role === "user" ? editingMsgIdx === idx ? (
                 /* Inline Edit Form for User Message */
-                /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { display: "flex", flexDirection: "column", gap: "6px", minWidth: "220px" }, children: [
-                  /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { display: "flex", flexDirection: "column", gap: "6px", minWidth: "220px" }, children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
                     "textarea",
                     {
                       value: editingText,
@@ -30780,8 +30614,8 @@ ${fileContext}` : fileContext;
                       style: { width: "100%", minHeight: "60px", padding: "6px", borderRadius: "4px", border: "1px solid var(--background-modifier-border)", background: "var(--background-primary)", color: "var(--text-normal)", fontSize: "12px" }
                     }
                   ),
-                  /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { display: "flex", gap: "6px", justifyContent: "flex-end" }, children: [
-                    /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+                  /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { display: "flex", gap: "6px", justifyContent: "flex-end" }, children: [
+                    /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
                       "button",
                       {
                         onClick: () => setEditingMsgIdx(null),
@@ -30789,7 +30623,7 @@ ${fileContext}` : fileContext;
                         children: t("cancelBtn", language)
                       }
                     ),
-                    /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+                    /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
                       "button",
                       {
                         onClick: () => handleSaveEdit(idx),
@@ -30801,11 +30635,11 @@ ${fileContext}` : fileContext;
                 ] })
               ) : (
                 /* Standard User Message Display */
-                /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { children: [
-                  msg.images && msg.images.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { style: { display: "flex", gap: "4px", marginBottom: "6px", flexWrap: "wrap" }, children: msg.images.map((img, i) => /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("img", { src: img, style: { width: "60px", height: "60px", borderRadius: "4px", objectFit: "cover" } }, i)) }),
-                  /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { style: { whiteSpace: "pre-wrap" }, children: msg.content }),
-                  /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "nei-msg-actions", children: [
-                    /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { children: [
+                  msg.images && msg.images.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { style: { display: "flex", gap: "4px", marginBottom: "6px", flexWrap: "wrap" }, children: msg.images.map((img, i) => /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("img", { src: img, style: { width: "60px", height: "60px", borderRadius: "4px", objectFit: "cover" } }, i)) }),
+                  /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { style: { whiteSpace: "pre-wrap" }, children: msg.content }),
+                  /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "nei-msg-actions", children: [
+                    /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
                       "button",
                       {
                         onClick: () => {
@@ -30816,7 +30650,7 @@ ${fileContext}` : fileContext;
                         children: t("copyText", language)
                       }
                     ),
-                    /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+                    /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
                       "button",
                       {
                         onClick: () => handleStartEdit(idx, msg.content || ""),
@@ -30825,7 +30659,7 @@ ${fileContext}` : fileContext;
                         children: t("editText", language)
                       }
                     ),
-                    /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+                    /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
                       "button",
                       {
                         onClick: () => handleRetryUserMessage(idx),
@@ -30839,17 +30673,17 @@ ${fileContext}` : fileContext;
                 ] })
               ) : (
                 /* Assistant Message Display */
-                /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { minWidth: 0 }, children: [
-                  /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(ObsidianMarkdown, { markdown: msg.content || "", app, component: viewComponent }),
-                  (msg.promptTokens !== void 0 || msg.completionTokens !== void 0) && /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "nei-msg-token-stats", children: [
-                    /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("span", { className: "nei-msg-token-chip", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { minWidth: 0 }, children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(ObsidianMarkdown, { markdown: msg.content || "", app, component: viewComponent }),
+                  (msg.promptTokens !== void 0 || msg.completionTokens !== void 0) && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "nei-msg-token-stats", children: [
+                    /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("span", { className: "nei-msg-token-chip", children: [
                       t("inputTokens", language),
                       " ",
                       msg.promptTokens || 0,
                       " ",
                       t("tokens", language)
                     ] }),
-                    /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("span", { className: "nei-msg-token-chip", children: [
+                    /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("span", { className: "nei-msg-token-chip", children: [
                       t("outputTokens", language),
                       " ",
                       msg.completionTokens || 0,
@@ -30857,8 +30691,8 @@ ${fileContext}` : fileContext;
                       t("tokens", language)
                     ] })
                   ] }),
-                  /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "nei-msg-actions nei-msg-actions--assistant", children: [
-                    /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+                  /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "nei-msg-actions nei-msg-actions--assistant", children: [
+                    /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
                       "button",
                       {
                         onClick: () => {
@@ -30868,7 +30702,7 @@ ${fileContext}` : fileContext;
                         children: t("copyText", language)
                       }
                     ),
-                    /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+                    /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
                       "button",
                       {
                         onClick: () => {
@@ -30879,7 +30713,7 @@ ${fileContext}` : fileContext;
                         children: "\u{1F33F} Branch"
                       }
                     ),
-                    msg.content && msg.content.length > 50 && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+                    msg.content && msg.content.length > 50 && /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
                       "button",
                       {
                         onClick: () => {
@@ -30895,7 +30729,7 @@ ${fileContext}` : fileContext;
             },
             msg.id || idx
           )),
-          activeSteps.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+          activeSteps.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
             ReasoningPanel,
             {
               steps: activeSteps,
@@ -30904,32 +30738,32 @@ ${fileContext}` : fileContext;
               onToggle: () => setShowReasoning(!showReasoning)
             }
           ),
-          learningProposal && /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "nei-learning-proposal", style: {
+          learningProposal && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "nei-learning-proposal", style: {
             background: "var(--background-secondary-alt)",
             border: "1px solid var(--interactive-accent)",
             borderRadius: "8px",
             padding: "10px 12px",
             fontSize: "11px"
           }, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { style: { fontWeight: "bold", marginBottom: "6px", color: "var(--interactive-accent)" }, children: t("learningProposalTitle", language) }),
-            learningProposal.proposal.facts.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { marginBottom: "4px" }, children: [
-              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { style: { fontSize: "10px", fontWeight: 600, color: "var(--text-muted)", marginBottom: "2px" }, children: t("learningProposalFacts", language) }),
-              learningProposal.proposal.facts.map((f, i) => /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { padding: "1px 0", color: "var(--text-normal)" }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { style: { fontWeight: "bold", marginBottom: "6px", color: "var(--interactive-accent)" }, children: t("learningProposalTitle", language) }),
+            learningProposal.proposal.facts.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { marginBottom: "4px" }, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { style: { fontSize: "10px", fontWeight: 600, color: "var(--text-muted)", marginBottom: "2px" }, children: t("learningProposalFacts", language) }),
+              learningProposal.proposal.facts.map((f, i) => /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { padding: "1px 0", color: "var(--text-normal)" }, children: [
                 "\u{1F4A1} ",
                 f
               ] }, i))
             ] }),
-            learningProposal.proposal.skillIdeas.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { marginBottom: "4px" }, children: [
-              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { style: { fontSize: "10px", fontWeight: 600, color: "var(--text-muted)", marginBottom: "2px" }, children: t("learningProposalSkills", language) }),
-              learningProposal.proposal.skillIdeas.map((s, i) => /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { padding: "1px 0", color: "var(--text-normal)" }, children: [
+            learningProposal.proposal.skillIdeas.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { marginBottom: "4px" }, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { style: { fontSize: "10px", fontWeight: 600, color: "var(--text-muted)", marginBottom: "2px" }, children: t("learningProposalSkills", language) }),
+              learningProposal.proposal.skillIdeas.map((s, i) => /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { padding: "1px 0", color: "var(--text-normal)" }, children: [
                 "\u{1F6E0} ",
                 s.name,
                 ": ",
                 s.description
               ] }, i))
             ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { display: "flex", gap: "8px", justifyContent: "flex-end", marginTop: "6px" }, children: [
-              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { display: "flex", gap: "8px", justifyContent: "flex-end", marginTop: "6px" }, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
                 "button",
                 {
                   onClick: learningProposal.onDismiss,
@@ -30937,7 +30771,7 @@ ${fileContext}` : fileContext;
                   children: t("dismiss", language)
                 }
               ),
-              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+              /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
                 "button",
                 {
                   onClick: () => void learningProposal.onAccept(),
@@ -30947,15 +30781,15 @@ ${fileContext}` : fileContext;
               )
             ] })
           ] }),
-          loading && /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { display: "flex", flexDirection: "column", gap: "4px", alignSelf: "flex-start", maxWidth: "92%", padding: "10px 14px", borderRadius: "12px", background: "var(--background-secondary)", fontSize: "13px" }, children: [
-            streamingContent ? /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { children: [
-              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(ObsidianMarkdown, { markdown: streamingContent, app, component: viewComponent }),
-              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { className: "nei-streaming-cursor", style: { color: "var(--interactive-accent)", fontWeight: "bold" }, children: " \u258A" })
-            ] }) : /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: "8px", color: "var(--text-muted)" }, children: [
-              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { className: "nei-spinner", children: "\u27F3" }),
-              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { children: t("agentRunning", language) })
+          loading && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { display: "flex", flexDirection: "column", gap: "4px", alignSelf: "flex-start", maxWidth: "92%", padding: "10px 14px", borderRadius: "12px", background: "var(--background-secondary)", fontSize: "13px" }, children: [
+            streamingContent ? /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { children: [
+              /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(ObsidianMarkdown, { markdown: streamingContent, app, component: viewComponent }),
+              /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { className: "nei-streaming-cursor", style: { color: "var(--interactive-accent)", fontWeight: "bold" }, children: " \u258A" })
+            ] }) : /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: "8px", color: "var(--text-muted)" }, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { className: "nei-spinner", children: "\u27F3" }),
+              /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { children: t("agentRunning", language) })
             ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
               "button",
               {
                 onClick: () => abortController?.abort(),
@@ -30965,20 +30799,20 @@ ${fileContext}` : fileContext;
               }
             )
           ] }),
-          currentConfirmation && /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { background: "var(--background-secondary)", border: "2px solid var(--interactive-accent)", borderRadius: "8px", padding: "12px", marginTop: "6px", fontSize: "12px" }, children: [
-            /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { fontWeight: "bold", marginBottom: "6px", color: "var(--text-normal)" }, children: [
+          currentConfirmation && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { background: "var(--background-secondary)", border: "2px solid var(--interactive-accent)", borderRadius: "8px", padding: "12px", marginTop: "6px", fontSize: "12px" }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { fontWeight: "bold", marginBottom: "6px", color: "var(--text-normal)" }, children: [
               "\u26A0\uFE0F ",
               t("actionConfirmation", language),
               pendingConfirmations.length > 1 && ` (${pendingConfirmations.length})`
             ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { marginBottom: "4px" }, children: [
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { marginBottom: "4px" }, children: [
               t("agentWantsExecute", language),
               ": ",
-              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("code", { children: currentConfirmation.toolName })
+              /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("code", { children: currentConfirmation.toolName })
             ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { style: { background: "var(--background-primary)", padding: "6px", borderRadius: "4px", fontFamily: "monospace", fontSize: "11px", marginBottom: "10px", whiteSpace: "pre-wrap", maxHeight: "100px", overflowY: "auto" }, children: currentConfirmation.argsStr }),
-            /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { display: "flex", gap: "8px", justifyContent: "flex-end" }, children: [
-              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { style: { background: "var(--background-primary)", padding: "6px", borderRadius: "4px", fontFamily: "monospace", fontSize: "11px", marginBottom: "10px", whiteSpace: "pre-wrap", maxHeight: "100px", overflowY: "auto" }, children: currentConfirmation.argsStr }),
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { display: "flex", gap: "8px", justifyContent: "flex-end" }, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
                 "button",
                 {
                   onClick: () => resolveConfirmation(currentConfirmation.id, false),
@@ -30986,7 +30820,7 @@ ${fileContext}` : fileContext;
                   children: t("cancelBtn", language)
                 }
               ),
-              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+              /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
                 "button",
                 {
                   onClick: () => resolveConfirmation(currentConfirmation.id, true),
@@ -30999,7 +30833,7 @@ ${fileContext}` : fileContext;
         ]
       }
     ),
-    warningModal && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+    warningModal && /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
       CapabilityWarningModal,
       {
         unsupportedTypes: warningModal.unsupportedTypes,
@@ -31009,19 +30843,19 @@ ${fileContext}` : fileContext;
         onCancel: () => setWarningModal(null)
       }
     ),
-    attachedFiles.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { className: "nei-attach-bar", children: attachedFiles.map((file) => /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "nei-attach-chip", children: [
-      file.type === "image" && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("img", { src: file.content, style: { width: "20px", height: "20px", objectFit: "cover", borderRadius: "2px" } }),
-      file.type === "text" && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { children: "\u{1F4C4}" }),
-      file.type === "pdf" && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { children: "\u{1F4D5}" }),
-      file.type === "audio" && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { children: "\u{1F3A4}" }),
-      file.type === "video" && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { children: "\u{1F3A5}" }),
-      /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { className: "nei-attach-chip-name", children: file.name }),
-      /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("span", { className: "nei-attach-chip-size", children: [
+    attachedFiles.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { className: "nei-attach-bar", children: attachedFiles.map((file) => /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "nei-attach-chip", children: [
+      file.type === "image" && /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("img", { src: file.content, style: { width: "20px", height: "20px", objectFit: "cover", borderRadius: "2px" } }),
+      file.type === "text" && /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { children: "\u{1F4C4}" }),
+      file.type === "pdf" && /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { children: "\u{1F4D5}" }),
+      file.type === "audio" && /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { children: "\u{1F3A4}" }),
+      file.type === "video" && /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { children: "\u{1F3A5}" }),
+      /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { className: "nei-attach-chip-name", children: file.name }),
+      /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("span", { className: "nei-attach-chip-size", children: [
         "(",
         (file.sizeBytes / 1024).toFixed(0),
         "KB)"
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
         "button",
         {
           onClick: () => {
@@ -31035,20 +30869,8 @@ ${fileContext}` : fileContext;
         }
       )
     ] }, file.id)) }),
-    isRecordingAudio && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { style: { marginBottom: "6px" }, children: /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
-      AudioRecorder,
-      {
-        onAudioCaptured: (audioDataUrl, durationSec) => {
-          const id = Math.random().toString(36).substring(2, 9);
-          const name = `audio_${durationSec}s.webm`;
-          setAttachedFiles((prev) => [...prev, { id, name, type: "audio", content: audioDataUrl, sizeBytes: Math.round(audioDataUrl.length * 0.75) }]);
-          setIsRecordingAudio(false);
-        },
-        onCancel: () => setIsRecordingAudio(false)
-      }
-    ) }),
-    /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { className: "nei-chat-input-container", children: /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "nei-chat-input-row", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(
+    /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { className: "nei-chat-input-container", children: /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "nei-chat-input-row", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(
         "label",
         {
           title: t("attachTooltip", language),
@@ -31056,7 +30878,7 @@ ${fileContext}` : fileContext;
           className: "nei-chat-attach-btn",
           children: [
             "\u{1F4CE}",
-            /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
               "input",
               {
                 type: "file",
@@ -31069,17 +30891,7 @@ ${fileContext}` : fileContext;
           ]
         }
       ),
-      (activeModelDetails?.capabilities?.audio || getDefaultModelCapabilities(model).supportsAudio) && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
-        "button",
-        {
-          onClick: () => setIsRecordingAudio(!isRecordingAudio),
-          title: "Record Audio Input",
-          "aria-label": "Record Audio Input",
-          className: `nei-chat-audio-btn ${isRecordingAudio ? "recording" : ""}`,
-          children: "\u{1F3A4}"
-        }
-      ),
-      /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
         "textarea",
         {
           ref: textareaRef,
@@ -31101,7 +30913,7 @@ ${fileContext}` : fileContext;
           className: "nei-chat-textarea"
         }
       ),
-      /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
         "button",
         {
           onClick: handleSendMessage,
@@ -31116,8 +30928,8 @@ ${fileContext}` : fileContext;
   ] });
 };
 var ChatPanel = (props) => {
-  const [panelKey, setPanelKey] = import_react7.default.useState(0);
-  return /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(ErrorBoundary, { children: /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(ChatPanelInner, { ...props, onReload: () => setPanelKey((k) => k + 1) }) }, panelKey);
+  const [panelKey, setPanelKey] = import_react6.default.useState(0);
+  return /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(ErrorBoundary, { children: /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(ChatPanelInner, { ...props, onReload: () => setPanelKey((k) => k + 1) }) }, panelKey);
 };
 
 // src/views/ChatView.ts
@@ -31144,7 +30956,7 @@ var NeiChatView = class extends import_obsidian12.ItemView {
     const rootEl = container.createDiv({ cls: "nei-chat-view-root" });
     this.root = (0, import_client.createRoot)(rootEl);
     this.root.render(
-      React8.createElement(ChatPanel, {
+      React7.createElement(ChatPanel, {
         app: this.app,
         viewLeaf: this.leaf,
         viewComponent: this,
