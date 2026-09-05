@@ -219,11 +219,18 @@ export function attachChromeInsetWatcher(container: HTMLElement): () => void {
     const capListenerHandles: Array<Promise<unknown> | unknown> = [];
 
     const apply = () => {
+        // Keyboard open = layout viewport shrank (resizing webview) OR the
+        // Capacitor bridge reported a keyboard (non-resizing webviews, e.g. MIUI).
+        const layoutShrank = window.innerHeight < baselineInnerHeight - 40;
+        const kbOpen = layoutShrank || capKeyboardInset > 0;
+        document.body.classList.toggle("nei-kb-open", kbOpen);
+
         const fast = measureChrome(container);
         if (fast.inset > 0) systemGap = Math.max(systemGap, fast.gapBelow);
         if (deep.inset > 0) systemGap = Math.max(systemGap, deep.gapBelow);
         const chromeInset = Math.max(fast.inset, deep.inset);
-        const effectiveChrome = chromeInset > 0 ? chromeInset : systemGap;
+        // With the keyboard open the system nav area is behind it — no gap fallback.
+        const effectiveChrome = kbOpen ? chromeInset : (chromeInset > 0 ? chromeInset : systemGap);
         const keyboardInset = computeKeyboardInset(
             baselineInnerHeight,
             window.innerHeight,
@@ -231,8 +238,13 @@ export function attachChromeInsetWatcher(container: HTMLElement): () => void {
         );
         // Keyboard closed again → re-baseline for the next open
         if (window.innerHeight >= baselineInnerHeight) baselineInnerHeight = window.innerHeight;
-        const keyboard = Math.max(keyboardInset, capKeyboardInset);
-        const total = Math.ceil(effectiveChrome + keyboard);
+        // In a non-resizing webview the keyboard OVERLAYS the page: bottom chrome
+        // (navbar pill) is then hidden BEHIND the keyboard and covers the same
+        // bottom region — take max, never sum (summing pushed the input ~100px
+        // too far from the keyboard). In a resizing webview the layout already
+        // excludes the keyboard, so the keyboard contributes nothing here.
+        const keyboard = layoutShrank ? 0 : Math.max(keyboardInset, capKeyboardInset);
+        const total = Math.ceil(Math.max(effectiveChrome, keyboard));
         container.style.setProperty("--nei-chrome-inset", `${total}px`);
     };
 
@@ -333,5 +345,6 @@ export function attachChromeInsetWatcher(container: HTMLElement): () => void {
         if (deepTimer !== null) window.clearTimeout(deepTimer);
         timers.forEach(t => window.clearTimeout(t));
         container.style.removeProperty("--nei-chrome-inset");
+        document.body.classList.remove("nei-kb-open");
     };
 }

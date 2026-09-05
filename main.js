@@ -28988,13 +28988,16 @@ function attachChromeInsetWatcher(container) {
   const timers = [];
   const capListenerHandles = [];
   const apply = () => {
+    const layoutShrank = window.innerHeight < baselineInnerHeight - 40;
+    const kbOpen = layoutShrank || capKeyboardInset > 0;
+    document.body.classList.toggle("nei-kb-open", kbOpen);
     const fast = measureChrome(container);
     if (fast.inset > 0)
       systemGap = Math.max(systemGap, fast.gapBelow);
     if (deep.inset > 0)
       systemGap = Math.max(systemGap, deep.gapBelow);
     const chromeInset = Math.max(fast.inset, deep.inset);
-    const effectiveChrome = chromeInset > 0 ? chromeInset : systemGap;
+    const effectiveChrome = kbOpen ? chromeInset : chromeInset > 0 ? chromeInset : systemGap;
     const keyboardInset = computeKeyboardInset(
       baselineInnerHeight,
       window.innerHeight,
@@ -29002,8 +29005,8 @@ function attachChromeInsetWatcher(container) {
     );
     if (window.innerHeight >= baselineInnerHeight)
       baselineInnerHeight = window.innerHeight;
-    const keyboard = Math.max(keyboardInset, capKeyboardInset);
-    const total = Math.ceil(effectiveChrome + keyboard);
+    const keyboard = layoutShrank ? 0 : Math.max(keyboardInset, capKeyboardInset);
+    const total = Math.ceil(Math.max(effectiveChrome, keyboard));
     container.style.setProperty("--nei-chrome-inset", `${total}px`);
   };
   const measureDeep = () => {
@@ -29090,6 +29093,7 @@ function attachChromeInsetWatcher(container) {
       window.clearTimeout(deepTimer);
     timers.forEach((t2) => window.clearTimeout(t2));
     container.style.removeProperty("--nei-chrome-inset");
+    document.body.classList.remove("nei-kb-open");
   };
 }
 

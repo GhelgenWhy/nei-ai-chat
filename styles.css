@@ -548,3 +548,13 @@ clamp() / container queries (container: nei-panel on .nei-chat-view-root).
         min-height: 36px;
     }
 }
+
+/* ── Keyboard open (body class set by the chrome watcher) ──
+   Obsidian's mobile drawer keeps its tab-select pill / header bars below the
+   leaf — on resizing webviews that is dead space between the input and the
+   keyboard. On non-resizing webviews the keyboard covers them anyway, so
+   hiding is harmless there. Scoped to mobile drawers only. */
+body.nei-kb-open .workspace-drawer .workspace-drawer-tab-header,
+body.nei-kb-open .workspace-drawer .workspace-drawer-header {
+    display: none !important;
+}
