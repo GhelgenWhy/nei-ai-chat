@@ -230,7 +230,10 @@ export interface KeyboardInsetParams {
  */
 export function resolveKeyboardInset(p: KeyboardInsetParams): number {
     if (p.layoutShrank) return 0;
-    if (p.kbOpen && p.roomBelow > KEYBOARD_ROOM_THRESHOLD) return 0;
+    // Keyboard closed: ignore the bridge entirely (stale values), but keep the
+    // viewport-based signal — it can report a keyboard before the bridge does.
+    if (!p.kbOpen) return Math.max(0, p.vvInset);
+    if (p.roomBelow > KEYBOARD_ROOM_THRESHOLD) return 0;
     return Math.max(p.vvInset, p.capInset);
 }
 

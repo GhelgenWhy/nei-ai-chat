@@ -28984,7 +28984,9 @@ var KEYBOARD_ROOM_THRESHOLD = 60;
 function resolveKeyboardInset(p) {
   if (p.layoutShrank)
     return 0;
-  if (p.kbOpen && p.roomBelow > KEYBOARD_ROOM_THRESHOLD)
+  if (!p.kbOpen)
+    return Math.max(0, p.vvInset);
+  if (p.roomBelow > KEYBOARD_ROOM_THRESHOLD)
     return 0;
   return Math.max(p.vvInset, p.capInset);
 }
