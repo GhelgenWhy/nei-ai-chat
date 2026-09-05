@@ -51,9 +51,9 @@ const MIN_CHROME_WIDTH = 80;
 /**
  * Capacitor's keyboardHeight tends to over-report (suggestion strip, rounded
  * corners) — the input ends up floating above the keyboard. Calibrated
- * on-device (MIUI): trim ~20px from bridge-reported heights.
+ * on-device (MIUI): trim ~35px from bridge-reported heights.
  */
-const KEYBOARD_HEIGHT_TRIM = 20;
+const KEYBOARD_HEIGHT_TRIM = 35;
 
 /**
  * How many pixels `rect` covers of the container's bottom strip, given its
@@ -256,6 +256,13 @@ export function attachChromeInsetWatcher(container: HTMLElement): () => void {
         const keyboard = layoutShrank ? 0 : Math.max(keyboardInset, capKeyboardInset);
         const total = Math.ceil(Math.max(effectiveChrome, keyboard));
         container.style.setProperty("--nei-chrome-inset", `${total}px`);
+        // Telemetry for the layout inspector / remote debugging
+        container.dataset.neiInset = String(total);
+        container.dataset.neiFast = String(fast.inset);
+        container.dataset.neiDeep = String(deep.inset);
+        container.dataset.neiKb = String(keyboard);
+        container.dataset.neiCap = String(capKeyboardInset);
+        container.dataset.neiGap = String(systemGap);
     };
 
     const measureDeep = () => {
@@ -275,32 +282,57 @@ export function attachChromeInsetWatcher(container: HTMLElement): () => void {
     // Capacitor Keyboard bridge (Obsidian mobile runs on Capacitor). Sizes may
     // arrive in device pixels on some bridge versions — normalize by dpr when
     // implausible, and clamp so a bogus event can never hide the whole panel.
+    // keyboardDidShow is authoritative: some ROMs report an inflated height on
+    // keyboardWillShow (which alone made the input fly far above the keyboard
+    // in the main window). willShow is only a timed fallback.
+    let willShowTimer: number | null = null;
     try {
         const cap = (window as unknown as {
             Capacitor?: { Plugins?: { Keyboard?: { addListener?: (event: string, cb: (e: { keyboardHeight?: number }) => void) => unknown } } };
         }).Capacitor;
         const kb = cap?.Plugins?.Keyboard;
         if (kb && typeof kb.addListener === "function") {
-            const onShow = (e: { keyboardHeight?: number }) => {
-                let h = Math.round(e?.keyboardHeight || 0);
-                if (h > window.innerHeight * 0.8) h = Math.round(h / (window.devicePixelRatio || 1));
-                // Bridges tend to over-report by the suggestion strip / rounding —
-                // the input ends up floating above the keyboard. Calibrated
-                // on-device (MIUI): trim ~20px.
+            const normalize = (raw: number): number => {
+                let h = Math.round(raw || 0);
+                if (h > window.innerHeight * 0.8) {
+                    h = Math.round(h / (window.devicePixelRatio || 1));
+                }
+                // A keyboard is never taller than ~55% of the viewport — some
+                // ROMs/bridges over-report massively in resize-mode-off.
+                return Math.max(0, Math.min(h - KEYBOARD_HEIGHT_TRIM, Math.round(window.innerHeight * 0.55)));
+            };
+            const setKeyboard = (h: number) => {
                 capKeyboardSeen = true;
-                capKeyboardInset = Math.max(
-                    0,
-                    Math.min(h - KEYBOARD_HEIGHT_TRIM, Math.round(window.innerHeight * 0.6))
-                );
+                capKeyboardInset = h;
                 apply();
             };
+            const onWillShow = (e: { keyboardHeight?: number }) => {
+                const h = normalize(e?.keyboardHeight || 0);
+                if (willShowTimer !== null) window.clearTimeout(willShowTimer);
+                // Provisional: some ROMs never fire didShow — apply after 350ms
+                willShowTimer = window.setTimeout(() => {
+                    willShowTimer = null;
+                    if (capKeyboardInset === 0) setKeyboard(h);
+                }, 350);
+            };
+            const onDidShow = (e: { keyboardHeight?: number }) => {
+                if (willShowTimer !== null) {
+                    window.clearTimeout(willShowTimer);
+                    willShowTimer = null;
+                }
+                setKeyboard(normalize(e?.keyboardHeight || 0));
+            };
             const onHide = () => {
+                if (willShowTimer !== null) {
+                    window.clearTimeout(willShowTimer);
+                    willShowTimer = null;
+                }
                 capKeyboardSeen = false;
                 capKeyboardInset = 0;
                 apply();
             };
-            capListenerHandles.push(kb.addListener("keyboardWillShow", onShow));
-            capListenerHandles.push(kb.addListener("keyboardDidShow", onShow));
+            capListenerHandles.push(kb.addListener("keyboardWillShow", onWillShow));
+            capListenerHandles.push(kb.addListener("keyboardDidShow", onDidShow));
             capListenerHandles.push(kb.addListener("keyboardWillHide", onHide));
             capListenerHandles.push(kb.addListener("keyboardDidHide", onHide));
         }
@@ -361,8 +393,15 @@ export function attachChromeInsetWatcher(container: HTMLElement): () => void {
             } catch { /* ignore */ }
         }
         if (deepTimer !== null) window.clearTimeout(deepTimer);
+        if (willShowTimer !== null) window.clearTimeout(willShowTimer);
         timers.forEach(t => window.clearTimeout(t));
         container.style.removeProperty("--nei-chrome-inset");
+        delete container.dataset.neiInset;
+        delete container.dataset.neiFast;
+        delete container.dataset.neiDeep;
+        delete container.dataset.neiKb;
+        delete container.dataset.neiCap;
+        delete container.dataset.neiGap;
         document.body.classList.remove("nei-kb-open");
     };
 }

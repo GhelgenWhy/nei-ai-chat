@@ -28891,7 +28891,7 @@ var OBSIDIAN_BOTTOM_CHROME_SELECTOR = ".status-bar, .mobile-toolbar, .mobile-nav
 var TRANSIENT_OVERLAY_SELECTOR = ".notice, .menu, .modal-container";
 var MIN_CHROME_HEIGHT = 16;
 var MIN_CHROME_WIDTH = 80;
-var KEYBOARD_HEIGHT_TRIM = 20;
+var KEYBOARD_HEIGHT_TRIM = 35;
 function bottomOverlayOverlap(containerRect, rect, style) {
   if (style.display === "none" || style.visibility === "hidden" || style.opacity === 0)
     return 0;
@@ -29010,6 +29010,12 @@ function attachChromeInsetWatcher(container) {
     const keyboard = layoutShrank ? 0 : Math.max(keyboardInset, capKeyboardInset);
     const total = Math.ceil(Math.max(effectiveChrome, keyboard));
     container.style.setProperty("--nei-chrome-inset", `${total}px`);
+    container.dataset.neiInset = String(total);
+    container.dataset.neiFast = String(fast.inset);
+    container.dataset.neiDeep = String(deep.inset);
+    container.dataset.neiKb = String(keyboard);
+    container.dataset.neiCap = String(capKeyboardInset);
+    container.dataset.neiGap = String(systemGap);
   };
   const measureDeep = () => {
     deep = scanBottomOverlaps(container);
@@ -29023,28 +29029,51 @@ function attachChromeInsetWatcher(container) {
       measureDeep();
     }, 250);
   };
+  let willShowTimer = null;
   try {
     const cap = window.Capacitor;
     const kb = cap?.Plugins?.Keyboard;
     if (kb && typeof kb.addListener === "function") {
-      const onShow = (e) => {
-        let h = Math.round(e?.keyboardHeight || 0);
-        if (h > window.innerHeight * 0.8)
+      const normalize = (raw) => {
+        let h = Math.round(raw || 0);
+        if (h > window.innerHeight * 0.8) {
           h = Math.round(h / (window.devicePixelRatio || 1));
+        }
+        return Math.max(0, Math.min(h - KEYBOARD_HEIGHT_TRIM, Math.round(window.innerHeight * 0.55)));
+      };
+      const setKeyboard = (h) => {
         capKeyboardSeen = true;
-        capKeyboardInset = Math.max(
-          0,
-          Math.min(h - KEYBOARD_HEIGHT_TRIM, Math.round(window.innerHeight * 0.6))
-        );
+        capKeyboardInset = h;
         apply();
       };
+      const onWillShow = (e) => {
+        const h = normalize(e?.keyboardHeight || 0);
+        if (willShowTimer !== null)
+          window.clearTimeout(willShowTimer);
+        willShowTimer = window.setTimeout(() => {
+          willShowTimer = null;
+          if (capKeyboardInset === 0)
+            setKeyboard(h);
+        }, 350);
+      };
+      const onDidShow = (e) => {
+        if (willShowTimer !== null) {
+          window.clearTimeout(willShowTimer);
+          willShowTimer = null;
+        }
+        setKeyboard(normalize(e?.keyboardHeight || 0));
+      };
       const onHide = () => {
+        if (willShowTimer !== null) {
+          window.clearTimeout(willShowTimer);
+          willShowTimer = null;
+        }
         capKeyboardSeen = false;
         capKeyboardInset = 0;
         apply();
       };
-      capListenerHandles.push(kb.addListener("keyboardWillShow", onShow));
-      capListenerHandles.push(kb.addListener("keyboardDidShow", onShow));
+      capListenerHandles.push(kb.addListener("keyboardWillShow", onWillShow));
+      capListenerHandles.push(kb.addListener("keyboardDidShow", onDidShow));
       capListenerHandles.push(kb.addListener("keyboardWillHide", onHide));
       capListenerHandles.push(kb.addListener("keyboardDidHide", onHide));
     }
@@ -29098,8 +29127,16 @@ function attachChromeInsetWatcher(container) {
     }
     if (deepTimer !== null)
       window.clearTimeout(deepTimer);
+    if (willShowTimer !== null)
+      window.clearTimeout(willShowTimer);
     timers.forEach((t2) => window.clearTimeout(t2));
     container.style.removeProperty("--nei-chrome-inset");
+    delete container.dataset.neiInset;
+    delete container.dataset.neiFast;
+    delete container.dataset.neiDeep;
+    delete container.dataset.neiKb;
+    delete container.dataset.neiCap;
+    delete container.dataset.neiGap;
     document.body.classList.remove("nei-kb-open");
   };
 }
