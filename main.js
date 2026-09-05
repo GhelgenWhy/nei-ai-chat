@@ -28983,8 +28983,10 @@ function attachChromeInsetWatcher(container) {
   let baselineInnerHeight = window.innerHeight;
   let deep = { inset: 0, gapBelow: 0 };
   let systemGap = 0;
+  let capKeyboardInset = 0;
   let deepTimer = null;
   const timers = [];
+  const capListenerHandles = [];
   const apply = () => {
     const fast = measureChrome(container);
     if (fast.inset > 0)
@@ -29000,7 +29002,8 @@ function attachChromeInsetWatcher(container) {
     );
     if (window.innerHeight >= baselineInnerHeight)
       baselineInnerHeight = window.innerHeight;
-    const total = Math.ceil(effectiveChrome + keyboardInset);
+    const keyboard = Math.max(keyboardInset, capKeyboardInset);
+    const total = Math.ceil(effectiveChrome + keyboard);
     container.style.setProperty("--nei-chrome-inset", `${total}px`);
   };
   const measureDeep = () => {
@@ -29015,6 +29018,28 @@ function attachChromeInsetWatcher(container) {
       measureDeep();
     }, 250);
   };
+  try {
+    const cap = window.Capacitor;
+    const kb = cap?.Plugins?.Keyboard;
+    if (kb && typeof kb.addListener === "function") {
+      const onShow = (e) => {
+        let h = Math.round(e?.keyboardHeight || 0);
+        if (h > window.innerHeight * 0.8)
+          h = Math.round(h / (window.devicePixelRatio || 1));
+        capKeyboardInset = Math.max(0, Math.min(h, Math.round(window.innerHeight * 0.6)));
+        apply();
+      };
+      const onHide = () => {
+        capKeyboardInset = 0;
+        apply();
+      };
+      capListenerHandles.push(kb.addListener("keyboardWillShow", onShow));
+      capListenerHandles.push(kb.addListener("keyboardDidShow", onShow));
+      capListenerHandles.push(kb.addListener("keyboardWillHide", onHide));
+      capListenerHandles.push(kb.addListener("keyboardDidHide", onHide));
+    }
+  } catch {
+  }
   const delayedRemeasure = () => {
     [200, 600, 1200].forEach((ms) => {
       timers.push(window.setTimeout(() => {
@@ -29051,6 +29076,16 @@ function attachChromeInsetWatcher(container) {
     container.ownerDocument.removeEventListener("focusout", delayedRemeasure);
     ro?.disconnect();
     mo?.disconnect();
+    for (const handle of capListenerHandles) {
+      try {
+        Promise.resolve(handle).then((h) => {
+          const r = h;
+          r?.remove?.();
+        }).catch(() => {
+        });
+      } catch {
+      }
+    }
     if (deepTimer !== null)
       window.clearTimeout(deepTimer);
     timers.forEach((t2) => window.clearTimeout(t2));

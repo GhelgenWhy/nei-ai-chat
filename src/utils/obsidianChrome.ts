@@ -210,8 +210,13 @@ export function attachChromeInsetWatcher(container: HTMLElement): () => void {
     // Android: the webview extends behind the system navigation area. When the
     // navbar pill auto-hides, this remembered gap keeps the input clear of it.
     let systemGap = 0;
+    // Authoritative keyboard height from the Capacitor bridge — the only signal
+    // on Android WebViews where the keyboard neither resizes the layout viewport
+    // nor shrinks visualViewport (it just overlays the page).
+    let capKeyboardInset = 0;
     let deepTimer: number | null = null;
     const timers: number[] = [];
+    const capListenerHandles: Array<Promise<unknown> | unknown> = [];
 
     const apply = () => {
         const fast = measureChrome(container);
@@ -226,7 +231,8 @@ export function attachChromeInsetWatcher(container: HTMLElement): () => void {
         );
         // Keyboard closed again → re-baseline for the next open
         if (window.innerHeight >= baselineInnerHeight) baselineInnerHeight = window.innerHeight;
-        const total = Math.ceil(effectiveChrome + keyboardInset);
+        const keyboard = Math.max(keyboardInset, capKeyboardInset);
+        const total = Math.ceil(effectiveChrome + keyboard);
         container.style.setProperty("--nei-chrome-inset", `${total}px`);
     };
 
@@ -243,6 +249,34 @@ export function attachChromeInsetWatcher(container: HTMLElement): () => void {
             measureDeep();
         }, 250);
     };
+
+    // Capacitor Keyboard bridge (Obsidian mobile runs on Capacitor). Sizes may
+    // arrive in device pixels on some bridge versions — normalize by dpr when
+    // implausible, and clamp so a bogus event can never hide the whole panel.
+    try {
+        const cap = (window as unknown as {
+            Capacitor?: { Plugins?: { Keyboard?: { addListener?: (event: string, cb: (e: { keyboardHeight?: number }) => void) => unknown } } };
+        }).Capacitor;
+        const kb = cap?.Plugins?.Keyboard;
+        if (kb && typeof kb.addListener === "function") {
+            const onShow = (e: { keyboardHeight?: number }) => {
+                let h = Math.round(e?.keyboardHeight || 0);
+                if (h > window.innerHeight * 0.8) h = Math.round(h / (window.devicePixelRatio || 1));
+                capKeyboardInset = Math.max(0, Math.min(h, Math.round(window.innerHeight * 0.6)));
+                apply();
+            };
+            const onHide = () => {
+                capKeyboardInset = 0;
+                apply();
+            };
+            capListenerHandles.push(kb.addListener("keyboardWillShow", onShow));
+            capListenerHandles.push(kb.addListener("keyboardDidShow", onShow));
+            capListenerHandles.push(kb.addListener("keyboardWillHide", onHide));
+            capListenerHandles.push(kb.addListener("keyboardDidHide", onHide));
+        }
+    } catch {
+        /* not a Capacitor build — viewport-based keyboard logic still applies */
+    }
 
     // .mobile-toolbar / keyboard chrome appears with an animation delay after focus
     const delayedRemeasure = () => {
@@ -288,6 +322,14 @@ export function attachChromeInsetWatcher(container: HTMLElement): () => void {
         container.ownerDocument.removeEventListener("focusout", delayedRemeasure);
         ro?.disconnect();
         mo?.disconnect();
+        for (const handle of capListenerHandles) {
+            try {
+                Promise.resolve(handle).then((h) => {
+                    const r = h as { remove?: () => void } | null | undefined;
+                    r?.remove?.();
+                }).catch(() => { /* bridge gone */ });
+            } catch { /* ignore */ }
+        }
         if (deepTimer !== null) window.clearTimeout(deepTimer);
         timers.forEach(t => window.clearTimeout(t));
         container.style.removeProperty("--nei-chrome-inset");
