@@ -1,6 +1,7 @@
 import { describe, test, expect } from "vitest";
 import {
     measureBottomChromeInset,
+    measureChrome,
     computeKeyboardInset,
     bottomOverlayOverlap
 } from "../src/utils/obsidianChrome";
@@ -117,6 +118,37 @@ describe("bottomOverlayOverlap (deep scan predicate — floating mobile navbar p
     test("measureBottomChromeInset skips full-screen wrappers of known classes", () => {
         const wrapper: Partial<Rect> = { top: 0, bottom: 800, left: 0, right: 400, width: 400, height: 800 };
         expect(measureBottomChromeInset(container(), [el(wrapper)])).toBe(0);
+    });
+});
+
+describe("Android floating navbar pill (measured on device: ih=904, pill 807..859, safe-b=0)", () => {
+    // Real geometry from the phone: webview extends behind system nav buttons,
+    // the pill hovers 45px above the container bottom.
+    const phoneContainer = () => container({ top: 0, bottom: 904, left: 0, right: 406, width: 406, height: 904 });
+    const phonePill: Partial<Rect> = { top: 807, bottom: 859, left: 44, right: 360, width: 316, height: 52 };
+
+    test("pill hovering above the bottom edge IS counted (regression)", () => {
+        expect(measureBottomChromeInset(phoneContainer(), [el(phonePill)])).toBe(97);
+    });
+
+    test("measureChrome reports the system-area gap below the pill", () => {
+        const m = measureChrome(phoneContainer(), [el(phonePill)]);
+        expect(m.inset).toBe(97);
+        expect(m.gapBelow).toBe(45);
+    });
+
+    test("deep-scan predicate counts the same pill", () => {
+        const cRect: Rect = { top: 0, bottom: 904, left: 0, right: 406, width: 406, height: 904 };
+        const pill: Rect = { top: 807, bottom: 859, left: 44, right: 360, width: 316, height: 52 };
+        expect(bottomOverlayOverlap(cRect, pill, visibleFixed)).toBe(97);
+    });
+
+    test("gapBelow clamps to 150px for strips far above the bottom", () => {
+        const strip: Partial<Rect> = { top: 500, bottom: 620, left: 0, right: 400, width: 400, height: 120 };
+        // top 500 ≥ half 400 ✓, bottom 620 ≥ quarter 600 ✓ → counted; gap 800-620=180 → clamp 150
+        const m = measureChrome(container(), [el(strip)]);
+        expect(m.inset).toBe(300);
+        expect(m.gapBelow).toBe(150);
     });
 });
 

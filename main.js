@@ -28901,42 +28901,48 @@ function bottomOverlayOverlap(containerRect, rect, style) {
   const halfPoint = containerRect.top + containerRect.height * 0.5;
   if (rect.top < halfPoint)
     return 0;
-  const touchesBottom = rect.top < containerRect.bottom && rect.bottom >= containerRect.bottom - 2;
+  const quarterLine = containerRect.top + containerRect.height * 0.75;
+  const inBottomRegion = rect.top < containerRect.bottom && rect.bottom >= quarterLine;
   const overlapsHorizontally = rect.left < containerRect.right && rect.right > containerRect.left;
-  if (!touchesBottom || !overlapsHorizontally)
+  if (!inBottomRegion || !overlapsHorizontally)
     return 0;
   return Math.ceil(containerRect.bottom - rect.top);
 }
-function measureBottomChromeInset(container, chromeElements) {
+function measureChrome(container, chromeElements) {
   const cRect = container.getBoundingClientRect();
   if (cRect.height <= 0 || cRect.width <= 0)
-    return 0;
+    return { inset: 0, gapBelow: 0 };
   const chrome = chromeElements ?? container.ownerDocument.querySelectorAll(OBSIDIAN_BOTTOM_CHROME_SELECTOR);
   let inset = 0;
+  let lowestBottom = Infinity;
   const halfPoint = cRect.top + cRect.height * 0.5;
+  const quarterLine = cRect.top + cRect.height * 0.75;
   for (const el of Array.from(chrome)) {
     const rect = el.getBoundingClientRect();
     if (rect.height <= 0 || rect.width <= 0)
       continue;
     if (rect.top < halfPoint)
       continue;
-    const touchesBottom = rect.top < cRect.bottom && rect.bottom >= cRect.bottom - 2;
+    const inBottomRegion = rect.top < cRect.bottom && rect.bottom >= quarterLine;
     const overlapsHorizontally = rect.left < cRect.right && rect.right > cRect.left;
-    if (touchesBottom && overlapsHorizontally) {
+    if (inBottomRegion && overlapsHorizontally) {
       inset = Math.max(inset, cRect.bottom - rect.top);
+      lowestBottom = Math.min(lowestBottom, rect.bottom);
     }
   }
-  return Math.ceil(inset);
+  const gapBelow = isFinite(lowestBottom) ? Math.max(0, Math.min(150, cRect.bottom - lowestBottom)) : 0;
+  return { inset: Math.ceil(inset), gapBelow: Math.round(gapBelow) };
 }
 function scanBottomOverlaps(container) {
   const doc = container.ownerDocument;
   const view = doc.defaultView;
   if (!view)
-    return 0;
+    return { inset: 0, gapBelow: 0 };
   const cRect = container.getBoundingClientRect();
   if (cRect.height <= 0 || cRect.width <= 0)
-    return 0;
-  let maxOverlap = 0;
+    return { inset: 0, gapBelow: 0 };
+  let inset = 0;
+  let lowestBottom = Infinity;
   const all = doc.querySelectorAll("body *");
   for (const el of Array.from(all)) {
     if (el === container || el.contains(container) || container.contains(el))
@@ -28949,16 +28955,21 @@ function scanBottomOverlaps(container) {
     } catch {
       continue;
     }
-    const overlap = bottomOverlayOverlap(cRect, el.getBoundingClientRect(), {
+    const rect = el.getBoundingClientRect();
+    const overlap = bottomOverlayOverlap(cRect, rect, {
       position: cs.position,
       display: cs.display,
       visibility: cs.visibility,
       opacity: Number(cs.opacity)
     });
-    if (overlap > maxOverlap)
-      maxOverlap = overlap;
+    if (overlap > 0) {
+      if (overlap > inset)
+        inset = overlap;
+      lowestBottom = Math.min(lowestBottom, rect.bottom);
+    }
   }
-  return maxOverlap;
+  const gapBelow = isFinite(lowestBottom) ? Math.max(0, Math.min(150, cRect.bottom - lowestBottom)) : 0;
+  return { inset, gapBelow: Math.round(gapBelow) };
 }
 function computeKeyboardInset(baselineInnerHeight, currentInnerHeight, visualViewport) {
   if (!visualViewport)
@@ -28970,11 +28981,18 @@ function computeKeyboardInset(baselineInnerHeight, currentInnerHeight, visualVie
 }
 function attachChromeInsetWatcher(container) {
   let baselineInnerHeight = window.innerHeight;
-  let deepInset = 0;
+  let deep = { inset: 0, gapBelow: 0 };
+  let systemGap = 0;
   let deepTimer = null;
   const timers = [];
   const apply = () => {
-    const fastInset = measureBottomChromeInset(container);
+    const fast = measureChrome(container);
+    if (fast.inset > 0)
+      systemGap = Math.max(systemGap, fast.gapBelow);
+    if (deep.inset > 0)
+      systemGap = Math.max(systemGap, deep.gapBelow);
+    const chromeInset = Math.max(fast.inset, deep.inset);
+    const effectiveChrome = chromeInset > 0 ? chromeInset : systemGap;
     const keyboardInset = computeKeyboardInset(
       baselineInnerHeight,
       window.innerHeight,
@@ -28982,11 +29000,11 @@ function attachChromeInsetWatcher(container) {
     );
     if (window.innerHeight >= baselineInnerHeight)
       baselineInnerHeight = window.innerHeight;
-    const total = Math.ceil(Math.max(fastInset, deepInset) + keyboardInset);
+    const total = Math.ceil(effectiveChrome + keyboardInset);
     container.style.setProperty("--nei-chrome-inset", `${total}px`);
   };
   const measureDeep = () => {
-    deepInset = scanBottomOverlaps(container);
+    deep = scanBottomOverlaps(container);
     apply();
   };
   const scheduleDeep = () => {

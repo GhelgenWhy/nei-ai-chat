@@ -69,10 +69,14 @@ export function bottomOverlayOverlap(
     const halfPoint = containerRect.top + containerRect.height * 0.5;
     if (rect.top < halfPoint) return 0;
 
-    // Must reach into the container's bottom strip (2px tolerance for rounding)
-    const touchesBottom = rect.top < containerRect.bottom && rect.bottom >= containerRect.bottom - 2;
+    // The element must reach into the bottom QUARTER of the container — it does
+    // NOT have to touch the very bottom edge: on Android the webview extends
+    // behind the system navigation buttons, so Obsidian's floating navbar pill
+    // hovers ~45px above the container bottom (data from on-device inspector).
+    const quarterLine = containerRect.top + containerRect.height * 0.75;
+    const inBottomRegion = rect.top < containerRect.bottom && rect.bottom >= quarterLine;
     const overlapsHorizontally = rect.left < containerRect.right && rect.right > containerRect.left;
-    if (!touchesBottom || !overlapsHorizontally) return 0;
+    if (!inBottomRegion || !overlapsHorizontally) return 0;
 
     return Math.ceil(containerRect.bottom - rect.top);
 }
@@ -85,25 +89,52 @@ export function measureBottomChromeInset(
     container: HTMLElement,
     chromeElements?: Iterable<Element>
 ): number {
+    return measureChrome(container, chromeElements).inset;
+}
+
+export interface ChromeMeasure {
+    /** Pixels of the container's bottom edge covered by the tallest chrome strip. */
+    inset: number;
+    /** Gap between the LOWEST chrome element's bottom edge and the container
+     *  bottom — on Android this is the system navigation area (0 on desktop). */
+    gapBelow: number;
+}
+
+/**
+ * Measures known Obsidian chrome: max inset + the system-area gap below it.
+ * Pure: pass chrome elements explicitly in tests.
+ */
+export function measureChrome(
+    container: HTMLElement,
+    chromeElements?: Iterable<Element>
+): ChromeMeasure {
     const cRect = container.getBoundingClientRect();
-    if (cRect.height <= 0 || cRect.width <= 0) return 0;
+    if (cRect.height <= 0 || cRect.width <= 0) return { inset: 0, gapBelow: 0 };
 
     const chrome = chromeElements ?? container.ownerDocument.querySelectorAll(OBSIDIAN_BOTTOM_CHROME_SELECTOR);
 
     let inset = 0;
+    let lowestBottom = Infinity;
     const halfPoint = cRect.top + cRect.height * 0.5;
+    const quarterLine = cRect.top + cRect.height * 0.75;
     for (const el of Array.from(chrome)) {
         const rect = (el as HTMLElement).getBoundingClientRect();
         if (rect.height <= 0 || rect.width <= 0) continue;
         // Chrome is a bottom strip, not a full-screen wrapper (see bottomOverlayOverlap)
         if (rect.top < halfPoint) continue;
-        const touchesBottom = rect.top < cRect.bottom && rect.bottom >= cRect.bottom - 2;
+        // Reaches the bottom quarter but may hover above the bottom edge
+        // (system navigation area) — see bottomOverlayOverlap for rationale.
+        const inBottomRegion = rect.top < cRect.bottom && rect.bottom >= quarterLine;
         const overlapsHorizontally = rect.left < cRect.right && rect.right > cRect.left;
-        if (touchesBottom && overlapsHorizontally) {
+        if (inBottomRegion && overlapsHorizontally) {
             inset = Math.max(inset, cRect.bottom - rect.top);
+            lowestBottom = Math.min(lowestBottom, rect.bottom);
         }
     }
-    return Math.ceil(inset);
+    const gapBelow = isFinite(lowestBottom)
+        ? Math.max(0, Math.min(150, cRect.bottom - lowestBottom))
+        : 0;
+    return { inset: Math.ceil(inset), gapBelow: Math.round(gapBelow) };
 }
 
 /**
@@ -112,14 +143,15 @@ export function measureBottomChromeInset(
  * (notices, menus, modals). This is what catches the floating mobile navbar
  * pill without knowing its class name. Walks `body *` — call it debounced.
  */
-export function scanBottomOverlaps(container: HTMLElement): number {
+export function scanBottomOverlaps(container: HTMLElement): ChromeMeasure {
     const doc = container.ownerDocument;
     const view = doc.defaultView;
-    if (!view) return 0;
+    if (!view) return { inset: 0, gapBelow: 0 };
     const cRect = container.getBoundingClientRect();
-    if (cRect.height <= 0 || cRect.width <= 0) return 0;
+    if (cRect.height <= 0 || cRect.width <= 0) return { inset: 0, gapBelow: 0 };
 
-    let maxOverlap = 0;
+    let inset = 0;
+    let lowestBottom = Infinity;
     const all = doc.querySelectorAll<HTMLElement>("body *");
     for (const el of Array.from(all)) {
         // Skip ourselves, our ancestors (app shell), and our descendants
@@ -133,15 +165,22 @@ export function scanBottomOverlaps(container: HTMLElement): number {
             continue;
         }
 
-        const overlap = bottomOverlayOverlap(cRect, el.getBoundingClientRect(), {
+        const rect = el.getBoundingClientRect();
+        const overlap = bottomOverlayOverlap(cRect, rect, {
             position: cs.position,
             display: cs.display,
             visibility: cs.visibility,
             opacity: Number(cs.opacity)
         });
-        if (overlap > maxOverlap) maxOverlap = overlap;
+        if (overlap > 0) {
+            if (overlap > inset) inset = overlap;
+            lowestBottom = Math.min(lowestBottom, rect.bottom);
+        }
     }
-    return maxOverlap;
+    const gapBelow = isFinite(lowestBottom)
+        ? Math.max(0, Math.min(150, cRect.bottom - lowestBottom))
+        : 0;
+    return { inset, gapBelow: Math.round(gapBelow) };
 }
 
 /**
@@ -167,12 +206,19 @@ export function computeKeyboardInset(
  */
 export function attachChromeInsetWatcher(container: HTMLElement): () => void {
     let baselineInnerHeight = window.innerHeight;
-    let deepInset = 0;
+    let deep: ChromeMeasure = { inset: 0, gapBelow: 0 };
+    // Android: the webview extends behind the system navigation area. When the
+    // navbar pill auto-hides, this remembered gap keeps the input clear of it.
+    let systemGap = 0;
     let deepTimer: number | null = null;
     const timers: number[] = [];
 
     const apply = () => {
-        const fastInset = measureBottomChromeInset(container);
+        const fast = measureChrome(container);
+        if (fast.inset > 0) systemGap = Math.max(systemGap, fast.gapBelow);
+        if (deep.inset > 0) systemGap = Math.max(systemGap, deep.gapBelow);
+        const chromeInset = Math.max(fast.inset, deep.inset);
+        const effectiveChrome = chromeInset > 0 ? chromeInset : systemGap;
         const keyboardInset = computeKeyboardInset(
             baselineInnerHeight,
             window.innerHeight,
@@ -180,12 +226,12 @@ export function attachChromeInsetWatcher(container: HTMLElement): () => void {
         );
         // Keyboard closed again → re-baseline for the next open
         if (window.innerHeight >= baselineInnerHeight) baselineInnerHeight = window.innerHeight;
-        const total = Math.ceil(Math.max(fastInset, deepInset) + keyboardInset);
+        const total = Math.ceil(effectiveChrome + keyboardInset);
         container.style.setProperty("--nei-chrome-inset", `${total}px`);
     };
 
     const measureDeep = () => {
-        deepInset = scanBottomOverlaps(container);
+        deep = scanBottomOverlaps(container);
         apply();
     };
 
